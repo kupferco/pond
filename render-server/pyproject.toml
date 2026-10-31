@@ -1,0 +1,31 @@
+[project]
+name = "pond-render-server"
+version = "0.1.0"
+description = "Pond render server: an MCP server that turns CadQuery scripts and SVG into images Claude can see."
+requires-python = ">=3.11"
+dependencies = [
+    "cadquery==2.8.0",
+    "cairosvg==2.9.1",
+    "mcp==2.3.0",
+    "uvicorn==0.54.0",
+    "starlette==1.10.0",
+    "pydantic==2.14.2",
+    "PyJWT==2.15.1",
+    "google-cloud-storage==3.17.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==9.2.0", "httpx==0.28.1"]
+
+[project.scripts]
+pond-render-server = "pond_render.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["pond_render*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
