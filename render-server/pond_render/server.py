@@ -249,7 +249,7 @@ def build_server(settings: Settings, store: Store) -> MCPServer:
 
     # ------------------------------------------------------------------ plain HTTP routes
 
-    @server.custom_route("/healthz", methods=["GET"])
+    @server.custom_route("/health", methods=["GET"])
     async def healthz(request: Request) -> Response:
         return JSONResponse({"ok": True, "version": __version__, "storage": store.describe()})
 

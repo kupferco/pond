@@ -1,11 +1,11 @@
 # Deploying the render server to Cloud Run
 
-Everything below uses `gcloud`. Pick values once and export them; the commands use them.
+Everything below uses `gcloud`. These are the values in use (set up 31 Oct 2026):
 
 ```bash
-export PROJECT=pond-render          # GCP project id (must be globally unique; adjust)
-export REGION=europe-west1          # any Cloud Run region close to you
-export BUCKET=${PROJECT}-renders    # GCS bucket for outputs
+export PROJECT=pond-render-kupfer   # project number 500653746288, billing "My Billing Account 1"
+export REGION=us-east1              # cheapest Cloud Run tier, between London and São Paulo
+export BUCKET=pond-render-kupfer-renders
 export SERVICE=pond-render
 export SA=pond-render-sa
 ```
@@ -52,13 +52,12 @@ done
 ## 4. First deploy
 
 Run from the repo root. `--source` builds the Dockerfile with Cloud Build (amd64) and pushes
-it to Artifact Registry. `--allow-unauthenticated` is required because the server does its
-own OAuth; Cloud Run's IAM check would block Claude before it could log in.
+it to Artifact Registry.
 
 ```bash
 gcloud run deploy $SERVICE --source render-server --region $REGION \
     --service-account $SA_EMAIL \
-    --allow-unauthenticated \
+    --no-allow-unauthenticated \
     --memory 4Gi --cpu 2 --cpu-boost --timeout 300 --concurrency 4 \
     --min-instances 0 --max-instances 2 \
     --set-env-vars POND_AUTH_MODE=oauth,POND_STORAGE=gs://$BUCKET,POND_CAD_TIMEOUT_S=60,POND_CAD_MEMORY_MB=3072 \
@@ -71,11 +70,35 @@ The server starts, but `POND_PUBLIC_URL` is not set yet, so its OAuth metadata a
 ```bash
 export URL=$(gcloud run services describe $SERVICE --region $REGION --format='value(status.url)')
 gcloud run services update $SERVICE --region $REGION --update-env-vars POND_PUBLIC_URL=$URL
-curl $URL/healthz
+curl $URL/health
 curl $URL/.well-known/oauth-protected-resource/mcp
 ```
 
 Later deploys keep the env vars, so `gcloud run deploy $SERVICE --source render-server --region $REGION` is enough.
+
+Live service (31 Oct 2026): `https://pond-render-500653746288.us-east1.run.app`
+
+### Make it reachable by Claude
+
+The server does its own OAuth, so Cloud Run's IAM check must be switched off for it, or Claude
+is blocked before it can log in. This grants "invoke" to everyone; the app still refuses anything
+without a valid token. Run it yourself (Claude Code's permission rules block it):
+
+```bash
+gcloud run services add-iam-policy-binding $SERVICE --region $REGION \
+    --member=allUsers --role=roles/run.invoker
+curl -s -o /dev/null -w '%{http_code}\n' $URL/health      # 200 once the binding is active
+```
+
+Until then, you can still test with your own Google identity by sending it in a second header
+(Cloud Run reads `X-Serverless-Authorization`, leaving `Authorization` for the app's token):
+
+```bash
+curl -H "X-Serverless-Authorization: Bearer $(gcloud auth print-identity-token)" $URL/health
+```
+
+Note: Cloud Run's front end swallows the path `/healthz` (404 for everyone), which is why the
+health route is `/health`.
 
 ## 5. Connect Claude
 
@@ -110,5 +133,5 @@ cd render-server
 docker build -t pond-render:dev .
 docker run --rm -p 8080:8080 -e POND_AUTH_MODE=token -e POND_API_TOKEN=dev-token \
     -e POND_PUBLIC_URL=http://localhost:8080 -e POND_STORAGE=local:/tmp/renders pond-render:dev
-curl localhost:8080/healthz
+curl localhost:8080/health
 ```

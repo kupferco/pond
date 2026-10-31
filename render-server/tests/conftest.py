@@ -61,7 +61,7 @@ class RunningServer:
         deadline = time.time() + 20
         while time.time() < deadline:
             try:
-                if httpx.get(self.base_url + "/healthz", timeout=1).status_code == 200:
+                if httpx.get(self.base_url + "/health", timeout=1).status_code == 200:
                     return self
             except httpx.HTTPError:
                 time.sleep(0.1)

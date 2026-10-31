@@ -30,7 +30,7 @@ def test_mcp_requires_token(token_server):
 
 
 def test_healthz_and_index_open(token_server):
-    assert httpx.get(token_server.base_url + "/healthz").json()["ok"] is True
+    assert httpx.get(token_server.base_url + "/health").json()["ok"] is True
     assert "MCP endpoint" in httpx.get(token_server.base_url + "/").text
 
 
