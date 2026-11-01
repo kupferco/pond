@@ -8,13 +8,15 @@ import shutil
 import tempfile
 from datetime import datetime, timezone
 from functools import partial
+from html import escape
 from pathlib import Path
+from urllib.parse import quote, urlparse
 
 import anyio
 from pydantic import AnyHttpUrl
 from starlette.applications import Starlette
 from starlette.requests import Request
-from starlette.responses import JSONResponse, PlainTextResponse, Response
+from starlette.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 
 from mcp.server.auth.settings import AuthSettings, ClientRegistrationOptions
 from mcp.server.mcpserver import Image, MCPServer
@@ -59,6 +61,47 @@ def _now() -> str:
 
 def _text(obj: object) -> str:
     return json.dumps(obj, indent=2, default=str)
+
+
+VIEWER_HOSTS = {"storage.googleapis.com", "storage.cloud.google.com"}
+MODEL_VIEWER_JS = "https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js"
+
+
+def _viewer_src_ok(src: str) -> bool:
+    u = urlparse(src)
+    return u.scheme == "https" and (u.hostname or "") in VIEWER_HOSTS
+
+
+def _add_viewer(summary: dict, settings: Settings) -> dict:
+    """Add a one-tap 3D viewer link when the GLB has a browser-loadable URL."""
+    glb = (summary.get("files") or {}).get("model.glb")
+    if glb and _viewer_src_ok(glb):
+        title = summary.get("title") or summary.get("id") or "model"
+        summary["viewer"] = f"{settings.public_url}/viewer?src={quote(glb, safe='')}&title={quote(str(title))}"
+    return summary
+
+
+def _viewer_page(src: str, title: str) -> str:
+    t = escape(title or "Pond render")
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{t}</title>
+<script type="module" src="{MODEL_VIEWER_JS}"></script>
+<style>
+  html, body {{ margin: 0; height: 100%; background: #1d1f24; color: #e6e6e6; font: 14px/1.4 system-ui, sans-serif; }}
+  model-viewer {{ width: 100%; height: 100%; background: #1d1f24; --poster-color: #1d1f24; }}
+  .bar {{ position: fixed; top: 0; left: 0; right: 0; padding: 10px 14px; display: flex; gap: 12px;
+         align-items: center; background: rgba(0,0,0,.35); pointer-events: none; }}
+  .bar a, .bar span {{ pointer-events: auto; color: #e6e6e6; }}
+  .bar strong {{ font-weight: 600; }}
+  .hint {{ position: fixed; bottom: 10px; left: 0; right: 0; text-align: center; opacity: .6; font-size: 12px; }}
+</style></head>
+<body>
+<model-viewer src="{escape(src, quote=True)}" alt="{t}" camera-controls auto-rotate shadow-intensity="1"
+  exposure="1" touch-action="pan-y" interaction-prompt="none"></model-viewer>
+<div class="bar"><strong>{t}</strong><span>·</span><a href="{escape(src, quote=True)}" download>download GLB</a></div>
+<div class="hint">drag to orbit · scroll or pinch to zoom · Z is up in the part, shown as Y here</div>
+</body></html>"""
 
 
 def open_github(settings: Settings) -> GitHubRepo | None:
@@ -234,7 +277,7 @@ def build_server(settings: Settings, store: Store, github: GitHubRepo | None = N
                 text += f"\n\nScript output:\n{result.log.strip()[-4000:]}"
             return [text]
 
-        summary = record.summary(store)
+        summary = _add_viewer(record.summary(store), settings)
         summary["duration_s"] = result.duration_s
         if result.log.strip():
             summary["script_output"] = result.log.strip()[-4000:]
@@ -248,7 +291,7 @@ def build_server(settings: Settings, store: Store, github: GitHubRepo | None = N
     async def list_renders(limit: int = 20) -> str:
         """List recent renders (newest first) with their ids, status, bounding boxes and file links."""
         records = await anyio.to_thread.run_sync(list_records, store, max(1, min(limit, 100)))
-        return _text([r.summary(store) for r in records])
+        return _text([_add_viewer(r.summary(store), settings) for r in records])
 
     @server.tool()
     async def get_render(render_id: str, include_images: bool = True, include_script: bool = False) -> list[Image | str]:
@@ -256,7 +299,7 @@ def build_server(settings: Settings, store: Store, github: GitHubRepo | None = N
         record = await anyio.to_thread.run_sync(load_record, store, render_id)
         if not record:
             return [f"No render with id {render_id!r}"]
-        summary = record.summary(store)
+        summary = _add_viewer(record.summary(store), settings)
         if record.log:
             summary["script_output"] = record.log[-4000:]
         out: list[Image | str] = []
@@ -382,6 +425,15 @@ def build_server(settings: Settings, store: Store, github: GitHubRepo | None = N
     @server.custom_route("/health", methods=["GET"])
     async def healthz(request: Request) -> Response:
         return JSONResponse({"ok": True, "version": __version__, "storage": store.describe()})
+
+    @server.custom_route("/viewer", methods=["GET"])
+    async def viewer(request: Request) -> Response:
+        """A static page that shows one GLB in the browser. Holds no data itself: the model comes
+        from the (time-limited, signed) storage URL in `src`, which must point at our bucket host."""
+        src = request.query_params.get("src", "")
+        if not _viewer_src_ok(src):
+            return PlainTextResponse("src must be an https URL on " + ", ".join(sorted(VIEWER_HOSTS)), status_code=400)
+        return HTMLResponse(_viewer_page(src, request.query_params.get("title", "")[:120]))
 
     @server.custom_route("/", methods=["GET"])
     async def index(request: Request) -> Response:
