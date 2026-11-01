@@ -9,7 +9,7 @@ import math
 PIPE_D = 32.0          # outer diameter of the track pipe (assumed)
 BORE_CLEAR = 4.0       # radial gap between pipe and sleeve bore
 WALL_OUT_R = 34.0      # outer radius of the sleeve body
-SLEEVE_L = 84.0        # sleeve length along the pipe
+SLEEVE_L = 94.0        # sleeve length along the pipe
 WHEEL_D = 20.0         # wheel diameter
 WHEEL_W = 8.0          # wheel width
 WHEEL_CLEAR = 1.0      # clearance round each wheel in its pocket
