@@ -4,22 +4,26 @@ A parameterised MJCF generator. The render server runs `build(**params)` in its 
 and simulates the result; `run_sim(model="pipe_climb", params={...})`.
 
 Model: a vertical steel pipe (capsule, fixed to the world). A cart body on a free joint
-with three wheels pressing on the pipe: one driven wheel on the outside (-X), two spring
-idlers at +/-60 deg on the inside. Wheels collide as spheres (robust contact) and are drawn
-as cylinders. The driven wheel has a velocity actuator; idlers free-wheel on sprung radial
-slides. Friction is a parameter: dry 0.8, wet 0.3.
+with three wheel stations pressing on the pipe: one driven station on the outside (-X), two
+spring idler stations at +/-60 deg on the inside. Wheels collide as spheres (robust contact)
+and are drawn as cylinders. Friction is a parameter: dry 0.8, wet 0.3.
 
-wheel_rows=2 duplicates the ring of three wheels above and below the cart centre
-(row_spacing_mm apart), like the wheel pairs on hand v6. The two drive wheels are coupled
-by a joint equality (the belt), and spring_preload_n is split across the rows so the total
-clamp force matches the one-row cart.
+Wheel layouts:
+- wheel_rows=1: one wheel per station (a single ring of three).
+- wheel_rows=2, rocker=false: two wheels per station, row_spacing_mm apart, rigidly mounted
+  (each wheel on its own spring, spring_preload_n split between them).
+- wheel_rows=2, rocker=true: hand v6 style. Each station is a rocker that pivots about an
+  axis parallel to the wheel axles and carries the two wheels; one spring per station with
+  the full spring_preload_n. A free rocker shares load between its wheels but cannot resist
+  a moment about its pivot.
+The two drive wheels are coupled by a joint equality (the belt).
 
 Note: sphere wheels give point contact, so sideways (axial-to-wheel) grip is probably
 understated compared with a real rubber tyre's contact patch.
 
 Signals the runner logs: cart height (pos_z) and speed, contact normal force, drive torque
 (force.drive), wheel slip (rim speed minus cart speed, from wheel_radius), spring travel
-(q.spring_*), roll/pitch/yaw. `climb_m` in the summary is the net height gained.
+(q.spring_*), rocker angle (q.rock_*), roll/pitch/yaw. `climb_m` is the net height gained.
 """
 
 from constants import (
@@ -31,13 +35,15 @@ import math
 PARAMS = {
     "surface": ("dry", "dry or wet: picks the wheel/pipe friction coefficient"),
     "friction": (None, "override the friction coefficient directly (e.g. 0.5)"),
-    "spring_preload_n": (SPRING_PRELOAD_N, "clamp force per idler station at rest, N (split across wheel rows)"),
+    "spring_preload_n": (SPRING_PRELOAD_N, "clamp force per idler station at rest, N"),
     "spring_k": (SPRING_K, "idler spring stiffness, N/m"),
     "cart_mass_kg": (CART_MASS, "cart mass without payload, kg"),
     "payload_kg": (PAYLOAD_MASS, "extra mass carried, kg"),
     "mass_offset_mm": (0.0, "sideways (tangential, +Y) offset of the cart's centre of mass, mm"),
-    "wheel_rows": (1, "1 = single ring of 3 wheels; 2 = two rings spaced along the pipe"),
-    "row_spacing_mm": (40.0, "axial distance between the two wheel rows, mm (wheel_rows=2)"),
+    "wheel_rows": (1, "1 = single ring of 3 wheels; 2 = two wheels per station along the pipe"),
+    "row_spacing_mm": (40.0, "axial distance between the two wheels of a station, mm (hand v6: 24)"),
+    "rocker": (False, "wheel_rows=2 only: true = each wheel pair rocks on a pivot (hand v6)"),
+    "rocker_range_deg": (20.0, "rocker travel each way, degrees"),
     "drive_rpm": (DRIVE_RPM, "target wheel speed, rpm (positive = up)"),
     "drive_torque_nm": (0.3, "stall torque the drive can apply at the wheel, N m"),
     "pipe_len_m": (1.2, "length of the vertical pipe"),
@@ -57,6 +63,12 @@ def _default_omega(drive_rpm: float) -> float:
 DEFAULT_CONTROLS = {"drive": _default_omega(DRIVE_RPM)}
 
 
+def _truthy(v) -> bool:
+    if isinstance(v, str):
+        return v.strip().lower() in ("1", "true", "yes", "on")
+    return bool(v)
+
+
 def build(**p) -> str:
     mu = p["friction"] if p["friction"] is not None else FRICTION[p["surface"]]
     wheel_r = float(p["wheel_r_m"])
@@ -67,18 +79,27 @@ def build(**p) -> str:
     cart_mass = float(p["cart_mass_kg"]) + float(p["payload_kg"])
     offset_y = float(p["mass_offset_mm"]) / 1000.0
     rows = 2 if int(p["wheel_rows"]) >= 2 else 1
+    rocker = rows == 2 and _truthy(p["rocker"])
     spacing = float(p["row_spacing_mm"]) / 1000.0
-    row_z = [0.0] if rows == 1 else [spacing / 2, -spacing / 2]
-    # Spring: zero-length at springref so the preload comes out right. The slide joint moves
-    # the idler along its radial axis; negative = towards the pipe. With the idler sitting at
-    # the touching radius, springref = -preload/k (it "wants" to be further in).
+    rock_rng = float(p["rocker_range_deg"])
     k = float(p["spring_k"])
-    springref = -(float(p["spring_preload_n"]) / rows) / k
+    preload = float(p["spring_preload_n"])
     travel = SPRING_TRAVEL
 
-    wheels = []
+    def wheel_geoms(name, tangent):
+        return f"""
+          <joint name="wheel_{name}" type="hinge" axis="{tangent}" damping="0.0005"/>
+          <geom name="{name}_col" type="sphere" size="{wheel_r:.5f}" mass="0.02" friction="{mu} 0.005 0.0001"
+                rgba="0.15 0.15 0.15 1" condim="3" solref="0.005 1" solimp="0.95 0.99 0.001"/>
+          <geom name="{name}_vis" type="cylinder" size="{wheel_r:.5f} {WHEEL_W/2:.5f}" zaxis="{tangent}"
+                contype="0" conaffinity="0" mass="0" rgba="0.2 0.2 0.25 1"/>"""
 
-    def wheel(name, angle_deg, driven, z):
+    def spring(name, radial, load):
+        ref = -load / k
+        return (f'<joint name="spring_{name}" type="slide" axis="{radial}" range="{-travel:.5f} {travel:.5f}" '
+                f'stiffness="{k:.1f}" springref="{ref:.6f}" damping="4" limited="true"/>')
+
+    def station(name, angle_deg, driven):
         a = math.radians(angle_deg)
         cx, cy = ring_r * math.cos(a), ring_r * math.sin(a)
         radial = f"{math.cos(a):.6f} {math.sin(a):.6f} 0"
@@ -86,35 +107,43 @@ def build(**p) -> str:
         # speed moves the cart UP the pipe (rolling without slip: v_cart = -omega x r_contact).
         sgn = -1.0 if driven else 1.0
         tangent = f"{sgn*-math.sin(a):.6f} {sgn*math.cos(a):.6f} 0"
-        slide = "" if driven else (
-            f'<joint name="spring_{name}" type="slide" axis="{radial}" range="{-travel:.5f} {travel:.5f}" '
-            f'stiffness="{k:.1f}" springref="{springref:.6f}" damping="4" limited="true"/>'
-        )
+        if rows == 1:
+            sp = "" if driven else spring(name, radial, preload)
+            return f"""
+      <body name="{name}" pos="{cx:.6f} {cy:.6f} 0">
+        {sp}{wheel_geoms(name, tangent)}
+      </body>"""
+        if not rocker:
+            out = ""
+            for z, sfx in ((spacing / 2, ""), (-spacing / 2, "2")):
+                sp = "" if driven else spring(name + sfx, radial, preload / 2)
+                out += f"""
+      <body name="{name}{sfx}" pos="{cx:.6f} {cy:.6f} {z:.5f}">
+        {sp}{wheel_geoms(name + sfx, tangent)}
+      </body>"""
+            return out
+        # Rocker: one sprung carrier per station, pivoting about the axle direction.
+        sp = "" if driven else spring(name, radial, preload)
         return f"""
-      <body name="{name}" pos="{cx:.6f} {cy:.6f} {z:.5f}">
-        {slide}
-        <joint name="wheel_{name}" type="hinge" axis="{tangent}" damping="0.0005"/>
-        <geom name="{name}_col" type="sphere" size="{wheel_r:.5f}" mass="0.02" friction="{mu} 0.005 0.0001"
-              rgba="0.15 0.15 0.15 1" condim="3" solref="0.005 1" solimp="0.95 0.99 0.001"/>
-        <geom name="{name}_vis" type="cylinder" size="{wheel_r:.5f} {WHEEL_W/2:.5f}" zaxis="{tangent}"
-              contype="0" conaffinity="0" mass="0" rgba="0.2 0.2 0.25 1"/>
+      <body name="{name}_rk" pos="{cx:.6f} {cy:.6f} 0">
+        {sp}
+        <joint name="rock_{name}" type="hinge" axis="{tangent}" range="{-rock_rng} {rock_rng}" limited="true" damping="0.002"/>
+        <geom type="box" size="0.003 0.003 {spacing/2:.5f}" mass="0.01" contype="0" conaffinity="0" rgba="0.6 0.6 0.65 1"/>
+        <body name="{name}" pos="0 0 {spacing/2:.5f}">{wheel_geoms(name, tangent)}
+        </body>
+        <body name="{name}2" pos="0 0 {-spacing/2:.5f}">{wheel_geoms(name + "2", tangent)}
+        </body>
       </body>"""
 
-    for r, z in enumerate(row_z):
-        sfx = "" if r == 0 else "2"
-        wheels.append(wheel(f"drive{sfx}", DRIVE_WHEEL_ANGLE, True, z))
-        for i, ang in enumerate(IDLER_WHEEL_ANGLES):
-            wheels.append(wheel(f"idler{i+1}{sfx}", ang, False, z))
-    wheels_xml = "".join(wheels)
+    wheels_xml = station("drive", DRIVE_WHEEL_ANGLE, True)
+    for i, ang in enumerate(IDLER_WHEEL_ANGLES):
+        wheels_xml += station(f"idler{i+1}", ang, False)
 
-    # Belt between the two drive wheels (second row only).
     equality_xml = (
         '<equality><joint joint1="wheel_drive2" joint2="wheel_drive" polycoef="0 1 0 0 0"/></equality>'
         if rows == 2 else ""
     )
 
-    # Cart body visual: a C-shaped collar around the pipe (no collision with the pipe; the
-    # wheels are the only contacts). Mass sits near the cart origin, shifted by mass_offset_mm.
     collar_r = ring_r + wheel_r * 0.6
     collar_h = 0.03 if rows == 1 else max(0.03, spacing / 2 + 0.015)
     collar_xml = "".join(
