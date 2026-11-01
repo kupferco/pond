@@ -94,6 +94,11 @@ curl $URL/.well-known/oauth-protected-resource/mcp
 
 Later deploys keep the env vars, so `gcloud run deploy $SERVICE --source render-server --region $REGION` is enough.
 
+**Never pass `--no-allow-unauthenticated` (or `--allow-unauthenticated`) on a redeploy.**
+Either flag rewrites the service's IAM policy, and the first one silently removes the
+`allUsers` invoker binding below, after which Cloud Run returns 403 to Claude before the
+request reaches the server. If that happens, run the `add-iam-policy-binding` command below again.
+
 Live service (31 Oct 2026): `https://pond-render-500653746288.us-east1.run.app`
 
 ### Make it reachable by Claude
