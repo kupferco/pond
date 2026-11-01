@@ -49,6 +49,24 @@ for s in pond-oauth-signing-secret pond-oauth-password; do
 done
 ```
 
+### GitHub token (for the repo_* tools and render auto-save)
+
+Create a fine-grained personal access token as the repo owner at
+https://github.com/settings/personal-access-tokens/new: repository access limited to the
+`pond` repo, permissions Contents read/write and Pull requests read/write. Then:
+
+```bash
+printf '%s' 'github_pat_...' | gcloud secrets create pond-github-token --data-file=-
+gcloud secrets add-iam-policy-binding pond-github-token --member=serviceAccount:$SA_EMAIL --role=roles/secretmanager.secretAccessor
+gcloud run services update $SERVICE --region $REGION \
+    --update-secrets POND_GITHUB_TOKEN=pond-github-token:latest \
+    --update-env-vars POND_GITHUB_REPO=kupferco/pond
+```
+
+The server only ever writes to the `claude/drafts` branch (created from `main` on first
+use) and only under `docs/`, `cad/` and `sim/`. Review and merge its PRs on GitHub.
+To revoke: delete the token on GitHub, or remove the two settings and redeploy.
+
 ## 4. First deploy
 
 Run from the repo root. `--source` builds the Dockerfile with Cloud Build (amd64) and pushes

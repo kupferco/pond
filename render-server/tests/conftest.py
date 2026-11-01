@@ -48,11 +48,11 @@ def make_settings(tmp_path: Path, port: int, **overrides) -> Settings:
 
 
 class RunningServer:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, github=None):
         self.settings = settings
         self.base_url = settings.public_url
         self.mcp_url = settings.mcp_url
-        config = uvicorn.Config(build_app(settings), host=settings.host, port=settings.port, log_level="warning")
+        config = uvicorn.Config(build_app(settings, github=github), host=settings.host, port=settings.port, log_level="warning")
         self._server = uvicorn.Server(config)
         self._thread = threading.Thread(target=self._server.run, daemon=True)
 
@@ -75,6 +75,19 @@ class RunningServer:
 @pytest.fixture
 def token_server(tmp_path):
     srv = RunningServer(make_settings(tmp_path, _free_port())).start()
+    yield srv
+    srv.stop()
+
+
+@pytest.fixture
+def github_server(tmp_path):
+    """Token-auth server with the GitHub tools wired to an in-memory fake GitHub."""
+    from tests.fake_github import FakeGitHub
+
+    fake = FakeGitHub()
+    settings = make_settings(tmp_path, _free_port(), github_token=fake.token, github_repo=fake.repo)
+    srv = RunningServer(settings, github=fake.client()).start()
+    srv.fake = fake
     yield srv
     srv.stop()
 

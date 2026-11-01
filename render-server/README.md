@@ -9,9 +9,12 @@ Deploying: [../docs/deploy-cloud-run.md](../docs/deploy-cloud-run.md).
 | Tool | What it does |
 | --- | --- |
 | `render_svg(svg, width?, title?)` | SVG markup → PNG, returned inline as an image. |
-| `render_cad(script, views?, show_hidden?, title?)` | Runs a CadQuery script in a sandbox, exports STEP/STL/GLB, returns one PNG per view (`front`, `back`, `top`, `bottom`, `right`/`side`, `left`, `iso`, `iso_back`) plus a summary with bounding box, volume and file links. Script errors come back as a trimmed traceback, so Claude can fix the script and retry. |
+| `render_cad(script, views?, show_hidden?, title?, name?, save_to_repo?)` | Runs a CadQuery script in a sandbox, exports STEP/STL/GLB, returns one PNG per view (`front`, `back`, `top`, `bottom`, `right`/`side`, `left`, `iso`, `iso_back`) plus a summary with bounding box, volume and file links. Script errors come back as a trimmed traceback, so Claude can fix the script and retry. With GitHub configured, a successful render also commits the script to `cad/<name>.py` on the drafts branch (`save_to_repo=false` opts out). |
 | `list_renders(limit?)` | Recent renders, newest first. |
 | `get_render(render_id, include_images?, include_script?)` | A past render's summary, links, images and script. |
+| `repo_write(path, content, message, branch?)` | Commits one text file to the Pond repo. Only under `docs/`, `cad/`, `sim/`; only on `claude/*` branches (default `claude/drafts`), never `main`; max 1 MB. Present only when GitHub is configured. |
+| `repo_read(path, ref?)` / `repo_list(dir?, ref?)` | Read a file or list a folder, from the drafts branch with fallback to `main`. |
+| `repo_open_pr(title, body?)` | Opens (or returns the existing) PR from the drafts branch to `main` for review. |
 
 Script conventions: millimetres, Z up, end with `result = <Workplane | Shape | Assembly>` or
 call `show_object(obj)`. `cq` and `math` are pre-imported.
@@ -54,6 +57,11 @@ OpenCascade dylibs; after that it is about two seconds per render subprocess.
 | `POND_CAD_MEMORY_MB` | `3072` | Address-space limit for the CAD subprocess (enforced on Linux). |
 | `POND_IMAGE_WIDTH` | `800` | Width of rendered views. |
 | `POND_STATELESS` | `true` | Stateless Streamable HTTP (right for Cloud Run). |
+| `POND_GITHUB_TOKEN` | | Fine-grained GitHub token (Contents + Pull requests read/write on the one repo). Enables the `repo_*` tools and render auto-save. |
+| `POND_GITHUB_REPO` | | `owner/name` of the repo the token may write to. |
+| `POND_GITHUB_BRANCH` | `claude/drafts` | Branch that writes go to; must start with `claude/`. Created from `main` on first use. |
+| `POND_GITHUB_WRITE_PREFIXES` | `docs,cad,sim` | Top-level folders writes are allowed in. |
+| `POND_GITHUB_MAX_BYTES` | `1048576` | Size cap per file. |
 
 ## How the sandbox works
 
@@ -79,6 +87,15 @@ The MCP endpoint is never exposed without auth (the config refuses `none` off lo
   under `auth/clients/` in the store; tokens are stateless signed JWTs, so nothing has to
   survive a Cloud Run cold start. Authorization shows a one-field password page.
 
+## GitHub writes
+
+With `POND_GITHUB_TOKEN` and `POND_GITHUB_REPO` set, Claude can save files into the repo.
+`pond_render/github.py` enforces the rules in code: writes go only to branches starting
+with `claude/` (`main` is refused before any request is made), only under the allowed
+folders, only as UTF-8 text under the size cap, and paths are normalised with `..` and
+hidden files refused. Every commit is logged with path, branch, sha and URL. Reads fall
+back from the drafts branch to `main`. Merging to `main` is always a human action.
+
 ## Layout
 
 ```
@@ -91,6 +108,7 @@ pond_render/
   storage.py       LocalStore / GCSStore
   renders.py       render records (renders/<id>/meta.json)
   config.py        POND_* settings
+  github.py        GitHub client with the write policy (claude/* branches, docs/cad/sim only)
 tests/             pytest: svg, sandbox, MCP end-to-end, OAuth flow
 Dockerfile
 ```

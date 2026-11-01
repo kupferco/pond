@@ -23,6 +23,7 @@ from mcp.server.transport_security import TransportSecuritySettings
 from . import __version__
 from .auth import BuiltinOAuthProvider, StaticTokenVerifier
 from .config import Settings
+from .github import GitHubError, GitHubRepo, RepoAccessError, RepoPolicy, slugify
 from .renders import RenderRecord, file_key, list_records, load_record, new_render_id, save_record
 from .sandbox.host import DEFAULT_VIEWS, run_cad_script
 from .sandbox.runner import VIEW_PRESETS, resolve_view
@@ -43,7 +44,11 @@ geometry and fix the script. Conventions:
   network access. Scripts are killed after the timeout.
 - Views are hidden-line drawings; the caption on each image says which way you are looking.
 Every render is stored with STEP, STL and GLB files and can be fetched again with get_render.
-render_svg turns SVG markup into a PNG so you can check a 2D drawing or diagram."""
+render_svg turns SVG markup into a PNG so you can check a 2D drawing or diagram.
+When the GitHub tools are present, a successful render_cad also commits its script to
+cad/<name>.py on the drafts branch; pass a stable `name` (e.g. "hand_sleeve") so iterations
+of one part build up a history of one file. repo_write/repo_read/repo_list work on the same
+repo; writes only ever go to claude/* branches, and Dani merges them to main."""
 
 _cad_slots = anyio.Semaphore(2)
 
@@ -56,7 +61,19 @@ def _text(obj: object) -> str:
     return json.dumps(obj, indent=2, default=str)
 
 
-def build_server(settings: Settings, store: Store) -> MCPServer:
+def open_github(settings: Settings) -> GitHubRepo | None:
+    """The GitHub client, or None when POND_GITHUB_TOKEN/POND_GITHUB_REPO are not set."""
+    if not settings.github_enabled:
+        return None
+    policy = RepoPolicy(
+        write_branch=settings.github_branch,
+        allowed_prefixes=settings.github_write_prefixes,
+        max_bytes=settings.github_max_bytes,
+    )
+    return GitHubRepo(token=settings.github_token or "", repo=settings.github_repo or "", policy=policy)
+
+
+def build_server(settings: Settings, store: Store, github: GitHubRepo | None = None) -> MCPServer:
     token_verifier = None
     provider: BuiltinOAuthProvider | None = None
     auth_settings = None
@@ -125,6 +142,8 @@ def build_server(settings: Settings, store: Store) -> MCPServer:
         views: list[str] | None = None,
         show_hidden: bool = False,
         title: str | None = None,
+        name: str | None = None,
+        save_to_repo: bool = True,
     ) -> list[Image | str]:
         """Run a CadQuery script in a sandbox and return PNG views of the result.
 
@@ -135,9 +154,13 @@ def build_server(settings: Settings, store: Store) -> MCPServer:
                 Default: front, top, right, iso.
             show_hidden: Draw hidden edges as dashed lines.
             title: Optional label stored with the render.
+            name: File stem for the auto-saved script, e.g. "hand_sleeve" -> cad/hand_sleeve.py.
+                Keep it the same across iterations of one part. Defaults to a slug of `title`.
+            save_to_repo: Commit the script to the GitHub drafts branch on success (when the
+                GitHub tools are configured). Set false for throwaway experiments.
         Returns a summary (render id, bounding box, volume, file links for STEP/STL/GLB,
-        script output) followed by one image per view. If the script fails, returns the
-        traceback so you can fix the script and call again.
+        script output, repo commit) followed by one image per view. If the script fails,
+        returns the traceback so you can fix the script and call again.
         """
         if len(script.encode("utf-8")) > settings.max_script_bytes:
             return [f"RENDER FAILED: script is larger than {settings.max_script_bytes} bytes"]
@@ -188,10 +211,10 @@ def build_server(settings: Settings, store: Store) -> MCPServer:
 
             images: list[Image | str] = []
             if result.ok:
-                for name, path in result.files.items():
-                    key = file_key(render_id, name)
+                for fname, path in result.files.items():
+                    key = file_key(render_id, fname)
                     await anyio.to_thread.run_sync(store.put_file, key, path)
-                    record.files[name] = key
+                    record.files[fname] = key
                 for view in view_names:
                     svg_path = result.svgs.get(view)
                     if not svg_path:
@@ -215,6 +238,10 @@ def build_server(settings: Settings, store: Store) -> MCPServer:
         summary["duration_s"] = result.duration_s
         if result.log.strip():
             summary["script_output"] = result.log.strip()[-4000:]
+        if github is not None:
+            summary["repo"] = await anyio.to_thread.run_sync(
+                partial(_auto_save, github, "cad", script, name=name, title=title, render_id=render_id, enabled=save_to_repo)
+            )
         return [_text(summary), *images]
 
     @server.tool()
@@ -247,6 +274,109 @@ def build_server(settings: Settings, store: Store) -> MCPServer:
                     out.append(Image(data=data, format="png"))
         return out
 
+    # ------------------------------------------------------------------ GitHub tools
+
+    if github is not None:
+        gh = github
+        branch = gh.policy.write_branch
+        folders = ", ".join(gh.policy.allowed_prefixes)
+
+        @server.tool()
+        async def repo_write(path: str, content: str, message: str, branch: str | None = None) -> str:
+            """Save one text file to the Pond GitHub repo as a single commit.
+
+            Args:
+                path: Repo-relative path. Writes are only allowed under the docs/, cad/ and sim/ folders.
+                content: The complete file contents (UTF-8 text, max 1 MB). Replaces the file if it exists.
+                message: Commit message, one line saying what changed and why.
+                branch: Branch to commit to. Defaults to the drafts branch; must start with claude/.
+                    Never main: Dani reviews and merges.
+            Returns the commit URL and whether the file was created or updated.
+            """
+            try:
+                res = await anyio.to_thread.run_sync(partial(gh.write_file, path, content, message, branch))
+            except RepoAccessError as exc:
+                return f"WRITE REFUSED: {exc}"
+            except GitHubError as exc:
+                return f"WRITE FAILED: {exc}"
+            if not res.commit_sha:
+                return _text({"path": res.path, "branch": res.branch, "changed": False, "url": res.url,
+                              "note": "file already had this exact content; nothing committed"})
+            return _text({"path": res.path, "branch": res.branch, "changed": True,
+                          "created": res.created, "commit": res.commit_sha[:12], "url": res.url})
+
+        @server.tool()
+        async def repo_read(path: str, ref: str | None = None) -> str:
+            """Read one text file from the Pond GitHub repo.
+
+            Args:
+                path: Repo-relative file path, e.g. cad/hand_sleeve.py or docs/sim-server-plan.md.
+                ref: Branch, tag or commit to read from. Defaults to the drafts branch, falling
+                    back to main when the file is not there.
+            """
+            try:
+                found = await anyio.to_thread.run_sync(partial(gh.read_file, path, ref or branch))
+                used = ref or branch
+                if found is None and not ref:
+                    found = await anyio.to_thread.run_sync(partial(gh.read_file, path, gh.policy.base_branch))
+                    used = gh.policy.base_branch
+            except RepoAccessError as exc:
+                return f"READ REFUSED: {exc}"
+            except GitHubError as exc:
+                return f"READ FAILED: {exc}"
+            if found is None:
+                return f"No file {path!r} on {ref or branch} or {gh.policy.base_branch}"
+            data, _sha = found
+            try:
+                text = data.decode("utf-8")
+            except UnicodeDecodeError:
+                return f"READ REFUSED: {path!r} is not a text file"
+            return f"# {path} @ {used}\n{text}"
+
+        @server.tool()
+        async def repo_list(dir: str = "", ref: str | None = None) -> str:
+            """List a folder in the Pond GitHub repo (files and sub-folders, one per line).
+
+            Args:
+                dir: Folder path, e.g. cad or docs. Empty for the repo root.
+                ref: Branch, tag or commit. Defaults to the drafts branch.
+            """
+            try:
+                entries = await anyio.to_thread.run_sync(partial(gh.list_dir, dir, ref or branch))
+                used = ref or branch
+                if entries is None and not ref:
+                    entries = await anyio.to_thread.run_sync(partial(gh.list_dir, dir, gh.policy.base_branch))
+                    used = gh.policy.base_branch
+            except RepoAccessError as exc:
+                return f"LIST REFUSED: {exc}"
+            except GitHubError as exc:
+                return f"LIST FAILED: {exc}"
+            if entries is None:
+                return f"No folder {dir!r} on {ref or branch} or {gh.policy.base_branch}"
+            lines = [f"# {dir or '/'} @ {used}"]
+            for e in sorted(entries, key=lambda e: (e.type != "dir", e.path)):
+                lines.append(f"{e.path}/" if e.type == "dir" else f"{e.path}  ({e.size} bytes)")
+            return "\n".join(lines)
+
+        @server.tool()
+        async def repo_open_pr(title: str, body: str = "") -> str:
+            """Open a pull request from the drafts branch to main so Dani can review and merge.
+
+            If a PR from the drafts branch is already open, returns that one instead.
+            Args:
+                title: Short PR title.
+                body: What changed and anything Dani should check before merging.
+            """
+            try:
+                pr = await anyio.to_thread.run_sync(partial(gh.open_pr, title, body, branch))
+            except RepoAccessError as exc:
+                return f"PR REFUSED: {exc}"
+            except GitHubError as exc:
+                return f"PR FAILED: {exc}"
+            return _text(pr)
+
+        log.info("GitHub tools enabled: repo %s, branch %s, folders %s", gh.repo, branch, folders)
+
     # ------------------------------------------------------------------ plain HTTP routes
 
     @server.custom_route("/health", methods=["GET"])
@@ -272,6 +402,35 @@ def build_server(settings: Settings, store: Store) -> MCPServer:
     return server
 
 
+def _auto_save(
+    github: GitHubRepo, folder: str, script: str, *, name: str | None, title: str | None,
+    render_id: str, enabled: bool,
+) -> dict:
+    """Commit a successful render's script to <folder>/<name>.py on the drafts branch.
+
+    Never raises: the render already succeeded, so a failed commit is reported, not fatal.
+    """
+    if not enabled:
+        return {"saved": False, "note": "save_to_repo was false"}
+    stem = slugify(name or title or "", default="")
+    if not stem:
+        return {"saved": False, "note": "give a `name` (or `title`) to save the script to the repo"}
+    path = f"{folder}/{stem}.py"
+    message = f"render {render_id}: {title or stem}"
+    try:
+        res = github.write_file(path, script, message)
+    except (RepoAccessError, GitHubError) as exc:
+        log.warning("auto-save of %s failed: %s", path, exc)
+        return {"saved": False, "path": path, "error": str(exc)}
+    except Exception as exc:  # noqa: BLE001 - network hiccups must not fail the render
+        log.warning("auto-save of %s failed: %s", path, exc)
+        return {"saved": False, "path": path, "error": f"{type(exc).__name__}: {exc}"}
+    if not res.commit_sha:
+        return {"saved": True, "path": res.path, "branch": res.branch, "changed": False, "url": res.url}
+    return {"saved": True, "path": res.path, "branch": res.branch, "changed": True,
+            "commit": res.commit_sha[:12], "url": res.url}
+
+
 def _persist_svg(store: Store, record: RenderRecord, svg: str, png: bytes | None) -> None:
     record.files["image.svg"] = file_key(record.id, "image.svg")
     store.put(record.files["image.svg"], svg.encode("utf-8"), "image/svg+xml")
@@ -281,12 +440,16 @@ def _persist_svg(store: Store, record: RenderRecord, svg: str, png: bytes | None
     save_record(store, record)
 
 
-def build_app(settings: Settings | None = None, store: Store | None = None) -> Starlette:
+def build_app(
+    settings: Settings | None = None, store: Store | None = None, github: GitHubRepo | None = None
+) -> Starlette:
     settings = settings or Settings.from_env()
     store = store or open_store(settings.storage)
-    log.info("Pond render server %s; storage: %s; auth: %s; public URL: %s",
-             __version__, store.describe(), settings.auth_mode, settings.public_url)
-    server = build_server(settings, store)
+    github = github or open_github(settings)
+    log.info("Pond render server %s; storage: %s; auth: %s; public URL: %s; github: %s",
+             __version__, store.describe(), settings.auth_mode, settings.public_url,
+             github.repo if github else "off")
+    server = build_server(settings, store, github)
 
     host = settings.public_host
     allowed_hosts = sorted({host, f"{host}:*", "localhost:*", "127.0.0.1:*", "localhost", "127.0.0.1"})
