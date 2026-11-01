@@ -159,17 +159,14 @@ def _unit_xml(cx, cy, ang, idx):
     g = []
     pipe = 'rgba="0.72 0.74 0.78 1"'
     W2 = LOOP_W / 2
-    # straight runs of the loop
     segs = [((-W2 + R, YL, Z_BOT), (W2 - R, YL, Z_BOT)), ((W2, YL, Z_BOT + R), (W2, YL, Z_TOP - R)),
             ((W2 - R, YL, Z_TOP), (-W2 + R, YL, Z_TOP)), ((-W2, YL, Z_TOP - R), (-W2, YL, Z_BOT + R))]
     for p, q in segs:
         g.append(f'<geom type="capsule" fromto="{ft(w(*p), w(*q))}" size="{PIPE_R}" {pipe}/>')
-    # rounded corners
     for (ox, oz, a0) in ((W2 - R, Z_BOT + R, -90), (W2 - R, Z_TOP - R, 0), (-W2 + R, Z_TOP - R, 90), (-W2 + R, Z_BOT + R, 180)):
         pts = [(ox + R * math.cos(math.radians(a0 + 15 * k)), YL, oz + R * math.sin(math.radians(a0 + 15 * k))) for k in range(7)]
         for p, q in zip(pts, pts[1:]):
             g.append(f'<geom type="capsule" fromto="{ft(w(*p), w(*q))}" size="{PIPE_R}" {pipe}/>')
-    # tank, spine, plant pipe, brackets, pods
     tx, ty, _ = w(0, 0, 0)
     g.append(f'<geom type="box" pos="{tx:.4f} {ty:.4f} {TANK[2]/2:.3f}" size="{TANK[0]/2} {TANK[1]/2} {TANK[2]/2}" '
              f'euler="0 0 {ang}" rgba="0.32 0.34 0.38 1"/>')
@@ -213,6 +210,9 @@ def _hand_xml(name, x0, color, jaw_color):
             + "\n".join(jaw) + "</body>")
 
 
+INERT = '<inertial pos="0 0 0" mass="0.01" diaginertia="1e-5 1e-5 1e-5"/>'
+
+
 def build(**p) -> str:
     units = "\n    ".join(_unit_xml(cx, cy, ang, i) for i, (cx, cy, ang) in enumerate(UNITS))
     ov_pos, ov_tgt = (3.1, -3.6, 3.0), (0.75, -0.35, 1.45)
@@ -228,7 +228,6 @@ def build(**p) -> str:
           <geom type="capsule" fromto="{SEP/2} -0.10 0.06 {SEP/2} -0.115 0.22" size="0.012" rgba="0.95 0.4 0.1 1"/>
           <geom type="capsule" fromto="{SEP/2} -0.115 0.22 {SEP/2} -0.125 0.06" size="0.012" rgba="0.95 0.4 0.1 1"/>
           <geom type="box" pos="{SEP/2} -0.125 0.05" size="0.015 0.015 0.015" rgba="0.95 0.4 0.1 1"/>"""
-    h0, _ = _pose(0.0)
     return f"""<mujoco model="unit_change">
   <compiler angle="degree"/>
   <option timestep="0.002" gravity="0 0 0" integrator="implicitfast"/>
@@ -241,14 +240,14 @@ def build(**p) -> str:
     <camera name="overview" pos="{ov_pos[0]} {ov_pos[1]} {ov_pos[2]}" xyaxes="{_cam_axes(ov_pos, ov_tgt)}" fovy="45"/>
     {units}
     <body name="cart" pos="0 0 0">
-      <joint name="x" type="slide" axis="1 0 0" damping="60" ref="0"/>
+      <joint name="x" type="slide" axis="1 0 0" damping="60"/>
       <joint name="y" type="slide" axis="0 1 0" damping="60"/>
       <joint name="z" type="slide" axis="0 0 1" damping="60"/>
       <geom type="sphere" size="0.004" mass="0.4" rgba="1 1 1 0"/>
       <camera name="chase" mode="track" pos="{ch_pos[0]} {ch_pos[1]} {ch_pos[2]}" xyaxes="{_cam_axes(ch_pos, (0.07, 0, 0))}" fovy="50"/>
-      <body name="r1"><joint name="a1" type="hinge" axis="1 0 0" armature="0.01" damping="1"/>
-        <body name="r2"><joint name="a2" type="hinge" axis="0 1 0" armature="0.01" damping="1"/>
-          <body name="r3"><joint name="a3" type="hinge" axis="1 0 0" armature="0.01" damping="1"/>
+      <body name="r1">{INERT}<joint name="a1" type="hinge" axis="1 0 0" armature="0.01" damping="1"/>
+        <body name="r2">{INERT}<joint name="a2" type="hinge" axis="0 1 0" armature="0.01" damping="1"/>
+          <body name="r3">{INERT}<joint name="a3" type="hinge" axis="1 0 0" armature="0.01" damping="1"/>
             <body name="r4"><joint name="a4" type="hinge" axis="0 1 0" armature="0.01" damping="1"/>
               {hands}
               {cart_extra}
@@ -269,5 +268,4 @@ def build(**p) -> str:
     <position name="jaw1" joint="hand1_jaw" kp="2"/>
     <position name="jaw2" joint="hand2_jaw" kp="2"/>
   </actuator>
-  <keyframe><key name="start" qpos="{h0[0]:.4f} {h0[1]:.4f} {h0[2]:.4f} 0 0 0 0 0 {-OPEN}"/></keyframe>
 </mujoco>"""
