@@ -23,7 +23,7 @@ Sequence (seconds):
 import math
 
 PARAMS = {
-    "dt_s": (0.02, "control sample spacing, s"),
+    "dt_s": (0.04, "control sample spacing, s (informational)"),
 }
 TRACK_BODY = "cart"
 CAMERAS = ["overview", "chase"]
@@ -131,7 +131,7 @@ def _controls(dt):
     return out
 
 
-DEFAULT_CONTROLS = _controls(0.02)
+DEFAULT_CONTROLS = _controls(0.04)
 
 
 def _cam_axes(pos, target):
@@ -230,12 +230,12 @@ def build(**p) -> str:
           <geom type="box" pos="{SEP/2} -0.125 0.05" size="0.015 0.015 0.015" rgba="0.95 0.4 0.1 1"/>"""
     return f"""<mujoco model="unit_change">
   <compiler angle="degree"/>
-  <option timestep="0.002" gravity="0 0 0" integrator="implicitfast"/>
-  <visual><global offwidth="1280" offheight="720"/><quality shadowsize="4096"/>
+  <option timestep="0.004" gravity="0 0 0" integrator="implicitfast"/>
+  <visual><global offwidth="800" offheight="450"/>
     <headlight ambient="0.45 0.45 0.45" diffuse="0.55 0.55 0.55"/></visual>
   <default><geom contype="0" conaffinity="0" mass="0.02"/></default>
   <worldbody>
-    <light pos="1.5 -2 5" dir="-0.2 0.3 -1" diffuse="0.5 0.5 0.5"/>
+    <light pos="1.5 -2 5" dir="-0.2 0.3 -1" diffuse="0.5 0.5 0.5" castshadow="false"/>
     <geom name="floor" type="plane" pos="0.7 -0.3 0" size="3 3 0.1" rgba="0.82 0.82 0.8 1"/>
     <camera name="overview" pos="{ov_pos[0]} {ov_pos[1]} {ov_pos[2]}" xyaxes="{_cam_axes(ov_pos, ov_tgt)}" fovy="45"/>
     {units}
