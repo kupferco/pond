@@ -67,6 +67,20 @@ The server only ever writes to the `claude/drafts` branch (created from `main` o
 use) and only under `docs/`, `cad/` and `sim/`. Review and merge its PRs on GitHub.
 To revoke: delete the token on GitHub, or remove the two settings and redeploy.
 
+### Bucket CORS (for the /viewer page)
+
+The viewer page at `$URL/viewer` loads GLB files straight from the bucket, so the bucket must
+allow that origin:
+
+```bash
+cat > /tmp/cors.json <<EOF
+[{"origin": ["$URL"], "method": ["GET", "HEAD"], "responseHeader": ["Content-Type", "Range"], "maxAgeSeconds": 3600}]
+EOF
+gcloud storage buckets update gs://$BUCKET --cors-file=/tmp/cors.json
+```
+
+(Needs `$URL`, so run it after the first deploy.)
+
 ## 4. First deploy
 
 Run from the repo root. `--source` builds the Dockerfile with Cloud Build (amd64) and pushes

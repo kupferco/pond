@@ -25,6 +25,7 @@ Goal: Claude (including in voice) can save files to the Pond repo directly, so G
 ## Step B: Quick fixes (render server)
 
 - GLB orientation: CadQuery is Z-up and glTF is Y-up, so rotate −90° about X on GLB export, so models stand upright in viewers.
+  - *Checked 1 Nov 2026: CadQuery's exporter already does this (a −90° X rotation on the glTF root node); the live GLBs measure Y-up. No change needed; regression tests added instead.*
 - Optional: a simple hosted viewer page (e.g. `<model-viewer>`), so one tap opens the model.
 
 ## Step C: MuJoCo sim tool

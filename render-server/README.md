@@ -11,6 +11,7 @@ Deploying: [../docs/deploy-cloud-run.md](../docs/deploy-cloud-run.md).
 | `render_svg(svg, width?, title?)` | SVG markup → PNG, returned inline as an image. |
 | `render_cad(script, views?, show_hidden?, title?, name?, save_to_repo?)` | Runs a CadQuery script in a sandbox, exports STEP/STL/GLB, returns one PNG per view (`front`, `back`, `top`, `bottom`, `right`/`side`, `left`, `iso`, `iso_back`) plus a summary with bounding box, volume and file links. Script errors come back as a trimmed traceback, so Claude can fix the script and retry. With GitHub configured, a successful render also commits the script to `cad/<name>.py` on the drafts branch (`save_to_repo=false` opts out). |
 | `list_renders(limit?)` | Recent renders, newest first. |
+| `/viewer?src=<glb url>` (HTTP page, not a tool) | One-tap 3D view of a render's GLB in the browser, linked as `viewer` in every summary when the files live in GCS. |
 | `get_render(render_id, include_images?, include_script?)` | A past render's summary, links, images and script. |
 | `repo_write(path, content, message, branch?)` | Commits one text file to the Pond repo. Only under `docs/`, `cad/`, `sim/`; only on `claude/*` branches (default `claude/drafts`), never `main`; max 1 MB. Present only when GitHub is configured. |
 | `repo_read(path, ref?)` / `repo_list(dir?, ref?)` | Read a file or list a folder, from the drafts branch with fallback to `main`. |
@@ -18,6 +19,10 @@ Deploying: [../docs/deploy-cloud-run.md](../docs/deploy-cloud-run.md).
 
 Script conventions: millimetres, Z up, end with `result = <Workplane | Shape | Assembly>` or
 call `show_object(obj)`. `cq` and `math` are pre-imported.
+
+Exports: STEP and STL are Z-up as modelled. The GLB is Y-up as glTF requires; CadQuery's
+exporter already does that with a rotation on the root node, so viewers show parts upright.
+`tests/test_sandbox.py` guards this by measuring the GLB's world-space extents.
 
 ## Local development
 

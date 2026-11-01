@@ -82,3 +82,23 @@ def test_render_cad_error_returns_traceback(token_server):
     text = _texts(result)[0]
     assert "RENDER FAILED" in text and "not allowed" in text
     assert not _images(result)
+
+
+def test_viewer_page(token_server):
+    base = token_server.base_url
+    src = "https://storage.googleapis.com/pond-render-kupfer-renders/renders/x/model.glb?X-Goog-Signature=abc"
+    r = httpx.get(base + "/viewer", params={"src": src, "title": "Hand <sleeve>"})
+    assert r.status_code == 200 and "text/html" in r.headers["content-type"]
+    assert "<model-viewer" in r.text and "model-viewer.min.js" in r.text
+    assert "Hand &lt;sleeve&gt;" in r.text and src.replace("&", "&amp;") in r.text
+    # only our storage hosts, only https
+    assert httpx.get(base + "/viewer", params={"src": "https://evil.example/x.glb"}).status_code == 400
+    assert httpx.get(base + "/viewer", params={"src": "http://storage.googleapis.com/x.glb"}).status_code == 400
+    assert httpx.get(base + "/viewer").status_code == 400
+
+
+def test_viewer_link_only_for_browser_loadable_glb(token_server):
+    # local file:// URLs can't be loaded by a browser page, so no viewer link is offered
+    result = call_tool(token_server.mcp_url, API_TOKEN, "render_cad", {"script": BOX, "views": ["iso"]})
+    summary = json.loads(_texts(result)[0])
+    assert "model.glb" in summary["files"] and "viewer" not in summary
