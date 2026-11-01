@@ -9,14 +9,17 @@ idlers at +/-60 deg on the inside. Wheels collide as spheres (robust contact) an
 as cylinders. The driven wheel has a velocity actuator; idlers free-wheel on sprung radial
 slides. Friction is a parameter: dry 0.8, wet 0.3.
 
+wheel_rows=2 duplicates the ring of three wheels above and below the cart centre
+(row_spacing_mm apart), like the wheel pairs on hand v6. The two drive wheels are coupled
+by a joint equality (the belt), and spring_preload_n is split across the rows so the total
+clamp force matches the one-row cart.
+
 Note: sphere wheels give point contact, so sideways (axial-to-wheel) grip is probably
 understated compared with a real rubber tyre's contact patch.
 
 Signals the runner logs: cart height (pos_z) and speed, contact normal force, drive torque
 (force.drive), wheel slip (rim speed minus cart speed, from wheel_radius), spring travel
-(q.spring_*). `climb_m` in the summary is the net height gained.
-Orientation: sensor.cart_xaxis[0..2] is the cart's X axis in world frame, so
-yaw about the pipe = atan2(cart_xaxis[1], cart_xaxis[0]); sensor.cart_zaxis[2] < 1 means tilt.
+(q.spring_*), roll/pitch/yaw. `climb_m` in the summary is the net height gained.
 """
 
 from constants import (
@@ -28,11 +31,13 @@ import math
 PARAMS = {
     "surface": ("dry", "dry or wet: picks the wheel/pipe friction coefficient"),
     "friction": (None, "override the friction coefficient directly (e.g. 0.5)"),
-    "spring_preload_n": (SPRING_PRELOAD_N, "force each idler pushes into the pipe at rest, N"),
+    "spring_preload_n": (SPRING_PRELOAD_N, "clamp force per idler station at rest, N (split across wheel rows)"),
     "spring_k": (SPRING_K, "idler spring stiffness, N/m"),
     "cart_mass_kg": (CART_MASS, "cart mass without payload, kg"),
     "payload_kg": (PAYLOAD_MASS, "extra mass carried, kg"),
     "mass_offset_mm": (0.0, "sideways (tangential, +Y) offset of the cart's centre of mass, mm"),
+    "wheel_rows": (1, "1 = single ring of 3 wheels; 2 = two rings spaced along the pipe"),
+    "row_spacing_mm": (40.0, "axial distance between the two wheel rows, mm (wheel_rows=2)"),
     "drive_rpm": (DRIVE_RPM, "target wheel speed, rpm (positive = up)"),
     "drive_torque_nm": (0.3, "stall torque the drive can apply at the wheel, N m"),
     "pipe_len_m": (1.2, "length of the vertical pipe"),
@@ -61,16 +66,19 @@ def build(**p) -> str:
     omega = _default_omega(float(p["drive_rpm"]))
     cart_mass = float(p["cart_mass_kg"]) + float(p["payload_kg"])
     offset_y = float(p["mass_offset_mm"]) / 1000.0
+    rows = 2 if int(p["wheel_rows"]) >= 2 else 1
+    spacing = float(p["row_spacing_mm"]) / 1000.0
+    row_z = [0.0] if rows == 1 else [spacing / 2, -spacing / 2]
     # Spring: zero-length at springref so the preload comes out right. The slide joint moves
     # the idler along its radial axis; negative = towards the pipe. With the idler sitting at
     # the touching radius, springref = -preload/k (it "wants" to be further in).
     k = float(p["spring_k"])
-    springref = -float(p["spring_preload_n"]) / k
+    springref = -(float(p["spring_preload_n"]) / rows) / k
     travel = SPRING_TRAVEL
 
     wheels = []
 
-    def wheel(name, angle_deg, driven):
+    def wheel(name, angle_deg, driven, z):
         a = math.radians(angle_deg)
         cx, cy = ring_r * math.cos(a), ring_r * math.sin(a)
         radial = f"{math.cos(a):.6f} {math.sin(a):.6f} 0"
@@ -82,9 +90,8 @@ def build(**p) -> str:
             f'<joint name="spring_{name}" type="slide" axis="{radial}" range="{-travel:.5f} {travel:.5f}" '
             f'stiffness="{k:.1f}" springref="{springref:.6f}" damping="4" limited="true"/>'
         )
-        # zaxis of the cylinder along the hinge (tangent) axis
         return f"""
-      <body name="{name}" pos="{cx:.6f} {cy:.6f} 0">
+      <body name="{name}" pos="{cx:.6f} {cy:.6f} {z:.5f}">
         {slide}
         <joint name="wheel_{name}" type="hinge" axis="{tangent}" damping="0.0005"/>
         <geom name="{name}_col" type="sphere" size="{wheel_r:.5f}" mass="0.02" friction="{mu} 0.005 0.0001"
@@ -93,16 +100,25 @@ def build(**p) -> str:
               contype="0" conaffinity="0" mass="0" rgba="0.2 0.2 0.25 1"/>
       </body>"""
 
-    wheels.append(wheel("drive", DRIVE_WHEEL_ANGLE, True))
-    for i, ang in enumerate(IDLER_WHEEL_ANGLES):
-        wheels.append(wheel(f"idler{i+1}", ang, False))
+    for r, z in enumerate(row_z):
+        sfx = "" if r == 0 else "2"
+        wheels.append(wheel(f"drive{sfx}", DRIVE_WHEEL_ANGLE, True, z))
+        for i, ang in enumerate(IDLER_WHEEL_ANGLES):
+            wheels.append(wheel(f"idler{i+1}{sfx}", ang, False, z))
     wheels_xml = "".join(wheels)
+
+    # Belt between the two drive wheels (second row only).
+    equality_xml = (
+        '<equality><joint joint1="wheel_drive2" joint2="wheel_drive" polycoef="0 1 0 0 0"/></equality>'
+        if rows == 2 else ""
+    )
 
     # Cart body visual: a C-shaped collar around the pipe (no collision with the pipe; the
     # wheels are the only contacts). Mass sits near the cart origin, shifted by mass_offset_mm.
     collar_r = ring_r + wheel_r * 0.6
+    collar_h = 0.03 if rows == 1 else max(0.03, spacing / 2 + 0.015)
     collar_xml = "".join(
-        f'<geom type="box" size="0.006 0.012 0.03" pos="{collar_r*math.cos(math.radians(a)):.5f} '
+        f'<geom type="box" size="0.006 0.012 {collar_h:.4f}" pos="{collar_r*math.cos(math.radians(a)):.5f} '
         f'{collar_r*math.sin(math.radians(a)):.5f} 0" euler="0 0 {a}" contype="0" conaffinity="0" '
         f'mass="0" rgba="0.85 0.85 0.9 1"/>'
         for a in (120, 150, 180, 210, 240, 90, -90, 60, -60)
@@ -130,6 +146,7 @@ def build(**p) -> str:
       {wheels_xml}
     </body>
   </worldbody>
+  {equality_xml}
   <actuator>
     <velocity name="drive" joint="wheel_drive" kv="1.0" ctrlrange="-{max(3*omega, 1.0):.3f} {max(3*omega, 1.0):.3f}"
               forcerange="-{p['drive_torque_nm']} {p['drive_torque_nm']}" ctrllimited="true" forcelimited="true"/>
