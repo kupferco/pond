@@ -298,7 +298,8 @@ def simulate(job: dict, xml: str, meta: dict, log_buffer: io.StringIO) -> dict:
         if bb == track_id:
             track_geoms.update(g for g in range(model.ngeom) if model.geom_bodyid[g] == b)
 
-    columns = ["t", "pos_x", "pos_y", "pos_z", "vel_x", "vel_y", "vel_z", "speed", "contacts", "contact_normal_N"]
+    columns = ["t", "pos_x", "pos_y", "pos_z", "vel_x", "vel_y", "vel_z", "speed", "contacts", "contact_normal_N",
+               "roll_deg", "pitch_deg", "yaw_deg"]
     columns += [f"ctrl.{n}" for n in names_act] + [f"force.{n}" for n in names_act]
     columns += [f"q.{n}" for _, n in joints] + [f"qd.{n}" for _, n in joints]
     columns += [f"sensor.{n}" for n, _ in sensors]
@@ -329,6 +330,8 @@ def simulate(job: dict, xml: str, meta: dict, log_buffer: io.StringIO) -> dict:
         renderer.update_scene(data, camera=cams[cam_name])
         return renderer.render().copy()
 
+    attitude = Attitude(mujoco)
+
     def log_row():
         pos = data.xpos[track_id]
         vel = _body_linvel(model, data, track_id, mujoco)
@@ -340,7 +343,7 @@ def simulate(job: dict, xml: str, meta: dict, log_buffer: io.StringIO) -> dict:
                 n_c += 1
                 mujoco.mj_contactForce(model, data, ci, f6)
                 fn += abs(float(f6[0]))
-        row = [data.time, *map(float, pos), *map(float, vel), speed, n_c, fn]
+        row = [data.time, *map(float, pos), *map(float, vel), speed, n_c, fn, *attitude.update(data.xquat[track_id])]
         row += [float(data.ctrl[i]) for i in range(model.nu)] + [float(data.actuator_force[i]) for i in range(model.nu)]
         row += [float(data.qpos[model.jnt_qposadr[j]]) for j, _ in joints] + [float(data.qvel[model.jnt_dofadr[j]]) for j, _ in joints]
         row += [float(data.sensordata[adr]) for _, adr in sensors]
@@ -429,6 +432,35 @@ def simulate(job: dict, xml: str, meta: dict, log_buffer: io.StringIO) -> dict:
         "signals": signals,
     }
     return {"files": files, "sheets": sheets, "summary": summary}
+
+
+class Attitude:
+    """Roll, pitch and yaw in degrees about world X, Y and Z, measured from the first reading.
+
+    Roll and yaw keep counting past 180 degrees, so a full turn reads 360, not 0. Pitch stays
+    within 90 degrees either way, and roll and yaw are unreliable when it gets close to that.
+    """
+
+    def __init__(self, mujoco):
+        self.mujoco = mujoco
+        self.start_inverse = None
+        self.roll = self.yaw = 0.0
+
+    def update(self, quat):
+        import numpy as np
+
+        if self.start_inverse is None:
+            self.start_inverse = np.zeros(4)
+            self.mujoco.mju_negQuat(self.start_inverse, quat)
+        rel = np.zeros(4)
+        self.mujoco.mju_mulQuat(rel, quat, self.start_inverse)
+        w, x, y, z = map(float, rel)
+        roll = math.degrees(math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)))
+        pitch = math.degrees(math.asin(max(-1.0, min(1.0, 2 * (w * y - z * x)))))
+        yaw = math.degrees(math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z)))
+        self.roll = roll + 360.0 * round((self.roll - roll) / 360.0)
+        self.yaw = yaw + 360.0 * round((self.yaw - yaw) / 360.0)
+        return self.roll, pitch, self.yaw
 
 
 def _body_linvel(model, data, body_id, mujoco):
