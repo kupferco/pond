@@ -9,9 +9,14 @@ idlers at +/-60 deg on the inside. Wheels collide as spheres (robust contact) an
 as cylinders. The driven wheel has a velocity actuator; idlers free-wheel on sprung radial
 slides. Friction is a parameter: dry 0.8, wet 0.3.
 
+Note: sphere wheels give point contact, so sideways (axial-to-wheel) grip is probably
+understated compared with a real rubber tyre's contact patch.
+
 Signals the runner logs: cart height (pos_z) and speed, contact normal force, drive torque
 (force.drive), wheel slip (rim speed minus cart speed, from wheel_radius), spring travel
 (q.spring_*). `climb_m` in the summary is the net height gained.
+Orientation: sensor.cart_xaxis[0..2] is the cart's X axis in world frame, so
+yaw about the pipe = atan2(cart_xaxis[1], cart_xaxis[0]); sensor.cart_zaxis[2] < 1 means tilt.
 """
 
 from constants import (
@@ -27,6 +32,7 @@ PARAMS = {
     "spring_k": (SPRING_K, "idler spring stiffness, N/m"),
     "cart_mass_kg": (CART_MASS, "cart mass without payload, kg"),
     "payload_kg": (PAYLOAD_MASS, "extra mass carried, kg"),
+    "mass_offset_mm": (0.0, "sideways (tangential, +Y) offset of the cart's centre of mass, mm"),
     "drive_rpm": (DRIVE_RPM, "target wheel speed, rpm (positive = up)"),
     "drive_torque_nm": (0.3, "stall torque the drive can apply at the wheel, N m"),
     "pipe_len_m": (1.2, "length of the vertical pipe"),
@@ -54,6 +60,7 @@ def build(**p) -> str:
     z0 = float(p["start_height_m"])
     omega = _default_omega(float(p["drive_rpm"]))
     cart_mass = float(p["cart_mass_kg"]) + float(p["payload_kg"])
+    offset_y = float(p["mass_offset_mm"]) / 1000.0
     # Spring: zero-length at springref so the preload comes out right. The slide joint moves
     # the idler along its radial axis; negative = towards the pipe. With the idler sitting at
     # the touching radius, springref = -preload/k (it "wants" to be further in).
@@ -92,7 +99,7 @@ def build(**p) -> str:
     wheels_xml = "".join(wheels)
 
     # Cart body visual: a C-shaped collar around the pipe (no collision with the pipe; the
-    # wheels are the only contacts). Mass sits at the cart origin.
+    # wheels are the only contacts). Mass sits near the cart origin, shifted by mass_offset_mm.
     collar_r = ring_r + wheel_r * 0.6
     collar_xml = "".join(
         f'<geom type="box" size="0.006 0.012 0.03" pos="{collar_r*math.cos(math.radians(a)):.5f} '
@@ -117,7 +124,7 @@ def build(**p) -> str:
     <camera name="top" pos="0 0 {pipe_len+0.4:.3f}" xyaxes="1 0 0 0 1 0" fovy="45"/>
     <body name="cart" pos="0 0 {z0:.4f}">
       <freejoint name="cart_free"/>
-      <geom name="cart_mass" type="sphere" size="0.005" pos="{-ring_r*0.5:.5f} 0 0" mass="{cart_mass:.4f}"
+      <geom name="cart_mass" type="sphere" size="0.005" pos="{-ring_r*0.5:.5f} {offset_y:.5f} 0" mass="{cart_mass:.4f}"
             contype="0" conaffinity="0" rgba="1 0.4 0.2 1"/>
       {collar_xml}
       {wheels_xml}
@@ -131,5 +138,7 @@ def build(**p) -> str:
     <framepos name="cart_pos" objtype="body" objname="cart"/>
     <framelinvel name="cart_vel" objtype="body" objname="cart"/>
     <actuatorfrc name="drive_torque" actuator="drive"/>
+    <framexaxis name="cart_xaxis" objtype="body" objname="cart"/>
+    <framezaxis name="cart_zaxis" objtype="body" objname="cart"/>
   </sensor>
 </mujoco>"""
