@@ -31,6 +31,7 @@ Goal: Claude (including in voice) can save files to the Pond repo directly, so G
 ## Step C: MuJoCo sim tool
 
 - `mujoco` Python package with headless OSMesa rendering (no GPU on Cloud Run); imageio/ffmpeg for clips.
+  - *Built 1 Nov 2026: `run_sim(model="pipe_climb", params=...)`. Models are generators in `/sim` read from the repo via GitHub (drafts branch, then main), so Claude can edit them with `repo_write` without a redeploy. Raw `mjcf_xml` also accepted. Snapshots come back as one sheet per camera.*
 - Raise the Cloud Run timeout/memory for sims, or run them on the MuJoCo VM later.
 - New tools:
   - `run_sim(mjcf_xml, duration_s, controls, cameras, record)`: returns snapshots, an optional clip, and logged signals (cart height, wheel slip, contact forces, joint torques).

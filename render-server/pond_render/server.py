@@ -27,7 +27,8 @@ from .auth import BuiltinOAuthProvider, StaticTokenVerifier
 from .config import Settings
 from .github import GitHubError, GitHubRepo, RepoAccessError, RepoPolicy, slugify
 from .renders import RenderRecord, file_key, list_records, load_record, new_render_id, save_record
-from .sandbox.host import DEFAULT_VIEWS, run_cad_script
+from .sim_models import SimModelSource
+from .sandbox.host import DEFAULT_VIEWS, run_cad_script, run_sim_job
 from .sandbox.runner import VIEW_PRESETS, resolve_view
 from .storage import Store, open_store
 from .svg_render import SvgRenderError, svg_to_png
@@ -50,7 +51,12 @@ render_svg turns SVG markup into a PNG so you can check a 2D drawing or diagram.
 When the GitHub tools are present, a successful render_cad also commits its script to
 cad/<name>.py on the drafts branch; pass a stable `name` (e.g. "hand_sleeve") so iterations
 of one part build up a history of one file. repo_write/repo_read/repo_list work on the same
-repo; writes only ever go to claude/* branches, and Dani merges them to main."""
+repo; writes only ever go to claude/* branches, and Dani merges them to main.
+run_sim simulates a MuJoCo model: either a named generator from the repo's sim/ folder
+(list_models shows them and their params) or raw MJCF XML. It returns snapshot sheets per
+camera (frames left-to-right, top-to-bottom, blue bar = time), a summary of every logged
+signal (cart height, speed, contact force, actuator torque, wheel slip, joint travel), the
+full time series as CSV, and an MP4 when record=true. SI units: metres, kg, seconds."""
 
 _cad_slots = anyio.Semaphore(2)
 
@@ -104,6 +110,13 @@ def _viewer_page(src: str, title: str) -> str:
 </body></html>"""
 
 
+def _sim_dir(settings: Settings) -> Path | None:
+    if settings.sim_dir:
+        return Path(settings.sim_dir)
+    candidate = Path(__file__).resolve().parents[2] / "sim"  # monorepo checkout: <repo>/sim
+    return candidate if candidate.is_dir() else None
+
+
 def open_github(settings: Settings) -> GitHubRepo | None:
     """The GitHub client, or None when POND_GITHUB_TOKEN/POND_GITHUB_REPO are not set."""
     if not settings.github_enabled:
@@ -116,7 +129,8 @@ def open_github(settings: Settings) -> GitHubRepo | None:
     return GitHubRepo(token=settings.github_token or "", repo=settings.github_repo or "", policy=policy)
 
 
-def build_server(settings: Settings, store: Store, github: GitHubRepo | None = None) -> MCPServer:
+def build_server(settings: Settings, store: Store, github: GitHubRepo | None = None,
+                 sim_models: SimModelSource | None = None) -> MCPServer:
     token_verifier = None
     provider: BuiltinOAuthProvider | None = None
     auth_settings = None
@@ -317,6 +331,165 @@ def build_server(settings: Settings, store: Store, github: GitHubRepo | None = N
                     out.append(Image(data=data, format="png"))
         return out
 
+    # ------------------------------------------------------------------ simulation tools
+
+    models = sim_models or SimModelSource(github, _sim_dir(settings))
+
+    @server.tool()
+    async def list_models() -> str:
+        """List the MuJoCo sim models in the repo's sim/ folder with their parameters and defaults.
+
+        Models are Python generators (sim/<name>.py) that build MJCF from params. Edit or add
+        them with repo_write; they take effect on the next run_sim with no redeploy.
+        """
+        try:
+            infos = await anyio.to_thread.run_sync(models.list)
+        except Exception as exc:  # noqa: BLE001
+            return f"LIST FAILED: {exc}"
+        if not infos:
+            return "No sim models found (expected sim/<name>.py files in the repo)."
+        return _text([{"name": i.name, "about": i.doc, "params": i.params, "source": i.origin} for i in infos])
+
+    @server.tool()
+    async def run_sim(
+        model: str | None = None,
+        params: dict | None = None,
+        mjcf_xml: str | None = None,
+        duration_s: float = 5.0,
+        controls: dict | None = None,
+        cameras: list[str] | None = None,
+        record: bool = False,
+        frames: int = 6,
+        track_body: str | None = None,
+        title: str | None = None,
+        name: str | None = None,
+        save_to_repo: bool = True,
+    ) -> list[Image | str]:
+        """Run a MuJoCo simulation in a sandbox and return snapshots plus logged signals.
+
+        Args:
+            model: Name of a generator in the repo's sim/ folder (see list_models), e.g. "pipe_climb".
+            params: Overrides for that model's PARAMS, e.g. {"surface": "wet", "spring_preload_n": 45}.
+            mjcf_xml: Instead of a model, a complete MJCF document (primitive geoms only; no files).
+            duration_s: Simulated time, seconds (capped by the server, default cap 30).
+            controls: Per-actuator ctrl: a constant, or [[t, value], ...] held piecewise, e.g.
+                {"drive": 6.3} or {"drive": [[0, 0], [1, 6.3]]}. Defaults to the model's DEFAULT_CONTROLS.
+            cameras: Camera names from the model, plus built-ins "track" (follows the tracked body)
+                and "free" (overview). Default: the model's CAMERAS or ["track"]. Max 4.
+            record: Also write an MP4 of the first camera.
+            frames: Snapshots per camera in the sheet (2 to 12).
+            track_body: Body whose position/velocity/contacts are logged. Default: model's TRACK_BODY.
+            title: Label stored with the run.
+            name: With mjcf_xml and GitHub configured, saves the XML as sim/<name>.xml on the drafts branch.
+            save_to_repo: Set false to skip that save.
+        Returns a summary (sim id, climb_m, per-signal min/max/mean/final, file links for
+        model.xml, signals.csv, sheets and clip) followed by one sheet image per camera.
+        """
+        if bool(model) == bool(mjcf_xml):
+            return ["SIM FAILED: give exactly one of `model` or `mjcf_xml`"]
+        if mjcf_xml and len(mjcf_xml.encode("utf-8")) > settings.max_script_bytes * 10:
+            return ["SIM FAILED: mjcf_xml is too large"]
+        generator = support = None
+        origin = None
+        if model:
+            try:
+                loaded = await anyio.to_thread.run_sync(models.load, model)
+            except (FileNotFoundError, ValueError) as exc:
+                return [f"SIM FAILED: {exc}"]
+            except Exception as exc:  # noqa: BLE001
+                return [f"SIM FAILED: could not load model {model!r}: {exc}"]
+            generator, support, origin = loaded.source, loaded.support, loaded.origin
+        duration = max(0.05, min(float(duration_s), settings.sim_max_duration_s))
+
+        sim_id = new_render_id()
+        tmp = Path(tempfile.mkdtemp(prefix="pond-sim-"))
+        try:
+            async with _cad_slots:
+                result = await anyio.to_thread.run_sync(
+                    partial(
+                        run_sim_job,
+                        out_dir=tmp,
+                        mjcf=mjcf_xml,
+                        generator=generator,
+                        support=support,
+                        params=params or {},
+                        duration_s=duration,
+                        controls=controls,
+                        cameras=cameras,
+                        record=record,
+                        frames=frames,
+                        track_body=track_body,
+                        timeout_s=settings.sim_timeout_s,
+                        memory_mb=settings.sim_memory_mb,
+                    )
+                )
+            record_ = RenderRecord(
+                id=sim_id,
+                kind="sim",
+                created_at=_now(),
+                status="ok" if result.ok else "error",
+                title=title,
+                model=model,
+                params=(result.meta or {}).get("params") if result.ok else (params or None),
+                views=sorted(result.sheets) if result.ok else [],
+                metrics=result.summary if result.ok else None,
+                error=result.error,
+                log=result.log or None,
+                duration_s=result.duration_s,
+            )
+            if mjcf_xml:
+                record_.files["input.xml"] = file_key(sim_id, "input.xml")
+                store.put(record_.files["input.xml"], mjcf_xml.encode("utf-8"), "application/xml")
+            images: list[Image | str] = []
+            if result.ok:
+                for fname, path in result.files.items():
+                    key = file_key(sim_id, fname)
+                    await anyio.to_thread.run_sync(store.put_file, key, path)
+                    record_.files[fname] = key
+                for cam in sorted(result.sheets):
+                    png = result.sheets[cam].read_bytes()
+                    images.append(Image(data=png, format="png"))
+            await anyio.to_thread.run_sync(save_record, store, record_)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+        if not result.ok:
+            text = f"SIM FAILED (id {sim_id}, {result.duration_s} s)\n\n{result.error}"
+            if result.log.strip():
+                text += f"\n\nOutput:\n{result.log.strip()[-4000:]}"
+            return [text]
+
+        summary = record_.summary(store)
+        summary["duration_s"] = result.duration_s
+        summary["sheets"] = {cam: f"frames at t = {', '.join(str(t) for t in (result.summary or {}).get('snapshot_times_s', []))} s" for cam in sorted(result.sheets)}
+        if origin:
+            summary["model_source"] = origin
+        if result.log.strip():
+            summary["output"] = result.log.strip()[-4000:]
+        if github is not None and mjcf_xml:
+            summary["repo"] = await anyio.to_thread.run_sync(
+                partial(_auto_save, github, "sim", mjcf_xml, name=name, title=title, render_id=sim_id, enabled=save_to_repo, ext="xml")
+            )
+        return [_text(summary), *images]
+
+    @server.tool()
+    async def get_sim(sim_id: str, include_images: bool = True) -> list[Image | str]:
+        """Fetch a past simulation by id: its summary (signals, params), file links and snapshot sheets."""
+        rec = await anyio.to_thread.run_sync(load_record, store, sim_id)
+        if not rec or rec.kind != "sim":
+            return [f"No simulation with id {sim_id!r}"]
+        summary = rec.summary(store)
+        if rec.log:
+            summary["output"] = rec.log[-4000:]
+        out: list[Image | str] = [_text(summary)]
+        if include_images:
+            for cam in rec.views:
+                key = rec.files.get(f"sheet_{cam}.png") or rec.files.get(f"sheet_{cam}")
+                data = await anyio.to_thread.run_sync(store.get, key) if key else None
+                if data:
+                    out.append(Image(data=data, format="png"))
+        return out
+
     # ------------------------------------------------------------------ GitHub tools
 
     if github is not None:
@@ -456,7 +629,7 @@ def build_server(settings: Settings, store: Store, github: GitHubRepo | None = N
 
 def _auto_save(
     github: GitHubRepo, folder: str, script: str, *, name: str | None, title: str | None,
-    render_id: str, enabled: bool,
+    render_id: str, enabled: bool, ext: str = "py",
 ) -> dict:
     """Commit a successful render's script to <folder>/<name>.py on the drafts branch.
 
@@ -467,7 +640,7 @@ def _auto_save(
     stem = slugify(name or title or "", default="")
     if not stem:
         return {"saved": False, "note": "give a `name` (or `title`) to save the script to the repo"}
-    path = f"{folder}/{stem}.py"
+    path = f"{folder}/{stem}.{ext}"
     message = f"render {render_id}: {title or stem}"
     try:
         res = github.write_file(path, script, message)
@@ -501,7 +674,8 @@ def build_app(
     log.info("Pond render server %s; storage: %s; auth: %s; public URL: %s; github: %s",
              __version__, store.describe(), settings.auth_mode, settings.public_url,
              github.repo if github else "off")
-    server = build_server(settings, store, github)
+    sim_models = SimModelSource(github, _sim_dir(settings))
+    server = build_server(settings, store, github, sim_models)
 
     host = settings.public_host
     allowed_hosts = sorted({host, f"{host}:*", "localhost:*", "127.0.0.1:*", "localhost", "127.0.0.1"})

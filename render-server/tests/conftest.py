@@ -40,6 +40,8 @@ def make_settings(tmp_path: Path, port: int, **overrides) -> Settings:
         image_width=800,
         stateless=True,
         log_level="WARNING",
+        sim_dir=str(Path(__file__).resolve().parents[2] / "sim"),
+        sim_timeout_s=120,
     )
     base.update(overrides)
     settings = Settings(**base)
