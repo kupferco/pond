@@ -1,10 +1,11 @@
 """Unit change animation: the cart crosses unit 1 -> unit 2 -> unit 3 (corner unit) and lands on F.
 
-Scripted, not physical: gravity is off, nothing collides, and every motion is driven by stiff
-position actuators following a precomputed path (DEFAULT_CONTROLS). Use it to check the
-sequence and clearances, not forces. Geometry follows 3-unit layout v2 (render
-20261101-104909-328f): 70 cm loops 2 m tall, loop 10 cm in front of the spine, pipes 14 cm
-apart at a handover, unit 3 swung clockwise about pipe E.
+Scripted, not physical: gravity is off, nothing collides. Every joint is driven by an
+integrated-velocity actuator fed piecewise-constant velocities (0.2 s knots), so the cart
+follows the path as straight chords between knots (under 2 mm off on the 150 mm corners).
+Use it to check the sequence and clearances, not forces. Geometry follows 3-unit layout v2
+(render 20261101-104909-328f): 70 cm loops 2 m tall, loop 10 cm in front of the spine,
+pipes 14 cm apart at a handover, unit 3 swung clockwise about pipe E.
 
 Pipes (all vertical sides of the loops): A, B = unit 1; C, D = unit 2; E, F = unit 3.
 Cart: two hands 14 cm apart on a yellow base plate, arm folded. It always rides on the hand
@@ -23,7 +24,7 @@ Sequence (seconds):
 import math
 
 PARAMS = {
-    "dt_s": (0.04, "control sample spacing, s (informational)"),
+    "knot_s": (0.2, "control knot spacing, s (informational; fixed at import)"),
 }
 TRACK_BODY = "cart"
 CAMERAS = ["overview", "chase"]
@@ -46,6 +47,7 @@ ZC = Z_BOT + LOOP_H / 2
 R = LOOP_R
 OPEN = 1.6
 UNITS = [(0.0, 0.0, 0.0), (PITCH, 0.0, 0.0), (U3[0], U3[1], -90.0)]
+KNOT = 0.2
 
 
 def lerp(a, b, u):
@@ -118,20 +120,33 @@ def _pose(t):
     return h1, s
 
 
-def _controls(dt):
-    names = ["x", "y", "z", "a1", "a2", "a3", "a4", "jaw1", "jaw2"]
-    out = {n: [] for n in names}
-    n = int(DURATION / dt) + 1
+NAMES = ["x", "y", "z", "a1", "a2", "a3", "a4", "jaw1", "jaw2"]
+
+
+def _joint_targets(t):
+    """Joint positions relative to the start pose (all joints are 0 at t=0)."""
+    h1, s = _pose(t)
+    h0, _ = _pose(0.0)
+    return [h1[0] - h0[0], h1[1] - h0[1], h1[2] - h0[2], s["a1"], s["a2"], s["a3"], s["a4"],
+            -s["j1"], OPEN - s["j2"]]
+
+
+def _controls():
+    out = {n: [] for n in NAMES}
+    n = int(math.ceil(DURATION / KNOT))
+    prev = _joint_targets(0.0)
     for i in range(n):
-        t = round(i * dt, 4)
-        h1, s = _pose(t)
-        vals = [h1[0], h1[1], h1[2], s["a1"], s["a2"], s["a3"], s["a4"], -s["j1"], -s["j2"]]
-        for k, v in zip(names, vals):
-            out[k].append([t, round(v, 5)])
+        t0, t1 = i * KNOT, min((i + 1) * KNOT, DURATION)
+        nxt = _joint_targets(t1)
+        for k, name in enumerate(NAMES):
+            out[name].append([round(t0, 3), round((nxt[k] - prev[k]) / (t1 - t0), 4)])
+        prev = nxt
+    for name in NAMES:
+        out[name].append([round(DURATION, 3), 0.0])
     return out
 
 
-DEFAULT_CONTROLS = _controls(0.04)
+DEFAULT_CONTROLS = _controls()
 
 
 def _cam_axes(pos, target):
@@ -146,7 +161,7 @@ def _cam_axes(pos, target):
     return f"{f(xc)} {f(yc)}"
 
 
-def _unit_xml(cx, cy, ang, idx):
+def _unit_xml(cx, cy, ang):
     th = math.radians(ang)
     c, s = math.cos(th), math.sin(th)
 
@@ -182,7 +197,7 @@ def _unit_xml(cx, cy, ang, idx):
     return "\n    ".join(g)
 
 
-def _hand_xml(name, x0, color, jaw_color):
+def _hand_xml(name, x0, color, jaw_color, jaw0_deg):
     """One hand in the cart frame: pipe along local z, opening facing +y (spine side)."""
     RR = 0.042
     g = []
@@ -205,8 +220,8 @@ def _hand_xml(name, x0, color, jaw_color):
         jaw.append(f'<geom type="sphere" pos="{0.024*math.cos(r) - hx:.4f} {0.024*math.sin(r) - hy:.4f} {z}" size="0.008" rgba="0.1 0.1 0.1 1"/>')
     jaw.append('<geom type="box" pos="0.012 -0.02 0.034" size="0.012 0.02 0.016" rgba="0.15 0.15 0.15 1"/>')
     return ("\n".join(g) +
-            f'\n<body name="{name}_jaw" pos="{x0 + hx:.4f} {hy:.4f} 0">'
-            f'<joint name="{name}_jaw" type="hinge" axis="0 0 1" range="-1.8 0.1" armature="0.001" damping="0.09"/>'
+            f'\n<body name="{name}_jaw" pos="{x0 + hx:.4f} {hy:.4f} 0" euler="0 0 {jaw0_deg:.2f}">'
+            f'<joint name="{name}_jaw" type="hinge" axis="0 0 1" armature="0.001" damping="0.09"/>'
             + "\n".join(jaw) + "</body>")
 
 
@@ -214,11 +229,12 @@ INERT = '<inertial pos="0 0 0" mass="0.01" diaginertia="1e-5 1e-5 1e-5"/>'
 
 
 def build(**p) -> str:
-    units = "\n    ".join(_unit_xml(cx, cy, ang, i) for i, (cx, cy, ang) in enumerate(UNITS))
+    units = "\n    ".join(_unit_xml(cx, cy, ang) for (cx, cy, ang) in UNITS)
+    h0, _ = _pose(0.0)
     ov_pos, ov_tgt = (3.1, -3.6, 3.0), (0.75, -0.35, 1.45)
     ch_pos = (0.75, -0.95, 0.35)
-    hands = _hand_xml("hand1", 0.0, "0.2 0.45 0.85 1", "0.55 0.3 0.85 1") + "\n" + \
-            _hand_xml("hand2", SEP, "0.2 0.45 0.85 1", "0.55 0.3 0.85 1")
+    hands = (_hand_xml("hand1", 0.0, "0.2 0.45 0.85 1", "0.55 0.3 0.85 1", 0.0) + "\n" +
+             _hand_xml("hand2", SEP, "0.2 0.45 0.85 1", "0.55 0.3 0.85 1", -math.degrees(OPEN)))
     cart_extra = f"""
           <geom type="box" pos="{SEP/2} -0.057 0" size="{SEP/2 + 0.02} 0.005 0.04" rgba="1 0.85 0.3 1"/>
           <geom type="cylinder" fromto="0 -0.062 -0.04 0 -0.062 0.04" size="0.016" rgba="0.2 0.7 0.4 1"/>
@@ -228,6 +244,10 @@ def build(**p) -> str:
           <geom type="capsule" fromto="{SEP/2} -0.10 0.06 {SEP/2} -0.115 0.22" size="0.012" rgba="0.95 0.4 0.1 1"/>
           <geom type="capsule" fromto="{SEP/2} -0.115 0.22 {SEP/2} -0.125 0.06" size="0.012" rgba="0.95 0.4 0.1 1"/>
           <geom type="box" pos="{SEP/2} -0.125 0.05" size="0.015 0.015 0.015" rgba="0.95 0.4 0.1 1"/>"""
+    acts = "\n    ".join(
+        f'<intvelocity name="{n}" joint="{j}" kp="{kp}" actrange="-6.5 6.5"/>'
+        for n, j, kp in (("x", "x", 2000), ("y", "y", 2000), ("z", "z", 2000), ("a1", "a1", 20), ("a2", "a2", 20),
+                         ("a3", "a3", 20), ("a4", "a4", 20), ("jaw1", "hand1_jaw", 2), ("jaw2", "hand2_jaw", 2)))
     return f"""<mujoco model="unit_change">
   <compiler angle="degree"/>
   <option timestep="0.004" gravity="0 0 0" integrator="implicitfast"/>
@@ -239,7 +259,7 @@ def build(**p) -> str:
     <geom name="floor" type="plane" pos="0.7 -0.3 0" size="3 3 0.1" rgba="0.82 0.82 0.8 1"/>
     <camera name="overview" pos="{ov_pos[0]} {ov_pos[1]} {ov_pos[2]}" xyaxes="{_cam_axes(ov_pos, ov_tgt)}" fovy="45"/>
     {units}
-    <body name="cart" pos="0 0 0">
+    <body name="cart" pos="{h0[0]:.4f} {h0[1]:.4f} {h0[2]:.4f}">
       <joint name="x" type="slide" axis="1 0 0" damping="60"/>
       <joint name="y" type="slide" axis="0 1 0" damping="60"/>
       <joint name="z" type="slide" axis="0 0 1" damping="60"/>
@@ -258,14 +278,6 @@ def build(**p) -> str:
     </body>
   </worldbody>
   <actuator>
-    <position name="x" joint="x" kp="2000"/>
-    <position name="y" joint="y" kp="2000"/>
-    <position name="z" joint="z" kp="2000"/>
-    <position name="a1" joint="a1" kp="20"/>
-    <position name="a2" joint="a2" kp="20"/>
-    <position name="a3" joint="a3" kp="20"/>
-    <position name="a4" joint="a4" kp="20"/>
-    <position name="jaw1" joint="hand1_jaw" kp="2"/>
-    <position name="jaw2" joint="hand2_jaw" kp="2"/>
+    {acts}
   </actuator>
 </mujoco>"""
