@@ -11,14 +11,22 @@ Pipes (all vertical sides of the loops): A, B = unit 1; C, D = unit 2; E, F = un
 Cart: two hands 14 cm apart on a yellow base plate, arm folded. It always rides on the hand
 whose partner hangs OUTSIDE the loop, and the hands swap roles at each crossover.
 
+Swing-off rule (v2; hand shell opening widened to 122 deg): after a hand releases, the base
+swivels 90 deg on the riding pipe so the free hand sits in front of it (-y); the old pipe
+leaves through the open jaw. Before the next clamp the base swivels back and the new pipe
+enters through the jaw. This fixes v1's clashes (free hand still round B at unit 2's top
+corner; free hand and base sweeping through unit 3's top corner at E while rounding D).
+Clearance check on this path: 5 mm minimum as a pipe slides through the jaw; the only
+remaining near-miss is the riding hand passing the top-bar brackets (open design question).
+
 Sequence (seconds):
   0.0  ride hand 1 up B (unit 1)
-  3.0  hand 2 clamps C (unit 2), 4.0 hand 1 releases B   -> now riding hand 2 on unit 2
-  5.0  up C, round unit 2's top corners, down D
- 12.0  hand 1 clamps E (unit 3), 13.0 hand 2 releases D  -> now riding hand 1 on E
- 14.0  up E sideways, round unit 3's top corner (cart still parallel to units 1-2)
- 18.0  swivel 90 deg about the top bar into unit 3's plane
- 20.0  along unit 3's top bar, round the far corner, down F; hold from 24.4
+  3.0  hand 2 clamps C, 4.0 hand 1 releases B, 5.0 swing hand 1 off to the front
+  6.2  up C, round unit 2's top corners, down D (free hand in front)
+ 13.2  swing hand 1 back in onto E, 14.4 hand 1 clamps E, 15.4 hand 2 releases D
+ 16.4  up E sideways, round unit 3's top corner (cart still parallel to units 1-2)
+ 20.4  swivel 90 deg about the top bar into unit 3's plane
+ 22.4  along unit 3's top bar, round the far corner, down F; hold from 26.8
 """
 
 import math
@@ -46,6 +54,7 @@ Y_F = YL - LOOP_W
 ZC = Z_BOT + LOOP_H / 2
 R = LOOP_R
 OPEN = 1.6
+SWING = math.radians(90)
 UNITS = [(0.0, 0.0, 0.0), (PITCH, 0.0, 0.0), (U3[0], U3[1], -90.0)]
 KNOT = 0.2
 
@@ -74,60 +83,76 @@ def _mm(A, B):
 
 
 D = math.radians
+# Each phase: (duration s, label, fn(u) -> state overrides). "rp" is the riding hand's centre.
 PHASES = [
-    (0.5, lambda u: {}),
-    (2.5, lambda u: {"rp": (X_B, YL, lerp(0.90, ZC, u))}),
-    (1.0, lambda u: {"j2": lerp(OPEN, 0, u)}),
-    (1.0, lambda u: {"j1": lerp(0, OPEN, u), "ride": 2, "rp": (X_C, YL, ZC)}),
-    (2.0, lambda u: {"rp": (X_C, YL, lerp(ZC, Z_TOP - R, u))}),
-    (1.0, lambda u: {"rp": (X_C + R - R * math.cos(D(90 * u)), YL, Z_TOP - R + R * math.sin(D(90 * u))), "a4": D(90 * u)}),
-    (1.0, lambda u: {"rp": (lerp(X_C + R, X_D - R, u), YL, Z_TOP)}),
-    (1.0, lambda u: {"rp": (X_D - R + R * math.sin(D(90 * u)), YL, Z_TOP - R + R * math.cos(D(90 * u))), "a4": D(90 + 90 * u)}),
-    (2.0, lambda u: {"rp": (X_D, YL, lerp(Z_TOP - R, ZC, u))}),
-    (1.0, lambda u: {"j1": lerp(OPEN, 0, u)}),
-    (1.0, lambda u: {"j2": lerp(0, OPEN, u), "ride": 1, "rp": (X_E, YL, ZC)}),
-    (2.0, lambda u: {"rp": (X_E, YL, lerp(ZC, Z_TOP - R, u))}),
-    (1.2, lambda u: {"rp": (X_E, YL - R + R * math.cos(D(90 * u)), Z_TOP - R + R * math.sin(D(90 * u))), "a3": D(90 * u)}),
-    (0.8, lambda u: {"rp": (X_E, lerp(YL - R, -0.33, u), Z_TOP)}),
-    (2.0, lambda u: {"a2": D(90 * u)}),
-    (1.2, lambda u: {"rp": (X_E, lerp(-0.33, Y_F + R, u), Z_TOP)}),
-    (1.2, lambda u: {"rp": (X_E, Y_F + R - R * math.sin(D(90 * u)), Z_TOP - R + R * math.cos(D(90 * u))), "a1": D(90 * u)}),
-    (2.0, lambda u: {"rp": (X_E, Y_F, lerp(Z_TOP - R, ZC, u))}),
-    (1.5, lambda u: {}),
+    (0.5, "start on B", lambda u: {}),
+    (2.5, "up B", lambda u: {"rp": (X_B, YL, lerp(0.90, ZC, u))}),
+    (1.0, "hand 2 clamps C", lambda u: {"j2": lerp(OPEN, 0, u)}),
+    (1.0, "hand 1 releases B", lambda u: {"j1": lerp(0, OPEN, u), "ride": 2, "rp": (X_C, YL, ZC)}),
+    (1.2, "swing off B", lambda u: {"a5": SWING * u}),
+    (2.0, "up C", lambda u: {"rp": (X_C, YL, lerp(ZC, Z_TOP - R, u))}),
+    (1.0, "corner C", lambda u: {"rp": (X_C + R - R * math.cos(D(90 * u)), YL, Z_TOP - R + R * math.sin(D(90 * u))), "a4": D(90 * u)}),
+    (1.0, "top bar unit 2", lambda u: {"rp": (lerp(X_C + R, X_D - R, u), YL, Z_TOP)}),
+    (1.0, "corner D", lambda u: {"rp": (X_D - R + R * math.sin(D(90 * u)), YL, Z_TOP - R + R * math.cos(D(90 * u))), "a4": D(90 + 90 * u)}),
+    (2.0, "down D", lambda u: {"rp": (X_D, YL, lerp(Z_TOP - R, ZC, u))}),
+    (1.2, "swing onto E", lambda u: {"a5": SWING * (1 - u)}),
+    (1.0, "hand 1 clamps E", lambda u: {"j1": lerp(OPEN, 0, u)}),
+    (1.0, "hand 2 releases D", lambda u: {"j2": lerp(0, OPEN, u), "ride": 1, "rp": (X_E, YL, ZC)}),
+    (2.0, "up E sideways", lambda u: {"rp": (X_E, YL, lerp(ZC, Z_TOP - R, u))}),
+    (1.2, "corner E", lambda u: {"rp": (X_E, YL - R + R * math.cos(D(90 * u)), Z_TOP - R + R * math.sin(D(90 * u))), "a3": D(90 * u)}),
+    (0.8, "top bar unit 3", lambda u: {"rp": (X_E, lerp(YL - R, -0.33, u), Z_TOP)}),
+    (2.0, "swivel into unit 3", lambda u: {"a2": D(90 * u)}),
+    (1.2, "top bar unit 3", lambda u: {"rp": (X_E, lerp(-0.33, Y_F + R, u), Z_TOP)}),
+    (1.2, "corner F", lambda u: {"rp": (X_E, Y_F + R - R * math.sin(D(90 * u)), Z_TOP - R + R * math.cos(D(90 * u))), "a1": D(90 * u)}),
+    (2.0, "down F", lambda u: {"rp": (X_E, Y_F, lerp(Z_TOP - R, ZC, u))}),
+    (1.5, "stop on F", lambda u: {}),
 ]
 DURATION = sum(p[0] for p in PHASES)
 
 
-def _state(t):
-    s = {"rp": (X_B, YL, 0.90), "ride": 1, "a1": 0.0, "a2": 0.0, "a3": 0.0, "a4": 0.0, "j1": 0.0, "j2": OPEN}
+def state(t):
+    s = {"rp": (X_B, YL, 0.90), "ride": 1, "a1": 0.0, "a2": 0.0, "a3": 0.0, "a4": 0.0, "a5": 0.0,
+         "j1": 0.0, "j2": OPEN, "phase": "stop on F"}
     t0 = 0.0
-    for dur, fn in PHASES:
+    for dur, name, fn in PHASES:
         if t >= t0 + dur:
             s.update(fn(1.0))
             t0 += dur
             continue
         s.update(fn(ease((t - t0) / dur)))
+        s["phase"] = name
         return s
     return s
 
 
-def _pose(t):
-    s = _state(t)
-    Rm = _mm(_mm(_rx(s["a1"]), _ry(s["a2"])), _mm(_rx(s["a3"]), _ry(s["a4"])))
+def rot(s):
+    return _mm(_mm(_rx(s["a1"]), _ry(s["a2"])), _mm(_rx(s["a3"]), _ry(s["a4"])))
+
+
+def pose(t):
+    """Root position (cart frame origin, = hand 1 when a5 = 0) and state.
+
+    The swing joint a5 turns everything about local z through hand 2 (x = SEP), which only
+    happens while riding hand 2, so hand 2 stays put and the root is rp - SEP * x_local.
+    """
+    s = state(t)
+    Rm = rot(s)
     xl = [Rm[i][0] for i in range(3)]
     rp = s["rp"]
-    h1 = rp if s["ride"] == 1 else tuple(rp[i] - SEP * xl[i] for i in range(3))
-    return h1, s
+    root = rp if s["ride"] == 1 else tuple(rp[i] - SEP * xl[i] for i in range(3))
+    if s["ride"] == 1:
+        assert abs(s["a5"]) < 1e-9, "swing only while riding hand 2"
+    return root, s
 
 
-NAMES = ["x", "y", "z", "a1", "a2", "a3", "a4", "jaw1", "jaw2"]
+NAMES = ["x", "y", "z", "a1", "a2", "a3", "a4", "a5", "jaw1", "jaw2"]
 
 
 def _joint_targets(t):
     """Joint positions relative to the start pose (all joints are 0 at t=0)."""
-    h1, s = _pose(t)
-    h0, _ = _pose(0.0)
-    return [h1[0] - h0[0], h1[1] - h0[1], h1[2] - h0[2], s["a1"], s["a2"], s["a3"], s["a4"],
+    r, s = pose(t)
+    r0, _ = pose(0.0)
+    return [r[0] - r0[0], r[1] - r0[1], r[2] - r0[2], s["a1"], s["a2"], s["a3"], s["a4"], s["a5"],
             -s["j1"], OPEN - s["j2"]]
 
 
@@ -201,7 +226,9 @@ def _hand_xml(name, x0, color, jaw_color, jaw0_deg):
     """One hand in the cart frame: pipe along local z, opening facing +y (spine side)."""
     RR = 0.042
     g = []
-    for a in range(110, 341, 23):
+    # Fixed shell spans 122..348 deg (opening widened from 110 so a pipe can slide out
+    # through the open jaw during the swing; boxes are +/-13 deg wide).
+    for a in range(135, 336, 25):
         r = math.radians(a)
         g.append(f'<geom type="box" pos="{x0 + RR*math.cos(r):.4f} {RR*math.sin(r):.4f} 0" size="0.004 0.0095 0.02" '
                  f'euler="0 0 {a}" rgba="{color}"/>')
@@ -211,7 +238,7 @@ def _hand_xml(name, x0, color, jaw_color, jaw0_deg):
             g.append(f'<geom type="sphere" pos="{x0 + 0.024*math.cos(r):.4f} {0.024*math.sin(r):.4f} {z}" size="0.008" rgba="0.1 0.1 0.1 1"/>')
     hx, hy = RR * math.cos(math.radians(346)), RR * math.sin(math.radians(346))
     jaw = []
-    for a in range(352, 431, 13):
+    for a in range(352, 418, 13):
         r = math.radians(a)
         jaw.append(f'<geom type="box" pos="{RR*math.cos(r) - hx:.4f} {RR*math.sin(r) - hy:.4f} 0" size="0.004 0.0075 0.02" '
                    f'euler="0 0 {a}" rgba="{jaw_color}"/>')
@@ -230,7 +257,7 @@ INERT = '<inertial pos="0 0 0" mass="0.01" diaginertia="1e-5 1e-5 1e-5"/>'
 
 def build(**p) -> str:
     units = "\n    ".join(_unit_xml(cx, cy, ang) for (cx, cy, ang) in UNITS)
-    h0, _ = _pose(0.0)
+    r0, _ = pose(0.0)
     ov_pos, ov_tgt = (3.1, -3.6, 3.0), (0.75, -0.35, 1.45)
     ch_pos = (0.75, -0.95, 0.35)
     hands = (_hand_xml("hand1", 0.0, "0.2 0.45 0.85 1", "0.55 0.3 0.85 1", 0.0) + "\n" +
@@ -247,7 +274,8 @@ def build(**p) -> str:
     acts = "\n    ".join(
         f'<intvelocity name="{n}" joint="{j}" kp="{kp}" actrange="-6.5 6.5"/>'
         for n, j, kp in (("x", "x", 2000), ("y", "y", 2000), ("z", "z", 2000), ("a1", "a1", 20), ("a2", "a2", 20),
-                         ("a3", "a3", 20), ("a4", "a4", 20), ("jaw1", "hand1_jaw", 2), ("jaw2", "hand2_jaw", 2)))
+                         ("a3", "a3", 20), ("a4", "a4", 20), ("a5", "a5", 20), ("jaw1", "hand1_jaw", 2),
+                         ("jaw2", "hand2_jaw", 2)))
     return f"""<mujoco model="unit_change">
   <compiler angle="degree"/>
   <option timestep="0.004" gravity="0 0 0" integrator="implicitfast"/>
@@ -259,7 +287,7 @@ def build(**p) -> str:
     <geom name="floor" type="plane" pos="0.7 -0.3 0" size="3 3 0.1" rgba="0.82 0.82 0.8 1"/>
     <camera name="overview" pos="{ov_pos[0]} {ov_pos[1]} {ov_pos[2]}" xyaxes="{_cam_axes(ov_pos, ov_tgt)}" fovy="45"/>
     {units}
-    <body name="cart" pos="{h0[0]:.4f} {h0[1]:.4f} {h0[2]:.4f}">
+    <body name="cart" pos="{r0[0]:.4f} {r0[1]:.4f} {r0[2]:.4f}">
       <joint name="x" type="slide" axis="1 0 0" damping="60"/>
       <joint name="y" type="slide" axis="0 1 0" damping="60"/>
       <joint name="z" type="slide" axis="0 0 1" damping="60"/>
@@ -268,9 +296,11 @@ def build(**p) -> str:
       <body name="r1">{INERT}<joint name="a1" type="hinge" axis="1 0 0" armature="0.01" damping="1"/>
         <body name="r2">{INERT}<joint name="a2" type="hinge" axis="0 1 0" armature="0.01" damping="1"/>
           <body name="r3">{INERT}<joint name="a3" type="hinge" axis="1 0 0" armature="0.01" damping="1"/>
-            <body name="r4"><joint name="a4" type="hinge" axis="0 1 0" armature="0.01" damping="1"/>
-              {hands}
-              {cart_extra}
+            <body name="r4">{INERT}<joint name="a4" type="hinge" axis="0 1 0" armature="0.01" damping="1"/>
+              <body name="r5"><joint name="a5" type="hinge" pos="{SEP} 0 0" axis="0 0 1" armature="0.01" damping="1"/>
+                {hands}
+                {cart_extra}
+              </body>
             </body>
           </body>
         </body>
