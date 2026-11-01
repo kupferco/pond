@@ -50,6 +50,10 @@ class Settings:
     github_branch: str = "claude/drafts"
     github_write_prefixes: tuple[str, ...] = ("docs/", "cad/", "sim/")
     github_max_bytes: int = 1_048_576
+    sim_timeout_s: int = 120
+    sim_memory_mb: int = 3072  # OSMesa reserves a lot of address space; 2 GB fails
+    sim_max_duration_s: float = 30.0
+    sim_dir: str | None = None  # local folder with sim/*.py when GitHub is not configured
 
     @property
     def github_enabled(self) -> bool:
@@ -83,6 +87,10 @@ class Settings:
                 if p.strip().strip("/")
             ),
             github_max_bytes=_env_int("GITHUB_MAX_BYTES", 1_048_576),
+            sim_timeout_s=_env_int("SIM_TIMEOUT_S", 120),
+            sim_memory_mb=_env_int("SIM_MEMORY_MB", 3072),
+            sim_max_duration_s=float(_env("SIM_MAX_DURATION_S", "30") or 30),
+            sim_dir=_env("SIM_DIR"),
         )
         settings.validate()
         return settings

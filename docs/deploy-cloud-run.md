@@ -144,6 +144,14 @@ Click Connect; a browser tab opens the server's login page; enter the password f
 `pond-oauth-password`. Then, in a chat (voice works too), ask Claude to render something,
 for example "render a 32 mm pipe with a C-clamp sleeve and check the views".
 
+### Simulations
+
+The image sets `MUJOCO_GL=osmesa` for headless rendering. Sims read their models from the
+repo through the GitHub token, so adding or editing `sim/*.py` needs no redeploy. A 5 s sim
+of the pipe-climb model takes well under a second of CPU; the 300 s request timeout and 4 GiB
+are plenty. Raise `POND_SIM_MAX_DURATION_S` if longer runs are wanted, remembering Claude's
+own connector timeout.
+
 ## 6. Operating
 
 ```bash

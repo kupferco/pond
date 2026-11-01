@@ -36,7 +36,7 @@ def test_healthz_and_index_open(token_server):
 
 def test_tools_listed(token_server):
     tools = list_tools(token_server.mcp_url, API_TOKEN)
-    assert {t.name for t in tools.tools} == {"render_svg", "render_cad", "list_renders", "get_render"}
+    assert {t.name for t in tools.tools} == {"render_svg", "render_cad", "list_renders", "get_render", "run_sim", "get_sim", "list_models"}
 
 
 def test_render_svg_tool(token_server):

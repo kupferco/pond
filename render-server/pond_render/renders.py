@@ -28,7 +28,7 @@ def file_key(render_id: str, name: str) -> str:
 @dataclass
 class RenderRecord:
     id: str
-    kind: str  # "cad" | "svg"
+    kind: str  # "cad" | "svg" | "sim"
     created_at: str
     status: str  # "ok" | "error"
     title: str | None = None
@@ -41,6 +41,9 @@ class RenderRecord:
     error: str | None = None
     log: str | None = None
     duration_s: float | None = None
+    metrics: dict | None = None  # sim: the runner summary (signals, climb, contacts ...)
+    model: str | None = None  # sim: generator name and params
+    params: dict | None = None
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), indent=2)
@@ -68,6 +71,12 @@ class RenderRecord:
             out["solids"] = self.solids
         if self.views:
             out["views"] = self.views
+        if self.model:
+            out["model"] = self.model
+        if self.params:
+            out["params"] = self.params
+        if self.metrics:
+            out["sim"] = self.metrics
         out["files"] = {name: store.url(key) for name, key in self.files.items()}
         if self.error:
             out["error"] = self.error

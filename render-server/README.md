@@ -13,6 +13,9 @@ Deploying: [../docs/deploy-cloud-run.md](../docs/deploy-cloud-run.md).
 | `list_renders(limit?)` | Recent renders, newest first. |
 | `/viewer?src=<glb url>` (HTTP page, not a tool) | One-tap 3D view of a render's GLB in the browser, linked as `viewer` in every summary when the files live in GCS. |
 | `get_render(render_id, include_images?, include_script?)` | A past render's summary, links, images and script. |
+| `list_models()` | The MuJoCo model generators in the repo's `sim/` folder, with their params and defaults (parsed statically). |
+| `run_sim(model?, params?, mjcf_xml?, duration_s?, controls?, cameras?, record?, frames?, track_body?, title?, name?, save_to_repo?)` | Simulates a named `sim/` model (or raw MJCF) in a sandbox. Returns one snapshot sheet per camera, a summary of every logged signal (height, speed, contact force, actuator torque, wheel slip, joint travel), `signals.csv`, `model.xml` and an MP4 when `record=true`. |
+| `get_sim(sim_id, include_images?)` | A past simulation's summary, links and sheets. |
 | `repo_write(path, content, message, branch?)` | Commits one text file to the Pond repo. Only under `docs/`, `cad/`, `sim/`; only on `claude/*` branches (default `claude/drafts`), never `main`; max 1 MB. Present only when GitHub is configured. |
 | `repo_read(path, ref?)` / `repo_list(dir?, ref?)` | Read a file or list a folder, from the drafts branch with fallback to `main`. |
 | `repo_open_pr(title, body?)` | Opens (or returns the existing) PR from the drafts branch to `main` for review. |
@@ -67,6 +70,20 @@ OpenCascade dylibs; after that it is about two seconds per render subprocess.
 | `POND_GITHUB_BRANCH` | `claude/drafts` | Branch that writes go to; must start with `claude/`. Created from `main` on first use. |
 | `POND_GITHUB_WRITE_PREFIXES` | `docs,cad,sim` | Top-level folders writes are allowed in. |
 | `POND_GITHUB_MAX_BYTES` | `1048576` | Size cap per file. |
+| `POND_SIM_TIMEOUT_S` | `120` | Wall-clock limit for a simulation subprocess. |
+| `POND_SIM_MEMORY_MB` | `3072` | Address-space limit for the sim subprocess (Linux). The software GL renderer needs about this much. |
+| `POND_SIM_MAX_DURATION_S` | `30` | Cap on simulated seconds per run. |
+| `POND_SIM_DIR` | `<repo>/sim` if present | Local folder of model generators, used when GitHub is not configured. |
+| `MUJOCO_GL` | | Set to `osmesa` in the Docker image for headless rendering; unset on a Mac. |
+
+## Simulations
+
+`run_sim` runs `pond_render/sandbox/sim_runner.py` in the same kind of subprocess as the CAD
+runner. A model is a generator script from the repo's `sim/` folder (read from GitHub, drafts
+branch first, or from a local checkout) that builds MJCF from params; it runs under the import
+guard with `sim/constants.py` importable. The MJCF may not reference files. The runner logs
+signals at 100 Hz, renders snapshot sheets with MuJoCo's offscreen renderer (OSMesa in Docker)
+and writes an MP4 with imageio-ffmpeg. See `sim/README.md` for the model contract.
 
 ## How the sandbox works
 
@@ -114,6 +131,8 @@ pond_render/
   renders.py       render records (renders/<id>/meta.json)
   config.py        POND_* settings
   github.py        GitHub client with the write policy (claude/* branches, docs/cad/sim only)
+  sim_models.py    where sim generators come from (GitHub or local sim/), static param listing
+  sandbox/sim_runner.py  MuJoCo child process: build MJCF, simulate, log, render
 tests/             pytest: svg, sandbox, MCP end-to-end, OAuth flow
 Dockerfile
 ```
