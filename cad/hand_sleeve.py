@@ -1,7 +1,17 @@
-# Hand sleeve, draft v3 (31 Oct 2026). Designed with Claude via the render server,
-# render id 20261031-232037-eaa2. Not yet printed or dimension-checked; see the
-# "assumed" comments. Runs with: .venv/bin/python -m pond_render (render_cad) or
-# locally via pond_render.sandbox.host.run_cad_script.
+# cad/hand_sleeve.py @ claude/drafts
+# Hand sleeve, draft v4 (2 Nov 2026). Changes from v3 (31 Oct, render 20261031-232037-eaa2):
+#   - Wheel rows set to exactly ROW_SPACING = 60 mm apart (v3 was 64 mm by accident of
+#     sleeve length). Sim: 60 mm holds yaw to ~4 deg on straights and still passes the
+#     150 mm loop corners (sim/guide_test.py, sim/bend_test.py).
+#   - The bracket gap (C opening, +X) is now a double-ended funnel: narrow OPENING_W in the
+#     middle, flaring to FUNNEL_MOUTH_W at both ends over FUNNEL_L. Track screws / brackets
+#     entering from either direction push the hand back square.
+#   - Spring idlers sized for SPRING_PRELOAD_N = 60 N per wheel station (30 N could not
+#     climb a wet pipe in sim; 60 N climbs wet with ~3% slip). Spring pockets unchanged;
+#     choose a stiffer spring for the same 2.5 mm travel.
+#   - Drive: specify a worm-gear motor so the hand holds position when stopped (back-drive
+#     resistance). Motor mount not yet drawn.
+# Not yet printed or dimension-checked; see the "assumed" comments.
 import cadquery as cq
 import math
 
@@ -9,17 +19,20 @@ import math
 PIPE_D = 32.0          # outer diameter of the track pipe (assumed)
 BORE_CLEAR = 4.0       # radial gap between pipe and sleeve bore
 WALL_OUT_R = 34.0      # outer radius of the sleeve body
-SLEEVE_L = 94.0        # sleeve length along the pipe
+ROW_SPACING = 60.0     # axial distance between the two wheel rows (centre to centre)
 WHEEL_D = 20.0         # wheel diameter
 WHEEL_W = 8.0          # wheel width
 WHEEL_CLEAR = 1.0      # clearance round each wheel in its pocket
 END_WALL = 4.0         # solid material above/below each pocket
-AXLE_D = 3.2           # axle hole (M3 / N20 3 mm shaft)
-AXLE_OVERRUN = 3.0     # how far each axle hole runs past the outer wall (clears the angled exit)
+AXLE_D = 3.2           # axle hole (M3 / 3 mm shaft)
+AXLE_OVERRUN = 3.0     # how far each axle hole runs past the outer wall
 SPRING_TRAVEL = 2.5    # radial slot travel for spring-loaded wheels
+SPRING_PRELOAD_N = 60.0  # target clamp force per idler station (for spring choice; not geometry)
 OUTER_WHEEL_ANG = 180.0          # driven wheel, outside of the loop (-X)
 INNER_WHEEL_ANGS = (60.0, -60.0) # spring wheels, back and front, towards spine
-OPENING_W = 14.0       # width of the C gap facing the spine (+X)
+OPENING_W = 14.0       # width of the C gap at its narrow middle (+X)
+FUNNEL_MOUTH_W = 26.0  # width of the gap at each end of the sleeve
+FUNNEL_L = 14.0        # axial length of each flare
 PAD_X0, PAD_X1 = -24.0, 0.0      # base mounting pad extent in X
 PAD_Y0, PAD_Y1 = -40.0, -21.0    # pad extent in Y (front = -Y)
 PAD_HOLE_D = 4.3       # M4 clearance holes for the cart base
@@ -32,7 +45,8 @@ WHEEL_R = WHEEL_D / 2
 AXLE_R_POS = R_PIPE + WHEEL_R            # wheel centre radius (touches pipe)
 POCKET_H = WHEEL_D + 2 * WHEEL_CLEAR
 POCKET_W = WHEEL_W + 2 * WHEEL_CLEAR
-RING_Z = SLEEVE_L / 2 - POCKET_H / 2 - END_WALL
+RING_Z = ROW_SPACING / 2
+SLEEVE_L = ROW_SPACING + POCKET_H + 2 * END_WALL   # 90 mm
 AXLE_LEN = 2 * (math.sqrt(WALL_OUT_R**2 - AXLE_R_POS**2) + AXLE_OVERRUN)
 
 # ---------------- Body ----------------
@@ -62,9 +76,16 @@ for z in (RING_Z, -RING_Z):
             axle = axle.union(axle2).union(bridge)
         body = body.cut(rot(axle, ang))
 
-opening = cq.Workplane("XY").box(WALL_OUT_R + 10 - 15, OPENING_W, SLEEVE_L + 2).translate(
-    ((15 + WALL_OUT_R + 10) / 2, 0, 0))
-body = body.cut(opening)
+# Bracket gap: a double-ended funnel. Profile in the YZ plane (y = width, z = along pipe),
+# extruded outward along +X from x = 15 mm to past the outer wall.
+X0 = 15.0
+H = SLEEVE_L / 2 + 1.0
+wm, wn = FUNNEL_MOUTH_W / 2, OPENING_W / 2
+zf = SLEEVE_L / 2 - FUNNEL_L
+profile = [(-wm, H), (wm, H), (wn, zf), (wn, -zf), (wm, -H), (-wm, -H), (-wn, -zf), (-wn, zf)]
+gap = (cq.Workplane("YZ", origin=(X0, 0, 0)).polyline(profile).close()
+       .extrude(WALL_OUT_R + 10 - X0))
+body = body.cut(gap)
 
 for z in (PAD_HOLE_Z, -PAD_HOLE_Z):
     hole = cq.Workplane("XY").add(cq.Solid.makeCylinder(
