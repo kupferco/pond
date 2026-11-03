@@ -12,6 +12,8 @@ log = logging.getLogger(__name__)
 
 
 class Store(ABC):
+    web_links = False  # True when url() gives an https link a browser can open without a login
+
     @abstractmethod
     def put(self, key: str, data: bytes, content_type: str | None = None) -> None: ...
 
@@ -67,6 +69,8 @@ class LocalStore(Store):
 
 
 class GCSStore(Store):
+    web_links = True
+
     def __init__(self, bucket: str, prefix: str = ""):
         from google.cloud import storage  # imported lazily so local dev needs no GCP libs loaded
 

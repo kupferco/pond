@@ -16,7 +16,7 @@ import anyio
 from pydantic import AnyHttpUrl
 from starlette.applications import Starlette
 from starlette.requests import Request
-from starlette.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
+from starlette.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
 
 from mcp.server.auth.settings import AuthSettings, ClientRegistrationOptions
 from mcp.server.mcpserver import Image, MCPServer
@@ -26,6 +26,7 @@ from . import __version__
 from .auth import BuiltinOAuthProvider, StaticTokenVerifier
 from .config import Settings
 from .github import GitHubError, GitHubRepo, RepoAccessError, RepoPolicy, slugify
+from .links import VIEWER_FILE, ShortLinks
 from .renders import RenderRecord, file_key, list_records, load_record, new_render_id, save_record
 from .sim_models import SimModelSource
 from .sandbox.host import DEFAULT_VIEWS, run_cad_script, run_sim_job
@@ -47,6 +48,7 @@ geometry and fix the script. Conventions:
   network access. Scripts are killed after the timeout.
 - Views are hidden-line drawings; the caption on each image says which way you are looking.
 Every render is stored with STEP, STL and GLB files and can be fetched again with get_render.
+File and viewer links in the results are short and do not expire: share them as they are.
 render_svg turns SVG markup into a PNG so you can check a 2D drawing or diagram.
 When the GitHub tools are present, a successful render_cad also commits its script to
 cad/<name>.py on the drafts branch; pass a stable `name` (e.g. "hand_sleeve") so iterations
@@ -79,10 +81,20 @@ def _viewer_src_ok(src: str) -> bool:
     return u.scheme == "https" and (u.hostname or "") in VIEWER_HOSTS
 
 
-def _add_viewer(summary: dict, settings: Settings) -> dict:
+def _short_links(settings: Settings, store: Store) -> ShortLinks | None:
+    """Short links need a server secret to sign them and a store whose URLs browsers can open."""
+    secret = settings.oauth_signing_secret or settings.api_token
+    if not secret or not store.web_links:
+        return None
+    return ShortLinks(secret, settings.public_url)
+
+
+def _add_viewer(summary: dict, settings: Settings, links: ShortLinks | None = None) -> dict:
     """Add a one-tap 3D viewer link when the GLB has a browser-loadable URL."""
-    glb = (summary.get("files") or {}).get("model.glb")
-    if glb and _viewer_src_ok(glb):
+    glb = (summary.get("files") or {}).get(VIEWER_FILE)
+    if glb and links and summary.get("id") and links.viewer_url(summary["id"]):
+        summary["viewer"] = links.viewer_url(summary["id"])
+    elif glb and _viewer_src_ok(glb):
         title = summary.get("title") or summary.get("id") or "model"
         summary["viewer"] = f"{settings.public_url}/viewer?src={quote(glb, safe='')}&title={quote(str(title))}"
     return summary
@@ -134,6 +146,10 @@ def build_server(settings: Settings, store: Store, github: GitHubRepo | None = N
                  sim_models: SimModelSource | None = None) -> MCPServer:
     token_verifier = None
     provider: BuiltinOAuthProvider | None = None
+    links = _short_links(settings, store)
+
+    def summarize(record: RenderRecord) -> dict:
+        return _add_viewer(record.summary(store, links.file_url if links else None), settings, links)
     auth_settings = None
 
     if settings.auth_mode == "token":
@@ -192,7 +208,7 @@ def build_server(settings: Settings, store: Store, github: GitHubRepo | None = N
 
         record = RenderRecord(id=render_id, kind="svg", created_at=_now(), status="ok", title=title, views=["image"])
         await anyio.to_thread.run_sync(_persist_svg, store, record, svg, png)
-        return [_text(record.summary(store)), Image(data=png, format="png")]
+        return [_text(summarize(record)), Image(data=png, format="png")]
 
     @server.tool()
     async def render_cad(
@@ -292,7 +308,7 @@ def build_server(settings: Settings, store: Store, github: GitHubRepo | None = N
                 text += f"\n\nScript output:\n{result.log.strip()[-4000:]}"
             return [text]
 
-        summary = _add_viewer(record.summary(store), settings)
+        summary = summarize(record)
         summary["duration_s"] = result.duration_s
         if result.log.strip():
             summary["script_output"] = result.log.strip()[-4000:]
@@ -306,7 +322,7 @@ def build_server(settings: Settings, store: Store, github: GitHubRepo | None = N
     async def list_renders(limit: int = 20) -> str:
         """List recent renders (newest first) with their ids, status, bounding boxes and file links."""
         records = await anyio.to_thread.run_sync(list_records, store, max(1, min(limit, 100)))
-        return _text([_add_viewer(r.summary(store), settings) for r in records])
+        return _text([summarize(r) for r in records])
 
     @server.tool()
     async def get_render(render_id: str, include_images: bool = True, include_script: bool = False) -> list[Image | str]:
@@ -314,7 +330,7 @@ def build_server(settings: Settings, store: Store, github: GitHubRepo | None = N
         record = await anyio.to_thread.run_sync(load_record, store, render_id)
         if not record:
             return [f"No render with id {render_id!r}"]
-        summary = _add_viewer(record.summary(store), settings)
+        summary = summarize(record)
         if record.log:
             summary["script_output"] = record.log[-4000:]
         out: list[Image | str] = []
@@ -460,7 +476,7 @@ def build_server(settings: Settings, store: Store, github: GitHubRepo | None = N
                 text += f"\n\nOutput:\n{result.log.strip()[-4000:]}"
             return [text]
 
-        summary = record_.summary(store)
+        summary = summarize(record_)
         summary["duration_s"] = result.duration_s
         summary["sheets"] = {cam: f"frames at t = {', '.join(str(t) for t in (result.summary or {}).get('snapshot_times_s', []))} s" for cam in sorted(result.sheets)}
         if origin:
@@ -479,7 +495,7 @@ def build_server(settings: Settings, store: Store, github: GitHubRepo | None = N
         rec = await anyio.to_thread.run_sync(load_record, store, sim_id)
         if not rec or rec.kind != "sim":
             return [f"No simulation with id {sim_id!r}"]
-        summary = rec.summary(store)
+        summary = summarize(rec)
         if rec.log:
             summary["output"] = rec.log[-4000:]
         out: list[Image | str] = [_text(summary)]
@@ -608,6 +624,29 @@ def build_server(settings: Settings, store: Store, github: GitHubRepo | None = N
         if not _viewer_src_ok(src):
             return PlainTextResponse("src must be an https URL on " + ", ".join(sorted(VIEWER_HOSTS)), status_code=400)
         return HTMLResponse(_viewer_page(src, request.query_params.get("title", "")[:120]))
+
+    def _link_target(code: str, name: str) -> tuple[RenderRecord, str] | None:
+        render_id = links.resolve(code, name) if links else None
+        record = load_record(store, render_id) if render_id else None
+        key = record.files.get(name) if record else None
+        return (record, store.url(key)) if key else None
+
+    @server.custom_route("/s/{code}/{name}", methods=["GET"])
+    async def short_link(request: Request) -> Response:
+        """A short, permanent file link: redirects to a freshly signed storage URL."""
+        found = await anyio.to_thread.run_sync(_link_target, request.path_params["code"], request.path_params["name"])
+        if not found:
+            return PlainTextResponse("Link not found", status_code=404)
+        return RedirectResponse(found[1], status_code=302, headers={"Cache-Control": "no-store"})
+
+    @server.custom_route("/v/{code}", methods=["GET"])
+    async def short_viewer(request: Request) -> Response:
+        """The 3D viewer page for one render's GLB, by short code."""
+        found = await anyio.to_thread.run_sync(_link_target, request.path_params["code"], VIEWER_FILE)
+        if not found or not _viewer_src_ok(found[1]):
+            return PlainTextResponse("Link not found", status_code=404)
+        record, src = found
+        return HTMLResponse(_viewer_page(src, (record.title or record.id)[:120]), headers={"Cache-Control": "no-store"})
 
     @server.custom_route("/", methods=["GET"])
     async def index(request: Request) -> Response:
