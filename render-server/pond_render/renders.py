@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import secrets
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 
@@ -54,8 +55,11 @@ class RenderRecord:
         known = {k: data.get(k) for k in cls.__dataclass_fields__ if k in data}
         return cls(**known)
 
-    def summary(self, store: Store) -> dict:
-        """What list_renders/get_render report, with links resolved."""
+    def summary(self, store: Store, link: Callable[[str, str], str | None] | None = None) -> dict:
+        """What list_renders/get_render report, with links resolved.
+
+        `link(render_id, file_name)` gives a short link; files without one get a storage URL.
+        """
         out = {
             "id": self.id,
             "kind": self.kind,
@@ -77,7 +81,8 @@ class RenderRecord:
             out["params"] = self.params
         if self.metrics:
             out["sim"] = self.metrics
-        out["files"] = {name: store.url(key) for name, key in self.files.items()}
+        out["files"] = {name: (link(self.id, name) if link else None) or store.url(key)
+                        for name, key in self.files.items()}
         if self.error:
             out["error"] = self.error
         return out

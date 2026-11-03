@@ -50,11 +50,11 @@ def make_settings(tmp_path: Path, port: int, **overrides) -> Settings:
 
 
 class RunningServer:
-    def __init__(self, settings: Settings, github=None):
+    def __init__(self, settings: Settings, github=None, store=None):
         self.settings = settings
         self.base_url = settings.public_url
         self.mcp_url = settings.mcp_url
-        config = uvicorn.Config(build_app(settings, github=github), host=settings.host, port=settings.port, log_level="warning")
+        config = uvicorn.Config(build_app(settings, store=store, github=github), host=settings.host, port=settings.port, log_level="warning")
         self._server = uvicorn.Server(config)
         self._thread = threading.Thread(target=self._server.run, daemon=True)
 
