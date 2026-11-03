@@ -1,10 +1,13 @@
 # cad/hand_sleeve.py @ claude/drafts
-# Hand sleeve, draft v4 (2 Nov 2026). Changes from v3 (31 Oct, render 20261031-232037-eaa2):
+# Hand sleeve, draft v4.1 (3 Nov 2026). v4.1: jaw OPENING_W widened 14 -> 18 mm and
+# FUNNEL_MOUTH_W 26 -> 30 mm so the track joint's M8 rod + standard lock nut (15 mm across
+# corners) pass with ~1.5 mm a side (cad/track_joint.py). Wheel pockets at +/-60 deg still clear.
+# Changes in v4 from v3 (31 Oct, render 20261031-232037-eaa2):
 #   - Wheel rows set to exactly ROW_SPACING = 60 mm apart (v3 was 64 mm by accident of
 #     sleeve length). Sim: 60 mm holds yaw to ~4 deg on straights and still passes the
 #     150 mm loop corners (sim/guide_test.py, sim/bend_test.py).
 #   - The bracket gap (C opening, +X) is now a double-ended funnel: narrow OPENING_W in the
-#     middle, flaring to FUNNEL_MOUTH_W at both ends over FUNNEL_L. Track screws / brackets
+#     middle, flaring to FUNNEL_MOUTH_W at both ends over FUNNEL_L. Track rods / brackets
 #     entering from either direction push the hand back square.
 #   - Spring idlers sized for SPRING_PRELOAD_N = 60 N per wheel station (30 N could not
 #     climb a wet pipe in sim; 60 N climbs wet with ~3% slip). Spring pockets unchanged;
@@ -30,8 +33,8 @@ SPRING_TRAVEL = 2.5    # radial slot travel for spring-loaded wheels
 SPRING_PRELOAD_N = 60.0  # target clamp force per idler station (for spring choice; not geometry)
 OUTER_WHEEL_ANG = 180.0          # driven wheel, outside of the loop (-X)
 INNER_WHEEL_ANGS = (60.0, -60.0) # spring wheels, back and front, towards spine
-OPENING_W = 14.0       # width of the C gap at its narrow middle (+X)
-FUNNEL_MOUTH_W = 26.0  # width of the gap at each end of the sleeve
+OPENING_W = 18.0       # width of the C gap at its narrow middle (+X); passes M8 nut
+FUNNEL_MOUTH_W = 30.0  # width of the gap at each end of the sleeve
 FUNNEL_L = 14.0        # axial length of each flare
 PAD_X0, PAD_X1 = -24.0, 0.0      # base mounting pad extent in X
 PAD_Y0, PAD_Y1 = -40.0, -21.0    # pad extent in Y (front = -Y)
