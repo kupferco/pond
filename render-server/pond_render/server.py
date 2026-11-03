@@ -55,7 +55,8 @@ repo; writes only ever go to claude/* branches, and Dani merges them to main.
 run_sim simulates a MuJoCo model: either a named generator from the repo's sim/ folder
 (list_models shows them and their params) or raw MJCF XML. It returns snapshot sheets per
 camera (frames left-to-right, top-to-bottom, blue bar = time), a summary of every logged
-signal (cart height, speed, contact force, actuator torque, wheel slip, joint travel), the
+signal (cart height, speed, roll/pitch/yaw, contact force, actuator torque, wheel slip, joint
+travel), the
 full time series as CSV, and an MP4 when record=true. SI units: metres, kg, seconds."""
 
 _cad_slots = anyio.Semaphore(2)

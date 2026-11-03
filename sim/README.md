@@ -33,8 +33,10 @@ to get slip logged per wheel.
 
 ## What the runner logs (100 Hz, `signals.csv`)
 
-`t`, tracked body `pos_*`/`vel_*`/`speed`, `contacts` (count) and `contact_normal_N` (sum of
-normal forces on the tracked body and its children), `ctrl.<actuator>`, `force.<actuator>`,
+`t`, tracked body `pos_*`/`vel_*`/`speed`, `roll_deg`/`pitch_deg`/`yaw_deg` (turn about world
+X/Y/Z since the start; yaw on `pipe_climb` is how far the cart has rotated around the pipe,
+and a full turn reads 360), `contacts` (count) and `contact_normal_N` (sum of normal forces on
+the tracked body and its children), `ctrl.<actuator>`, `force.<actuator>`,
 `q.<joint>`/`qd.<joint>` for every hinge and slide, `sensor.<name>` for every `<sensor>`, and
 `slip.<wheel joint>` (rim speed minus body speed). The summary has min/max/mean/final of each,
 plus `climb_m` (height gained) and `max_contacts`.

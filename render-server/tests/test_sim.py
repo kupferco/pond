@@ -1,6 +1,8 @@
 """MuJoCo sim runner, the sim model source, the pipe-climb model, and the MCP tools."""
 
+import csv
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -45,6 +47,24 @@ def test_ball_drop_runner(tmp_path):
     assert s["signals"]["contact_normal_N"]["max"] > 0
     header = r.files["signals.csv"].read_text().splitlines()[0]
     assert header.startswith("t,pos_x,pos_y,pos_z,vel_x,vel_y,vel_z,speed,contacts,contact_normal_N")
+
+
+def test_attitude_counts_full_turns_from_start(tmp_path):
+    spinner = """<mujoco><option gravity="0 0 0" timestep="0.002"/><worldbody>
+    <body name="spinner" euler="0 0 45"><joint name="hinge" type="hinge" axis="0 0 1"/>
+    <geom type="box" size=".1 .02 .02" mass="1"/></body></worldbody>
+    <actuator><motor name="spin" joint="hinge"/></actuator></mujoco>"""
+    r = run_sim_job(out_dir=tmp_path, mjcf=spinner, duration_s=2.0, controls={"spin": 0.05}, cameras=["free"])
+    assert r.ok, r.error
+    rows = list(csv.DictReader(r.files["signals.csv"].read_text().splitlines()))
+    assert float(rows[0]["yaw_deg"]) == pytest.approx(0, abs=1e-6)  # measured from the start, not from the world axes
+    yaw = [float(x["yaw_deg"]) for x in rows]
+    assert yaw == sorted(yaw) and yaw[-1] > 360  # keeps counting through each full turn
+    for row in rows:
+        one_step = math.degrees(abs(float(row["qd.hinge"])) * 0.002)  # body poses lag joint values by a step
+        assert float(row["yaw_deg"]) == pytest.approx(math.degrees(float(row["q.hinge"])), abs=one_step + 0.01)
+        assert float(row["roll_deg"]) == pytest.approx(0, abs=0.01)
+        assert float(row["pitch_deg"]) == pytest.approx(0, abs=0.01)
 
 
 def test_runner_refuses_files_and_includes(tmp_path):
@@ -131,6 +151,7 @@ def test_pipe_climb_dry_climbs(tmp_path):
     assert s["max_contacts"] >= 3 and s["wheel_radius_m"] == pytest.approx(0.01)
     assert "slip.wheel_drive" in s["signals"] and "q.spring_idler1" in s["signals"]
     assert "sensor.cart_pos[2]" in s["signals"]
+    assert abs(s["signals"]["yaw_deg"]["final"]) < 90, s["signals"]["yaw_deg"]  # still on the pipe, not spun round
 
 
 def test_pipe_climb_wet_slides(tmp_path):
