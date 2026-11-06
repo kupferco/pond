@@ -1,6 +1,7 @@
 {
   "updated": "2026-11-06",
   "renders": [
+    {"id": "20261106-161737-f125", "date": "2026-11-06", "group": "Spine", "title": "Spine joint v1", "comment": "Flat-pack spine joint: 100 mm spigot with anti-twist key; water tube and shock cord run through the bore. Exploded and joined.", "viewer": "https://pond-render-500653746288.us-east1.run.app/v/1fk5SO5V3WMDj8", "thumb": "https://pond-render-500653746288.us-east1.run.app/s/1fk5SO5VEnZnEC/iso.png"},
     {"id": "20261104-130254-43a9", "date": "2026-11-04", "group": "Full unit", "title": "MVP v1 unit — full assembly v2", "comment": "Current full unit: closed rounded track loop, sloped store rows.", "viewer": "https://pond-render-500653746288.us-east1.run.app/v/1fWtEcx708H1mw", "thumb": "https://pond-render-500653746288.us-east1.run.app/s/1fWtEcx7EH6kNZ/iso.png"},
     {"id": "20261104-130010-3473", "date": "2026-11-04", "group": "Full unit", "title": "MVP v1 unit — full assembly concept", "comment": "First full-assembly concept, superseded by v2.", "viewer": "https://pond-render-500653746288.us-east1.run.app/v/1fWsVVv1Cm71Uh", "thumb": "https://pond-render-500653746288.us-east1.run.app/s/1fWsVVv1D5dQYh/iso.png"},
     {"id": "20261104-124614-d7dc", "date": "2026-11-04", "group": "Pick hole", "title": "Pick hole v3 — cross-slit silicone membrane", "comment": "Membrane version, shown closed and open.", "viewer": "https://pond-render-500653746288.us-east1.run.app/v/1fWonnum3htxiy", "thumb": "https://pond-render-500653746288.us-east1.run.app/s/1fWonnum8kmJyb/iso.png"},
