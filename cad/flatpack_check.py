@@ -1,7 +1,7 @@
 import cadquery as cq
 
 # Flat-pack check v3 (7 Nov 2026): v2 contents + bracing v5 parts.
-# New: 30 W panel flat above the shelf; lower side legs (948) and back strut (910) split in two halves
+# New: 30 W panel flat above the shelf; lower side legs and back strut split in two halves
 # (push-fit spigot joints, like the spine); top legs 389; base bar halves, top bar, panel rails;
 # 4 fold-out feet; clamp collars shipped as halves (ENVELOPE boxes); 2 internal spacers; sandbags folded flat.
 TW, TD, TH = 700.0, 400.0, 300.0
@@ -60,7 +60,6 @@ z_top = SHELF_Z + 4
 add(box(100, 280, 100, -290, 0, z_top), "arm_folded_ASSUMED", (0.95, 0.75, 0.3, 1))
 add(ytube(GP + 8, GP + 1, 100, -195, -50, z_top + (GP + 8)/2), "sleeve", (0.3, 0.55, 0.85, 1))
 
-# ---- new in v3, above the shelf, x from -145 to 340 ----
 add(box(450, 350, 25, 95, 0, z_top), "solar_panel_30W", (0.08, 0.12, 0.35, 1))
 z1 = z_top + 26
 LR = 16.0
