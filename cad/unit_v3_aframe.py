@@ -1,14 +1,15 @@
 import cadquery as cq, math
-# cad/unit_v3_aframe.py — v2 (7 Nov 2026)
-# v2: adds back strut (lid back edge -> lower joint), inverted A-frame on top (top bar -> 3rd pipe joint),
-#     V solar roof (2 x ~50 W panels, 700 x 540, 30 deg pitch) on the top bar, and 4 fold-out L feet
-#     (depth 840 overall) with bolt/peg holes and sandbags.
+# cad/unit_v3_aframe.py — v3 (7 Nov 2026)
+# v3: V roof replaced by ONE ~40 W panel (550 x 450), tilted 23 deg (Sao Paulo latitude), low edge at the
+#     front (-y). Top triangle shrunk: 500 mm bar on the spine top, two legs to the 3rd pipe joint (z=1547.5).
+#     Panel sits on two short front-back rails with front and back posts. No ridge/posts.
+# v2: back strut, inverted top A-frame, V solar roof, fold-out L feet with sandbags.
 # v1: lower A-frame in the spine plane (y=0) behind the track (y=-60), legs meet spine at z=1215.
 TW, TD, TH = 700.0, 400.0, 300.0
 GP = 75.0; SP = 33.7
 TX = 250.0; TR = 16.0; R = 150.0; LOOP_Y = -60.0
 ZB = TH + 150.0; ZT = 1900.0 - TR
-ZJ1 = 1215.0; ZJ2 = 1547.5; FOOT_X = 340.0; LID = TH + 4; ZBAR = 1900.0
+ZJ1 = 1215.0; ZJ2 = 1547.5; FOOT_X = 340.0; LID = TH + 4; ZBAR = 1900.0; BAR_X = 250.0
 def box(sx, sy, sz, cx, cy, z0):
     return cq.Workplane("XY").box(sx, sy, sz, centered=(True, True, False)).translate((cx, cy, z0))
 def cyl(r, h, x, y, z0):
@@ -57,35 +58,31 @@ def brace(zj, ends, ca, cb):
         coup = coup.union(tdir(16, 12.5, 50, (u.x * s0, u.y * s0, zj + u.z * s0), (u.x, u.y, u.z)))
         legs = U(legs, cq.Workplane("XY").add(cq.Solid.makeCylinder(12.5, Ld - 22, cq.Vector(u.x * 22, u.y * 22, zj + u.z * 22), u)))
     return coup, legs
-low_ends = [(-FOOT_X, 0, LID), (FOOT_X, 0, LID), (0, 196, LID)]
-coup1, legs1 = brace(ZJ1, low_ends, c1a, c1b)
-top_ends = [(-FOOT_X, 0, ZBAR), (FOOT_X, 0, ZBAR)]
-coup2, legs2 = brace(ZJ2, top_ends, c2a, c2b)
+coup1, legs1 = brace(ZJ1, [(-FOOT_X, 0, LID), (FOOT_X, 0, LID), (0, 196, LID)], c1a, c1b)
+coup2, legs2 = brace(ZJ2, [(-BAR_X, 0, ZBAR), (BAR_X, 0, ZBAR)], c2a, c2b)
 add(coup1.union(coup2), "brace_couplings", (0.2, 0.4, 0.8, 1))
 add(legs1, "lower_aframe_and_back_strut", (0.95, 0.6, 0.2, 1))
-add(legs2, "upper_inverted_aframe", (0.95, 0.6, 0.2, 1))
-hubs = tube(24, SP / 2, 30, 0, 0, ZJ1 - 15).union(tube(24, SP / 2, 30, 0, 0, ZJ2 - 15))
-add(hubs, "spine_hubs", (0.15, 0.15, 0.15, 1))
+add(legs2, "top_triangle_legs", (0.95, 0.6, 0.2, 1))
+add(tube(24, SP / 2, 30, 0, 0, ZJ1 - 15).union(tube(24, SP / 2, 30, 0, 0, ZJ2 - 15)), "spine_hubs", (0.15, 0.15, 0.15, 1))
 lidp = box(FOOT_X - 50, 30, 20, -(50 + FOOT_X) / 2, 0, LID).union(box(FOOT_X - 50, 30, 20, (50 + FOOT_X) / 2, 0, LID))
 lidp = lidp.union(box(70, 40, 6, -(FOOT_X - 20), 0, LID)).union(box(70, 40, 6, FOOT_X - 20, 0, LID)).union(box(40, 50, 6, 0, 175, LID))
 add(lidp, "base_bar_and_lid_plates", (0.2, 0.4, 0.8, 1))
-add(box(2 * FOOT_X + 40, 30, 20, 0, 0, ZBAR), "top_bar", (0.2, 0.4, 0.8, 1))
+add(box(2 * BAR_X + 30, 30, 20, 0, 0, ZBAR), "top_bar", (0.2, 0.4, 0.8, 1))
 
-# solar roof: ridge along x, slopes front and back
-PL, PW, PT, PITCH = 700.0, 540.0, 35.0, 30.0
-ZE = ZBAR + 20
-zr = ZE + PW * math.sin(math.radians(PITCH))
-posts = box(20, 20, zr - ZE, -300, 0, ZE).union(box(20, 20, zr - ZE, 300, 0, ZE)).union(box(PL, 30, 30, 0, 0, zr - 30))
-add(posts, "roof_posts_and_ridge", (0.2, 0.4, 0.8, 1))
-panels = None
-for sy, ang in ((-1, PITCH), (1, -PITCH)):
-    p = cq.Workplane("XY").box(PL, PW, PT).rotate((0, 0, 0), (1, 0, 0), ang)
-    yc = sy * (PW / 2) * math.cos(math.radians(PITCH))
-    zc = zr - (PW / 2) * math.sin(math.radians(PITCH)) + 10
-    panels = U(panels, p.translate((0, yc, zc)))
-add(panels, "solar_panels", (0.08, 0.12, 0.35, 1))
+# single tilted panel
+PW_X, PD_Y, PT, TILT = 550.0, 450.0, 30.0, 23.0
+ZPC = 2028.0
+t = math.tan(math.radians(TILT))
+panel = cq.Workplane("XY").box(PW_X, PD_Y, PT).rotate((0, 0, 0), (1, 0, 0), TILT).translate((0, 0, ZPC))
+add(panel, "solar_panel_40W", (0.08, 0.12, 0.35, 1))
+mount = None
+for x in (-200.0, 200.0):
+    mount = U(mount, box(30, 340, 20, x, 0, ZBAR + 20))
+    for y in (-150.0, 150.0):
+        zu = ZPC + y * t - (PT / 2) / math.cos(math.radians(TILT))
+        mount = U(mount, box(20, 20, zu - (ZBAR + 40) + 2, x, y, ZBAR + 40))
+add(mount, "panel_rails_and_posts", (0.2, 0.4, 0.8, 1))
 
-# fold-out L feet with bolt / peg holes, sandbags on top
 feet = None; bags = None
 for sx in (-1, 1):
     for sy in (-1, 1):
