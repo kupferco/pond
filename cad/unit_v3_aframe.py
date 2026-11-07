@@ -1,16 +1,16 @@
 import cadquery as cq, math
-# cad/unit_v3_aframe.py — v4 (7 Nov 2026)
-# v4: bulky 180 mm couplings replaced by 50 mm metal clamp collars centred where each leg crosses the
-#     pipe wall (pipe drilled, collar gasket seals). Legs 16 mm steel tube. Back strut aimed higher on the
-#     spine so it crosses the pipe at the same height as the side legs (one collar). 30 W panel 450 x 350,
-#     tilt 23 deg; top bar 400 mm. Growing pipe continuous again.
-# v3: single 40 W panel on small top triangle. v2: back strut, feet, V roof. v1: lower A-frame.
+# cad/unit_v3_aframe.py — v5 (7 Nov 2026)
+# v5: legs no longer pass through the PVC. 50 mm metal clamp collars sit OUTSIDE the growing pipe with
+#     long angled sleeves (60 mm) that take the 16 mm legs. Inside the pipe at each collar height, a spacer
+#     ring between pipe and spine carries the load to the spine. Lower collar z=1215 (side legs + back strut),
+#     top collar z=1547.5. 30 W panel 450 x 350 at 23 deg on a 400 mm top bar.
+# v4: short collars but legs through drilled pipe. v3: single panel. v2: strut, feet, V roof. v1: lower A-frame.
 TW, TD, TH = 700.0, 400.0, 300.0
 GP = 75.0; SP = 33.7; LR = 8.0
 TX = 250.0; TR = 16.0; R = 150.0; LOOP_Y = -60.0
 ZB = TH + 150.0; ZT = 1900.0 - TR
-ZJ1 = 1215.0; ZJ2 = 1547.5; FOOT_X = 340.0; LID = TH + 4; ZBAR = 1900.0; BAR_X = 200.0
-RP = GP / 2
+ZC1 = 1215.0; ZC2 = 1547.5; FOOT_X = 340.0; LID = TH + 4; ZBAR = 1900.0; BAR_X = 200.0
+RP = GP / 2; RC = RP + 3
 def box(sx, sy, sz, cx, cy, z0):
     return cq.Workplane("XY").box(sx, sy, sz, centered=(True, True, False)).translate((cx, cy, z0))
 def cyl(r, h, x, y, z0):
@@ -45,44 +45,27 @@ add(track, "track_loop", (0.7, 0.7, 0.72, 1))
 add(box(16, 30, 30, 0, -45, ZT - 15).union(box(16, 30, 30, 0, -45, ZB - 15)), "spine_brackets", (0.2, 0.2, 0.2, 1))
 add(box(70, 90, 110, TX, LOOP_Y, ZB + R + 50), "cart", (0.9, 0.2, 0.2, 1))
 
-def legs_to(zt, ends):
-    # zt: where each leg meets the spine; returns legs, stubs, list of crossing heights
-    legs = None; stubs = None; zc = []
+def collar(zc, ends):
+    c = tube(RC, RP, 50, 0, 0, zc - 25)
+    legs = None
     for e in ends:
-        d = cq.Vector(e[0], e[1], e[2] - zt); Ld = d.Length; u = d.normalized()
-        h = math.hypot(u.x, u.y)
-        s_wall = RP / h
-        zc.append(zt + u.z * s_wall)
-        legs = U(legs, cq.Workplane("XY").add(cq.Solid.makeCylinder(LR, Ld - 18, cq.Vector(u.x * 18, u.y * 18, zt + u.z * 18), u)))
-        s1 = (RP + 3) / h
-        stubs = U(stubs, tdir(LR + 3, LR, 15, (u.x * s1, u.y * s1, zt + u.z * s1), (u.x, u.y, u.z)))
-    return legs, stubs, zc
-side = [(-FOOT_X, 0, LID), (FOOT_X, 0, LID)]
-legsA, stubsA, zcA = legs_to(ZJ1, side)
-zcross = zcA[0]
-# back strut: choose spine meeting point so it crosses the pipe wall at the same height
-db = cq.Vector(0, 196, 0)
-dz_needed = None
-# solve: zt_b + uz * (RP/h) = zcross, with direction from (0,0,zt_b) to (0,196,LID)
-lo, hi = zcross, ZT
-for _ in range(60):
-    mid = (lo + hi) / 2
-    v = cq.Vector(0, 196, LID - mid).normalized()
-    zc_mid = mid + v.z * (RP / abs(v.y))
-    if zc_mid < zcross: lo = mid
-    else: hi = mid
-ZBACK = (lo + hi) / 2
-legsB, stubsB, _ = legs_to(ZBACK, [(0, 196, LID)])
-legsT, stubsT, zcT = legs_to(ZJ2, [(-BAR_X, 0, ZBAR), (BAR_X, 0, ZBAR)])
-collars = tube(RP + 3, RP, 50, 0, 0, zcross - 25).union(tube(RP + 3, RP, 50, 0, 0, zcT[0] - 25))
-collars = collars.union(stubsA).union(stubsB).union(stubsT)
-add(collars, "metal_collars_50mm", (0.55, 0.57, 0.6, 1))
-add(legsA.union(legsB), "lower_aframe_and_back_strut_16mm", (0.95, 0.6, 0.2, 1))
-add(legsT, "top_triangle_legs_16mm", (0.95, 0.6, 0.2, 1))
-hubs = tube(22, SP / 2, 24, 0, 0, ZJ1 - 12).union(tube(22, SP / 2, 24, 0, 0, ZBACK - 12)).union(tube(22, SP / 2, 24, 0, 0, ZJ2 - 12))
-add(hubs, "spine_hubs", (0.15, 0.15, 0.15, 1))
+        h = math.hypot(e[0], e[1])
+        px, py = e[0] / h * (RC - 4), e[1] / h * (RC - 4)
+        P = cq.Vector(px, py, zc)
+        d = cq.Vector(e[0], e[1], e[2]) - P; Ld = d.Length; u = d.normalized()
+        c = c.union(tdir(LR + 3, LR, 60, (P.x, P.y, P.z), (u.x, u.y, u.z)))
+        s = P + u * 12
+        legs = U(legs, cq.Workplane("XY").add(cq.Solid.makeCylinder(LR, Ld - 12, s, u)))
+    return c, legs
+cA, legsA = collar(ZC1, [(-FOOT_X, 0, LID), (FOOT_X, 0, LID), (0, 180, LID)])
+cB, legsB = collar(ZC2, [(-BAR_X, 0, ZBAR), (BAR_X, 0, ZBAR)])
+add(cA.union(cB), "clamp_collars_50mm", (0.55, 0.57, 0.6, 1))
+add(legsA, "lower_aframe_and_back_strut_16mm", (0.95, 0.6, 0.2, 1))
+add(legsB, "top_triangle_legs_16mm", (0.95, 0.6, 0.2, 1))
+spacers = tube(RP - 3, SP / 2, 50, 0, 0, ZC1 - 25).union(tube(RP - 3, SP / 2, 50, 0, 0, ZC2 - 25))
+add(spacers, "internal_spacers", (0.1, 0.1, 0.1, 1))
 lidp = box(FOOT_X - 50, 20, 15, -(50 + FOOT_X) / 2, 0, LID).union(box(FOOT_X - 50, 20, 15, (50 + FOOT_X) / 2, 0, LID))
-lidp = lidp.union(box(50, 30, 5, -(FOOT_X - 10), 0, LID)).union(box(50, 30, 5, FOOT_X - 10, 0, LID)).union(box(30, 40, 5, 0, 180, LID))
+lidp = lidp.union(box(50, 30, 5, -(FOOT_X - 10), 0, LID)).union(box(50, 30, 5, FOOT_X - 10, 0, LID)).union(box(30, 40, 5, 0, 175, LID))
 add(lidp, "base_bar_and_lid_plates", (0.55, 0.57, 0.6, 1))
 add(box(2 * BAR_X + 20, 20, 15, 0, 0, ZBAR), "top_bar", (0.55, 0.57, 0.6, 1))
 PW_X, PD_Y, PT, TILT = 450.0, 350.0, 25.0, 23.0
@@ -105,5 +88,4 @@ for sx in (-1, 1):
         bags = U(bags, box(110, 120, 55, sx * 325, sy * 315, 6))
 add(feet, "fold_out_feet", (0.2, 0.2, 0.2, 1))
 add(bags, "sandbags", (0.8, 0.7, 0.45, 1))
-print("lower collar z", round(zcross, 1), "back strut meets spine z", round(ZBACK, 1), "top collar z", round(zcT[0], 1))
 result = assy
