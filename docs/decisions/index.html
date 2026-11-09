@@ -4,50 +4,35 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pond — Decisions and notes</title>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<style>
-  body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f7f4;color:#1d2a1f}
-  .wrap{max-width:860px;margin:auto;padding:16px}
-  h1{margin:4px 0 4px}
-  h2.sec{font-size:17px;text-transform:uppercase;letter-spacing:.05em;margin:24px 0 10px;color:#2f6b3a}
-  a.item{display:block;background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);text-decoration:none;color:inherit;overflow-wrap:anywhere}
-  a.item:hover{box-shadow:0 2px 8px rgba(0,0,0,.15)}
-  .date{font-size:13px;color:#667}
-  .title{font-weight:600}
-  #doc{background:#fff;border-radius:10px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.08);line-height:1.55;overflow-wrap:anywhere}
-  #doc h1{font-size:22px}
-  #doc .tbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  #doc table{border-collapse:collapse;font-size:14px}
-  #doc td,#doc th{border:1px solid #ddd;padding:4px 8px;overflow-wrap:normal}
-  #doc img{max-width:100%}
-  #doc ul,#doc ol{padding-left:20px}
-  .back{display:inline-block;margin:6px 0 14px;color:#2f6b3a;font-weight:600;text-decoration:none}
-</style>
+<link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
 <script src="../assets/site.js" data-root="../" data-page="decisions"></script>
-<div class="wrap">
-  <div id="view"></div>
-</div>
+<div id="view"></div>
+<footer class="site">Designed in London, being built in São Paulo.</footer>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 let D=null;
+const view=document.getElementById('view');
 function list(){
-  const v=document.getElementById('view');
-  v.innerHTML='<h1>Decisions and notes</h1>';
+  view.innerHTML='<header class="page-head"><div class="inner"><p class="label">Why</p><h1>Decisions and notes</h1></div></header>';
   [['decisions','Decisions'],['notes','Working notes']].forEach(([k,label])=>{
-    const h=document.createElement('h2');h.className='sec';h.textContent=label;v.appendChild(h);
+    const sec=document.createElement('section');sec.className='block';
+    sec.innerHTML='<div class="inner"><h2></h2><div class="rows"></div></div>';
+    sec.querySelector('h2').textContent=label;
+    const rows=sec.querySelector('.rows');
     D[k].forEach(d=>{
-      const a=document.createElement('a');a.className='item';a.href='#'+encodeURIComponent(d.file);
-      a.innerHTML='<div class="date"></div><div class="title"></div>';
-      a.querySelector('.date').textContent=d.date;
-      a.querySelector('.title').textContent=d.title;
-      v.appendChild(a);
+      const a=document.createElement('a');a.className='row';a.href='#'+encodeURIComponent(d.file);
+      const dv=document.createElement('div');dv.textContent=d.title;
+      const s=document.createElement('small');s.textContent=new Date(d.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+      dv.appendChild(s);a.appendChild(dv);rows.appendChild(a);
     });
+    view.appendChild(sec);
   });
+  window.scrollTo(0,0);
 }
 function show(file){
-  const v=document.getElementById('view');
-  v.innerHTML='<a class="back" href="#">← All decisions and notes</a><div id="doc">Loading…</div>';
+  view.innerHTML='<section class="block"><div class="inner"><a class="back" href="#">← All decisions and notes</a><article class="prose" id="doc">Loading…</article></div></section>';
   fetch(file).then(r=>r.text()).then(t=>{
     const doc=document.getElementById('doc');
     doc.innerHTML=marked.parse(t);
