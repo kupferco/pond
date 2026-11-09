@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pond — Roadmap item</title>
+<style>
+  body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f7f4;color:#1d2a1f}
+  .wrap{max-width:760px;margin:auto;padding:16px}
+  .back{display:inline-block;margin:6px 0 14px;color:#2f6b3a;font-weight:600;text-decoration:none}
+  .stage{display:inline-block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:20px;padding:3px 10px}
+  .stage.now{background:#d3f2dc;color:#17643a}.stage.next{background:#fff1c2;color:#7a5b00}.stage.later{background:#eee;color:#555}
+  .area{display:inline-block;font-size:12px;background:#e3efe5;color:#2f6b3a;border-radius:20px;padding:3px 10px;margin-left:6px}
+  h1{margin:12px 0 6px;font-size:26px;overflow-wrap:anywhere}
+  .summary{font-size:16px;color:#334;margin:0 0 16px;line-height:1.5}
+  .box{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.08);line-height:1.6;overflow-wrap:anywhere}
+  h2{font-size:15px;text-transform:uppercase;letter-spacing:.05em;color:#2f6b3a;margin:22px 0 8px}
+  .links a{display:block;background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);color:#1d2a1f;text-decoration:none;font-weight:600}
+  .links a:after{content:" →";color:#2f6b3a}
+</style>
+</head>
+<body>
+<script src="../assets/site.js" data-root="../" data-page="roadmap"></script>
+<div class="wrap">
+  <a class="back" href="./">← Roadmap</a>
+  <div id="view">Loading…</div>
+</div>
+<script>
+function slug(t){return t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+const id=new URLSearchParams(location.search).get('id');
+fetch('roadmap.json').then(r=>r.json()).then(d=>{
+  let item=null,stage=null;
+  ['now','next','later'].forEach(k=>(d[k]||[]).forEach(i=>{if(slug(i.title)===id){item=i;stage=k;}}));
+  const v=document.getElementById('view');
+  if(!item){v.textContent='Could not find that roadmap item.';return;}
+  document.title='Pond — '+item.title;
+  v.innerHTML='';
+  const tags=document.createElement('div');
+  const s=document.createElement('span');s.className='stage '+stage;s.textContent=stage;tags.appendChild(s);
+  if(item.area){const a=document.createElement('span');a.className='area';a.textContent=item.area;tags.appendChild(a);}
+  const h=document.createElement('h1');h.textContent=item.title;
+  const p=document.createElement('p');p.className='summary';p.textContent=item.note||'';
+  v.append(tags,h,p);
+  if(item.details){
+    const h2=document.createElement('h2');h2.textContent='Details';
+    const b=document.createElement('div');b.className='box';b.textContent=item.details;
+    v.append(h2,b);
+  }
+  if(item.links&&item.links.length){
+    const h2=document.createElement('h2');h2.textContent='Related';
+    const l=document.createElement('div');l.className='links';
+    item.links.forEach(x=>{const a=document.createElement('a');a.href=x.href;a.textContent=x.label;l.appendChild(a);});
+    v.append(h2,l);
+  }
+});
+</script>
+</body>
+</html>
