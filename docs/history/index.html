@@ -4,34 +4,36 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pond — History</title>
+<link rel="stylesheet" href="../assets/style.css">
 <style>
-  body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f7f4;color:#1d2a1f}
-  .wrap{max-width:800px;margin:auto;padding:16px}
-  h1{margin:4px 0 4px}.updated{color:#667;font-size:14px}
-  .entry{border-left:3px solid #2f6b3a;padding:0 0 18px 16px;margin-left:6px;position:relative;overflow-wrap:anywhere}
-  .entry:before{content:"";position:absolute;left:-8px;top:4px;width:13px;height:13px;border-radius:50%;background:#2f6b3a}
-  .date{font-size:13px;color:#667}
-  .entry h3{margin:2px 0 6px;font-size:17px}
-  .entry ul{margin:0;padding-left:18px;font-size:14px;line-height:1.5;color:#334}
-  #list{margin-top:20px}
+  .entry{position:relative;border-left:2px solid #cfe9da;padding:0 0 26px 20px;margin-left:6px;overflow-wrap:anywhere}
+  .entry:before{content:"";position:absolute;left:-8px;top:5px;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--green-bright)}
+  .entry .date{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--green)}
+  .entry h2{font-size:21px;margin:4px 0 8px}
+  .entry ul{margin:0;padding-left:18px;font-size:15px;line-height:1.55}
+  .entry li{margin:3px 0}
 </style>
 </head>
 <body>
 <script src="../assets/site.js" data-root="../" data-page="history"></script>
-<div class="wrap">
-  <h1>History</h1>
-  <div class="updated" id="updated"></div>
-  <div id="list"></div>
-</div>
+<header class="page-head">
+  <div class="inner">
+    <p class="label">Record</p>
+    <h1>History</h1>
+    <p class="updated" id="updated"></p>
+  </div>
+</header>
+<section class="block"><div class="inner" id="list"></div></section>
+<footer class="site">Designed in London, being built in São Paulo.</footer>
 <script>
 fetch('history.json').then(r=>r.json()).then(d=>{
   document.getElementById('updated').textContent='Last updated '+d.updated;
   const list=document.getElementById('list');
   d.entries.slice().sort((a,b)=>b.date.localeCompare(a.date)).forEach(e=>{
     const el=document.createElement('div');el.className='entry';
-    el.innerHTML='<div class="date"></div><h3></h3><ul></ul>';
+    el.innerHTML='<div class="date"></div><h2></h2><ul></ul>';
     el.querySelector('.date').textContent=new Date(e.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
-    el.querySelector('h3').textContent=e.title;
+    el.querySelector('h2').textContent=e.title;
     const ul=el.querySelector('ul');
     e.items.forEach(t=>{const li=document.createElement('li');li.textContent=t;ul.appendChild(li);});
     list.appendChild(el);

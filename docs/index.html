@@ -4,47 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pond</title>
-<style>
-  :root{--ink:#0a2540;--body:#425466;--muted:#6b7c93;--green:#1d7a4f;--green-bright:#2fa36b;--line:rgba(10,37,64,.08);
-    --shadow:0 13px 27px -5px rgba(50,50,93,.18),0 8px 16px -8px rgba(0,0,0,.2);--shadow-sm:0 2px 5px -1px rgba(50,50,93,.15),0 1px 3px -1px rgba(0,0,0,.2)}
-  body{margin:0;background:#fff;color:var(--body);font-size:16px;line-height:1.6}
-  .hero{position:relative;overflow:hidden;padding:44px 22px 36px;
-    background:linear-gradient(160deg,#eaf7ef 0%,#f6f9fc 45%,#ffffff 100%)}
-  .hero:before{content:"";position:absolute;top:-120px;right:-140px;width:360px;height:360px;border-radius:50%;
-    background:radial-gradient(circle,rgba(47,163,107,.22),rgba(47,163,107,0) 70%)}
-  .inner{position:relative;max-width:640px;margin:0 auto}
-  .eyebrow{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.02em;color:var(--green);
-    background:#fff;border-radius:999px;padding:5px 12px;box-shadow:var(--shadow-sm)}
-  h1{margin:18px 0 12px;color:var(--ink);font-size:36px;line-height:1.12;letter-spacing:-.03em;font-weight:800}
-  .lead{margin:0 0 24px;font-size:18px;line-height:1.55;color:var(--body)}
-  .btns{display:flex;flex-wrap:wrap;gap:10px}
-  .btn{display:inline-flex;align-items:center;height:44px;padding:0 18px;border-radius:999px;font-weight:700;font-size:15px;text-decoration:none}
-  .btn.primary{background:var(--ink);color:#fff}
-  .btn.ghost{background:#fff;color:var(--ink);box-shadow:var(--shadow-sm)}
-  .shot{display:block;margin:32px auto 0;max-width:420px;background:#fff;border-radius:18px;padding:18px;box-shadow:var(--shadow);text-decoration:none}
-  .shot img{display:block;width:100%;height:auto;max-height:52vh;object-fit:contain}
-  .shot .cap{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:14px}
-  .shot .cap b{color:var(--ink)}
-  .shot .cap span{color:var(--green);font-weight:700}
-  section.block{padding:40px 22px 8px}
-  .label{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green);margin:0 0 6px}
-  h2{margin:0 0 18px;color:var(--ink);font-size:24px;letter-spacing:-.02em;line-height:1.25}
-  .list{display:grid;gap:12px}
-  .card{display:block;background:#fff;border-radius:14px;padding:18px;box-shadow:var(--shadow-sm);border:1px solid var(--line);
-    text-decoration:none;color:inherit;overflow-wrap:anywhere;transition:box-shadow .2s,transform .2s}
-  .card:active{transform:scale(.99)}
-  .card h3{margin:0 0 4px;color:var(--ink);font-size:17px;letter-spacing:-.01em}
-  .card p{margin:0;font-size:15px;line-height:1.5;color:var(--body)}
-  .card .go{display:inline-block;margin-top:10px;font-size:14px;font-weight:700;color:var(--green)}
-  .rows{border-radius:14px;border:1px solid var(--line);overflow:hidden}
-  .row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;background:#fff;text-decoration:none;color:var(--ink);font-weight:600;border-top:1px solid var(--line)}
-  .row:first-child{border-top:0}
-  .row small{display:block;font-weight:400;color:var(--muted);font-size:14px;margin-top:2px}
-  .row:after{content:"→";color:var(--green);font-weight:700}
-  .more{display:inline-block;margin-top:14px;font-weight:700;color:var(--green);text-decoration:none}
-  footer{padding:40px 22px 48px;text-align:center;font-size:13px;color:var(--muted)}
-  @media (min-width:720px){h1{font-size:48px}.list{grid-template-columns:1fr 1fr}}
-</style>
+<link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 <script src="assets/site.js" data-root="./" data-page="home"></script>
@@ -95,7 +55,7 @@
   </div>
 </section>
 
-<footer>Designed in London, being built in São Paulo.</footer>
+<footer class="site">Designed in London, being built in São Paulo.</footer>
 
 <script>
 function slug(t){return t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}

@@ -1,6 +1,7 @@
 // Shared site header for the Pond hub.
 // Usage, first thing inside <body>:
 //   <script src="ROOT/assets/site.js" data-root="ROOT/" data-page="home|gallery|roadmap|decisions|shopping|history"></script>
+// Page styles live in ROOT/assets/style.css (linked in each page's <head>).
 (function () {
   var me = document.currentScript;
   var root = me.getAttribute('data-root') || './';
@@ -20,19 +21,17 @@
   var tc = document.createElement('meta'); tc.name = 'theme-color'; tc.content = '#ffffff';
   document.head.appendChild(tc);
 
-  // Network-first service worker: always the latest version when online.
+  // Service worker: fresh copy when the network is quick, saved copy if it's slow or offline.
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register(root + 'sw.js', { scope: root }).catch(function () {});
   }
 
   var css = document.createElement('style');
   css.textContent =
-    '*{box-sizing:border-box}html,body{overflow-x:hidden;max-width:100%}' +
-    'body{-webkit-font-smoothing:antialiased;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}' +
     '.pd-bar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;' +
-      'height:60px;padding:0 20px;background:rgba(255,255,255,.85);-webkit-backdrop-filter:saturate(180%) blur(12px);' +
+      'height:60px;padding:0 20px;background:rgba(255,255,255,.88);-webkit-backdrop-filter:saturate(180%) blur(12px);' +
       'backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid rgba(10,37,64,.06)}' +
-    '.pd-logo{font-size:22px;font-weight:800;letter-spacing:-.04em;color:#0a2540;text-decoration:none;line-height:1}' +
+    '.pd-logo{font-family:var(--serif,Georgia,serif);font-size:24px;font-weight:700;letter-spacing:-.02em;color:#0a2540;text-decoration:none;line-height:1}' +
     '.pd-logo:after{content:".";color:#2fa36b}' +
     '.pd-burger{width:44px;height:44px;margin-right:-10px;border:0;background:none;display:flex;flex-direction:column;' +
       'justify-content:center;align-items:center;gap:5px;cursor:pointer;padding:0}' +
