@@ -5,29 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pond — Roadmap</title>
 <style>
-  *{box-sizing:border-box}
-  html,body{overflow-x:hidden;max-width:100%}
   body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f7f4;color:#1d2a1f}
-  header{padding:20px 16px 8px;max-width:1100px;margin:auto}
-  nav{display:flex;flex-wrap:wrap;gap:6px 14px}
-  nav a{color:#2f6b3a;text-decoration:none;font-weight:600}
-  h1{margin:8px 0 4px}
+  header{padding:16px 16px 4px;max-width:1100px;margin:auto}
+  h1{margin:4px 0 4px}
   .updated{color:#667;font-size:14px}
   main{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:18px;padding:16px;max-width:1100px;margin:auto}
   .col h2{font-size:17px;text-transform:uppercase;letter-spacing:.05em;margin:0 0 10px}
-  .card{background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow-wrap:anywhere;scroll-margin-top:16px}
-  .card:target{outline:3px solid #2f6b3a;box-shadow:0 2px 10px rgba(47,107,58,.3)}
+  .card{display:block;background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow-wrap:anywhere;text-decoration:none;color:inherit}
+  .card:hover{box-shadow:0 2px 8px rgba(0,0,0,.15)}
   .card h3{margin:0 0 4px;font-size:16px}
   .card p{margin:0;font-size:14px;line-height:1.45;color:#334}
-  .area{display:inline-block;font-size:12px;background:#e3efe5;color:#2f6b3a;border-radius:20px;padding:2px 8px;margin-top:8px}
-  .links{margin-top:8px;font-size:13px}
-  .links a{color:#2f6b3a;font-weight:600;margin-right:10px}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+  .area{display:inline-block;font-size:12px;background:#e3efe5;color:#2f6b3a;border-radius:20px;padding:2px 8px}
+  .go{font-size:13px;color:#2f6b3a;font-weight:600}
   .now h2{color:#2f6b3a}.next h2{color:#8a6d1d}.later h2{color:#667}
 </style>
 </head>
 <body>
+<script src="../assets/site.js" data-root="../" data-page="roadmap"></script>
 <header>
-  <nav><a href="../">Home</a><a href="../gallery/">Drawings</a><a href="./">Roadmap</a><a href="../decisions/">Decisions</a><a href="../shopping/">Shopping</a><a href="../history/">History</a></nav>
   <h1>Roadmap</h1>
   <div class="updated" id="updated"></div>
 </header>
@@ -41,21 +37,15 @@ fetch('roadmap.json').then(r=>r.json()).then(d=>{
     const c=document.createElement('section');c.className='col '+k;
     c.innerHTML='<h2>'+label+'</h2>';
     (d[k]||[]).forEach(i=>{
-      const card=document.createElement('div');card.className='card';card.id=slug(i.title);
-      card.innerHTML='<h3></h3><p></p><span class="area"></span>';
+      const card=document.createElement('a');card.className='card';card.href='item.html?id='+slug(i.title);
+      card.innerHTML='<h3></h3><p></p><div class="foot"><span class="area"></span><span class="go">Details →</span></div>';
       card.querySelector('h3').textContent=i.title;
-      card.querySelector('p').textContent=i.details||i.note||'';
-      card.querySelector('.area').textContent=i.area||'';
-      if(i.links&&i.links.length){
-        const l=document.createElement('div');l.className='links';
-        i.links.forEach(x=>{const a=document.createElement('a');a.href=x.href;a.textContent=x.label+' →';l.appendChild(a);});
-        card.appendChild(l);
-      }
+      card.querySelector('p').textContent=i.note||'';
+      const ar=card.querySelector('.area');if(i.area)ar.textContent=i.area;else ar.remove();
       c.appendChild(card);
     });
     cols.appendChild(c);
   });
-  if(location.hash){const t=document.getElementById(location.hash.slice(1));if(t){t.scrollIntoView();}}
 });
 </script>
 </body>
