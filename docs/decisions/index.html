@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pond — Decisions and notes</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f7f4;color:#1d2a1f}
+  .wrap{max-width:860px;margin:auto;padding:24px 20px}
+  nav a{margin-right:14px;color:#2f6b3a;text-decoration:none;font-weight:600}
+  h1{margin:8px 0 4px}
+  h2.sec{font-size:18px;text-transform:uppercase;letter-spacing:.05em;margin:24px 0 10px;color:#2f6b3a}
+  a.item{display:block;background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);text-decoration:none;color:inherit}
+  a.item:hover{box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .date{font-size:13px;color:#667}
+  .title{font-weight:600}
+  #doc{background:#fff;border-radius:10px;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.08);line-height:1.55}
+  #doc table{border-collapse:collapse;font-size:14px}
+  #doc td,#doc th{border:1px solid #ddd;padding:4px 8px}
+  .back{display:inline-block;margin:14px 0;color:#2f6b3a;font-weight:600;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav><a href="../">Home</a><a href="../gallery/">Drawings</a><a href="../roadmap/">Roadmap</a><a href="./">Decisions</a><a href="../shopping/">Shopping</a><a href="../history/">History</a></nav>
+  <div id="view"></div>
+</div>
+<script>
+let D=null;
+function list(){
+  const v=document.getElementById('view');
+  v.innerHTML='<h1>Decisions and notes</h1>';
+  [['decisions','Decisions'],['notes','Working notes']].forEach(([k,label])=>{
+    const h=document.createElement('h2');h.className='sec';h.textContent=label;v.appendChild(h);
+    D[k].forEach(d=>{
+      const a=document.createElement('a');a.className='item';a.href='#'+encodeURIComponent(d.file);
+      a.innerHTML='<div class="date"></div><div class="title"></div>';
+      a.querySelector('.date').textContent=d.date;
+      a.querySelector('.title').textContent=d.title;
+      v.appendChild(a);
+    });
+  });
+}
+function show(file){
+  const v=document.getElementById('view');
+  v.innerHTML='<a class="back" href="#">← All decisions and notes</a><div id="doc">Loading…</div>';
+  fetch(file).then(r=>r.text()).then(t=>{document.getElementById('doc').innerHTML=marked.parse(t);window.scrollTo(0,0);})
+    .catch(()=>{document.getElementById('doc').textContent='Could not load '+file;});
+}
+function route(){const h=decodeURIComponent(location.hash.slice(1));h?show(h):list();}
+fetch('docs.json').then(r=>r.json()).then(d=>{D=d;route();window.onhashchange=route;});
+</script>
+</body>
+</html>
