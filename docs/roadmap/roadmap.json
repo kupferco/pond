@@ -1,0 +1,19 @@
+{
+  "updated": "2026-11-09",
+  "now": [
+    {"title": "Project hub", "note": "Turn the site into a hub: drawings, roadmap, shopping list, history, plus a homepage dashboard.", "area": "Tooling"},
+    {"title": "Arm V1 parts", "note": "Buy STS3215 servos and pay the import tax. Keep servo mounts standard so cheaper servos can drop in later.", "area": "Arm"},
+    {"title": "UK vs Brazil sourcing", "note": "Small, valuable electronics come from the UK in the cabin bag; bulky, generic parts are bought in Brazil.", "area": "Sourcing"}
+  ],
+  "next": [
+    {"title": "Motor positions on the cart", "note": "Where the drive and hand motors sit on the cart.", "area": "Cart"},
+    {"title": "Water system", "note": "Pump inside the tank, water up a tube inside the hollow spine. Low risk; only price matters for now.", "area": "Water"},
+    {"title": "Size collar and steel legs", "note": "From real loads; simulate the wobble with the cart on one side.", "area": "Structure"},
+    {"title": "Yaw control follow-ups", "note": "Print a 60 mm test hand; simulate screw + funnel and pick screw spacing; fix the cart sliding downhill after reversing; drive both hands for twin pipes.", "area": "Cart"},
+    {"title": "Real parts for energy", "note": "Replace the energy budget estimates with real parts.", "area": "Power"}
+  ],
+  "later": [
+    {"title": "Arm cost-cutting (V2/V3)", "note": "R&D track: home-built servos, assembly in Brazil.", "area": "Arm"},
+    {"title": "Software architecture", "note": "Many robots, one or two per household; firmware vs local vs cloud; dev, staging and prod; a test app for manual control.", "area": "Software"}
+  ]
+}
