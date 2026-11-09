@@ -5,11 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pond — History</title>
 <style>
+  *{box-sizing:border-box}
+  html,body{overflow-x:hidden;max-width:100%}
   body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f7f4;color:#1d2a1f}
-  .wrap{max-width:800px;margin:auto;padding:24px 20px}
-  nav a{margin-right:14px;color:#2f6b3a;text-decoration:none;font-weight:600}
+  .wrap{max-width:800px;margin:auto;padding:20px 16px}
+  nav{display:flex;flex-wrap:wrap;gap:6px 14px}
+  nav a{color:#2f6b3a;text-decoration:none;font-weight:600}
   h1{margin:8px 0 4px}.updated{color:#667;font-size:14px}
-  .entry{border-left:3px solid #2f6b3a;padding:0 0 18px 16px;margin-left:6px;position:relative}
+  .entry{border-left:3px solid #2f6b3a;padding:0 0 18px 16px;margin-left:6px;position:relative;overflow-wrap:anywhere}
   .entry:before{content:"";position:absolute;left:-8px;top:4px;width:13px;height:13px;border-radius:50%;background:#2f6b3a}
   .date{font-size:13px;color:#667}
   .entry h3{margin:2px 0 6px;font-size:17px}
