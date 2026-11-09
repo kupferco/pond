@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pond</title>
+<style>
+  body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f7f4;color:#1d2a1f}
+  .wrap{max-width:1100px;margin:auto;padding:24px 20px}
+  nav a{margin-right:14px;color:#2f6b3a;text-decoration:none;font-weight:600}
+  h1{margin:10px 0 2px;font-size:32px}
+  .tag{color:#556;margin:0 0 20px}
+  h2{font-size:18px;text-transform:uppercase;letter-spacing:.05em;margin:24px 0 10px;color:#2f6b3a}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  .card{background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .card h3{margin:0 0 4px;font-size:16px}
+  .card p{margin:0;font-size:14px;line-height:1.4;color:#334}
+  a.card{text-decoration:none;color:inherit}
+  a.card:hover{box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .next .card{opacity:.75}
+  .more{display:inline-block;margin-top:10px;color:#2f6b3a;font-weight:600;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav><a href="./">Home</a><a href="gallery/">Drawings</a><a href="roadmap/">Roadmap</a><a href="shopping/">Shopping</a><a href="history/">History</a></nav>
+  <h1>Pond</h1>
+  <p class="tag">Open-source autonomous communal urban farming. Phase 1: digital design and simulation.</p>
+
+  <h2>Working on now</h2>
+  <div class="grid" id="now"></div>
+  <h2>Up next</h2>
+  <div class="grid next" id="next"></div>
+  <a class="more" href="roadmap/">Full roadmap →</a>
+
+  <h2>Sections</h2>
+  <div class="grid">
+    <a class="card" href="gallery/"><h3>Drawings</h3><p>Every CAD render, grouped by part, with version history.</p></a>
+    <a class="card" href="roadmap/"><h3>Roadmap</h3><p>Now, next and later.</p></a>
+    <a class="card" href="shopping/"><h3>Shopping list</h3><p id="shopsum">What to buy in the UK and in Brazil.</p></a>
+    <a class="card" href="history/"><h3>History</h3><p>A dated record of what was done.</p></a>
+  </div>
+</div>
+<script>
+function fill(id,items){
+  const g=document.getElementById(id);
+  items.forEach(i=>{
+    const c=document.createElement('div');c.className='card';
+    c.innerHTML='<h3></h3><p></p>';
+    c.querySelector('h3').textContent=i.title;
+    c.querySelector('p').textContent=i.note||'';
+    g.appendChild(c);
+  });
+}
+fetch('roadmap/roadmap.json').then(r=>r.json()).then(d=>{fill('now',d.now||[]);fill('next',(d.next||[]).slice(0,3));});
+fetch('shopping/shopping.json').then(r=>r.json()).then(d=>{
+  const left=d.items.filter(i=>!i.bought).length;
+  document.getElementById('shopsum').textContent=left+' of '+d.items.length+' items still to buy.';
+});
+</script>
+</body>
+</html>
