@@ -1,5 +1,6 @@
 {
   "decisions": [
+    {"date": "2026-11-09", "title": "Arm V1, printer and UK vs Brazil sourcing", "file": "2026-11-09-arm-v1-printer-sourcing.md"},
     {"date": "2026-11-07", "title": "Spine bracing, feet, solar and flat-pack", "file": "2026-11-07-spine-bracing-feet-solar-flatpack.md"},
     {"date": "2026-11-02", "title": "Hand yaw control and bracket clearance", "file": "2026-11-02-hand-yaw-control.md"},
     {"date": "2026-11-01", "title": "CAD session decisions", "file": "2026-11-01-cad-session.md"},

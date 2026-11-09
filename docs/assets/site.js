@@ -14,10 +14,10 @@
     ['history', 'History', 'history/']
   ];
 
-  // App manifest + theme colour, so "Add to home screen" behaves like an app.
+  // App manifest + theme colour, so "Add to home screen" behaves like an app (portrait only).
   var mf = document.createElement('link'); mf.rel = 'manifest'; mf.href = root + 'manifest.webmanifest';
   document.head.appendChild(mf);
-  var tc = document.createElement('meta'); tc.name = 'theme-color'; tc.content = '#1f3b2d';
+  var tc = document.createElement('meta'); tc.name = 'theme-color'; tc.content = '#ffffff';
   document.head.appendChild(tc);
 
   // Network-first service worker: always the latest version when online.
@@ -28,23 +28,26 @@
   var css = document.createElement('style');
   css.textContent =
     '*{box-sizing:border-box}html,body{overflow-x:hidden;max-width:100%}' +
+    'body{-webkit-font-smoothing:antialiased;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}' +
     '.pd-bar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;' +
-      'padding:12px 16px;background:#fff;border-bottom:1px solid #e6e8e3}' +
-    '.pd-logo{font-family:Georgia,"Times New Roman",serif;font-size:24px;font-weight:700;letter-spacing:-.02em;' +
-      'color:#1f3b2d;text-decoration:none;line-height:1}' +
-    '.pd-burger{width:44px;height:44px;border:0;background:none;display:flex;flex-direction:column;justify-content:center;' +
-      'align-items:center;gap:5px;cursor:pointer;padding:0}' +
-    '.pd-burger span{display:block;width:24px;height:2px;background:#1f3b2d;border-radius:2px}' +
-    '.pd-shade{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:60}' +
-    '.pd-drawer{position:fixed;top:0;right:0;height:100%;width:min(280px,80vw);background:#fff;z-index:70;' +
-      'transform:translateX(100%);transition:transform .25s ease;box-shadow:-4px 0 16px rgba(0,0,0,.12);' +
-      'display:flex;flex-direction:column;padding:12px 0}' +
+      'height:60px;padding:0 20px;background:rgba(255,255,255,.85);-webkit-backdrop-filter:saturate(180%) blur(12px);' +
+      'backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid rgba(10,37,64,.06)}' +
+    '.pd-logo{font-size:22px;font-weight:800;letter-spacing:-.04em;color:#0a2540;text-decoration:none;line-height:1}' +
+    '.pd-logo:after{content:".";color:#2fa36b}' +
+    '.pd-burger{width:44px;height:44px;margin-right:-10px;border:0;background:none;display:flex;flex-direction:column;' +
+      'justify-content:center;align-items:center;gap:5px;cursor:pointer;padding:0}' +
+    '.pd-burger span{display:block;width:20px;height:2px;background:#0a2540;border-radius:2px}' +
+    '.pd-shade{position:fixed;inset:0;background:rgba(10,37,64,.3);opacity:0;pointer-events:none;transition:opacity .2s;z-index:60}' +
+    '.pd-drawer{position:fixed;top:0;right:0;height:100%;width:min(300px,82vw);background:#fff;z-index:70;' +
+      'transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);' +
+      'box-shadow:-20px 0 50px -12px rgba(50,50,93,.25);display:flex;flex-direction:column;padding:8px 0}' +
     '.pd-open .pd-shade{opacity:1;pointer-events:auto}.pd-open .pd-drawer{transform:none}' +
-    '.pd-close{align-self:flex-end;width:44px;height:44px;margin-right:8px;border:0;background:none;font-size:28px;' +
-      'line-height:1;color:#1f3b2d;cursor:pointer}' +
-    '.pd-drawer a{display:block;padding:14px 24px;font-size:18px;font-weight:600;color:#1f3b2d;text-decoration:none}' +
-    '.pd-drawer a.on{background:#e3efe5;color:#2f6b3a}' +
-    '.pd-drawer a:active{background:#f0f3ee}';
+    '.pd-close{align-self:flex-end;width:44px;height:44px;margin:6px 10px 10px 0;border:0;background:none;font-size:26px;' +
+      'line-height:1;color:#425466;cursor:pointer}' +
+    '.pd-drawer a{display:block;margin:2px 12px;padding:13px 14px;border-radius:10px;font-size:17px;font-weight:600;' +
+      'color:#0a2540;text-decoration:none}' +
+    '.pd-drawer a.on{background:#eef7f2;color:#1d7a4f}' +
+    '.pd-drawer a:active{background:#f6f9fc}';
   document.head.appendChild(css);
 
   var bar = document.createElement('div');
