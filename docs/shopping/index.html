@@ -5,13 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pond — Shopping list</title>
 <style>
-  *{box-sizing:border-box}
-  html,body{overflow-x:hidden;max-width:100%}
   body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f7f4;color:#1d2a1f}
-  .wrap{max-width:1100px;margin:auto;padding:20px 16px}
-  nav{display:flex;flex-wrap:wrap;gap:6px 14px}
-  nav a{color:#2f6b3a;text-decoration:none;font-weight:600}
-  h1{margin:8px 0 4px}.updated{color:#667;font-size:14px}
+  .wrap{max-width:1100px;margin:auto;padding:16px}
+  h1{margin:4px 0 4px}.updated{color:#667;font-size:14px}
   .sechead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px;margin:24px 0 10px}
   .sechead h2{font-size:17px;text-transform:uppercase;letter-spacing:.05em;margin:0;color:#2f6b3a}
   .sectotal{font-size:14px;font-weight:700;color:#1d2a1f}
@@ -30,8 +26,8 @@
 </style>
 </head>
 <body>
+<script src="../assets/site.js" data-root="../" data-page="shopping"></script>
 <div class="wrap">
-  <nav><a href="../">Home</a><a href="../gallery/">Drawings</a><a href="../roadmap/">Roadmap</a><a href="../decisions/">Decisions</a><a href="./">Shopping</a><a href="../history/">History</a></nav>
   <h1>Shopping list</h1>
   <div class="updated" id="updated"></div>
   <div id="list"></div>
@@ -67,7 +63,7 @@ fetch('shopping.json').then(r=>r.json()).then(d=>{
         const total=i.unit_price*(i.qty||1);
         c.querySelector('.line').textContent=(i.approx?'~':'')+money(total,i.currency);
         if(i.qty>1){const s=document.createElement('span');s.className='chip';s.textContent=money(i.unit_price,i.currency)+' each';m.appendChild(s);}
-      }else{c.querySelector('.line').textContent='price tbc';c.querySelector('.line').style.fontWeight='400';c.querySelector('.line').style.color='#999';}
+      }else{const l=c.querySelector('.line');l.textContent='price tbc';l.style.fontWeight='400';l.style.color='#999';}
       const f=document.createElement('span');f.className='chip';f.textContent=i.for;m.appendChild(f);
       if(i.note){const p=document.createElement('div');p.textContent=i.note;m.appendChild(p);}
       if(i.link){const a=document.createElement('a');a.className='buy';a.href=i.link;a.target='_blank';a.rel='noopener';a.textContent='Buy here →';m.appendChild(a);}
