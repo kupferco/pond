@@ -4,44 +4,45 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pond — Roadmap</title>
+<link rel="stylesheet" href="../assets/style.css">
 <style>
-  body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f7f4;color:#1d2a1f}
-  header{padding:16px 16px 4px;max-width:1100px;margin:auto}
-  h1{margin:4px 0 4px}
-  .updated{color:#667;font-size:14px}
-  main{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:18px;padding:16px;max-width:1100px;margin:auto}
-  .col h2{font-size:17px;text-transform:uppercase;letter-spacing:.05em;margin:0 0 10px}
-  .card{display:block;background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow-wrap:anywhere;text-decoration:none;color:inherit}
-  .card:hover{box-shadow:0 2px 8px rgba(0,0,0,.15)}
-  .card h3{margin:0 0 4px;font-size:16px}
-  .card p{margin:0;font-size:14px;line-height:1.45;color:#334}
-  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
-  .area{display:inline-block;font-size:12px;background:#e3efe5;color:#2f6b3a;border-radius:20px;padding:2px 8px}
-  .go{font-size:13px;color:#2f6b3a;font-weight:600}
-  .now h2{color:#2f6b3a}.next h2{color:#8a6d1d}.later h2{color:#667}
+  .cols{display:grid;gap:8px}
+  .cols .card{margin-bottom:12px}
+  .cols .foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+  .cols .foot .chip{margin:0}
+  .cols .go{margin:0}
+  @media (min-width:900px){.cols{grid-template-columns:repeat(3,1fr);gap:24px}}
 </style>
 </head>
 <body>
 <script src="../assets/site.js" data-root="../" data-page="roadmap"></script>
-<header>
-  <h1>Roadmap</h1>
-  <div class="updated" id="updated"></div>
+<header class="page-head">
+  <div class="inner wide">
+    <p class="label">Plan</p>
+    <h1>Roadmap</h1>
+    <p class="updated" id="updated"></p>
+  </div>
 </header>
-<main id="cols"></main>
+<section class="block">
+  <div class="inner wide cols" id="cols"></div>
+</section>
+<footer class="site">Designed in London, being built in São Paulo.</footer>
 <script>
 function slug(t){return t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
 fetch('roadmap.json').then(r=>r.json()).then(d=>{
   document.getElementById('updated').textContent='Last updated '+d.updated;
   const cols=document.getElementById('cols');
-  [['now','Now'],['next','Next'],['later','Later']].forEach(([k,label])=>{
-    const c=document.createElement('section');c.className='col '+k;
-    c.innerHTML='<h2>'+label+'</h2>';
+  [['now','Now','Working on now'],['next','Next','Coming up'],['later','Later','Later on']].forEach(([k,label,title])=>{
+    const c=document.createElement('div');
+    const l=document.createElement('p');l.className='label';l.textContent=label;
+    const h=document.createElement('h2');h.textContent=title;
+    c.append(l,h);
     (d[k]||[]).forEach(i=>{
       const card=document.createElement('a');card.className='card';card.href='item.html?id='+slug(i.title);
-      card.innerHTML='<h3></h3><p></p><div class="foot"><span class="area"></span><span class="go">Details →</span></div>';
+      card.innerHTML='<h3></h3><p></p><div class="foot"><span class="chip"></span><span class="go">Details →</span></div>';
       card.querySelector('h3').textContent=i.title;
       card.querySelector('p').textContent=i.note||'';
-      const ar=card.querySelector('.area');if(i.area)ar.textContent=i.area;else ar.remove();
+      const ch=card.querySelector('.chip');if(i.area)ch.textContent=i.area;else ch.remove();
       c.appendChild(card);
     });
     cols.appendChild(c);
