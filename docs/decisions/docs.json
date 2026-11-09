@@ -1,0 +1,15 @@
+{
+  "decisions": [
+    {"date": "2026-11-07", "title": "Spine bracing, feet, solar and flat-pack", "file": "2026-11-07-spine-bracing-feet-solar-flatpack.md"},
+    {"date": "2026-11-02", "title": "Hand yaw control and bracket clearance", "file": "2026-11-02-hand-yaw-control.md"},
+    {"date": "2026-11-01", "title": "CAD session decisions", "file": "2026-11-01-cad-session.md"},
+    {"date": "2026-10-31", "title": "Unit and cart design", "file": "2026-10-31-unit-and-cart-design.md"},
+    {"date": "2026-10-29", "title": "Infrastructure plan and bill of materials", "file": "2026-10-29-infrastructure-plan-and-bom.md"}
+  ],
+  "notes": [
+    {"date": "2026-11-07", "title": "Energy budget and battery plan (first estimate)", "file": "../notes/2026-11-07-energy-budget.md"},
+    {"date": "2026-11-01", "title": "MuJoCo sim server build plan", "file": "../sim-server-plan.md"},
+    {"date": "2026-10-31", "title": "Render server build plan", "file": "../render-server-plan.md"},
+    {"date": "2026-10-27", "title": "Vision: autonomous communal urban farming", "file": "../notes/2026-10-27-vision.md"}
+  ]
+}
