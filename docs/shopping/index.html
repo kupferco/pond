@@ -5,17 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pond — Shopping list</title>
 <style>
+  *{box-sizing:border-box}
+  html,body{overflow-x:hidden;max-width:100%}
   body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f7f4;color:#1d2a1f}
-  .wrap{max-width:1100px;margin:auto;padding:24px 20px}
-  nav a{margin-right:14px;color:#2f6b3a;text-decoration:none;font-weight:600}
+  .wrap{max-width:1100px;margin:auto;padding:20px 16px}
+  nav{display:flex;flex-wrap:wrap;gap:6px 14px}
+  nav a{color:#2f6b3a;text-decoration:none;font-weight:600}
   h1{margin:8px 0 4px}.updated{color:#667;font-size:14px}
-  h2{font-size:18px;text-transform:uppercase;letter-spacing:.05em;margin:24px 0 10px;color:#2f6b3a}
-  .card{background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;gap:12px;align-items:flex-start}
+  .sechead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px;margin:24px 0 10px}
+  .sechead h2{font-size:17px;text-transform:uppercase;letter-spacing:.05em;margin:0;color:#2f6b3a}
+  .sectotal{font-size:14px;font-weight:700;color:#1d2a1f}
+  .sectotal small{font-weight:400;color:#667}
+  .card{background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;gap:12px;align-items:flex-start;overflow-wrap:anywhere}
   .card.bought{opacity:.5}.card.bought h3{text-decoration:line-through}
-  .tick{font-size:20px;line-height:1}
+  .tick{font-size:20px;line-height:1;flex:none}
+  .main{flex:1;min-width:0}
+  .top{display:flex;justify-content:space-between;gap:10px}
   .card h3{margin:0 0 4px;font-size:16px}
+  .line{font-weight:700;white-space:nowrap;font-size:15px}
   .meta{font-size:14px;color:#334}
-  .chip{display:inline-block;font-size:12px;background:#e3efe5;color:#2f6b3a;border-radius:20px;padding:2px 8px;margin-right:6px}
+  .chip{display:inline-block;font-size:12px;background:#e3efe5;color:#2f6b3a;border-radius:20px;padding:2px 8px;margin:0 6px 4px 0}
+  .buy{display:inline-block;margin-top:6px;font-weight:600;color:#2f6b3a;text-decoration:none}
+  .nolink{display:inline-block;margin-top:6px;font-size:13px;color:#999}
 </style>
 </head>
 <body>
@@ -26,21 +37,41 @@
   <div id="list"></div>
 </div>
 <script>
+const SYM={USD:'$',GBP:'£',BRL:'R$'};
+function money(v,c){return (SYM[c]||c+' ')+v.toLocaleString('en-GB',{maximumFractionDigits:2});}
 fetch('shopping.json').then(r=>r.json()).then(d=>{
   document.getElementById('updated').textContent='Last updated '+d.updated;
   const list=document.getElementById('list');
   ['UK','Brazil'].forEach(w=>{
     const items=d.items.filter(i=>i.where===w).sort((a,b)=>a.bought-b.bought);
     if(!items.length)return;
-    const h=document.createElement('h2');h.textContent='Buy in '+w;list.appendChild(h);
+    const totals={};let unpriced=0;
+    items.forEach(i=>{
+      if(i.bought)return;
+      if(i.unit_price!=null){const t=i.unit_price*(i.qty||1);totals[i.currency]=(totals[i.currency]||0)+t;}else unpriced++;
+    });
+    const head=document.createElement('div');head.className='sechead';
+    const h=document.createElement('h2');h.textContent='Buy in '+w;
+    const st=document.createElement('div');st.className='sectotal';
+    const parts=Object.entries(totals).map(([c,v])=>'~'+money(v,c));
+    st.textContent=(parts.length?parts.join(' + '):'No prices yet');
+    if(unpriced){const s=document.createElement('small');s.textContent=' + '+unpriced+' without a price';st.appendChild(s);}
+    head.append(h,st);list.appendChild(head);
     items.forEach(i=>{
       const c=document.createElement('div');c.className='card'+(i.bought?' bought':'');
-      c.innerHTML='<div class="tick"></div><div><h3></h3><div class="meta"></div></div>';
+      c.innerHTML='<div class="tick"></div><div class="main"><div class="top"><h3></h3><div class="line"></div></div><div class="meta"></div></div>';
       c.querySelector('.tick').textContent=i.bought?'✅':'⬜';
       c.querySelector('h3').textContent=(i.qty?i.qty+' × ':'')+i.item;
       const m=c.querySelector('.meta');
-      [i.for,i.price||'price tbc'].forEach(t=>{const s=document.createElement('span');s.className='chip';s.textContent=t;m.appendChild(s);});
+      if(i.unit_price!=null){
+        const total=i.unit_price*(i.qty||1);
+        c.querySelector('.line').textContent=(i.approx?'~':'')+money(total,i.currency);
+        if(i.qty>1){const s=document.createElement('span');s.className='chip';s.textContent=money(i.unit_price,i.currency)+' each';m.appendChild(s);}
+      }else{c.querySelector('.line').textContent='price tbc';c.querySelector('.line').style.fontWeight='400';c.querySelector('.line').style.color='#999';}
+      const f=document.createElement('span');f.className='chip';f.textContent=i.for;m.appendChild(f);
       if(i.note){const p=document.createElement('div');p.textContent=i.note;m.appendChild(p);}
+      if(i.link){const a=document.createElement('a');a.className='buy';a.href=i.link;a.target='_blank';a.rel='noopener';a.textContent='Buy here →';m.appendChild(a);}
+      else{const s=document.createElement('span');s.className='nolink';s.textContent='No shop link yet';m.appendChild(s);}
       list.appendChild(c);
     });
   });
