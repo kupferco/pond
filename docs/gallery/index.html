@@ -9,50 +9,129 @@
   header { padding: 24px 32px; background: #1f3b2d; color: #fff; }
   header h1 { margin: 0 0 4px; font-size: 26px; }
   header p { margin: 0; opacity: .8; }
-  main { padding: 16px 32px 48px; }
-  h2 { margin: 32px 0 12px; font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 6px; }
+  nav { padding: 14px 32px 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  nav button { border: 1px solid #1f3b2d; background: #fff; color: #1f3b2d; border-radius: 999px; padding: 6px 14px; font-size: 14px; cursor: pointer; }
+  nav button.on { background: #1f3b2d; color: #fff; }
+  main { padding: 8px 32px 48px; }
+  h2 { margin: 28px 0 12px; font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 6px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
-  .card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.1); text-decoration: none; color: inherit; display: flex; flex-direction: column; }
+  .card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.1); display: flex; flex-direction: column; }
+  .card a.view { text-decoration: none; color: inherit; display: block; }
   .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.15); }
-  .card img { width: 100%; aspect-ratio: 4/3; object-fit: contain; background: #fafafa; }
+  .card img { width: 100%; aspect-ratio: 4/3; object-fit: contain; background: #fafafa; display: block; }
+  .card .noimg { width: 100%; aspect-ratio: 4/3; background: #eee; display: flex; align-items: center; justify-content: center; color: #999; font-size: 13px; }
   .card .body { padding: 10px 12px 14px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+  .chip { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: .03em; }
+  .s-sketch { background: #eee; color: #555; }
+  .s-draft { background: #fff1c2; color: #7a5b00; }
+  .s-tested { background: #d4ecff; color: #0b4f86; }
+  .s-final { background: #d3f2dc; color: #17643a; }
+  .s-experiment { background: #f0dcff; color: #5d2a85; }
+  .s-superseded { background: #f3d6d6; color: #8a2b2b; }
+  .cat { background: #e8efe9; color: #1f3b2d; }
   .card .title { font-weight: 600; font-size: 15px; }
   .card .date { font-size: 12px; color: #777; margin: 2px 0 6px; }
   .card .comment { font-size: 13px; color: #444; }
+  .hist-btn { margin-top: 10px; background: none; border: 1px solid #bbb; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+  .hist { margin-top: 8px; border-top: 1px solid #eee; padding-top: 8px; display: none; }
+  .hist.open { display: block; }
+  .hist a { display: flex; gap: 8px; align-items: center; text-decoration: none; color: #333; font-size: 13px; padding: 4px 0; }
+  .hist img { width: 48px; height: 36px; object-fit: contain; background: #fafafa; border-radius: 4px; }
   footer { padding: 16px 32px; font-size: 12px; color: #777; }
 </style>
 </head>
 <body>
 <header>
   <h1>Pond — CAD gallery</h1>
-  <p>Open-source communal urban farming unit. Click any drawing to open it in the 3D viewer.</p>
+  <p>Open-source communal urban farming unit. One card per part, showing its latest version. Tap a drawing to open the 3D viewer.</p>
 </header>
+<nav id="filters"></nav>
 <main id="gallery">Loading…</main>
 <footer id="foot"></footer>
 <script>
+const CATEGORIES = ["Cart", "Arm", "Unit structure", "Pod handling", "Water", "Power", "Flat-pack and transport", "Experiments"];
+let DATA = null, active = "All";
+
+function chip(text, cls) { const s = document.createElement('span'); s.className = 'chip ' + cls; s.textContent = text; return s; }
+function thumbEl(r) {
+  if (r.thumb) { const i = document.createElement('img'); i.src = r.thumb; i.alt = r.title; i.loading = 'lazy'; return i; }
+  const d = document.createElement('div'); d.className = 'noimg'; d.textContent = 'Open in viewer'; return d;
+}
+
+function parts() {
+  // group renders by part; newest version first
+  const byPart = {};
+  DATA.renders.forEach(r => {
+    const key = r.part || r.title;
+    (byPart[key] = byPart[key] || []).push(r);
+  });
+  Object.values(byPart).forEach(list => list.sort((a, b) => (b.version || 0) - (a.version || 0) || (b.date > a.date ? 1 : -1)));
+  return byPart;
+}
+
+function card(list) {
+  const r = list[0];
+  const el = document.createElement('div'); el.className = 'card';
+  const a = document.createElement('a'); a.className = 'view'; a.href = r.viewer; a.target = '_blank'; a.rel = 'noopener';
+  a.appendChild(thumbEl(r));
+  const body = document.createElement('div'); body.className = 'body';
+  const chips = document.createElement('div'); chips.className = 'chips';
+  const st = (r.status || 'draft').toLowerCase();
+  chips.append(chip(st + (r.version ? ' · v' + r.version : ''), 's-' + st));
+  if (active === 'All') chips.append(chip(r.category || 'Other', 'cat'));
+  const t = document.createElement('div'); t.className = 'title'; t.textContent = r.part || r.title;
+  const d = document.createElement('div'); d.className = 'date'; d.textContent = r.date;
+  const c = document.createElement('div'); c.className = 'comment'; c.textContent = r.comment;
+  body.append(chips, t, d, c);
+  a.appendChild(body);
+  el.appendChild(a);
+  if (list.length > 1) {
+    const box = document.createElement('div'); box.className = 'body';
+    const btn = document.createElement('button'); btn.className = 'hist-btn'; btn.textContent = 'History (' + (list.length - 1) + ' older)';
+    const hist = document.createElement('div'); hist.className = 'hist';
+    list.slice(1).forEach(o => {
+      const h = document.createElement('a'); h.href = o.viewer; h.target = '_blank'; h.rel = 'noopener';
+      h.append(thumbEl(o));
+      const s = document.createElement('span'); s.textContent = (o.version ? 'v' + o.version + ' — ' : '') + o.title + ' (' + o.date + ')';
+      h.append(s); hist.appendChild(h);
+    });
+    btn.onclick = () => hist.classList.toggle('open');
+    box.append(btn, hist); el.appendChild(box);
+  }
+  return el;
+}
+
+function render() {
+  const main = document.getElementById('gallery'); main.innerHTML = '';
+  const byPart = parts();
+  const cats = active === 'All' ? CATEGORIES.concat(['Other']) : [active];
+  cats.forEach(cat => {
+    const lists = Object.values(byPart).filter(l => (l[0].category || 'Other') === cat);
+    if (!lists.length) return;
+    lists.sort((a, b) => (b[0].date > a[0].date ? 1 : -1));
+    const h = document.createElement('h2'); h.textContent = cat; main.appendChild(h);
+    const grid = document.createElement('div'); grid.className = 'grid';
+    lists.forEach(l => grid.appendChild(card(l)));
+    main.appendChild(grid);
+  });
+  if (!main.children.length) main.textContent = 'Nothing in this category yet.';
+}
+
+function filters() {
+  const nav = document.getElementById('filters'); nav.innerHTML = '';
+  ['All'].concat(CATEGORIES).forEach(c => {
+    const b = document.createElement('button'); b.textContent = c; if (c === active) b.className = 'on';
+    b.onclick = () => { active = c; filters(); render(); };
+    nav.appendChild(b);
+  });
+}
+
 fetch('renders.json', { cache: 'no-store' })
   .then(r => r.json())
   .then(data => {
-    const main = document.getElementById('gallery');
-    main.innerHTML = '';
-    const groups = {};
-    data.renders.forEach(r => (groups[r.group] = groups[r.group] || []).push(r));
-    Object.keys(groups).forEach(g => {
-      const h = document.createElement('h2'); h.textContent = g; main.appendChild(h);
-      const grid = document.createElement('div'); grid.className = 'grid';
-      groups[g].forEach(r => {
-        const a = document.createElement('a');
-        a.className = 'card'; a.href = r.viewer; a.target = '_blank'; a.rel = 'noopener';
-        const img = document.createElement('img'); img.src = r.thumb; img.alt = r.title; img.loading = 'lazy';
-        const body = document.createElement('div'); body.className = 'body';
-        const t = document.createElement('div'); t.className = 'title'; t.textContent = r.title;
-        const d = document.createElement('div'); d.className = 'date'; d.textContent = r.date;
-        const c = document.createElement('div'); c.className = 'comment'; c.textContent = r.comment;
-        body.append(t, d, c); a.append(img, body); grid.appendChild(a);
-      });
-      main.appendChild(grid);
-    });
-    document.getElementById('foot').textContent = 'List updated ' + data.updated + ' · source: docs/gallery/renders.json in kupferco/pond';
+    DATA = data; filters(); render();
+    document.getElementById('foot').textContent = 'List updated ' + data.updated + ' · source: docs/gallery/renders.json in kupferco/pond · each line has part, category, status (sketch, draft, tested, final, experiment) and version';
   })
   .catch(() => { document.getElementById('gallery').textContent = 'Could not load renders.json.'; });
 </script>
