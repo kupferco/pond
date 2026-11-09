@@ -1,11 +1,11 @@
 {
-  "updated": "9 Nov 2026, 13:10",
+  "updated": "9 Nov 2026, 13:15",
   "items": [
-    {"item": "STS3215 servos", "qty": 6, "where": "UK", "unit_price": 16, "currency": "USD", "approx": true, "link": null, "for": "Arm V1", "note": "Cabin bag. Bulk on Alibaba ~$10.60 at 1,000+.", "bought": false},
-    {"item": "Servo driver board", "qty": 1, "where": "UK", "unit_price": null, "currency": "GBP", "link": null, "for": "Arm V1", "note": "Cabin bag.", "bought": false},
-    {"item": "USB cable", "qty": 1, "where": "UK", "unit_price": null, "currency": "GBP", "link": null, "for": "Arm V1", "note": "Cabin bag.", "bought": false},
-    {"item": "Power supply (works on Brazil voltage)", "qty": 1, "where": "UK", "unit_price": null, "currency": "GBP", "link": null, "for": "Arm V1", "note": "Cabin bag. Check it handles 127 V and 220 V.", "bought": false},
-    {"item": "Bambu Lab A1 printer (no AMS)", "qty": 1, "where": "Brazil", "unit_price": 3191, "currency": "BRL", "approx": true, "link": null, "for": "Workshop", "note": "Pending a chat with Mum.", "bought": false},
+    {"item": "STS3215 servos, 12 V 30 kg version", "qty": 6, "where": "UK", "unit_price": 16, "currency": "USD", "approx": true, "link": "https://uk.robotshop.com/products/feetech-12v-30kgcm-magnetic-encoding-servo-sts3215", "for": "Arm V1", "note": "Cabin bag. Get the 12 V 30 kg model (the sim uses its limits), not the 7.4 V 19 kg one. UK price to check on the page. Bulk on Alibaba ~$10.60 at 1,000+.", "bought": false},
+    {"item": "Servo driver board (Waveshare Bus Servo Adapter A)", "qty": 1, "where": "UK", "unit_price": null, "currency": "GBP", "link": "https://www.waveshare.com/bus-servo-adapter-a.htm", "for": "Arm V1", "note": "Cabin bag. Drives ST-series bus servos over USB. It passes the supply voltage straight to the servos.", "bought": false},
+    {"item": "USB cable", "qty": 1, "where": "UK", "unit_price": null, "currency": "GBP", "link": null, "for": "Arm V1", "note": "Cabin bag. Match the driver board's USB port.", "bought": false},
+    {"item": "12 V power supply (100–240 V input)", "qty": 1, "where": "UK", "unit_price": null, "currency": "GBP", "link": null, "for": "Arm V1", "note": "Cabin bag. Must be 12 V to match the 12 V servos, with a 100–240 V input so it works in Brazil (127 V and 220 V). Size the amps for six servos.", "bought": false},
+    {"item": "Bambu Lab A1 printer (no AMS)", "qty": 1, "where": "Brazil", "unit_price": 3191, "currency": "BRL", "approx": true, "link": "https://www.gtmax3d.com.br/impressora-3d-bambu-lab-a1", "for": "Workshop", "note": "GTMax3D is an authorised Bambu Lab reseller in Brazil. Other shops: bambulab.com/pt-br/where-to-buy. Pending a chat with Mum.", "bought": false},
     {"item": "PLA/PETG filament", "qty": null, "where": "Brazil", "unit_price": null, "currency": "BRL", "link": null, "for": "Arm and parts", "note": "", "bought": false},
     {"item": "Pipe, tank and plywood", "qty": null, "where": "Brazil", "unit_price": null, "currency": "BRL", "link": null, "for": "Unit", "note": "Bulky and generic, so buy locally.", "bought": false},
     {"item": "N20 motors", "qty": null, "where": "Brazil", "unit_price": null, "currency": "BRL", "link": null, "for": "Cart", "note": "Quantity depends on motor positions.", "bought": false}
