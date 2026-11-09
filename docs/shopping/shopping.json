@@ -1,13 +1,13 @@
 {
   "updated": "2026-11-09",
   "items": [
-    {"item": "STS3215 servos", "qty": 6, "where": "UK", "price": "~$16 each (~$96)", "for": "Arm V1", "note": "Cabin bag. Bulk on Alibaba ~$10.60 at 1,000+.", "bought": false},
-    {"item": "Servo driver board", "qty": 1, "where": "UK", "price": null, "for": "Arm V1", "note": "Cabin bag.", "bought": false},
-    {"item": "USB cable", "qty": 1, "where": "UK", "price": null, "for": "Arm V1", "note": "Cabin bag.", "bought": false},
-    {"item": "Power supply (works on Brazil voltage)", "qty": 1, "where": "UK", "price": null, "for": "Arm V1", "note": "Cabin bag. Check it handles 127 V and 220 V.", "bought": false},
-    {"item": "Bambu Lab A1 printer (no AMS)", "qty": 1, "where": "Brazil", "price": "~R$3,191", "for": "Workshop", "note": "Pending a chat with Mum.", "bought": false},
-    {"item": "PLA/PETG filament", "qty": null, "where": "Brazil", "price": null, "for": "Arm and parts", "note": "", "bought": false},
-    {"item": "Pipe, tank and plywood", "qty": null, "where": "Brazil", "price": null, "for": "Unit", "note": "Bulky and generic, so buy locally.", "bought": false},
-    {"item": "N20 motors", "qty": null, "where": "Brazil", "price": null, "for": "Cart", "note": "Quantity depends on motor positions.", "bought": false}
+    {"item": "STS3215 servos", "qty": 6, "where": "UK", "unit_price": 16, "currency": "USD", "approx": true, "link": null, "for": "Arm V1", "note": "Cabin bag. Bulk on Alibaba ~$10.60 at 1,000+.", "bought": false},
+    {"item": "Servo driver board", "qty": 1, "where": "UK", "unit_price": null, "currency": "GBP", "link": null, "for": "Arm V1", "note": "Cabin bag.", "bought": false},
+    {"item": "USB cable", "qty": 1, "where": "UK", "unit_price": null, "currency": "GBP", "link": null, "for": "Arm V1", "note": "Cabin bag.", "bought": false},
+    {"item": "Power supply (works on Brazil voltage)", "qty": 1, "where": "UK", "unit_price": null, "currency": "GBP", "link": null, "for": "Arm V1", "note": "Cabin bag. Check it handles 127 V and 220 V.", "bought": false},
+    {"item": "Bambu Lab A1 printer (no AMS)", "qty": 1, "where": "Brazil", "unit_price": 3191, "currency": "BRL", "approx": true, "link": null, "for": "Workshop", "note": "Pending a chat with Mum.", "bought": false},
+    {"item": "PLA/PETG filament", "qty": null, "where": "Brazil", "unit_price": null, "currency": "BRL", "link": null, "for": "Arm and parts", "note": "", "bought": false},
+    {"item": "Pipe, tank and plywood", "qty": null, "where": "Brazil", "unit_price": null, "currency": "BRL", "link": null, "for": "Unit", "note": "Bulky and generic, so buy locally.", "bought": false},
+    {"item": "N20 motors", "qty": null, "where": "Brazil", "unit_price": null, "currency": "BRL", "link": null, "for": "Cart", "note": "Quantity depends on motor positions.", "bought": false}
   ]
 }
