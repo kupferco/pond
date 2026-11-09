@@ -6,18 +6,25 @@
 <title>Pond — Decisions and notes</title>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
+  *{box-sizing:border-box}
+  html,body{overflow-x:hidden;max-width:100%}
   body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f7f4;color:#1d2a1f}
-  .wrap{max-width:860px;margin:auto;padding:24px 20px}
-  nav a{margin-right:14px;color:#2f6b3a;text-decoration:none;font-weight:600}
+  .wrap{max-width:860px;margin:auto;padding:20px 16px}
+  nav{display:flex;flex-wrap:wrap;gap:6px 14px}
+  nav a{color:#2f6b3a;text-decoration:none;font-weight:600}
   h1{margin:8px 0 4px}
-  h2.sec{font-size:18px;text-transform:uppercase;letter-spacing:.05em;margin:24px 0 10px;color:#2f6b3a}
-  a.item{display:block;background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);text-decoration:none;color:inherit}
+  h2.sec{font-size:17px;text-transform:uppercase;letter-spacing:.05em;margin:24px 0 10px;color:#2f6b3a}
+  a.item{display:block;background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);text-decoration:none;color:inherit;overflow-wrap:anywhere}
   a.item:hover{box-shadow:0 2px 8px rgba(0,0,0,.15)}
   .date{font-size:13px;color:#667}
   .title{font-weight:600}
-  #doc{background:#fff;border-radius:10px;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.08);line-height:1.55}
+  #doc{background:#fff;border-radius:10px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.08);line-height:1.55;overflow-wrap:anywhere}
+  #doc h1{font-size:22px}
+  #doc .tbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
   #doc table{border-collapse:collapse;font-size:14px}
-  #doc td,#doc th{border:1px solid #ddd;padding:4px 8px}
+  #doc td,#doc th{border:1px solid #ddd;padding:4px 8px;overflow-wrap:normal}
+  #doc img{max-width:100%}
+  #doc ul,#doc ol{padding-left:20px}
   .back{display:inline-block;margin:14px 0;color:#2f6b3a;font-weight:600;text-decoration:none}
 </style>
 </head>
@@ -45,8 +52,12 @@ function list(){
 function show(file){
   const v=document.getElementById('view');
   v.innerHTML='<a class="back" href="#">← All decisions and notes</a><div id="doc">Loading…</div>';
-  fetch(file).then(r=>r.text()).then(t=>{document.getElementById('doc').innerHTML=marked.parse(t);window.scrollTo(0,0);})
-    .catch(()=>{document.getElementById('doc').textContent='Could not load '+file;});
+  fetch(file).then(r=>r.text()).then(t=>{
+    const doc=document.getElementById('doc');
+    doc.innerHTML=marked.parse(t);
+    doc.querySelectorAll('table').forEach(tb=>{const w=document.createElement('div');w.className='tbl';tb.parentNode.insertBefore(w,tb);w.appendChild(tb);});
+    window.scrollTo(0,0);
+  }).catch(()=>{document.getElementById('doc').textContent='Could not load '+file;});
 }
 function route(){const h=decodeURIComponent(location.hash.slice(1));h?show(h):list();}
 fetch('docs.json').then(r=>r.json()).then(d=>{D=d;route();window.onhashchange=route;});
