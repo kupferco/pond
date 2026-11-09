@@ -5,9 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pond — CAD gallery</title>
 <style>
+  * { box-sizing: border-box; }
+  html, body { overflow-x: hidden; max-width: 100%; }
   body { font-family: system-ui, sans-serif; margin: 0; background: #f6f5f1; color: #222; }
-  .sitenav { padding: 12px 32px; background: #fff; border-bottom: 1px solid #e3e3e3; }
-  .sitenav a { margin-right: 14px; color: #2f6b3a; text-decoration: none; font-weight: 600; font-size: 15px; }
+  .sitenav { padding: 12px 32px; background: #fff; border-bottom: 1px solid #e3e3e3; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+  .sitenav a { color: #2f6b3a; text-decoration: none; font-weight: 600; font-size: 15px; }
   .sitenav a.here { color: #1f3b2d; text-decoration: underline; }
   header { padding: 24px 32px; background: #1f3b2d; color: #fff; }
   header h1 { margin: 0 0 4px; font-size: 26px; }
@@ -17,8 +19,8 @@
   #filters button.on { background: #1f3b2d; color: #fff; }
   main { padding: 8px 32px 48px; }
   h2 { margin: 28px 0 12px; font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 6px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
-  .card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.1); display: flex; flex-direction: column; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 16px; }
+  .card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.1); display: flex; flex-direction: column; overflow-wrap: anywhere; }
   .card a.view { text-decoration: none; color: inherit; display: block; }
   .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.15); }
   .card img { width: 100%; aspect-ratio: 4/3; object-fit: contain; background: #fafafa; display: block; }
@@ -40,8 +42,12 @@
   .hist { margin-top: 8px; border-top: 1px solid #eee; padding-top: 8px; display: none; }
   .hist.open { display: block; }
   .hist a { display: flex; gap: 8px; align-items: center; text-decoration: none; color: #333; font-size: 13px; padding: 4px 0; }
-  .hist img { width: 48px; height: 36px; object-fit: contain; background: #fafafa; border-radius: 4px; }
-  footer { padding: 16px 32px; font-size: 12px; color: #777; }
+  .hist img { width: 48px; height: 36px; object-fit: contain; background: #fafafa; border-radius: 4px; flex: none; }
+  footer { padding: 16px 32px; font-size: 12px; color: #777; overflow-wrap: anywhere; }
+  @media (max-width: 600px) {
+    .sitenav, header, #filters, main, footer { padding-left: 16px; padding-right: 16px; }
+    header h1 { font-size: 22px; }
+  }
 </style>
 </head>
 <body>
