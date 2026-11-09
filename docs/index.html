@@ -6,8 +6,18 @@
 <title>Pond</title>
 <style>
   body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f7f4;color:#1d2a1f}
+  .hero{background:#fff;border-bottom:1px solid #e6e8e3}
+  .hero a.pic{display:block}
+  .hero img{display:block;width:100%;max-width:720px;max-height:70vh;object-fit:contain;margin:0 auto;background:#fff}
+  .hero .cap{max-width:720px;margin:0 auto;padding:4px 16px 16px;text-align:center}
+  .hero .cap p{margin:0 0 10px;font-size:14px;color:#556}
+  .btns{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+  .btn{display:inline-block;padding:9px 16px;border-radius:999px;font-weight:600;font-size:14px;text-decoration:none}
+  .btn.primary{background:#1f3b2d;color:#fff}
+  .btn.ghost{border:1px solid #1f3b2d;color:#1f3b2d;background:#fff}
   .wrap{max-width:1100px;margin:auto;padding:16px}
-  .tag{color:#556;margin:4px 0 20px;font-size:16px;line-height:1.45}
+  .tag{font-family:Georgia,"Times New Roman",serif;font-size:22px;line-height:1.35;color:#1f3b2d;margin:8px 0 6px}
+  .sub{color:#556;margin:0 0 20px;font-size:15px}
   h2{font-size:17px;text-transform:uppercase;letter-spacing:.05em;margin:24px 0 10px;color:#2f6b3a}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:12px}
   .card{display:block;background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.08);text-decoration:none;color:inherit;overflow-wrap:anywhere}
@@ -21,8 +31,21 @@
 </head>
 <body>
 <script src="assets/site.js" data-root="./" data-page="home"></script>
+<section class="hero">
+  <a class="pic" href="https://pond-render-500653746288.us-east1.run.app/v/1fkBj3mHJRGcTR" target="_blank" rel="noopener">
+    <img src="https://pond-render-500653746288.us-east1.run.app/s/1fkBj3mH9GAhGD/iso.png" alt="Drawing of a Pond growing unit: a tall pipe of plants on a water tank, with a track loop the robot cart rides on">
+  </a>
+  <div class="cap">
+    <p>A Pond unit, 1.9 m tall.</p>
+    <div class="btns">
+      <a class="btn primary" href="https://pond-render-500653746288.us-east1.run.app/v/1fkBj3mHJRGcTR" target="_blank" rel="noopener">Open in 3D</a>
+      <a class="btn ghost" href="gallery/">See all drawings →</a>
+    </div>
+  </div>
+</section>
 <div class="wrap">
-  <p class="tag">Open-source autonomous communal urban farming. Phase 1: digital design and simulation.</p>
+  <p class="tag">A small robot that looks after a vertical vegetable garden, so neighbours can grow their own food together.</p>
+  <p class="sub">Open source. Designed in London, being built in São Paulo. Phase 1: digital design and simulation.</p>
 
   <h2>Working on now</h2>
   <div class="grid" id="now"></div>
