@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pond — Roadmap</title>
+<style>
+  body{font-family:system-ui,-apple-system,sans-serif;margin:0;background:#f6f7f4;color:#1d2a1f}
+  header{padding:24px 20px 8px;max-width:1100px;margin:auto}
+  nav a{margin-right:14px;color:#2f6b3a;text-decoration:none;font-weight:600}
+  h1{margin:8px 0 4px}
+  .updated{color:#667;font-size:14px}
+  main{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;padding:20px;max-width:1100px;margin:auto}
+  .col h2{font-size:18px;text-transform:uppercase;letter-spacing:.05em;margin:0 0 10px}
+  .card{background:#fff;border-radius:10px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .card h3{margin:0 0 4px;font-size:16px}
+  .card p{margin:0;font-size:14px;line-height:1.4;color:#334}
+  .area{display:inline-block;font-size:12px;background:#e3efe5;color:#2f6b3a;border-radius:20px;padding:2px 8px;margin-top:8px}
+  .now h2{color:#2f6b3a}.next h2{color:#8a6d1d}.later h2{color:#667}
+</style>
+</head>
+<body>
+<header>
+  <nav><a href="../">Home</a><a href="../gallery/">Drawings</a><a href="./">Roadmap</a><a href="../shopping/">Shopping</a><a href="../history/">History</a></nav>
+  <h1>Roadmap</h1>
+  <div class="updated" id="updated"></div>
+</header>
+<main id="cols"></main>
+<script>
+fetch('roadmap.json').then(r=>r.json()).then(d=>{
+  document.getElementById('updated').textContent='Last updated '+d.updated;
+  const cols=document.getElementById('cols');
+  [['now','Now'],['next','Next'],['later','Later']].forEach(([k,label])=>{
+    const c=document.createElement('section');c.className='col '+k;
+    c.innerHTML='<h2>'+label+'</h2>';
+    (d[k]||[]).forEach(i=>{
+      const card=document.createElement('div');card.className='card';
+      card.innerHTML='<h3></h3><p></p><span class="area"></span>';
+      card.querySelector('h3').textContent=i.title;
+      card.querySelector('p').textContent=i.note||'';
+      card.querySelector('.area').textContent=i.area||'';
+      c.appendChild(card);
+    });
+    cols.appendChild(c);
+  });
+});
+</script>
+</body>
+</html>
