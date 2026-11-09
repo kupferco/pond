@@ -14,6 +14,17 @@
     ['history', 'History', 'history/']
   ];
 
+  // App manifest + theme colour, so "Add to home screen" behaves like an app.
+  var mf = document.createElement('link'); mf.rel = 'manifest'; mf.href = root + 'manifest.webmanifest';
+  document.head.appendChild(mf);
+  var tc = document.createElement('meta'); tc.name = 'theme-color'; tc.content = '#1f3b2d';
+  document.head.appendChild(tc);
+
+  // Network-first service worker: always the latest version when online.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register(root + 'sw.js', { scope: root }).catch(function () {});
+  }
+
   var css = document.createElement('style');
   css.textContent =
     '*{box-sizing:border-box}html,body{overflow-x:hidden;max-width:100%}' +
