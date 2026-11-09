@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-09",
+  "updated": "9 Nov 2026, 13:10",
   "items": [
     {"item": "STS3215 servos", "qty": 6, "where": "UK", "unit_price": 16, "currency": "USD", "approx": true, "link": null, "for": "Arm V1", "note": "Cabin bag. Bulk on Alibaba ~$10.60 at 1,000+.", "bought": false},
     {"item": "Servo driver board", "qty": 1, "where": "UK", "unit_price": null, "currency": "GBP", "link": null, "for": "Arm V1", "note": "Cabin bag.", "bought": false},
