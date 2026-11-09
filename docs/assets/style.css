@@ -1,0 +1,104 @@
+/* Pond hub: global styles. Every page links this file; change it here and the whole site follows. */
+
+:root{
+  --ink:#0a2540;          /* headings and strong text */
+  --body:#425466;         /* body text */
+  --muted:#6b7c93;        /* captions, dates */
+  --green:#1d7a4f;        /* accent */
+  --green-bright:#2fa36b;
+  --green-soft:#eef7f2;
+  --amber:#8a6100;--amber-soft:#fff4d6;
+  --bg:#ffffff;--bg-soft:#f6f9fc;
+  --line:rgba(10,37,64,.08);
+  --radius:14px;
+  --shadow:0 13px 27px -5px rgba(50,50,93,.18),0 8px 16px -8px rgba(0,0,0,.2);
+  --shadow-sm:0 2px 5px -1px rgba(50,50,93,.12),0 1px 3px -1px rgba(0,0,0,.14);
+  --serif:"Iowan Old Style","Charter","Source Serif Pro","Noto Serif",Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+
+*{box-sizing:border-box}
+html,body{overflow-x:hidden;max-width:100%}
+body{margin:0;background:var(--bg);color:var(--body);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--green)}
+img{max-width:100%}
+
+/* Headings: serif. Everything else: sans. */
+h1,h2{font-family:var(--serif);color:var(--ink);font-weight:700;letter-spacing:-.015em}
+h1{font-size:34px;line-height:1.15;margin:0 0 10px}
+h2{font-size:24px;line-height:1.25;margin:0 0 16px}
+h3,h4{font-family:var(--sans);color:var(--ink);font-weight:700;letter-spacing:-.01em}
+h3{font-size:17px;margin:0 0 4px}
+
+/* Layout */
+.inner{max-width:680px;margin:0 auto}
+.inner.wide{max-width:1100px}
+.block{padding:36px 22px 8px}
+.label{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green);margin:0 0 6px}
+.updated{font-size:14px;color:var(--muted);margin:0}
+footer.site{padding:40px 22px 48px;text-align:center;font-size:13px;color:var(--muted)}
+
+/* Inner-page header */
+.page-head{padding:32px 22px 20px;background:linear-gradient(160deg,#eaf7ef 0%,var(--bg-soft) 55%,#fff 100%);border-bottom:1px solid var(--line)}
+.page-head p.lead{margin:0 0 6px}
+
+/* Homepage hero */
+.hero{position:relative;overflow:hidden;padding:44px 22px 36px;background:linear-gradient(160deg,#eaf7ef 0%,var(--bg-soft) 45%,#fff 100%)}
+.hero:before{content:"";position:absolute;top:-120px;right:-140px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(47,163,107,.22),rgba(47,163,107,0) 70%)}
+.hero .inner{position:relative}
+.hero h1{font-size:38px;line-height:1.1;margin:18px 0 12px}
+.eyebrow{display:inline-block;font-size:13px;font-weight:700;color:var(--green);background:#fff;border-radius:999px;padding:5px 12px;box-shadow:var(--shadow-sm)}
+.lead{font-size:18px;line-height:1.55;color:var(--body);margin:0 0 24px}
+.shot{display:block;margin:32px auto 0;max-width:420px;background:#fff;border-radius:18px;padding:18px;box-shadow:var(--shadow);text-decoration:none}
+.shot img{display:block;width:100%;height:auto;max-height:52vh;object-fit:contain}
+.shot .cap{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:14px}
+.shot .cap b{color:var(--ink)}
+.shot .cap span{color:var(--green);font-weight:700}
+
+/* Buttons */
+.btns{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-flex;align-items:center;height:44px;padding:0 18px;border-radius:999px;font-weight:700;font-size:15px;text-decoration:none;border:0;cursor:pointer;font-family:var(--sans)}
+.btn.primary{background:var(--ink);color:#fff}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:var(--shadow-sm)}
+
+/* Cards */
+.list{display:grid;gap:12px}
+.card{display:block;background:#fff;border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-sm);border:1px solid var(--line);text-decoration:none;color:inherit;overflow-wrap:anywhere}
+a.card:active{transform:scale(.99)}
+.card p{margin:0;font-size:15px;line-height:1.5;color:var(--body)}
+.card .go{display:inline-block;margin-top:10px;font-size:14px;font-weight:700;color:var(--green)}
+.card.done{opacity:.55}
+.card.done h3{text-decoration:line-through}
+
+/* Rows (list menus) */
+.rows{border-radius:var(--radius);border:1px solid var(--line);overflow:hidden;background:#fff}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;text-decoration:none;color:var(--ink);font-weight:600;border-top:1px solid var(--line);overflow-wrap:anywhere}
+.row:first-child{border-top:0}
+.row small{display:block;font-weight:400;color:var(--muted);font-size:14px;margin-top:2px}
+a.row:after{content:"→";color:var(--green);font-weight:700;flex:none}
+.more{display:inline-block;margin-top:14px;font-weight:700;color:var(--green);text-decoration:none}
+.back{display:inline-block;margin:0 0 14px;font-weight:700;color:var(--green);text-decoration:none}
+
+/* Chips */
+.chip{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;margin:0 6px 6px 0;background:var(--green-soft);color:var(--green)}
+.chip.now{background:#d9f2e3;color:var(--green)}
+.chip.next{background:var(--amber-soft);color:var(--amber)}
+.chip.later{background:#eef1f5;color:var(--muted)}
+
+/* Long-form text (decision docs) */
+.prose{line-height:1.65;overflow-wrap:anywhere}
+.prose h1{font-size:28px}
+.prose h2{font-size:21px;margin-top:28px}
+.prose h3{margin-top:20px}
+.prose ul,.prose ol{padding-left:20px}
+.prose li{margin:4px 0}
+.prose .tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:12px 0}
+.prose table{border-collapse:collapse;font-size:14px}
+.prose th,.prose td{border:1px solid var(--line);padding:6px 10px;text-align:left;overflow-wrap:normal}
+.prose th{background:var(--bg-soft);color:var(--ink)}
+
+@media (min-width:720px){
+  h1{font-size:40px}
+  .hero h1{font-size:52px}
+  .list.two{grid-template-columns:1fr 1fr}
+}
