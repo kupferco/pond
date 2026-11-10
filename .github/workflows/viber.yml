@@ -137,6 +137,7 @@ jobs:
             git log and git diff ${{ github.event.repository.default_branch }}... before changing anything.
             You are already on the branch ${{ inputs.branch }}. Commit your work to it. Do not push,
             do not open a pull request, do not merge: the workflow does that after you finish.
+            Start every commit message subject with "Viber #${{ inputs.task_id }}: " followed by what the commit does.
             When done, write to ${{ runner.temp }}/viber-pr.md: for a new task, a pull request
             description (what changed, how to check it, anything left open); for a follow-up, a short
             note of what this round changed.
@@ -172,7 +173,7 @@ jobs:
           git config user.email >/dev/null || git config user.email "viber@users.noreply.github.com"
           if [ -n "$(git status --porcelain)" ]; then
             git add -A
-            git commit -m "Uncommitted work from Viber task ${{ inputs.task_id }}"
+            git commit -m "Viber #${{ inputs.task_id }}: uncommitted work"
           fi
           if [ "$(git rev-parse HEAD)" = "${{ steps.branch.outputs.start }}" ]; then
             echo "pushed=false" >> "$GITHUB_OUTPUT"
