@@ -7,7 +7,7 @@ const isolation = {
 };
 
 export default defineConfig({
-  base: './',
+  base: './', // page lives at /sim/ in the hub; relative assets work from there
   server: { headers: isolation },
   preview: { headers: isolation },
   build: { target: 'es2022' },

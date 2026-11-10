@@ -2,10 +2,10 @@ name: Control UI hosting
 
 on:
   pull_request:
-    paths: ['control-ui/**', '.github/workflows/control-ui.yml']
+    paths: ['control-ui/**', 'docs/**', '.github/workflows/control-ui.yml']
   push:
     branches: [main]
-    paths: ['control-ui/**', '.github/workflows/control-ui.yml']
+    paths: ['control-ui/**', 'docs/**', '.github/workflows/control-ui.yml']
 
 permissions:
   contents: read
@@ -28,7 +28,7 @@ jobs:
           cache: npm
           cache-dependency-path: control-ui/package-lock.json
       - run: npm ci
-      - run: npm run build
+      - run: npm run build:site
       - run: npm test
       - name: Preview channel (pull requests)
         if: github.event_name == 'pull_request'

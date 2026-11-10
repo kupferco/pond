@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types test/sim.test.ts",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:site": "npm run build && node scripts-assemble.mjs"
   },
   "dependencies": {
     "@mujoco/mujoco": "^4.0.0",

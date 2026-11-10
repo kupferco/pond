@@ -3,6 +3,7 @@ __pycache__/
 .DS_Store
 node_modules/
 dist/
+site/
 .venv/
 venv/
 *.whl

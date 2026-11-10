@@ -1,6 +1,6 @@
 # Pond control UI (spike)
 
-Web page: MuJoCo (official WASM build) + three.js on the left, command panel on the right.
+Page at /sim in the Pond hub (hub header, light theme). Web page: MuJoCo (official WASM build) + three.js on the left, command panel on the right.
 Commands go through `src/commands.ts` (`CommandLayer`) to a driver: `SimDriver` (working) or
 `RealDriver` (stub; Web Serial + Feetech STS later). Add cart / pick-pod commands on the same layer.
 

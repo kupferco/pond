@@ -13,7 +13,7 @@ export class Viewer {
   constructor(private host: HTMLElement, private sim: SimDriver) {
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     host.appendChild(this.renderer.domElement);
-    this.scene.background = new THREE.Color(0x10141a);
+    this.scene.background = new THREE.Color(0xf6f9fc);
     this.scene.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.6));
     const sun = new THREE.DirectionalLight(0xffffff, 2.2);
     sun.position.set(0.5, -0.4, 1);
