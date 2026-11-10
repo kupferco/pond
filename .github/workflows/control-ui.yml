@@ -30,20 +30,31 @@ jobs:
       - run: npm ci
       - run: npm run build:site
       - run: npm test
+      - name: Check deploy credentials
+        id: creds
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POND_CONTROL }}
+        run: |
+          if [ -n "$SA" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::FIREBASE_SERVICE_ACCOUNT_POND_CONTROL is not set, so the Firebase deploy is skipped. See 'Fix on the computer' in docs/notes/2026-11-10-control-ui-spike.md."
+          fi
       - name: Preview channel (pull requests)
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && steps.creds.outputs.available == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POND_CONTROL }}
-          projectId: ${{ vars.FIREBASE_PROJECT_ID }}
+          projectId: pond-grow
           entryPoint: control-ui
       - name: Live (merge to main)
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && steps.creds.outputs.available == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POND_CONTROL }}
-          projectId: ${{ vars.FIREBASE_PROJECT_ID }}
+          projectId: pond-grow
           channelId: live
           entryPoint: control-ui
