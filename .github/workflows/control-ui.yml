@@ -1,0 +1,49 @@
+name: Control UI hosting
+
+on:
+  pull_request:
+    paths: ['control-ui/**', '.github/workflows/control-ui.yml']
+  push:
+    branches: [main]
+    paths: ['control-ui/**', '.github/workflows/control-ui.yml']
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  deploy:
+    # Fork PRs get no secrets, so skip them.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: control-ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: control-ui/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - name: Preview channel (pull requests)
+        if: github.event_name == 'pull_request'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POND_CONTROL }}
+          projectId: ${{ vars.FIREBASE_PROJECT_ID }}
+          entryPoint: control-ui
+      - name: Live (merge to main)
+        if: github.event_name == 'push'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POND_CONTROL }}
+          projectId: ${{ vars.FIREBASE_PROJECT_ID }}
+          channelId: live
+          entryPoint: control-ui

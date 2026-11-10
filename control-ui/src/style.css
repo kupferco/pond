@@ -1,0 +1,25 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; font: 14px system-ui, sans-serif; background: #10141a; color: #e6e9ee; }
+#app { display: flex; height: 100%; }
+#view { flex: 1 1 50%; position: relative; min-width: 0; }
+#status { position: absolute; inset: 0; display: grid; place-items: center; color: #9aa4b2; pointer-events: none; }
+#panel { flex: 1 1 50%; min-width: 320px; padding: 16px 20px; overflow: auto; background: #181d25; border-left: 1px solid #2a313c; }
+h1 { font-size: 18px; margin: 0 0 12px; }
+table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; }
+th { text-align: left; font-weight: 500; color: #9aa4b2; padding: 4px 6px; }
+td { padding: 6px; border-top: 1px solid #2a313c; vertical-align: middle; }
+td small { display: block; color: #7d8794; }
+td.id { font-weight: 700; font-size: 16px; }
+td.now { font-variant-numeric: tabular-nums; text-align: right; }
+input { width: 80px; padding: 6px; background: #10141a; color: inherit; border: 1px solid #3a4352; border-radius: 4px; }
+button { padding: 6px 12px; background: #2b3441; color: inherit; border: 1px solid #3a4352; border-radius: 4px; cursor: pointer; }
+button:hover { background: #364051; }
+.row { display: flex; gap: 8px; }
+.mode { display: inline-flex; margin-bottom: 8px; }
+.mode button { border-radius: 0; }
+.mode button:first-child { border-radius: 4px 0 0 4px; }
+.mode button:last-child { border-radius: 0 4px 4px 0; }
+.mode button.on { background: #3b82f6; border-color: #3b82f6; }
+.msg { min-height: 1.2em; margin: 4px 0; color: #9aa4b2; }
+.msg.err { color: #f87171; }
+@media (max-width: 800px) { #app { flex-direction: column; } #view { flex: 0 0 45%; } #panel { border-left: 0; } }
