@@ -4,11 +4,11 @@ Read this file first in every new session. It holds the big picture only. For an
 
 ## What Pond is
 
-An open-source, autonomous communal urban farming unit, aimed first at São Paulo (MVP "Pond 2027"). A hydroponic growing tower with a pipe-climbing robot cart and a small arm (SO-101 style, STS3215 servos). The robot's main job is constant monitoring (catching pump failures, sick plants) plus planting pods and clearing failed plants, not heavy labour. Solar powered, flat-packs into its own tank. Target market: schools, councils, green-economy grants, and households; designs open-source for self-builders.
+An open-source, autonomous communal urban farming unit, aimed first at São Paulo (MVP "Pond 2027"). A hydroponic growing tower with a pipe-climbing robot cart and a small arm (SO-101 follower, STS3215 servos). The robot's main job is constant monitoring (catching pump failures, sick plants) plus planting pods and clearing failed plants, not heavy labour. Solar powered, flat-packs into its own tank. Target market: schools, councils, green-economy grants, and households; designs open-source for self-builders.
 
 ## Current phase
 
-Phase 1: digital design and simulation (CAD with CadQuery, MuJoCo sims) before buying and building hardware. V1 should be simple: build it, run it, let real problems surface.
+Phase 1 moving into the first hardware: the arm is being built in the UK (two months before Dani goes to Brazil), while the cart and unit stay in digital design and simulation (CAD with CadQuery, MuJoCo sims). V1 should be simple: build it, run it, let real problems surface.
 
 ## Where things live (sources of truth)
 
@@ -17,7 +17,7 @@ Phase 1: digital design and simulation (CAD with CadQuery, MuJoCo sims) before b
 - **Decisions (why things are the way they are):** `docs/decisions/` (index in `docs.json`)
 - **Working notes:** `docs/notes/`
 - **Drawings:** `docs/gallery/` (built from `renders.json`)
-- **Shopping list and costs:** `docs/shopping/`
+- **Shopping list and costs:** `docs/shopping/shopping.json`
 - **Live site:** https://kupferco.github.io/pond/
 - Google Drive ("Pond 2027") is an archive only.
 
@@ -27,20 +27,24 @@ Phase 1: digital design and simulation (CAD with CadQuery, MuJoCo sims) before b
 - Spine: hidden 33.7 mm stainless tube; water runs in a separate tube inside it; spigot joints with anti-twist key and shock cord.
 - Cart: six wheels per hand in rigid pairs, passes 150 mm loop corners in sim.
 - Power: one 30 W panel, battery in base and on cart, charging dock on the track's bottom run.
+- Arm V1: follower arm only, six 12 V STS3215 servos on one Waveshare board, driven over USB from a laptop (later a Raspberry Pi on the cart battery). Scripted poses, no camera and no leader arm for now.
 - Sourcing: small valuable electronics bought in the UK (cabin bag); bulky generic parts bought in Brazil.
 - Prefer eco-friendly, low-plastic materials when cost is similar. Target about $100 material cost per unit in production.
 
 ## Open questions
 
-- SO-101 ready-made kit versus parts plus printing (check kit prices).
-- Shop links on the shopping list still empty.
+- Servos and board: Amazon UK or ArmDojo? Dani to check the Amazon price (buy there if under about £135).
+- Is there enough filament? Dani to weigh the current spool.
+- Is there a 12 V, 5 A supply at home?
+- Arm dev tool: confirm the Web Serial approach before starting it in Viber.
 - Dimensioned isometric drawing of unit v3 not done yet.
 
 ## How we work
 
-- Dani often works by voice: short turns, don't guess ahead, let him finish. English, not Portuguese.
+- Dani often works by voice, on walks and on the bike: short turns, don't guess ahead, let him finish. English, not Portuguese.
+- Don't drop new topics in passing; raise them one at a time.
 - Dani checks numbers against his own mental model; show the working.
-- Claude writes only to the `claude/drafts` branch under `docs/`, `cad/` and `sim/`; Dani reviews and merges to `main`.
+- Claude writes only to the `claude/drafts` branch under `docs/`, `cad/` and `sim/`; Dani merges to `main` when home (not from the phone). Website and code jobs go through Viber.
 - CAD renders are shared as viewer links.
 
 ## End-of-session rule
