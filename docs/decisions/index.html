@@ -5,14 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pond — Decisions and notes</title>
 <link rel="stylesheet" href="../assets/style.css">
+<link rel="preload" as="fetch" href="docs.json" crossorigin>
 </head>
 <body>
 <script src="../assets/site.js" data-root="../" data-page="decisions"></script>
 <div id="view"></div>
 <footer class="site">Designed in London, being built in São Paulo.</footer>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 let D=null;
+// marked is only needed when a document is opened, so load it on demand instead of blocking the page.
+let markedReady=null;
+function loadMarked(){return markedReady||(markedReady=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/marked/marked.min.js';s.onload=ok;s.onerror=no;document.head.appendChild(s);}));}
 const view=document.getElementById('view');
 function list(){
   view.innerHTML='<header class="page-head"><div class="inner"><p class="label">Why</p><h1>Decisions and notes</h1></div></header>';
@@ -33,7 +36,7 @@ function list(){
 }
 function show(file){
   view.innerHTML='<section class="block"><div class="inner"><a class="back" href="#">← All decisions and notes</a><article class="prose" id="doc">Loading…</article></div></section>';
-  fetch(file).then(r=>r.text()).then(t=>{
+  Promise.all([fetch(file).then(r=>r.text()),loadMarked()]).then(([t])=>{
     const doc=document.getElementById('doc');
     doc.innerHTML=marked.parse(t);
     doc.querySelectorAll('table').forEach(tb=>{const w=document.createElement('div');w.className='tbl';tb.parentNode.insertBefore(w,tb);w.appendChild(tb);});

@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pond — Drawings</title>
 <link rel="stylesheet" href="../assets/style.css">
+<link rel="preload" as="fetch" href="renders.json" crossorigin>
+<link rel="preconnect" href="https://pond-render-500653746288.us-east1.run.app" crossorigin>
 <style>
   #filters{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:16px 22px 4px;scrollbar-width:none}
   #filters::-webkit-scrollbar{display:none}
@@ -107,7 +109,7 @@ function filters(){
     nav.appendChild(b);
   });
 }
-fetch('renders.json',{cache:'no-store'}).then(r=>r.json()).then(data=>{
+fetch("renders.json").then(r=>r.json()).then(data=>{
   DATA=data;filters();render();
   document.getElementById('foot').textContent='List updated '+data.updated+' · source: docs/gallery/renders.json';
 }).catch(()=>{document.getElementById('gallery').textContent='Could not load renders.json.';});

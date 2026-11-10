@@ -1,11 +1,22 @@
 // Pond hub service worker.
-// Tries the network first so the app shows the latest version, but waits at most 1.5 s:
-// if the network is slower than that, it shows the saved copy and updates it in the background.
-// Offline, it always uses the saved copy.
-const CACHE = 'pond-v2';
-const WAIT_MS = 1500;
+// Stale-while-revalidate: every page, script and JSON file is answered from the saved copy straight
+// away (no network wait), and refreshed in the background, so the next visit has the latest version.
+// The shell and data files are saved on install, so even the first tab switch is instant.
+const CACHE = 'pond-v3';
+const PRECACHE = [
+  './', 'assets/site.js', 'assets/style.css', 'manifest.webmanifest',
+  'gallery/', 'gallery/renders.json',
+  'roadmap/', 'roadmap/item.html', 'roadmap/roadmap.json',
+  'decisions/', 'decisions/docs.json',
+  'shopping/', 'shopping/shopping.json',
+  'history/', 'history/history.json'
+];
+const IMAGE_HOST = 'pond-render-500653746288.us-east1.run.app';
 
-self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('install', e => {
+  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE).then(c => Promise.all(PRECACHE.map(u => c.add(u).catch(() => {})))));
+});
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
@@ -15,16 +26,20 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  const sameOrigin = url.origin === self.location.origin;
+  const isThumb = url.hostname === IMAGE_HOST && req.destination === 'image';
+  if (!sameOrigin && !isThumb) return;
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
-    const network = fetch(req, { cache: 'no-store' }).then(res => {
-      if (res && res.ok) cache.put(req, res.clone());
+    // Match ignoring the query string so "item.html?id=x" and "#hash" pages reuse the saved shell.
+    const saved = await cache.match(req, { ignoreSearch: sameOrigin });
+    const update = fetch(req).then(res => {
+      if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
       return res;
     });
-    const saved = await cache.match(req);
-    if (!saved) return network;
-    const slow = new Promise(resolve => setTimeout(() => resolve(saved), WAIT_MS));
-    return Promise.race([network.catch(() => saved), slow]);
+    if (saved) { e.waitUntil(update.catch(() => {})); return saved; }
+    return update;
   })());
 });
