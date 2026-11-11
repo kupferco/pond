@@ -8,7 +8,7 @@ Working note. First step toward one web page with a live MuJoCo sim and a comman
 - SO-101 follower arm, six STS3215 joints A to F with limits, rendered with three.js from the official MuJoCo WASM build, in real time.
 - Panel: target angle and Go per motor, Go all, Home, live joint readout, Sim/Real toggle.
 - One command layer (`CommandLayer`) with `SimDriver` (working) and `RealDriver` (stub, "not connected yet"; Web Serial + Feetech STS later). Cart and pick-pod commands go on the same layer.
-- Hosting: a NEW Firebase project hosts the whole hub (`docs/` plus `/sim`), built by `npm run build:site` into `control-ui/site/`. COOP/COEP headers are set in `control-ui/firebase.json`. GitHub Actions deploys a preview channel per pull request and live on merge to main. GitHub Pages is untouched and keeps running; `/sim` only exists on Firebase.
+- Hosting: a NEW Firebase project hosts the whole hub (`docs/` plus `/sim`), built by `npm run build:site` into `control-ui/site/`. COOP/COEP headers are set in `control-ui/firebase.json` for `/sim/**` only: site-wide `require-corp` blocked the cross-origin render-server images on the hub pages. GitHub Actions deploys a preview channel per pull request and live on merge to main. GitHub Pages is untouched and keeps running; `/sim` only exists on Firebase.
 - `docs/sw.js` has one added line so the service worker ignores `/sim/` requests; `docs/assets/site.js` has the one menu link.
 
 ## How sim performance felt
@@ -50,3 +50,14 @@ Needed Dani's permissions; nothing was created or changed on Firebase or GCP by 
 4. Re-run the "Control UI hosting" workflow on the pull request. Until the secret exists the deploy steps are skipped with a warning instead of failing.
 
 Prompt for Claude Code: "Create a new Firebase project with ID pond-grow (if taken, the closest free ID such as pond-grow-hub, and tell me which, then update control-ui/.firebaserc and the workflow projectId), enable Hosting, make a service account with Firebase Hosting Admin, and set the GitHub secret FIREBASE_SERVICE_ACCOUNT_POND_CONTROL on kupferco/pond. Don't reuse any existing project. Then re-run the Control UI hosting workflow and open the preview URL's /sim page."
+
+## Fix on the computer: report deploys to Viber (task #54)
+
+`.github/workflows/control-ui.yml` does not yet tell Viber about previews or live deploys. The session could not read `kupferco/housekeeper`'s `.github/workflows/deploy.yml` (steps "Tell Viber the preview is ready" and "Tell Viber how the deploy went") or list this repo's secrets, so the hook URL and payload were not guessed. To finish: copy those two steps into the Preview and Live jobs, and make sure the same names exist on this repo:
+
+```
+gh secret set VIBER_HOOK_SECRET -R kupferco/pond
+gh variable set VIBER_URL -R kupferco/pond --body "<same value as on kupferco/housekeeper>"
+```
+
+(Check with `gh variable list -R kupferco/housekeeper` and `gh secret list -R kupferco/housekeeper` whether Housekeeper uses a variable or a secret for `VIBER_URL`, and match it.)
