@@ -36,17 +36,11 @@ import cart_assembly as ca
 import cart_arm as arm            # shared layout numbers; importing builds the arm drawing too
 
 # ---------------- Shared layout (imported) ----------------
-PIPE_SPACING = arm.PIPE_SPACING   # ASSUMED 280
-HX = arm.HX
-PLATE_X0, PLATE_X1 = arm.PLATE_X0, arm.PLATE_X1
-PLATE_ZH = arm.PLATE_ZH
-PLATE_T = ca.PLATE_T
-PLATE_Y0, PLATE_Y1, PLATE_CY = ca.PLATE_Y0, ca.PLATE_Y1, arm.PLATE_CY
-ARM_X, ARM_Z = ca.ARM_X, ca.ARM_Z
-BATT, BATT_C = ca.BATT, arm.BATT_C
-MOTOR_R, MOTOR_L, MOTOR_DX = ca.MOTOR_R, ca.MOTOR_L, arm.MOTOR_DX
+from cart_dims import (PIPE_SPACING, HX, PLATE_X0, PLATE_X1, PLATE_ZH, PLATE_T, PLATE_Y0, PLATE_Y1,
+                       ARM_X, ARM_Z, BATT, MOTOR_R, MOTOR_L, MOTOR_DX, BOSS_HX, BOSS_HZ, ARM_BLOCK_HX, RIM)
+PLATE_CY = ca.PLATE_CY
+BATT_C = arm.BATT_C
 PIPE_Z0, PIPE_Z1 = arm.PIPE_Z0, arm.PIPE_Z1
-BOSS_HX, BOSS_HZ, ARM_BLOCK_HX, RIM = arm.BOSS_HX, arm.BOSS_HZ, arm.ARM_BLOCK_HX, arm.RIM
 PAD_CX = ca.pad_cx
 box, cyl, fuse, xshift = arm.box, arm.cyl, arm.fuse, arm.xshift
 

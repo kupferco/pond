@@ -2,7 +2,7 @@
 # a GLB model for the 3D viewer plus black-and-white hidden-line outline drawings (SVG, and PNG when cairosvg
 # is installed). The outline code is the render server's own project_svg (render-server/pond_render/sandbox/
 # runner.py), loaded from the repo so the style is identical; joint letters and target tags are added on top.
-# Usage: python cad/render_gallery.py OUT_DIR
+# Usage: python cad/render_gallery.py OUT_DIR [arm|assembly|all]   (default: arm)
 import importlib.util
 import math
 import os
@@ -13,6 +13,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import cadquery as cq
 import cart_arm as arm
+import cart_assembly as cart
 
 RUNNER = os.path.join(HERE, "..", "render-server", "pond_render", "sandbox", "runner.py")
 spec = importlib.util.spec_from_file_location("pond_runner", RUNNER)
@@ -103,8 +104,13 @@ def stowed_labels(view, info):
 
 if __name__ == "__main__":
     outdir = sys.argv[1]
+    which = sys.argv[2] if len(sys.argv) > 2 else "arm"
     os.makedirs(outdir, exist_ok=True)
-    out = draw(arm.result, arm.INFO, "cart-arm-v2", outdir, working_labels)
-    out += draw(arm.result_stowed, arm.INFO_STOWED, "cart-arm-stowed-v2", outdir, stowed_labels)
+    out = []
+    if which in ("arm", "all"):
+        out += draw(arm.result, arm.INFO, "cart-arm-v2", outdir, working_labels)
+        out += draw(arm.result_stowed, arm.INFO_STOWED, "cart-arm-stowed-v2", outdir, stowed_labels)
+    if which in ("assembly", "all"):
+        out += draw(cart.result, None, "cart-assembly-v3", outdir, lambda view, info: [])
     for f in out:
         print("wrote", f)
