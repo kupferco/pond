@@ -21,7 +21,9 @@ The default single-threaded build is almost certainly enough for one arm. COOP/C
 
 ## Fix on the computer
 
-Needs Dani's permissions; nothing was created or changed on Firebase or GCP.
+**Update 11 Nov:** steps 1 to 3 are done by Dani (project `pond-grow`, service account `github-deployer@pond-grow.iam.gserviceaccount.com` with Hosting Admin, secret `FIREBASE_SERVICE_ACCOUNT_POND_CONTROL`). Original steps kept below for reference.
+
+Needed Dani's permissions; nothing was created or changed on Firebase or GCP by Claude.
 
 1. Create a NEW Firebase project with ID `pond-grow` (hub at https://pond-grow.web.app, sim at /sim) and enable Hosting. If `pond-grow` is taken, pick the closest free ID (for example `pond-grow-hub`), **say which one you used**, and update it in one place: `control-ui/.firebaserc` (and `projectId` in `.github/workflows/control-ui.yml`).
    ```
