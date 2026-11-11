@@ -1,6 +1,7 @@
 {
   "updated": "11 Nov 2026",
   "entries": [
+    {"date": "2026-11-11", "title": "Cart base on two pipes (cart drawing 2 of 5)", "items": ["Viber #70: draft drawing of the base plate across two parallel pipes (replaces the closed one-pipe base task #62): hand mounts, arm mount, battery bars, motor saddles, cable tie slots. Assumptions listed at the top of cad/cart_base.py."]},
     {"date": "2026-11-11", "title": "Cart sleeve systems drawing", "items": ["Viber #63: cart drawing 3 of 5, both hands as a pair, each on its own pipe (two parallel pipes, not two hands on one pipe), plus an exploded hand (draft). Open/closed hand not drawn: hand_sleeve v4.1 has no jaw. Gallery entries use the GLB viewer and the black-and-white outline drawing."]},
     {"date": "2026-11-11", "title": "Arm on the cart (cart drawing 5 of 5)", "items": ["Draft drawings of the SO-101 arm on the cart: joints A-F, board and cable path, reach to a D1 pick hole and a seedling cell, and the stowed pose for travel. Assumptions listed at the top of cad/cart_arm.py. Base plate runs across two parallel pipes (pipe B and C of neighbouring units, one hand each), not along one pipe; this also keeps the 550 mm shoulder of pod_store_reach."]},
     {"date": "2026-11-11", "title": "Whole cart assembly v3", "items": ["The whole cart drawing now has each hand on its own pipe: two parallel pipes, the base plate across them, the arm at the centre. Layout numbers are shared with the arm-on-cart drawing. Gallery card shows an outline drawing and opens the 3D model."]},
