@@ -90,3 +90,77 @@ def test_first_part_script_renders(tmp_path):
     assert r.ok, r.error
     assert r.solids == 1
     assert r.bbox["size"][2] == 40.0  # LENGTH along Z
+
+
+def _glb_extents(path):
+    """Return the world-space (x, y, z) size of a GLB: accessor bounds pushed through node transforms."""
+    import json
+    import struct
+
+    import numpy as np
+
+    data = path.read_bytes()
+    magic, _version, _length = struct.unpack_from("<4sII", data, 0)
+    assert magic == b"glTF"
+    chunk_len, chunk_type = struct.unpack_from("<II", data, 12)
+    assert chunk_type == 0x4E4F534A  # JSON
+    doc = json.loads(data[20:20 + chunk_len])
+
+    def local_matrix(node):
+        if "matrix" in node:
+            return np.array(node["matrix"], dtype=float).reshape(4, 4).T  # glTF is column-major
+        m = np.eye(4)
+        t = node.get("translation", [0, 0, 0])
+        qx, qy, qz, qw = node.get("rotation", [0, 0, 0, 1])
+        sx, sy, sz = node.get("scale", [1, 1, 1])
+        r = np.array([
+            [1 - 2 * (qy * qy + qz * qz), 2 * (qx * qy - qz * qw), 2 * (qx * qz + qy * qw)],
+            [2 * (qx * qy + qz * qw), 1 - 2 * (qx * qx + qz * qz), 2 * (qy * qz - qx * qw)],
+            [2 * (qx * qz - qy * qw), 2 * (qy * qz + qx * qw), 1 - 2 * (qx * qx + qy * qy)],
+        ])
+        m[:3, :3] = r @ np.diag([sx, sy, sz])
+        m[:3, 3] = t
+        return m
+
+    pts = []
+
+    def visit(index, parent):
+        node = doc["nodes"][index]
+        world = parent @ local_matrix(node)
+        if "mesh" in node:
+            for prim in doc["meshes"][node["mesh"]]["primitives"]:
+                acc = doc["accessors"][prim["attributes"]["POSITION"]]
+                lo, hi = acc["min"], acc["max"]
+                for cx in (lo[0], hi[0]):
+                    for cy in (lo[1], hi[1]):
+                        for cz in (lo[2], hi[2]):
+                            pts.append((world @ np.array([cx, cy, cz, 1.0]))[:3])
+        for child in node.get("children", []):
+            visit(child, world)
+
+    scene = doc["scenes"][doc.get("scene", 0)]
+    for root in scene["nodes"]:
+        visit(root, np.eye(4))
+    arr = np.array(pts)
+    return [round(float(v), 2) for v in (arr.max(axis=0) - arr.min(axis=0))]
+
+
+def test_glb_is_y_up_for_shape(tmp_path):
+    """A 10 x 20 x 40 box (Z tall) must come out 10 wide, 40 tall (Y) and 20 deep (Z) in the GLB."""
+    r = run_cad_script('result = cq.Workplane("XY").box(10, 20, 40)\n', out_dir=tmp_path, views=["iso"],
+                       timeout_s=120, exports=("glb",))
+    assert r.ok, r.error
+    assert r.bbox["size"] == [10.0, 20.0, 40.0]  # bbox stays Z-up
+    assert _glb_extents(r.files["model.glb"]) == [10.0, 40.0, 20.0]
+
+
+def test_glb_is_y_up_for_assembly(tmp_path):
+    script = """
+a = cq.Workplane("XY").box(10, 10, 10)
+b = cq.Workplane("XY").box(10, 10, 10).translate((0, 0, 30))
+result = cq.Assembly().add(a, name="a").add(b, name="b")
+"""
+    r = run_cad_script(script, out_dir=tmp_path, views=["iso"], timeout_s=120, exports=("glb",))
+    assert r.ok, r.error
+    assert r.bbox["size"] == [10.0, 10.0, 40.0]
+    assert _glb_extents(r.files["model.glb"]) == [10.0, 40.0, 10.0]

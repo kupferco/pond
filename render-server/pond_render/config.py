@@ -45,6 +45,19 @@ class Settings:
     image_width: int
     stateless: bool
     log_level: str
+    github_token: str | None = None
+    github_repo: str | None = None  # "owner/name"
+    github_branch: str = "claude/drafts"
+    github_write_prefixes: tuple[str, ...] = ("docs/", "cad/", "sim/")
+    github_max_bytes: int = 1_048_576
+    sim_timeout_s: int = 120
+    sim_memory_mb: int = 3072  # OSMesa reserves a lot of address space; 2 GB fails
+    sim_max_duration_s: float = 30.0
+    sim_dir: str | None = None  # local folder with sim/*.py when GitHub is not configured
+
+    @property
+    def github_enabled(self) -> bool:
+        return bool(self.github_token and self.github_repo)
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -65,6 +78,19 @@ class Settings:
             image_width=_env_int("IMAGE_WIDTH", 800),
             stateless=_env_bool("STATELESS", True),
             log_level=(_env("LOG_LEVEL", "INFO") or "INFO").upper(),
+            github_token=_env("GITHUB_TOKEN"),
+            github_repo=_env("GITHUB_REPO"),
+            github_branch=_env("GITHUB_BRANCH", "claude/drafts") or "claude/drafts",
+            github_write_prefixes=tuple(
+                p.strip().strip("/") + "/"
+                for p in (_env("GITHUB_WRITE_PREFIXES", "docs,cad,sim") or "").split(",")
+                if p.strip().strip("/")
+            ),
+            github_max_bytes=_env_int("GITHUB_MAX_BYTES", 1_048_576),
+            sim_timeout_s=_env_int("SIM_TIMEOUT_S", 120),
+            sim_memory_mb=_env_int("SIM_MEMORY_MB", 3072),
+            sim_max_duration_s=float(_env("SIM_MAX_DURATION_S", "30") or 30),
+            sim_dir=_env("SIM_DIR"),
         )
         settings.validate()
         return settings
@@ -100,3 +126,10 @@ class Settings:
                 raise ValueError("POND_OAUTH_PASSWORD should be at least 12 characters")
         if not self.public_url.startswith(("http://", "https://")):
             raise ValueError("POND_PUBLIC_URL must start with http:// or https://")
+        if bool(self.github_token) != bool(self.github_repo):
+            raise ValueError("POND_GITHUB_TOKEN and POND_GITHUB_REPO must be set together")
+        if self.github_enabled:
+            if self.github_branch in {"main", "master"} or not self.github_branch.startswith("claude/"):
+                raise ValueError("POND_GITHUB_BRANCH must start with claude/ (never main)")
+            if not self.github_write_prefixes:
+                raise ValueError("POND_GITHUB_WRITE_PREFIXES must name at least one folder")

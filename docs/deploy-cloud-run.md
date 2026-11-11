@@ -49,6 +49,38 @@ for s in pond-oauth-signing-secret pond-oauth-password; do
 done
 ```
 
+### GitHub token (for the repo_* tools and render auto-save)
+
+Create a fine-grained personal access token as the repo owner at
+https://github.com/settings/personal-access-tokens/new: repository access limited to the
+`pond` repo, permissions Contents read/write and Pull requests read/write. Then:
+
+```bash
+printf '%s' 'github_pat_...' | gcloud secrets create pond-github-token --data-file=-
+gcloud secrets add-iam-policy-binding pond-github-token --member=serviceAccount:$SA_EMAIL --role=roles/secretmanager.secretAccessor
+gcloud run services update $SERVICE --region $REGION \
+    --update-secrets POND_GITHUB_TOKEN=pond-github-token:latest \
+    --update-env-vars POND_GITHUB_REPO=kupferco/pond
+```
+
+The server only ever writes to the `claude/drafts` branch (created from `main` on first
+use) and only under `docs/`, `cad/` and `sim/`. Review and merge its PRs on GitHub.
+To revoke: delete the token on GitHub, or remove the two settings and redeploy.
+
+### Bucket CORS (for the /viewer page)
+
+The viewer page at `$URL/viewer` loads GLB files straight from the bucket, so the bucket must
+allow that origin:
+
+```bash
+cat > /tmp/cors.json <<EOF
+[{"origin": ["$URL"], "method": ["GET", "HEAD"], "responseHeader": ["Content-Type", "Range"], "maxAgeSeconds": 3600}]
+EOF
+gcloud storage buckets update gs://$BUCKET --cors-file=/tmp/cors.json
+```
+
+(Needs `$URL`, so run it after the first deploy.)
+
 ## 4. First deploy
 
 Run from the repo root. `--source` builds the Dockerfile with Cloud Build (amd64) and pushes
@@ -111,6 +143,14 @@ Claude → Settings → Connectors → Add custom connector:
 Click Connect; a browser tab opens the server's login page; enter the password from
 `pond-oauth-password`. Then, in a chat (voice works too), ask Claude to render something,
 for example "render a 32 mm pipe with a C-clamp sleeve and check the views".
+
+### Simulations
+
+The image sets `MUJOCO_GL=osmesa` for headless rendering. Sims read their models from the
+repo through the GitHub token, so adding or editing `sim/*.py` needs no redeploy. A 5 s sim
+of the pipe-climb model takes well under a second of CPU; the 300 s request timeout and 4 GiB
+are plenty. Raise `POND_SIM_MAX_DURATION_S` if longer runs are wanted, remembering Claude's
+own connector timeout.
 
 ## 6. Operating
 

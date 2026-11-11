@@ -16,6 +16,8 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  // The sim control page needs cross-origin isolation and big WASM files: never touch it.
+  if (new URL(req.url).pathname.includes('/sim/')) return;
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
     const network = fetch(req, { cache: 'no-store' }).then(res => {
