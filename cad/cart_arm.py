@@ -2,10 +2,13 @@
 # Drawing 5 of 5 planned cart drawings (whole cart, base, sleeve/hand systems, wheel pairs, arm on cart).
 # Not production geometry: a readable drawing of how the arm sits on the cart and what it can reach.
 #
-# Frame: the cart_assembly.py / hand_sleeve.py frame (track pipe along Z, plate on the -Y side of the pipe).
-# The track pipe is VERTICAL in the unit (pipe A of pod_store_reach.py), so cart +Z is world up and the
-# arm points sideways, out of the plate (cart -Y), towards the store. Store parts are placed in this frame
-# with store_to_cart() below.
+# Frame: the hand_sleeve.py frame (track pipes along Z, plate on the -Y side of the pipes).
+# v2 (follow-up): the base plate runs ACROSS two parallel pipes, one hand clamped on each pipe (pipe B and
+# pipe C, one pipe from each of two neighbouring units), instead of both hands clamping the same pipe as in
+# cart_assembly.py. So the plate's long side is cart X, the two hands sit at x = -/+ PIPE_SPACING/2 and the
+# plate is only as tall (Z) as one hand. The arm stays on the plate centre, as in cart_assembly.py.
+# The track pipes are VERTICAL in the unit, so cart +Z is world up and the arm points sideways, out of the
+# plate (cart -Y), towards the store. Store parts are placed in this frame with store_to_cart() below.
 #
 # Two scenes are built:
 #   result          working scene: arm reaching a dry-store pick hole (D1) and a seedling tray cell (A2),
@@ -13,15 +16,21 @@
 #   result_stowed   the same cart with the arm folded for travel.
 #
 # ASSUMED (all marked "ASSUMED" below; nothing here is decided):
-#  1. Arm mount, base plate, hands, battery, motors: exactly as cart_assembly.py (itself assumed).
+#  0. Pipe spacing: the two pipes the cart clamps are 280 mm apart, centre to centre (ASSUMED; the real
+#     spacing between neighbouring units is not decided). One hand per pipe, both facing the same way.
+#  1. Arm mount, hands, wheels, sleeves: as cart_assembly.py (itself assumed). Base plate redrawn across the
+#     two pipes: 112 mm (Z) x PIPE_SPACING + 100 (X) x 6 mm, same open-frame idea, bosses round each hand's
+#     holes and an arm block. Battery 70 x 50 x 70 beside the arm on the pipe-C side, motors one per hand on
+#     the +X side of each hand (gearbox up), all ASSUMED positions.
 #  2. Link lengths (shoulder to elbow 120, elbow to wrist 130, wrist to gripper tip 100 = 350 mm
 #     stretched) taken from the layout in so101_servo_layout.py and the 350 mm REACH of pod_store_reach.py.
 #     Servos and links are envelope boxes, not real parts.
 #  3. Store, tank, lid, pick holes, rows, seedling tray: pod_store_reach.py v3 numbers (tank 700 x 400 x 400,
 #     row pitch 35, pod pitch 28, pipe A at x = -250). The lid is shown only as a patch near the arm.
-#  4. Cart height on the pipe: parked at its lowest, plate bottom end 20 mm above the lid top, so the
-#     shoulder is 590 mm above the tank base. pod_store_reach.py used 550, which would put the plate's
-#     lower end 20 mm BELOW the lid top (plate is 332 mm long). TO DECIDE: lowest allowed cart position.
+#  4. Cart height on the pipes: shoulder 550 mm above the tank base, as pod_store_reach.py. The pipes start
+#     at z = 480 there (lid 404 + 76); the plate is now short enough (112 mm) that its bottom edge is at 494,
+#     clear of both the pipe ends and the lid. The two pipes are drawn as stubs from the pipe end up.
+#     The store model has one pipe per x position: the second pipe (neighbouring unit) is not in it.
 #  5. The lid has an access opening over the seedling tray (pod_store_reach.py shows no opening).
 #  6. Seedling tray: 4 x 4 cells (the grid is an open question: 4 x 4 or 3 x 5), 200 x 380 mm, cell A1 at the
 #     tray corner nearest the store and the track end, numbering runs along the tray. Cell A2 is used.
@@ -31,15 +40,15 @@
 #     (wrist out and clear). Cells further out than the tray's first column are not reached from this cart
 #     position. The solution keeps the elbow on the store side (away from the cart). Wrist flex and roll ranges are not checked against the real servo limits.
 #  8. Waveshare bus servo board: 42 x 33 x 12 mm block on four 6 mm standoffs, on a small bracket tab that is
-#     bolted to the base-plate arm block and overhangs towards Hand A. Real board size to confirm.
+#     bolted to the base-plate arm block and overhangs towards pipe B. Real board size to confirm.
 #  9. Cable path: one 6-way servo daisy chain from the board (A at the base up to F at the gripper, clipped
-#     to the +arm-Y side of the links), 12 V lead from the battery, USB lead out of the board towards the end
-#     of the plate (to a laptop now, a Raspberry Pi on the cart battery later). Routes are drawn as
+#     to the +arm-Y side of the links), 12 V lead from the battery, USB lead out of the board towards the top
+#     edge of the plate (to a laptop now, a Raspberry Pi on the cart battery later). Routes are drawn as
 #     straight 4 mm round runs; real cable lengths, clips and strain relief are not designed.
 # 10. Stowed pose: upper arm lies along the pipe over the base block, forearm folded back beside it,
 #     gripper folded forward beside that (three lanes 26 mm apart). The shoulder pan in this pose is
-#     assumed to turn the arm's lanes to the -X side of the cart (towards the battery side, which is clear
-#     at that height). Not collision-checked against a real arm.
+#     assumed to turn the arm's lanes to the -X side of the cart (towards pipe B; nothing is up there above
+#     the plate). Not collision-checked against a real arm.
 import math
 import os
 import sys
@@ -62,7 +71,11 @@ STORE_X0 = -140.0; ROW_P = 35.0; POD_D = 25.0
 FRONT_Y = -200.0
 SEED_X0, SEED_X1, SEED_Y = -345.0, -145.0, 190.0     # seedling tray 200 x 380
 SEED_TOP = TH - 20.0
-SHOULDER_Z = LID_TOP + 20.0 + ca.PLATE_L / 2           # ASSUMED 590: plate bottom 20 mm above lid top
+SHOULDER_Z = 550.0                                    # as pod_store_reach.py (plate bottom then at 494, pipes start 480)
+PIPE_BOTTOM_W = 480.0                                  # pipe ends at z = TH + 80 in pod_store_reach.py
+PIPE_SPACING = 280.0                                   # ASSUMED: pipe B to pipe C, centre to centre
+HX = PIPE_SPACING / 2
+PLATE_ZH = (hs.SLEEVE_L + 22.0) / 2                    # ASSUMED: plate 112 mm tall, 11 mm margin beyond each sleeve end
 ARM_YW = 0.0                                          # world y of the arm axis (cart parked above row line y = 0)
 YC = ARM_YW - ca.ARM_X                                # world y of the cart's own Y axis origin
 
@@ -224,31 +237,66 @@ def solve_pose(target_c, elbow_store_side=True, a3_deg=90.0):
     a2 = math.degrees(math.atan2(wx - e[0], wz - e[1]))
     return pan, a1, a2, a3_deg, d
 
-# ---------------- Cart (reused from cart_assembly.py) ----------------
-cart = [
-    ("track_pipe", ca.pipe, (0.75, 0.78, 0.8, 1)),
-    ("base_plate", ca.plate, (0.35, 0.35, 0.38, 1)),
-    ("battery", ca.battery, (0.2, 0.45, 0.85, 1)),
-    ("drive_motors", ca.motors, (0.85, 0.25, 0.25, 1)),
-]
-for tag, hz in (("A", ca.HAND_Z), ("B", -ca.HAND_Z)):
-    cart.append(("hand_%s_sleeve" % tag, ca.zshift(hs.result, hz), (0.95, 0.75, 0.2, 1)))
-    cart.append(("hand_%s_wheels" % tag, ca.zshift(ca.WHEELS, hz), (0.15, 0.15, 0.15, 1)))
+# ---------------- Cart: two hands on two parallel pipes, one plate across them ----------------
+PIPE_Z0, PIPE_Z1 = PIPE_BOTTOM_W - SHOULDER_Z, 165.0     # pipe stubs: from the pipe end (z -70) up to z +165
+def xshift(shape, x):
+    return shape.translate((x, 0, 0))
+
+PLATE_X0 = -HX - 62.0                                     # 62 mm of plate on the -X side of the pad, 38 on +X
+PLATE_X1 = HX + 38.0                                      # (same margins as cart_assembly.py, per hand)
+PLATE_CY = (ca.PLATE_Y0 + ca.PLATE_Y1) / 2
+RIM, BOSS_HX, BOSS_HZ, ARM_BLOCK_HX = 10.0, 18.0, 28.0, 42.0
+def window(x0, x1, z0, z1):
+    return box(x1 - x0, ca.PLATE_T + 2, z1 - z0, ((x0 + x1) / 2, PLATE_CY, (z0 + z1) / 2))
+def build_plate():
+    plate = box(PLATE_X1 - PLATE_X0, ca.PLATE_T, 2 * PLATE_ZH, ((PLATE_X0 + PLATE_X1) / 2, PLATE_CY, 0))
+    ZE = PLATE_ZH - RIM
+    for sgn in (1, -1):
+        bc = sgn * HX + ca.pad_cx                          # boss centre x (pad centre of that hand)
+        inner = ca.ARM_X + sgn * ARM_BLOCK_HX
+        outer_end = (PLATE_X1 - RIM) if sgn > 0 else (PLATE_X0 + RIM)
+        for xa, xb in ((inner, bc - sgn * BOSS_HX), (bc + sgn * BOSS_HX, outer_end)):
+            plate = plate.cut(window(min(xa, xb), max(xa, xb), -ZE, ZE))
+        # windows above and below each boss
+        for za, zb in ((BOSS_HZ, ZE), (-ZE, -BOSS_HZ)):
+            plate = plate.cut(window(bc - BOSS_HX, bc + BOSS_HX, za, zb))
+        for dz in (hs.PAD_HOLE_Z, -hs.PAD_HOLE_Z):          # M4 holes matching the pad
+            plate = plate.cut(cyl(hs.PAD_HOLE_D / 2, ca.PLATE_T + 2, "y", (bc, PLATE_CY, dz)))
+    return plate
+plate = build_plate()
+
+BATT_C = 70.0                                              # ASSUMED: battery x centre, between arm block and pipe-C boss
+battery = box(ca.BATT[0], ca.BATT[1], ca.BATT[2], (BATT_C, ca.PLATE_Y0 - ca.BATT[1] / 2, 0.0))
+MOTOR_DX = 24.0                                            # ASSUMED: motor beside each pad, on +X of its pipe
+motors = None
+for sgn in (1, -1):
+    mx = sgn * HX + MOTOR_DX
+    m = cyl(ca.MOTOR_R, ca.MOTOR_L, "z", (mx, ca.PLATE_Y0 - ca.MOTOR_R, 0.0))
+    m = m.union(box(26, 2 * ca.MOTOR_R, 20, (mx, ca.PLATE_Y0 - ca.MOTOR_R, ca.MOTOR_L / 2 + 10)))   # gearbox up (ASSUMED)
+    motors = m if motors is None else motors.union(m)
+
+cart = [("base_plate", plate, (0.35, 0.35, 0.38, 1)),
+        ("battery", battery, (0.2, 0.45, 0.85, 1)),
+        ("drive_motors", motors, (0.85, 0.25, 0.25, 1))]
+for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):
+    cart.append(("track_%s" % tag, xshift(ca.cyl(hs.R_PIPE, PIPE_Z1 - PIPE_Z0, "z", (0, 0, (PIPE_Z0 + PIPE_Z1) / 2)), sgn * HX),
+                 (0.75, 0.78, 0.8, 1)))
+    cart.append(("hand_on_%s_sleeve" % tag, xshift(hs.result, sgn * HX), (0.95, 0.75, 0.2, 1)))
+    cart.append(("hand_on_%s_wheels" % tag, xshift(ca.WHEELS, sgn * HX), (0.15, 0.15, 0.15, 1)))
 
 # ---------------- Waveshare board and bracket ----------------
-BOARD = (33.0, 12.0, 42.0)                       # ASSUMED: X, out from plate, Z
-BOARD_Z = 70.0                                   # ASSUMED: towards Hand A, beside the arm block
+BOARD = (42.0, 12.0, 33.0)                       # ASSUMED: X (along plate), out from plate, Z
+BOARD_X = ca.ARM_X - 58.0                        # ASSUMED: towards pipe B, beside the arm block
 TAB_T, STAND = 3.0, 6.0
-board_c = (ca.ARM_X, ca.PLATE_Y0 - TAB_T - STAND - BOARD[1] / 2, BOARD_Z)
-tab = box(33.0, TAB_T, 66.0, (ca.ARM_X, ca.PLATE_Y0 - TAB_T / 2, 67.0))   # z 34..100: bolted to the arm block (to z 42)
-standoffs = fuse([cyl(2.5, STAND, "y", (ca.ARM_X + sx * 13.0, ca.PLATE_Y0 - TAB_T - STAND / 2, BOARD_Z + sz * 16.0))
+board_c = (BOARD_X, ca.PLATE_Y0 - TAB_T - STAND - BOARD[1] / 2, 0.0)
+tab = box(56.0, TAB_T, 33.0, (ca.ARM_X - 65.0, ca.PLATE_Y0 - TAB_T / 2, 0.0))   # x -105..-49: clear of the arm base (to -47), bolted to the arm block (to x -54)
+standoffs = fuse([cyl(2.5, STAND, "y", (BOARD_X + sx * 16.0, ca.PLATE_Y0 - TAB_T - STAND / 2, sz * 13.0))
                   for sx in (-1, 1) for sz in (-1, 1)])
 board = box(BOARD[0], BOARD[1], BOARD[2], board_c)
-# 12 V lead: board -> round the arm base on the +X side -> battery
-bat_in = (ca.BATT_X + ca.BATT[0] / 2, ca.PLATE_Y0 - 12.0, ca.BATT_Z)
-power_pts = [(ca.ARM_X, board_c[1], BOARD_Z - 21.0), (ca.ARM_X + 40.0, ca.PLATE_Y0 - 12.0, BOARD_Z - 21.0),
-             (ca.ARM_X + 40.0, ca.PLATE_Y0 - 12.0, ca.BATT_Z), bat_in]
-usb_pts = [(ca.ARM_X, board_c[1], BOARD_Z + 21.0), (ca.ARM_X, board_c[1], ca.PLATE_L / 2 + 10.0)]
+# 12 V lead: board -> down past the arm base (below z -35) -> battery
+power_pts = [(BOARD_X, board_c[1], -BOARD[2] / 2), (BOARD_X, ca.PLATE_Y0 - 12.0, -48.0),
+             (BATT_C, ca.PLATE_Y0 - 12.0, -48.0), (BATT_C, ca.PLATE_Y0 - 12.0, -20.0)]
+usb_pts = [(BOARD_X, board_c[1], BOARD[2] / 2), (BOARD_X, board_c[1], PLATE_ZH + 10.0)]
 
 def polyline(pts, r=2.0):
     out = []
@@ -342,7 +390,7 @@ STOW = dict(pan=0.0, a1=90.0, a2=270.0, a3=90.0, lane=(0.0, 26.0, 52.0))
 
 # ---------------- Scenes ----------------
 def build_board_and_cable(arm_cable_pts):
-    arm_cable = polyline([(board_c[0], board_c[1], board_c[2] - 21.0)] + [p for p in arm_cable_pts], 2.0)
+    arm_cable = polyline([(board_c[0] + BOARD[0] / 2, board_c[1], board_c[2])] + [p for p in arm_cable_pts], 2.0)
     return arm_cable, polyline(power_pts, 2.0), polyline(usb_pts, 2.0)
 
 def add_arm(assy, tag, pose, color_override=None, labelled=True, prefix=""):

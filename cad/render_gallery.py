@@ -104,7 +104,7 @@ def stowed_labels(view, info):
 if __name__ == "__main__":
     outdir = sys.argv[1]
     os.makedirs(outdir, exist_ok=True)
-    out = draw(arm.result, arm.INFO, "cart-arm-v1", outdir, working_labels)
-    out += draw(arm.result_stowed, arm.INFO_STOWED, "cart-arm-stowed-v1", outdir, stowed_labels)
+    out = draw(arm.result, arm.INFO, "cart-arm-v2", outdir, working_labels)
+    out += draw(arm.result_stowed, arm.INFO_STOWED, "cart-arm-stowed-v2", outdir, stowed_labels)
     for f in out:
         print("wrote", f)
