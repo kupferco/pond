@@ -59,6 +59,30 @@ jobs:
           fi
           echo "start=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
+      # Every run starts from the latest default branch: other tasks merge
+      # while this one waits or runs, and a stale branch conflicts later. A
+      # clean merge is committed; a conflict is left in the working tree for
+      # the session to resolve first.
+      - name: Bring in the latest default branch
+        id: merge
+        run: |
+          git config user.name  >/dev/null || git config user.name  "Viber"
+          git config user.email >/dev/null || git config user.email "viber@users.noreply.github.com"
+          START="$(git rev-parse HEAD)"
+          CONFLICT=false
+          if git fetch origin "$BASE" 2>&1; then
+            if git merge --no-edit -m "Viber #${{ inputs.task_id }}: merge $BASE into $BRANCH" "origin/$BASE"; then
+              START="$(git rev-parse HEAD)"
+            elif [ -n "$(git diff --name-only --diff-filter=U)" ]; then
+              CONFLICT=true
+              git diff --name-only --diff-filter=U > "$RUNNER_TEMP/viber-conflicts.txt"
+            else
+              git merge --abort 2>/dev/null || true
+            fi
+          fi
+          echo "start=$START" >> "$GITHUB_OUTPUT"
+          echo "conflict=$CONFLICT" >> "$GITHUB_OUTPUT"
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -142,6 +166,7 @@ jobs:
             following CLAUDE.md, in particular its section on sessions started by Viber.
             If the brief is a follow-up, the earlier work is already on this branch: read it with
             git log and git diff ${{ github.event.repository.default_branch }}... before changing anything.
+            ${{ steps.merge.outputs.conflict == 'true' && format('FIRST, before anything else: the branch is in the middle of merging {0} and these files conflict: see git status. Resolve every conflict keeping both sides behaviour, run the repo checks, and commit the merge with the subject "Viber #{1}: merge {0} into {2}". Then do the brief.', github.event.repository.default_branch, inputs.task_id, inputs.branch) || '' }}
             You are already on the branch ${{ inputs.branch }}. Commit your work to it. Do not push,
             do not open a pull request, do not merge: the workflow does that after you finish.
             Start every commit message subject with "Viber #${{ inputs.task_id }}: " followed by what the commit does.
@@ -182,7 +207,7 @@ jobs:
             git add -A
             git commit -m "Viber #${{ inputs.task_id }}: uncommitted work"
           fi
-          if [ "$(git rev-parse HEAD)" = "${{ steps.branch.outputs.start }}" ]; then
+          if [ "$(git rev-parse HEAD)" = "${{ steps.merge.outputs.start }}" ]; then
             echo "pushed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
