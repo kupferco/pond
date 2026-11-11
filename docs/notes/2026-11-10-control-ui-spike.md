@@ -61,3 +61,7 @@ gh variable set VIBER_URL -R kupferco/pond --body "<same value as on kupferco/ho
 ```
 
 (Check with `gh variable list -R kupferco/housekeeper` and `gh secret list -R kupferco/housekeeper` whether Housekeeper uses a variable or a secret for `VIBER_URL`, and match it.)
+
+### Update (task #55)
+
+The preview step "Tell Viber the preview is ready" is now in `control-ui.yml` (secrets `VIBER_URL`, `VIBER_HOOK_SECRET`; `POST /hooks/preview`, Bearer auth, as in `viber.yml`). The "Tell Viber how the deploy went" step after the Live deploy is still missing: the deploy-result hook path and payload could not be read, so they were not guessed. Paste the step of that name from `kupferco/housekeeper`'s `.github/workflows/deploy.yml` after the "Live (merge to main)" step (give the Live step `id: live` and use `steps.live.outcome`, with `if: always()`, `|| echo "::warning::..."` so it never fails the deploy). Note that `VIBER_URL` is a secret, not a variable, so the `gh variable set` line above is wrong.
