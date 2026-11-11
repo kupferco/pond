@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pond 3D viewer</title>
+<!-- Same page as the render server's /viewer, for GLB files kept in this repo: viewer.html?src=renders/x.glb&title=... -->
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; background: #1d1f24; color: #e6e6e6; font: 14px/1.4 system-ui, sans-serif; }
+  model-viewer { width: 100%; height: 100%; background: #1d1f24; --poster-color: #1d1f24; }
+  .bar { position: fixed; top: 0; left: 0; right: 0; padding: 10px 14px; display: flex; gap: 12px;
+         align-items: center; background: rgba(0,0,0,.35); pointer-events: none; }
+  .bar a, .bar span { pointer-events: auto; color: #e6e6e6; }
+  .bar strong { font-weight: 600; }
+  .hint { position: fixed; bottom: 10px; left: 0; right: 0; text-align: center; opacity: .6; font-size: 12px; }
+</style></head>
+<body>
+<model-viewer id="mv" camera-controls auto-rotate shadow-intensity="1" exposure="1" touch-action="pan-y" interaction-prompt="none"></model-viewer>
+<div class="bar"><strong id="t">Pond render</strong><span>·</span><a id="dl" download>download GLB</a></div>
+<div class="hint">drag to orbit · scroll or pinch to zoom · Z is up in the part, shown as Y here</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const src = q.get('src') || '';
+  // only files from this gallery's renders/ folder (no other hosts, no folder climbing)
+  if (/^renders\/[A-Za-z0-9._-]+\.glb$/.test(src)) {
+    const mv = document.getElementById('mv');
+    mv.src = src; mv.alt = q.get('title') || 'Pond render';
+    document.getElementById('dl').href = src;
+  } else { document.getElementById('t').textContent = 'No model given'; }
+  const title = (q.get('title') || 'Pond render').slice(0, 120);
+  document.getElementById('t').textContent = src ? title : 'No model given';
+  document.title = title;
+</script>
+</body></html>
