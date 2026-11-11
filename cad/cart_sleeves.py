@@ -1,9 +1,12 @@
-# cad/cart_sleeves.py: the two SLEEVE (hand) systems of the Pond cart (DRAFT, 11 Nov 2026).
+# cad/cart_sleeves.py: the two SLEEVE (hand) systems of the Pond cart (DRAFT v2, 11 Nov 2026).
 # Drawing 3 of 5 planned cart drawings (whole cart, base, sleeve/hand systems, wheel pairs, arm on cart).
 # Reuses cad/hand_sleeve.py v4.1 (the sleeve body) and cad/cart_assembly.py (hand spacing, wheel helper);
 # neither is redrawn or changed. Not production geometry: a readable drawing of how the parts relate.
 #
-# Frame: the hand_sleeve.py frame. Track pipe runs along Z, base pads face -Y, the C-gap with funnel faces +X.
+# v2 (follow-up): each hand (each set of wheels) clamps its OWN pipe. The two pipes run parallel, side by side
+# (as in cart_arm.py v2), not both hands on one pipe as in cart_assembly.py v1.
+#
+# Frame: the hand_sleeve.py frame. Track pipes run along Z, base pads face -Y, the C-gap with funnel faces +X.
 #
 # DECIDED (hand_sleeve.py v4.1, decisions 31 Oct, 1 Nov, 2 Nov):
 #   90 mm sleeve, outer R 34, two wheel rows 60 mm apart, six wheels per hand (driven wheel at 180 deg,
@@ -12,7 +15,8 @@
 #
 # ASSUMED (undecided; every one is marked "ASSUMED" below):
 #  1. Pipe OD 32 mm (also assumed in hand_sleeve.py), shown as a 330 mm stub.
-#  2. Hand spacing 220 mm centre to centre (assumed in cart_assembly.py, reused here).
+#  2. Pipe spacing 280 mm centre to centre, one hand per pipe (same assumed value as cart_arm.py v2; the
+#     real spacing between neighbouring units is not decided). Both hands at the same height along the pipes.
 #  3. Drive layout: ONE worm shaft per hand, along the pipe, beside the sleeve on -X, meshing with a worm
 #     wheel on each driven axle (both 180 deg wheels, one per row). Worm wheel R 7 mm, worm R 3 mm, worm 80 mm
 #     long. The real ratio, tooth form and motor torque are not sized.
@@ -25,7 +29,7 @@
 #     open and closed state to draw. The "open" jaw seen in sim/unit_change.py (hand shell opening widened
 #     122 deg) and the jaw motor in the 1 Nov notes are not in the CAD. So there is no open/closed view; the
 #     release is shown as the idler travel only (exploded view, top view). ASSUMED: release = jaw to be designed.
-#  8. Both hands identical, same way round, drive on the outer end of each hand (mirror of each other along Z).
+#  8. Both hands identical and the same way round (C-gap facing +X), drive on the +Z end of each hand.
 #  9. Exploded view offsets are for readability only.
 import math
 import os
@@ -37,7 +41,8 @@ import hand_sleeve as hs        # reused, not redrawn
 import cart_assembly as ca      # reused: HAND_SPACING, PIPE_STUB_L, box/cyl helpers
 
 box, cyl = ca.box, ca.cyl
-HAND_Z = ca.HAND_SPACING / 2                      # ASSUMED 220 mm spacing (from cart_assembly.py)
+PIPE_SPACING = 280.0                              # ASSUMED: pipe-to-pipe, as cart_arm.py v2
+HAND_X = PIPE_SPACING / 2                         # hands at x = -/+ 140, one per pipe
 
 # ---------------- Drive (all ASSUMED) ----------------
 AXLE_PIN_R = hs.AXLE_D / 2
@@ -67,7 +72,7 @@ def wheel_stations():
 # ---------------- One hand: parts in the hand's own frame (centred at z = 0) ----------------
 def hand_parts():
     """Dict name -> (shape, colour). Frame: sleeve centred on z = 0. Motor sits on the +Z end;
-    the hand at -Z is this hand mirrored (see mirror_z)."""
+    the same hand is placed on each pipe (see build_pair)."""
     parts = {}
     parts["sleeve"] = (hs.result, (0.95, 0.75, 0.2, 1))
     wheels, axles, wwheels, arrows = None, None, None, None
@@ -107,17 +112,13 @@ def hand_parts():
     parts["drive_motor"] = (motor, (0.85, 0.25, 0.25, 1))
     return parts
 
-def mirror_z(shape):
-    return shape.mirror("XY")
-
-# ---------------- Pair on the pipe ----------------
+# ---------------- Pair: one hand on each of two parallel pipes ----------------
 def build_pair():
     a = cq.Assembly()
-    a.add(cyl(hs.R_PIPE, ca.PIPE_STUB_L, "z", (0, 0, 0)), name="track_pipe", color=cq.Color(0.75, 0.78, 0.8, 1))
-    for tag, hz, mir in (("A", HAND_Z, False), ("B", -HAND_Z, True)):
+    for tag, hx in (("B", -HAND_X), ("C", HAND_X)):
+        a.add(cyl(hs.R_PIPE, ca.PIPE_STUB_L, "z", (hx, 0, 0)), name="track_pipe_%s" % tag, color=cq.Color(0.75, 0.78, 0.8, 1))
         for name, (shp, col) in hand_parts().items():
-            s = mirror_z(shp) if mir else shp          # Hand B: motor on the -Z end (outer end)
-            a.add(s.translate((0, 0, hz)), name="hand_%s_%s" % (tag, name), color=cq.Color(*col))
+            a.add(shp.translate((hx, 0, 0)), name="hand_%s_%s" % (tag, name), color=cq.Color(*col))
     return a
 
 # ---------------- Exploded view of one hand ----------------
@@ -160,7 +161,7 @@ result = pair
 
 # Key dimensions (mm), reused by the render script for the drawing annotations.
 DIMS = {
-    "hand_spacing": ca.HAND_SPACING,
+    "pipe_spacing": PIPE_SPACING,
     "sleeve_length": hs.SLEEVE_L,
     "row_spacing": hs.ROW_SPACING,
     "sleeve_od": 2 * hs.WALL_OUT_R,

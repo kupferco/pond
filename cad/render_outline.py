@@ -30,28 +30,29 @@ def dim_svg(s, ty, tx, p0, p1, label, off=(0, 0), horizontal=False):
     out.append('<text x="%.1f" y="%.1f" stroke="none">%s</text></g>' % (tx_ + (0 if horizontal else 6), ty_ + (-6 if horizontal else 4), label))
     return "".join(out)
 
-def annotate(svg, view, D, hand_z):
+def annotate(svg, view, D, hand_x):
     m = re.search(r'scale\(([\d.eE+-]+), -[\d.eE+-]+\) translate\(([\d.eE+-]+),([\d.eE+-]+)\)', svg)
     s, tx, ty = (float(g) for g in m.groups())
     items = []
-    L, R, S = D["sleeve_length"], D["row_spacing"], D["hand_spacing"]
+    L, R, S = D["sleeve_length"], D["row_spacing"], D["pipe_spacing"]
     OD, PD = D["sleeve_od"], D["pipe_od"]
-    if view == "front":   # u = X, v = Z
+    hx = hand_x
+    if view == "front":   # u = X, v = Z (two pipes side by side, one hand on each)
         items += [
-            dim_svg(s, ty, tx, (50, hand_z - L / 2), (50, hand_z + L / 2), "%g sleeve" % L),
-            dim_svg(s, ty, tx, (50, -hand_z - R / 2), (50, -hand_z + R / 2), "%g rows" % R),
-            dim_svg(s, ty, tx, (84, -S / 2), (84, S / 2), "%g hand spacing" % S),
-            dim_svg(s, ty, tx, (-OD / 2, 20), (OD / 2, 20), "%g sleeve OD" % OD, horizontal=True),
-            dim_svg(s, ty, tx, (-PD / 2, -10), (PD / 2, -10), "%g pipe OD" % PD, horizontal=True),
+            dim_svg(s, ty, tx, (hx + 50, -L / 2), (hx + 50, L / 2), "%g sleeve" % L),
+            dim_svg(s, ty, tx, (hx + 110, -R / 2), (hx + 110, R / 2), "%g rows" % R),
+            dim_svg(s, ty, tx, (-hx, -L / 2 - 22), (hx, -L / 2 - 22), "%g pipe spacing" % S, horizontal=True),
+            dim_svg(s, ty, tx, (hx - OD / 2, L / 2 + 14), (hx + OD / 2, L / 2 + 14), "%g sleeve OD" % OD, horizontal=True),
+            dim_svg(s, ty, tx, (-hx - PD / 2, -L / 2 - 50), (-hx + PD / 2, -L / 2 - 50), "%g pipe OD" % PD, horizontal=True),
         ]
     elif view == "side":  # u = Y, v = Z
         items += [dim_svg(s, ty, tx, (-40, 0), (34, 0), "74 pad face to sleeve top", off=(0, -18), horizontal=True),
-                  dim_svg(s, ty, tx, (-48, hand_z - L / 2), (-48, hand_z + L / 2), "%g sleeve" % L)]
+                  dim_svg(s, ty, tx, (-48, -L / 2), (-48, L / 2), "%g sleeve" % L)]
     elif view == "top":   # u = X, v = Y (looking down the pipe)
         gn, gm = D["gap_narrow"], D["gap_mouth"]
-        items += [dim_svg(s, ty, tx, (44, -gn / 2), (44, gn / 2), "%g gap" % gn),
-                  dim_svg(s, ty, tx, (60, -gm / 2), (60, gm / 2), "%g funnel mouth" % gm),
-                  dim_svg(s, ty, tx, (-OD / 2, -48), (OD / 2, -48), "%g sleeve OD" % OD, horizontal=True)]
+        items += [dim_svg(s, ty, tx, (-hx + 44, -gn / 2), (-hx + 44, gn / 2), "%g gap" % gn),
+                  dim_svg(s, ty, tx, (-hx + 60, -gm / 2), (-hx + 60, gm / 2), "%g funnel mouth" % gm),
+                  dim_svg(s, ty, tx, (-hx - OD / 2, -48), (-hx + OD / 2, -48), "%g sleeve OD" % OD, horizontal=True)]
     return svg.replace("</svg>", "".join(items) + "</svg>")
 
 def main():
@@ -71,7 +72,7 @@ def main():
         caption = "%s  ·  %s  ·  bbox %s mm" % (view, runner.VIEW_PRESETS[runner.resolve_view(view)][2], size)
         svg = runner.project_svg(shape, runner.resolve_view(view), width=W, height=H, show_hidden=False, caption=caption)
         if with_dims and view != "iso":
-            svg = annotate(svg, view, ns["DIMS"], ns["HAND_Z"])
+            svg = annotate(svg, view, ns["DIMS"], ns["HAND_X"])
         out = os.path.join(outdir, "%s-%s.png" % (name, view))
         cairosvg.svg2png(bytestring=svg.encode(), write_to=out, background_color="white")
         print("wrote", os.path.basename(out))
