@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pond 3D viewer</title>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; background: #1d1f24; color: #e6e6e6; font: 14px/1.4 system-ui, sans-serif; }
+  model-viewer { width: 100%; height: calc(100% - 36px); background: #1d1f24; }
+  .bar { height: 36px; display: flex; gap: 10px; align-items: center; padding: 0 12px; box-sizing: border-box; }
+  .bar a { color: #9cc4ff; }
+</style></head>
+<body>
+<div class="bar"><a href="./">&larr; Gallery</a><strong id="t">Pond model</strong><span>·</span><a id="dl" download>download GLB</a></div>
+<model-viewer id="mv" camera-controls auto-rotate shadow-intensity="0.6" exposure="1.1"></model-viewer>
+<script>
+  // src must be a .glb file next to this page (e.g. renders/foo.glb): no other hosts.
+  const q = new URLSearchParams(location.search);
+  const src = q.get('src') || '';
+  if (/^renders\/[\w.-]+\.glb$/.test(src)) {
+    document.getElementById('mv').src = src;
+    document.getElementById('dl').href = src;
+    document.getElementById('t').textContent = (q.get('title') || 'Pond model').slice(0, 120);
+  } else {
+    document.getElementById('t').textContent = 'No model given';
+  }
+</script>
+</body></html>
