@@ -5,9 +5,8 @@
 # Frame: the hand_sleeve.py frame. Track pipe along Z, cart base on the -Y side, C-gap on +X.
 # A "pair" is the two wheels at the same angle in the hand's two rows (60 mm apart along the pipe), held by
 # one rigid carrier. A hand has three pairs: the DRIVEN pair at 180 deg (-X, outside of the loop) and two
-# SPRING IDLER pairs at +/-60 deg (towards the spine). Six wheels per row-pair set = 6 wheels per hand
-# (hand_sleeve.py draws 12 wheel pockets for two rows of three; the decision doc calls this "6 wheels per hand
-# in rigid pairs"; here a pair = 2 wheels, 3 pairs = 6 wheels, matching the doc).
+# SPRING IDLER pairs at +/-60 deg (towards the spine): 3 pairs x 2 wheels = the 6 wheels per hand of
+# hand_sleeve.py and the decision doc.
 #
 # Two models are built here:
 #   result  : one hand's three pairs on the track pipe, with the driven pair's worm drive and motor.
