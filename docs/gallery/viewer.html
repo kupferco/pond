@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pond 3D viewer</title>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; background: #1d1f24; color: #e6e6e6; font: 14px/1.4 system-ui, sans-serif; }
+  model-viewer { width: 100%; height: 100%; background: #1d1f24; --poster-color: #1d1f24; }
+  .bar { position: fixed; top: 0; left: 0; right: 0; padding: 10px 14px; display: flex; gap: 12px; background: rgba(0,0,0,.35); pointer-events: none; }
+  .bar a { pointer-events: auto; color: #e6e6e6; }
+  .hint { position: fixed; bottom: 10px; left: 0; right: 0; text-align: center; opacity: .6; font-size: 12px; }
+</style></head>
+<body>
+<!-- Static viewer for a GLB kept in this folder: viewer.html?src=renders/NAME.glb&title=... (same look as the render server's /v/ page) -->
+<model-viewer id="m" camera-controls auto-rotate shadow-intensity="1" exposure="1" touch-action="pan-y" interaction-prompt="none"></model-viewer>
+<div class="bar"><strong id="t">Pond model</strong><span>·</span><a id="dl" download>download GLB</a></div>
+<div class="hint">drag to orbit · scroll or pinch to zoom · Z is up in the part, shown as Y here</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const src = q.get('src') || '';
+  if (/^renders\/[\w.-]+\.glb$/.test(src)) {   // only GLBs from this gallery's renders folder
+    document.getElementById('m').src = src;
+    document.getElementById('dl').href = src;
+  }
+  document.getElementById('t').textContent = (q.get('title') || 'Pond model').slice(0, 120);
+</script>
+</body></html>

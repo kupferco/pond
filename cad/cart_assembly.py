@@ -34,21 +34,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hand_sleeve as hs   # reused, not redrawn; importing runs the model and exposes hs.result and dims
 
 # ---------------- Layout (mm) ----------------
-HAND_SPACING = 220.0                    # ASSUMED: centre-to-centre along the pipe
-HAND_Z = HAND_SPACING / 2
-PLATE_T = 6.0                           # ASSUMED
-PLATE_W = 100.0                         # ASSUMED: X extent
-PLATE_X0 = hs.PAD_X0 - 38.0             # ASSUMED: plate centred a little off the pads towards -X
-PLATE_L = HAND_SPACING + hs.SLEEVE_L + 2 * 11.0   # ASSUMED: 332 mm, a margin beyond each sleeve
-PLATE_Y1 = hs.PAD_Y0                    # plate sits on the pads' outer (-Y) face
-PLATE_Y0 = PLATE_Y1 - PLATE_T
-BATT = (70.0, 50.0, 70.0)               # ASSUMED: X, Y (out from plate), Z (along pipe)
-BATT_Z = -75.0                          # ASSUMED: clear of the centred arm base (z +/-35)
-BATT_X = -27.0                          # ASSUMED: towards -X so the motors keep +X
-MOTOR_R, MOTOR_L = 14.0, 55.0           # ASSUMED worm-gear motor placeholder
-MOTOR_X = 24.0                          # ASSUMED: beside the pad, on +X of the plate
-ARM_Z = 0.0                             # ASSUMED: arm base in the middle of the plate
-ARM_X = PLATE_X0 + PLATE_W / 2           # ASSUMED: arm on the plate centre (x = -12)
+# Shared with cart_base.py: the numbers live in cart_layout.py (all ASSUMED values are marked there).
+from cart_layout import *   # noqa: F401,F403
+import cart_base
 PIPE_STUB_L = 330.0                     # ASSUMED
 
 def box(sx, sy, sz, c):
@@ -62,7 +50,6 @@ def cyl(r, h, axis, c):
 def zshift(shape, z):
     return shape.translate((0, 0, z))
 
-pad_cx = (hs.PAD_X0 + hs.PAD_X1) / 2
 
 # ---------------- Parts ----------------
 def hand_wheels():
@@ -79,26 +66,7 @@ WHEELS = hand_wheels()
 
 pipe = cyl(hs.R_PIPE, PIPE_STUB_L, "z", (0, 0, 0))
 
-plate = box(PLATE_W, PLATE_T, PLATE_L, (PLATE_X0 + PLATE_W / 2 + 0.0, (PLATE_Y0 + PLATE_Y1) / 2, 0))
-# Open frame: cut large windows (X-Z rectangles through the plate), keeping rim, bosses, arm block, cross bars.
-RIM, BOSS_HW, BOSS_HL, ARM_BLOCK_HL = 10.0, 18.0, 28.0, 42.0
-PLATE_CY = (PLATE_Y0 + PLATE_Y1) / 2
-def window(x0, x1, z0, z1):
-    return box(x1 - x0, PLATE_T + 2, z1 - z0, ((x0 + x1) / 2, PLATE_CY, (z0 + z1) / 2))
-XL, XR = PLATE_X0 + RIM, PLATE_X0 + PLATE_W - RIM
-ZE = PLATE_L / 2 - RIM
-for sgn in (1, -1):
-    for za, zb in ((ARM_BLOCK_HL, HAND_Z - BOSS_HL), (HAND_Z + BOSS_HL, ZE)):
-        lo, hi = sorted((sgn * za, sgn * zb))
-        plate = plate.cut(window(XL, XR, lo, hi))
-    # side windows either side of each boss
-    lo, hi = sorted((sgn * (HAND_Z - BOSS_HL), sgn * (HAND_Z + BOSS_HL)))
-    plate = plate.cut(window(XL, pad_cx - BOSS_HW, lo, hi)).cut(window(pad_cx + BOSS_HW, XR, lo, hi))
-# plate M4 holes matching each hand's pad holes
-for hz in (HAND_Z, -HAND_Z):
-    for dz in (hs.PAD_HOLE_Z, -hs.PAD_HOLE_Z):
-        plate = plate.cut(cyl(hs.PAD_HOLE_D / 2, PLATE_T + 2, "y",
-                              ((hs.PAD_X0 + hs.PAD_X1) / 2, (PLATE_Y0 + PLATE_Y1) / 2, hz + dz)))
+plate = cart_base.base   # the base plate frame, drawn in cart_base.py (drawing 2)
 
 battery = box(BATT[0], BATT[1], BATT[2], (BATT_X, PLATE_Y0 - BATT[1] / 2, BATT_Z))
 
