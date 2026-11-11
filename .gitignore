@@ -4,8 +4,15 @@ __pycache__/
 node_modules/
 dist/
 site/
-.venv/
-venv/
-*.whl
 .firebase/
 *.log
+
+# Python packages and environments (never commit these)
+*.whl
+venv/
+.venv/
+*.egg-info/
+wheels/
+.pip-cache/
+.cache/pip/
+pip-wheel-metadata/
