@@ -42,6 +42,7 @@ jobs:
             echo "::warning::FIREBASE_SERVICE_ACCOUNT_POND_CONTROL is not set, so the Firebase deploy is skipped. See 'Fix on the computer' in docs/notes/2026-11-10-control-ui-spike.md."
           fi
       - name: Preview channel (pull requests)
+        id: preview
         if: github.event_name == 'pull_request' && steps.creds.outputs.available == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -49,6 +50,23 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POND_CONTROL }}
           projectId: pond-grow
           entryPoint: control-ui
+      - name: Tell Viber the preview is ready
+        if: github.event_name == 'pull_request' && steps.preview.outcome == 'success'
+        env:
+          VIBER_URL: ${{ secrets.VIBER_URL }}
+          VIBER_HOOK_SECRET: ${{ secrets.VIBER_HOOK_SECRET }}
+          URL: ${{ steps.preview.outputs.details_url }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          if [ -z "$VIBER_URL" ] || [ -z "$VIBER_HOOK_SECRET" ]; then
+            echo "::warning::VIBER_URL or VIBER_HOOK_SECRET is not set, so Viber was not told about the preview."
+            exit 0
+          fi
+          jq -n --arg repo "${{ github.repository }}" --arg branch "$BRANCH" --arg url "$URL" '{repo:$repo, branch:$branch, url:$url}' \
+            | curl -fsS --connect-timeout 5 -m 20 -X POST "$VIBER_URL/hooks/preview" \
+                -H "Authorization: Bearer $VIBER_HOOK_SECRET" \
+                -H "Content-Type: application/json" --data-binary @- \
+            || echo "::warning::Could not tell Viber the preview is ready."
       - name: Live (merge to main)
         if: github.event_name == 'push' && steps.creds.outputs.available == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
