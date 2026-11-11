@@ -1,6 +1,11 @@
 __pycache__/
 *.pyc
 .DS_Store
+node_modules/
+dist/
+site/
+.firebase/
+*.log
 
 # Python packages and environments (never commit these)
 *.whl

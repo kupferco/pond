@@ -1,0 +1,25 @@
+/* Sim page styles; colours come from the hub's assets/style.css variables. */
+body.simpage { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+#app { display: flex; flex: 1; min-height: 0; }
+#view { flex: 1 1 50%; position: relative; min-width: 0; background: var(--bg-soft); }
+#status { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); pointer-events: none; }
+#panel { flex: 1 1 50%; min-width: 320px; padding: 16px 20px; overflow: auto; border-left: 1px solid var(--line); }
+#panel h1 { font-size: 26px; margin: 0 0 12px; }
+table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; }
+th { text-align: left; font-weight: 600; color: var(--muted); padding: 4px 6px; }
+td { padding: 6px; border-top: 1px solid var(--line); vertical-align: middle; }
+td small { display: block; color: var(--muted); }
+td.id { font-weight: 700; font-size: 16px; color: var(--ink); }
+td.now { font-variant-numeric: tabular-nums; text-align: right; }
+input { width: 80px; padding: 6px; background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+button { padding: 6px 14px; background: var(--bg-soft); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; font: inherit; font-weight: 600; }
+button:hover { background: var(--green-soft); }
+.row { display: flex; gap: 8px; }
+.mode { display: inline-flex; margin-bottom: 8px; }
+.mode button { border-radius: 0; }
+.mode button:first-child { border-radius: 8px 0 0 8px; }
+.mode button:last-child { border-radius: 0 8px 8px 0; }
+.mode button.on { background: var(--green); border-color: var(--green); color: #fff; }
+.msg { min-height: 1.2em; margin: 4px 0; color: var(--muted); }
+.msg.err { color: #b42318; }
+@media (max-width: 800px) { #app { flex-direction: column; } #view { flex: 0 0 45%; } #panel { border-left: 0; } }
