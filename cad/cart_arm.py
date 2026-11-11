@@ -73,9 +73,7 @@ SEED_X0, SEED_X1, SEED_Y = -345.0, -145.0, 190.0     # seedling tray 200 x 380
 SEED_TOP = TH - 20.0
 SHOULDER_Z = 550.0                                    # as pod_store_reach.py (plate bottom then at 494, pipes start 480)
 PIPE_BOTTOM_W = 480.0                                  # pipe ends at z = TH + 80 in pod_store_reach.py
-PIPE_SPACING = 280.0                                   # ASSUMED: pipe B to pipe C, centre to centre
-HX = PIPE_SPACING / 2
-PLATE_ZH = (hs.SLEEVE_L + 22.0) / 2                    # ASSUMED: plate 112 mm tall, 11 mm margin beyond each sleeve end
+PIPE_SPACING, HX, PLATE_ZH = ca.PIPE_SPACING, ca.HX, ca.PLATE_ZH     # shared with cart_assembly via cart_dims.py
 ARM_YW = 0.0                                          # world y of the arm axis (cart parked above row line y = 0)
 YC = ARM_YW - ca.ARM_X                                # world y of the cart's own Y axis origin
 
@@ -242,38 +240,9 @@ PIPE_Z0, PIPE_Z1 = PIPE_BOTTOM_W - SHOULDER_Z, 165.0     # pipe stubs: from the 
 def xshift(shape, x):
     return shape.translate((x, 0, 0))
 
-PLATE_X0 = -HX - 62.0                                     # 62 mm of plate on the -X side of the pad, 38 on +X
-PLATE_X1 = HX + 38.0                                      # (same margins as cart_assembly.py, per hand)
-PLATE_CY = (ca.PLATE_Y0 + ca.PLATE_Y1) / 2
-RIM, BOSS_HX, BOSS_HZ, ARM_BLOCK_HX = 10.0, 18.0, 28.0, 42.0
-def window(x0, x1, z0, z1):
-    return box(x1 - x0, ca.PLATE_T + 2, z1 - z0, ((x0 + x1) / 2, PLATE_CY, (z0 + z1) / 2))
-def build_plate():
-    plate = box(PLATE_X1 - PLATE_X0, ca.PLATE_T, 2 * PLATE_ZH, ((PLATE_X0 + PLATE_X1) / 2, PLATE_CY, 0))
-    ZE = PLATE_ZH - RIM
-    for sgn in (1, -1):
-        bc = sgn * HX + ca.pad_cx                          # boss centre x (pad centre of that hand)
-        inner = ca.ARM_X + sgn * ARM_BLOCK_HX
-        outer_end = (PLATE_X1 - RIM) if sgn > 0 else (PLATE_X0 + RIM)
-        for xa, xb in ((inner, bc - sgn * BOSS_HX), (bc + sgn * BOSS_HX, outer_end)):
-            plate = plate.cut(window(min(xa, xb), max(xa, xb), -ZE, ZE))
-        # windows above and below each boss
-        for za, zb in ((BOSS_HZ, ZE), (-ZE, -BOSS_HZ)):
-            plate = plate.cut(window(bc - BOSS_HX, bc + BOSS_HX, za, zb))
-        for dz in (hs.PAD_HOLE_Z, -hs.PAD_HOLE_Z):          # M4 holes matching the pad
-            plate = plate.cut(cyl(hs.PAD_HOLE_D / 2, ca.PLATE_T + 2, "y", (bc, PLATE_CY, dz)))
-    return plate
-plate = build_plate()
-
-BATT_C = 70.0                                              # ASSUMED: battery x centre, between arm block and pipe-C boss
-battery = box(ca.BATT[0], ca.BATT[1], ca.BATT[2], (BATT_C, ca.PLATE_Y0 - ca.BATT[1] / 2, 0.0))
-MOTOR_DX = 24.0                                            # ASSUMED: motor beside each pad, on +X of its pipe
-motors = None
-for sgn in (1, -1):
-    mx = sgn * HX + MOTOR_DX
-    m = cyl(ca.MOTOR_R, ca.MOTOR_L, "z", (mx, ca.PLATE_Y0 - ca.MOTOR_R, 0.0))
-    m = m.union(box(26, 2 * ca.MOTOR_R, 20, (mx, ca.PLATE_Y0 - ca.MOTOR_R, ca.MOTOR_L / 2 + 10)))   # gearbox up (ASSUMED)
-    motors = m if motors is None else motors.union(m)
+PLATE_X0, PLATE_X1, PLATE_CY = ca.PLATE_X0, ca.PLATE_X1, ca.PLATE_CY
+plate, battery, motors = ca.plate, ca.battery, ca.motors    # the same parts as the whole-cart drawing
+BATT_C = ca.BATT_X
 
 cart = [("base_plate", plate, (0.35, 0.35, 0.38, 1)),
         ("battery", battery, (0.2, 0.45, 0.85, 1)),
