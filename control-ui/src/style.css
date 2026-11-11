@@ -3,7 +3,7 @@ body.simpage { height: 100vh; display: flex; flex-direction: column; overflow: h
 #app { display: flex; flex: 1; min-height: 0; }
 #view { flex: 1 1 50%; position: relative; min-width: 0; background: var(--bg-soft); }
 #status { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); pointer-events: none; }
-#panel { flex: 1 1 50%; min-width: 320px; padding: 16px 20px; overflow: auto; border-left: 1px solid var(--line); }
+#panel { flex: 1 1 50%; min-width: 320px; padding: 16px 20px; overflow: auto; border-right: 1px solid var(--line); }
 #panel h1 { font-size: 26px; margin: 0 0 12px; }
 table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; }
 th { text-align: left; font-weight: 600; color: var(--muted); padding: 4px 6px; }
@@ -22,4 +22,4 @@ button:hover { background: var(--green-soft); }
 .mode button.on { background: var(--green); border-color: var(--green); color: #fff; }
 .msg { min-height: 1.2em; margin: 4px 0; color: var(--muted); }
 .msg.err { color: #b42318; }
-@media (max-width: 800px) { #app { flex-direction: column; } #view { flex: 0 0 45%; } #panel { border-left: 0; } }
+@media (max-width: 800px) { #app { flex-direction: column; } #view { flex: 0 0 45%; } #panel { border-right: 0; order: 2; } }
