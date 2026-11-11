@@ -2,7 +2,7 @@
 // Tries the network first so the app shows the latest version, but waits at most 1.5 s:
 // if the network is slower than that, it shows the saved copy and updates it in the background.
 // Offline, it always uses the saved copy.
-const CACHE = 'pond-v2';
+const CACHE = 'pond-v3';
 const WAIT_MS = 1500;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
@@ -21,7 +21,8 @@ self.addEventListener('fetch', e => {
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
     const network = fetch(req, { cache: 'no-store' }).then(res => {
-      if (res && res.ok) cache.put(req, res.clone());
+      // only whole answers can be saved (a partial 206 would throw and break the page)
+      if (res && res.status === 200) cache.put(req, res.clone()).catch(() => {});
       return res;
     });
     const saved = await cache.match(req);

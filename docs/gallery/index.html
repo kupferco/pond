@@ -47,8 +47,17 @@ let DATA=null,active="All";
 function chip(text,cls){const s=document.createElement('span');s.className='chip '+cls;s.textContent=text;return s;}
 function viewerUrl(r){
   // GLB files in this repo open in our own small 3D viewer page; server links open as they are.
-  return /\.glb$/i.test(r.viewer)?'viewer.html?src='+encodeURIComponent(r.viewer)+'&title='+encodeURIComponent(r.title):r.viewer;
+  // Server links (older entries) open as they are: their GLB sits in a bucket that only allows the render server's origin.
+  const cat=active==='All'?'':'&cat='+encodeURIComponent(active);
+  const v=r.viewer||'';
+  if(/\.glb$/i.test(v))return 'viewer.html?src='+encodeURIComponent(v)+'&title='+encodeURIComponent(r.title)+cat;
+  if(/^viewer\.html\?/.test(v))return v+cat;
+  return v;
 }
+// Same window everywhere (a new tab has no way back in the Home Screen app). Remember the category in the
+// address so Back from the viewer lands on the same list.
+function setActive(c){active=c;history.replaceState(null,'',c==='All'?location.pathname:'#cat='+encodeURIComponent(c));}
+(function(){const m=/^#cat=(.+)$/.exec(location.hash);if(m){try{const c=decodeURIComponent(m[1]);if(CATEGORIES.includes(c))active=c;}catch(e){}}})();
 function thumbEl(r){
   if(r.thumb){const i=document.createElement('img');i.src=r.thumb;i.alt=r.title;i.loading='lazy';return i;}
   const d=document.createElement('div');d.className='noimg';d.textContent='Open in viewer';return d;
@@ -62,7 +71,7 @@ function parts(){
 function card(list){
   const r=list[0];
   const el=document.createElement('div');el.className='dcard';
-  const a=document.createElement('a');a.className='view';a.href=viewerUrl(r);a.target='_blank';a.rel='noopener';
+  const a=document.createElement('a');a.className='view';a.href=viewerUrl(r);
   a.appendChild(thumbEl(r));
   const body=document.createElement('div');body.className='body';
   const chips=document.createElement('div');
@@ -78,7 +87,7 @@ function card(list){
     const btn=document.createElement('button');btn.className='hist-btn';btn.textContent='History ('+(list.length-1)+' older)';
     const hist=document.createElement('div');hist.className='hist';
     list.slice(1).forEach(o=>{
-      const h=document.createElement('a');h.href=viewerUrl(o);h.target='_blank';h.rel='noopener';
+      const h=document.createElement('a');h.href=viewerUrl(o);
       h.append(thumbEl(o));
       const s=document.createElement('span');s.textContent=(o.version?'v'+o.version+' — ':'')+o.title+' ('+o.date+')';
       h.append(s);hist.appendChild(h);
@@ -107,7 +116,7 @@ function filters(){
   const nav=document.getElementById('filters');nav.innerHTML='';
   ['All'].concat(CATEGORIES).forEach(c=>{
     const b=document.createElement('button');b.textContent=c;if(c===active)b.className='on';
-    b.onclick=()=>{active=c;filters();render();};
+    b.onclick=()=>{setActive(c);filters();render();};
     nav.appendChild(b);
   });
 }
