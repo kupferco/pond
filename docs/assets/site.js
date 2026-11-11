@@ -12,7 +12,8 @@
     ['roadmap', 'Roadmap', 'roadmap/'],
     ['decisions', 'Decisions', 'decisions/'],
     ['shopping', 'Shopping', 'shopping/'],
-    ['history', 'History', 'history/']
+    ['history', 'History', 'history/'],
+    ['sim', 'Sim control', 'sim/']
   ];
 
   // App manifest + theme colour, so "Add to home screen" behaves like an app (portrait only).
