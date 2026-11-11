@@ -45,6 +45,10 @@
 const CATEGORIES=["Cart","Arm","Unit structure","Pod handling","Water","Power","Flat-pack and transport","Experiments"];
 let DATA=null,active="All";
 function chip(text,cls){const s=document.createElement('span');s.className='chip '+cls;s.textContent=text;return s;}
+function viewerUrl(r){
+  // GLB files in this repo open in our own small 3D viewer page; server links open as they are.
+  return /\.glb$/i.test(r.viewer)?'viewer.html?src='+encodeURIComponent(r.viewer)+'&title='+encodeURIComponent(r.title):r.viewer;
+}
 function thumbEl(r){
   if(r.thumb){const i=document.createElement('img');i.src=r.thumb;i.alt=r.title;i.loading='lazy';return i;}
   const d=document.createElement('div');d.className='noimg';d.textContent='Open in viewer';return d;
@@ -58,7 +62,7 @@ function parts(){
 function card(list){
   const r=list[0];
   const el=document.createElement('div');el.className='dcard';
-  const a=document.createElement('a');a.className='view';a.href=r.viewer;a.target='_blank';a.rel='noopener';
+  const a=document.createElement('a');a.className='view';a.href=viewerUrl(r);a.target='_blank';a.rel='noopener';
   a.appendChild(thumbEl(r));
   const body=document.createElement('div');body.className='body';
   const chips=document.createElement('div');
@@ -74,7 +78,7 @@ function card(list){
     const btn=document.createElement('button');btn.className='hist-btn';btn.textContent='History ('+(list.length-1)+' older)';
     const hist=document.createElement('div');hist.className='hist';
     list.slice(1).forEach(o=>{
-      const h=document.createElement('a');h.href=o.viewer;h.target='_blank';h.rel='noopener';
+      const h=document.createElement('a');h.href=viewerUrl(o);h.target='_blank';h.rel='noopener';
       h.append(thumbEl(o));
       const s=document.createElement('span');s.textContent=(o.version?'v'+o.version+' — ':'')+o.title+' ('+o.date+')';
       h.append(s);hist.appendChild(h);
