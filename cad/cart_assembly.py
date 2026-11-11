@@ -12,13 +12,16 @@
 #
 # ASSUMPTIONS (all marked "ASSUMED" below):
 #  1. Hand spacing: hands 220 mm apart centre to centre along the pipe.
-#  2. Base plate: 100 x 332 x 6 mm flat plate bolted to both pads (M4 pattern from hand_sleeve.py).
-#  3. Battery: 70 (along pipe) x 80 (across) x 50 (out from plate) mm block.
+#  2. Base plate (v2): open frame, 100 x 332 x 6 mm outline, bolted to both pads (M4 pattern from
+#     hand_sleeve.py). 10 mm rim, 36 mm wide bosses round each hand's holes, an 84 mm block under the arm
+#     and cross bars between; everything else is cut out as large windows.
+#  3. Battery: 70 (along pipe) x 70 (across) x 50 (out from plate) mm block, between the arm and Hand B,
+#     resting on the frame's cross bars (v2: narrowed from 80 and moved to make room for the centred arm).
 #  4. Drive motors: one worm-gear motor per hand, on the plate beside the hand, shaft along the pipe,
 #     as a 28 mm diameter x 55 mm placeholder cylinder. Motor positions are an open roadmap item;
 #     power transmission from motor to the driven wheel is not drawn.
-#  5. Arm mount: SO-101 base on the plate between the hands, on the side away from the battery,
-#     arm shown folded over the cart (counterweight idea from the 31 Oct decisions).
+#  5. Arm mount (v2): SO-101 base in the middle of the plate (centre of the frame, midway between the
+#     hands), arm shown folded over the cart (counterweight idea from the 31 Oct decisions).
 #  6. SO-101 arm is an envelope only (boxes sized from cad/so101_servo_layout.py), not real parts.
 #  7. Track pipe OD 32 mm (assumed in hand_sleeve.py too). The pipe is shown as a 330 mm stub.
 #  8. Both hands are identical and face the same way (no 90 deg swivel between Hand B and the base yet).
@@ -39,12 +42,13 @@ PLATE_X0 = hs.PAD_X0 - 38.0             # ASSUMED: plate centred a little off th
 PLATE_L = HAND_SPACING + hs.SLEEVE_L + 2 * 11.0   # ASSUMED: 332 mm, a margin beyond each sleeve
 PLATE_Y1 = hs.PAD_Y0                    # plate sits on the pads' outer (-Y) face
 PLATE_Y0 = PLATE_Y1 - PLATE_T
-BATT = (80.0, 50.0, 70.0)               # ASSUMED: X, Y (out from plate), Z (along pipe)
-BATT_Z = -45.0                          # ASSUMED
+BATT = (70.0, 50.0, 70.0)               # ASSUMED: X, Y (out from plate), Z (along pipe)
+BATT_Z = -75.0                          # ASSUMED: clear of the centred arm base (z +/-35)
+BATT_X = -27.0                          # ASSUMED: towards -X so the motors keep +X
 MOTOR_R, MOTOR_L = 14.0, 55.0           # ASSUMED worm-gear motor placeholder
-MOTOR_X = 22.0                          # ASSUMED: beside the pad, on +X of the plate
-ARM_Z = 55.0                            # ASSUMED: arm base position along the pipe
-ARM_X = (hs.PAD_X0 + hs.PAD_X1) / 2     # ASSUMED: arm on the plate centreline (x = -12)
+MOTOR_X = 24.0                          # ASSUMED: beside the pad, on +X of the plate
+ARM_Z = 0.0                             # ASSUMED: arm base in the middle of the plate
+ARM_X = PLATE_X0 + PLATE_W / 2           # ASSUMED: arm on the plate centre (x = -12)
 PIPE_STUB_L = 330.0                     # ASSUMED
 
 def box(sx, sy, sz, c):
@@ -57,6 +61,8 @@ def cyl(r, h, axis, c):
 
 def zshift(shape, z):
     return shape.translate((0, 0, z))
+
+pad_cx = (hs.PAD_X0 + hs.PAD_X1) / 2
 
 # ---------------- Parts ----------------
 def hand_wheels():
@@ -74,14 +80,27 @@ WHEELS = hand_wheels()
 pipe = cyl(hs.R_PIPE, PIPE_STUB_L, "z", (0, 0, 0))
 
 plate = box(PLATE_W, PLATE_T, PLATE_L, (PLATE_X0 + PLATE_W / 2 + 0.0, (PLATE_Y0 + PLATE_Y1) / 2, 0))
+# Open frame: cut large windows (X-Z rectangles through the plate), keeping rim, bosses, arm block, cross bars.
+RIM, BOSS_HW, BOSS_HL, ARM_BLOCK_HL = 10.0, 18.0, 28.0, 42.0
+PLATE_CY = (PLATE_Y0 + PLATE_Y1) / 2
+def window(x0, x1, z0, z1):
+    return box(x1 - x0, PLATE_T + 2, z1 - z0, ((x0 + x1) / 2, PLATE_CY, (z0 + z1) / 2))
+XL, XR = PLATE_X0 + RIM, PLATE_X0 + PLATE_W - RIM
+ZE = PLATE_L / 2 - RIM
+for sgn in (1, -1):
+    for za, zb in ((ARM_BLOCK_HL, HAND_Z - BOSS_HL), (HAND_Z + BOSS_HL, ZE)):
+        lo, hi = sorted((sgn * za, sgn * zb))
+        plate = plate.cut(window(XL, XR, lo, hi))
+    # side windows either side of each boss
+    lo, hi = sorted((sgn * (HAND_Z - BOSS_HL), sgn * (HAND_Z + BOSS_HL)))
+    plate = plate.cut(window(XL, pad_cx - BOSS_HW, lo, hi)).cut(window(pad_cx + BOSS_HW, XR, lo, hi))
 # plate M4 holes matching each hand's pad holes
 for hz in (HAND_Z, -HAND_Z):
     for dz in (hs.PAD_HOLE_Z, -hs.PAD_HOLE_Z):
         plate = plate.cut(cyl(hs.PAD_HOLE_D / 2, PLATE_T + 2, "y",
                               ((hs.PAD_X0 + hs.PAD_X1) / 2, (PLATE_Y0 + PLATE_Y1) / 2, hz + dz)))
 
-pad_cx = (hs.PAD_X0 + hs.PAD_X1) / 2
-battery = box(BATT[0], BATT[1], BATT[2], (pad_cx, PLATE_Y0 - BATT[1] / 2, BATT_Z))
+battery = box(BATT[0], BATT[1], BATT[2], (BATT_X, PLATE_Y0 - BATT[1] / 2, BATT_Z))
 
 motors = None
 for hz in (HAND_Z, -HAND_Z):
