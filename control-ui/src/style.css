@@ -76,3 +76,16 @@ table.runs td, table.runs th { padding: 3px 6px; }
 tr.fail td { background: #fee4e2; color: #7a271a; }
 details.batch { margin: 6px 0; }
 details summary { cursor: pointer; padding: 4px 0; }
+
+/* Cart scene: 44px tap targets, no horizontal scroll on phones */
+.cartstat dl { margin: 0; }
+.cartstat .hint { margin-bottom: 0; }
+input.tall { min-height: 44px; width: 100%; min-width: 0; box-sizing: border-box; font-size: 16px; }
+.xy.stepbar label { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.cartstat + .tabs button, .tabs button { min-height: 44px; }
+.row .grow { flex: 1 1 140px; }
+#panel { overflow-x: hidden; box-sizing: border-box; }
+@media (max-width: 800px) {
+  #panel { min-width: 0; }
+  .xy.stepbar { grid-template-columns: 1fr; }
+}
