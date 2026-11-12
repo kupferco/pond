@@ -74,14 +74,33 @@ export class Viewer {
 
   private bindOrbit() {
     const el = this.renderer.domElement;
-    let drag = false, lx = 0, ly = 0;
-    el.addEventListener('pointerdown', (e) => { drag = true; lx = e.clientX; ly = e.clientY; el.setPointerCapture(e.pointerId); });
-    el.addEventListener('pointerup', () => { drag = false; });
+    // touch-action: none (set in CSS too) so drags on the canvas orbit instead of scrolling the page;
+    // the rest of the page still scrolls normally. One pointer orbits, two pointers pinch-zoom.
+    el.style.touchAction = 'none';
+    const pts = new Map<number, { x: number; y: number }>();
+    const pinchDist = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+    let lastPinch = 0;
+    el.addEventListener('pointerdown', (e) => {
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      el.setPointerCapture(e.pointerId);
+      if (pts.size === 2) lastPinch = pinchDist();
+    });
+    const up = (e: PointerEvent) => { pts.delete(e.pointerId); if (pts.size === 2) lastPinch = pinchDist(); };
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
     el.addEventListener('pointermove', (e) => {
-      if (!drag) return;
-      this.orbit.az -= (e.clientX - lx) * 0.008;
-      this.orbit.el = Math.min(1.5, Math.max(0.02, this.orbit.el + (e.clientY - ly) * 0.008));
-      lx = e.clientX; ly = e.clientY;
+      const p = pts.get(e.pointerId);
+      if (!p) return;
+      const dx = e.clientX - p.x, dy = e.clientY - p.y;
+      p.x = e.clientX; p.y = e.clientY;
+      if (pts.size >= 2) {
+        const d = pinchDist();
+        if (lastPinch > 0 && d > 0) this.orbit.dist = Math.min(2, Math.max(0.2, this.orbit.dist * (lastPinch / d)));
+        lastPinch = d;
+        return;
+      }
+      this.orbit.az -= dx * 0.008;
+      this.orbit.el = Math.min(1.5, Math.max(0.02, this.orbit.el + dy * 0.008));
     });
     el.addEventListener('wheel', (e) => {
       e.preventDefault();
