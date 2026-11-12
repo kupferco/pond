@@ -4,6 +4,8 @@ import { SimDriver } from '../src/drivers/simDriver.ts';
 import { RealDriver } from '../src/drivers/realDriver.ts';
 import { CommandLayer } from '../src/commands.ts';
 
+import { SCENE_INFOS, resolveSceneId } from '../src/scenes/list.ts';
+
 const mj = await loadMujoco();
 const sim = new SimDriver(mj);
 const cmd = new CommandLayer(sim, new RealDriver());
@@ -33,6 +35,12 @@ check('home returns', Object.values(h).every((v) => Math.abs(v) < 3), JSON.strin
 let msg = '';
 try { await cmd.setMode('real'); } catch (e) { msg = (e as Error).message; }
 check('real mode refuses, stays on sim', msg.includes('not connected') && cmd.mode === 'sim');
+
+check('seven scenes, two groups', SCENE_INFOS.length === 7 && SCENE_INFOS.filter((s) => s.group === 'Tests').length === 5);
+check('scene default is arm', resolveSceneId('', null) === 'arm');
+check('scene URL wins over stored', resolveSceneId('?scene=cart', 'pillar') === 'cart');
+check('stored scene used without URL', resolveSceneId('', 'pillar') === 'pillar');
+check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
 
 const t0 = performance.now(); run(5); const ms = performance.now() - t0;
 console.log(`5 s of sim took ${ms.toFixed(0)} ms in node`);
