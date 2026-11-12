@@ -3,6 +3,8 @@
 // Geometry is primitives only; it is a faithful-enough stand-in, not the real STEP meshes.
 // Zero pose: upper arm vertical, forearm horizontal (an "L"). Positive lift/elbow/wrist pitch forward/down.
 
+import { JAW_PIVOT_X, PAD_END_X, POD_H, POD_R, POD_REST_Z, SLOT_BASE, SLOT_OPEN, SLOT_WALL, SLOT_RIM_Z } from './arm/dims.ts';
+
 export interface MotorSpec {
   id: string;       // A..F, the bus order on the arm (servo IDs 1..6)
   joint: string;    // MJCF joint name
@@ -10,6 +12,7 @@ export interface MotorSpec {
   min: number;      // degrees
   max: number;      // degrees
   home: number;     // degrees
+  linear?: boolean; // true for a linear joint: the Step tab then counts in mm instead of degrees
 }
 
 export const MOTORS: MotorSpec[] = [
@@ -39,6 +42,17 @@ export const MJCF = `
   <worldbody>
     <geom name="floor" type="plane" size="0.6 0.6 0.01" rgba="0.18 0.2 0.24 1"/>
     <geom name="base_plate" type="box" size="0.06 0.06 0.004" pos="0 0 0.004" rgba="0.3 0.3 0.3 1"/>
+    <!-- Pod and slot are mocap bodies: poses are set by the scene code, not by physics. -->
+    <body name="pod" mocap="true" pos="0.16 -0.06 ${POD_REST_Z}">
+      <geom name="pod_body" type="cylinder" size="${POD_R} ${POD_H / 2}" rgba="0.62 0.42 0.2 1"/>
+    </body>
+    <body name="slot" mocap="true" pos="0.16 0.08 0">
+      <geom name="slot_base" type="box" size="${SLOT_OPEN / 2 + SLOT_WALL} ${SLOT_OPEN / 2 + SLOT_WALL} ${SLOT_BASE / 2}" pos="0 0 ${SLOT_BASE / 2}" rgba="0.2 0.55 0.35 1"/>
+      <geom name="slot_wall_n" type="box" size="${SLOT_OPEN / 2 + SLOT_WALL} ${SLOT_WALL / 2} ${(SLOT_RIM_Z - SLOT_BASE) / 2}" pos="0 ${SLOT_OPEN / 2 + SLOT_WALL / 2} ${(SLOT_RIM_Z + SLOT_BASE) / 2}" rgba="0.3 0.7 0.45 1"/>
+      <geom name="slot_wall_s" type="box" size="${SLOT_OPEN / 2 + SLOT_WALL} ${SLOT_WALL / 2} ${(SLOT_RIM_Z - SLOT_BASE) / 2}" pos="0 ${-(SLOT_OPEN / 2 + SLOT_WALL / 2)} ${(SLOT_RIM_Z + SLOT_BASE) / 2}" rgba="0.3 0.7 0.45 1"/>
+      <geom name="slot_wall_e" type="box" size="${SLOT_WALL / 2} ${SLOT_OPEN / 2} ${(SLOT_RIM_Z - SLOT_BASE) / 2}" pos="${SLOT_OPEN / 2 + SLOT_WALL / 2} 0 ${(SLOT_RIM_Z + SLOT_BASE) / 2}" rgba="0.3 0.7 0.45 1"/>
+      <geom name="slot_wall_w" type="box" size="${SLOT_WALL / 2} ${SLOT_OPEN / 2} ${(SLOT_RIM_Z - SLOT_BASE) / 2}" pos="${-(SLOT_OPEN / 2 + SLOT_WALL / 2)} 0 ${(SLOT_RIM_Z + SLOT_BASE) / 2}" rgba="0.3 0.7 0.45 1"/>
+    </body>
     <body name="base" pos="0 0 0">
       <geom name="servo1" type="box" size="0.0225 0.012 0.0175" pos="0 0 0.026" rgba="0.9 0.2 0.2 1" mass="0.06"/>
       <body name="turntable" pos="0 0 0.048">
@@ -59,11 +73,11 @@ export const MJCF = `
               <body name="hand" pos="0.03 0 0">
                 <joint name="wrist_roll" type="hinge" axis="1 0 0" range="-2.7925 2.7925"/>
                 <geom name="servo5" type="box" size="0.0175 0.012 0.0225" pos="0.0175 0 0" rgba="0.2 0.45 0.95 1" mass="0.06"/>
-                <geom name="jaw_fixed" type="box" size="0.03 0.004 0.006" pos="0.07 0 -0.016" rgba="0.85 0.85 0.85 1" mass="0.02"/>
-                <body name="jaw" pos="0.04 0 0.016">
-                  <joint name="gripper" type="hinge" axis="0 1 0" range="0 1.7453"/>
-                  <geom name="servo6" type="box" size="0.012 0.012 0.0175" pos="-0.01 0.02 0" rgba="0.6 0.25 0.85 1" mass="0.06"/>
-                  <geom name="jaw_moving" type="box" size="0.03 0.004 0.006" pos="0.03 0 0" rgba="0.95 0.95 0.95 1" mass="0.02"/>
+                <geom name="jaw_fixed" type="box" size="${((PAD_END_X - 0.038) / 2).toFixed(5)} 0.004 0.006" pos="${((PAD_END_X + 0.038) / 2).toFixed(5)} 0 -0.012" rgba="0.85 0.85 0.85 1" mass="0.02"/>
+                <body name="jaw" pos="${JAW_PIVOT_X} 0 -0.006">
+                  <joint name="gripper" type="hinge" axis="0 -1 0" range="0 1.7453"/>
+                  <geom name="servo6" type="box" size="0.012 0.012 0.0175" pos="-0.01 0.02 0.01" rgba="0.6 0.25 0.85 1" mass="0.06"/>
+                  <geom name="jaw_moving" type="box" size="${((PAD_END_X - JAW_PIVOT_X) / 2).toFixed(5)} 0.004 0.006" pos="${((PAD_END_X - JAW_PIVOT_X) / 2).toFixed(5)} 0 0.006" rgba="0.95 0.95 0.95 1" mass="0.02"/>
                 </body>
               </body>
             </body>

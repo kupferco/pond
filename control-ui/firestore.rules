@@ -1,0 +1,38 @@
+rules_version = '2';
+// Arm sim runs: anyone may read summaries and create a new run doc with exactly the expected shape.
+// Nothing can be updated or deleted from a client; everything else in the database is closed.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function str(v, max) { return v is string && v.size() <= max; }
+    function num(v, lo, hi) { return (v is int || v is float) && v >= lo && v <= hi; }
+    function validRun(d, runId) {
+      return d.keys().hasOnly(['id', 'ts', 'scene', 'sceneVersion', 'controllerVersion', 'batchId', 'batchIndex', 'batchSize',
+          'seed', 'podXmm', 'podYmm', 'slotXmm', 'slotYmm', 'success', 'reason', 'posErrMm', 'tiltErrDeg', 'durationS',
+          'samples', 'noiseMm', 'storagePath', 'bytes'])
+        && d.keys().hasAll(['id', 'ts', 'scene', 'sceneVersion', 'controllerVersion', 'batchId', 'batchIndex', 'batchSize',
+          'seed', 'podXmm', 'podYmm', 'slotXmm', 'slotYmm', 'success', 'reason', 'posErrMm', 'tiltErrDeg', 'durationS',
+          'samples', 'noiseMm', 'storagePath', 'bytes'])
+        && d.id == runId
+        && d.ts == request.time
+        && d.scene == 'arm'
+        && str(d.sceneVersion, 40) && str(d.controllerVersion, 40)
+        && str(d.batchId, 40) && d.batchId.matches('^[A-Za-z0-9_-]{8,40}$')
+        && num(d.batchIndex, 0, 100000) && num(d.batchSize, 1, 100000)
+        && num(d.seed, 0, 4294967295)
+        && num(d.podXmm, -1000, 1000) && num(d.podYmm, -1000, 1000)
+        && num(d.slotXmm, -1000, 1000) && num(d.slotYmm, -1000, 1000)
+        && d.success is bool
+        && str(d.reason, 80)
+        && num(d.posErrMm, 0, 100000) && num(d.tiltErrDeg, 0, 360) && num(d.durationS, 0, 1000)
+        && num(d.samples, 0, 5000) && num(d.noiseMm, 0, 100)
+        && d.storagePath == 'runs/' + d.batchId + '/' + runId + '.json.gz'
+        && num(d.bytes, 0, 300000);
+    }
+    match /runs/{runId} {
+      allow get: if true;
+      allow list: if request.query.limit <= 500;
+      allow create: if runId.matches('^[A-Za-z0-9_-]{8,40}$') && validRun(request.resource.data, runId);
+      allow update, delete: if false;
+    }
+  }
+}
