@@ -39,11 +39,11 @@ export const armScene: Scene = {
     <section class="card">
       <h2>Scene</h2>
       <div class="xy">
-        <span>Pod</span><label>x <input class="lock" id="pod-x" type="number" step="5" aria-label="Pod x mm"></label><label>y <input class="lock" id="pod-y" type="number" step="5" aria-label="Pod y mm"></label>
-        <span>Slot</span><label>x <input class="lock" id="slot-x" type="number" step="5" aria-label="Slot x mm"></label><label>y <input class="lock" id="slot-y" type="number" step="5" aria-label="Slot y mm"></label>
+        <span>Pod</span><label>x <input class="lock" id="pod-x" type="number" inputmode="decimal" step="5" aria-label="Pod x mm"></label><label>y <input class="lock" id="pod-y" type="number" inputmode="decimal" step="5" aria-label="Pod y mm"></label>
+        <span>Slot</span><label>x <input class="lock" id="slot-x" type="number" inputmode="decimal" step="5" aria-label="Slot x mm"></label><label>y <input class="lock" id="slot-y" type="number" inputmode="decimal" step="5" aria-label="Slot y mm"></label>
       </div>
       <div class="row"><button class="lock" id="randomize">Randomize</button></div>
-      <p class="hint">mm from the arm base (x forward, y left). Reach: ${REACH.rMin * 1000}–${REACH.rMax * 1000} mm from the base, within ±${REACH.angMax}° of forward; pod and slot at least 65 mm apart. Pod: 25 × 40 mm cylinder (assumed, as in cad/pod_store.py). Slot: one 29 mm square socket.</p>
+      <details class="more"><summary>Placement help</summary><p class="hint">mm from the arm base (x forward, y left). Reach: ${REACH.rMin * 1000}–${REACH.rMax * 1000} mm from the base, within ±${REACH.angMax}° of forward; pod and slot at least 65 mm apart. Pod: 25 × 40 mm cylinder (assumed, as in cad/pod_store.py). Slot: one 29 mm square socket.</p></details>
     </section>
 
     <div class="tabs" role="tablist">
@@ -53,20 +53,23 @@ export const armScene: Scene = {
     </div>
 
     <div class="tabpane" data-pane="step">
-      <div class="xy stepbar">
-        <label>Joint <select class="lock" id="step-joint">${MOTORS.map((m) => `<option value="${m.id}">${m.id} · ${m.label}</option>`).join('')}</select></label>
-        <label>Step <input class="lock" id="step-size" type="number" min="0.1" step="1" value="10"> <span id="step-unit">°</span></label>
+      <label class="stepsize">Step size <input class="lock" id="step-size" type="number" inputmode="decimal" min="0.1" step="any" value="10" aria-label="Step size"> <span class="hint">° (mm for linear joints)</span></label>
+      <div class="steprows">${MOTORS.map((m) => `
+        <div class="steprow" data-step-row="${m.id}">
+          <div class="sr-info"><span class="id">${m.id}</span><span class="sr-name">${m.label}<small>${m.min} to ${m.max}${unitOf(m)}</small></span></div>
+          <div class="sr-ctl">
+            <button class="lock stepbtn" data-dir="-1" aria-label="Motor ${m.id} minus step">−</button>
+            <span class="sr-val"><span class="now" data-target="${m.id}">0.0</span><small class="sr-lim" data-lim="${m.id}"></small></span>
+            <button class="lock stepbtn" data-dir="1" aria-label="Motor ${m.id} plus step">+</button>
+          </div>
+        </div>`).join('')}
       </div>
-      <div class="row"><button class="lock big" id="step-minus">− step</button><button class="lock big" id="step-plus">+ step</button><button class="lock" id="step-home">Home</button></div>
-      <table>
-        <thead><tr><th>Motor</th><th>Joint</th><th>Target</th><th>Now</th></tr></thead>
-        <tbody>${MOTORS.map((m) => `<tr><td class="id">${m.id}</td><td>${m.label}<small>${m.min} to ${m.max}${unitOf(m)}</small></td><td class="now" data-target="${m.id}">0.0</td><td class="now" data-now="${m.id}">0.0</td></tr>`).join('')}</tbody>
-      </table>
+      <div class="row"><button class="lock big" id="step-home">Home</button></div>
     </div>
 
     <div class="tabpane" data-pane="task" hidden>
       <p><strong>Pick up the pod and place it in the slot.</strong> Scripted controller: inverse kinematics, then approach, descend, grasp, lift, move, lower, release, retreat.</p>
-      <p class="hint">Success = pod seated in the socket within ${POS_TOL_MM} mm and ${TILT_TOL_DEG}° of the seat pose. The controller sees pod and slot with 1.2 mm of simulated perception noise. Grasp and release are kinematic (no contact physics yet).</p>
+      <details class="more"><summary>How success is judged</summary><p class="hint">Success = pod seated in the socket within ${POS_TOL_MM} mm and ${TILT_TOL_DEG}° of the seat pose. The controller sees pod and slot with 1.2 mm of simulated perception noise. Grasp and release are kinematic (no contact physics yet).</p></details>
       <div class="row wrap">
         <button class="lock big" id="run-one">Run task</button>
         <label>Speed <select class="lock" id="speed"><option value="1">1×</option><option value="4" selected>4×</option><option value="0">Max</option></select></label>
@@ -75,13 +78,13 @@ export const armScene: Scene = {
 
       <h3>Auto-run</h3>
       <div class="row wrap">
-        <label>Attempts <input class="lock" id="auto-n" type="number" min="1" max="500" step="1" value="50"></label>
+        <label>Attempts <input class="lock" id="auto-n" type="number" inputmode="numeric" min="1" max="500" step="1" value="50"></label>
         <button class="lock big" id="auto-go">Run randomized</button><button id="auto-stop" hidden>Stop</button>
       </div>
       <div id="auto" class="auto" hidden>
         <progress id="auto-bar" max="1" value="0"></progress>
         <p id="auto-text" class="stat"></p>
-        <div class="scroll"><table class="runs"><thead><tr><th>#</th><th>Result</th><th>Pos mm</th><th>Tilt °</th><th>Time s</th><th>Seed</th></tr></thead><tbody id="auto-rows"></tbody></table></div>
+        <details class="more" id="auto-details"><summary>Attempt results</summary><div class="scroll"><table class="runs"><thead><tr><th>#</th><th>Result</th><th>Pos mm</th><th>Tilt °</th><th>Time s</th><th>Seed</th></tr></thead><tbody id="auto-rows"></tbody></table></div></details>
       </div>
 
       <h3>Logging</h3>
@@ -99,8 +102,8 @@ export const armScene: Scene = {
       <tbody id="direct-rows">${MOTORS.map((m) => `
         <tr data-id="${m.id}">
           <td class="id">${m.id}</td>
-          <td>${m.label}<small>${m.min}° to ${m.max}°</small></td>
-          <td><input class="lock" type="number" step="1" min="${m.min}" max="${m.max}" value="${m.home}" aria-label="Motor ${m.id} target degrees"></td>
+          <td class="jn">${m.label}<small>${m.min}° to ${m.max}°</small></td>
+          <td class="tgt"><input class="lock" type="number" inputmode="decimal" step="1" min="${m.min}" max="${m.max}" value="${m.home}" aria-label="Motor ${m.id} target degrees"></td>
           <td><button class="go lock">Go</button></td>
           <td class="now" data-now="${m.id}">0.0</td>
         </tr>`).join('')}
@@ -175,31 +178,34 @@ export const armScene: Scene = {
     }));
     const goHome = () => guard(() => {
       cmd.home();
-      MOTORS.forEach((m, i) => { rowInput(rows[i]).value = String(m.home); });
+      MOTORS.forEach((m, i) => { rowInput(rows[i]).value = String(m.home); showLimit(m.id, ''); });
       say('');
     });
     $('home').addEventListener('click', goHome);
     $('step-home').addEventListener('click', goHome);
 
     // --- step tab ------------------------------------------------------------
-    const jointSel = $<HTMLSelectElement>('step-joint'), stepSize = $<HTMLInputElement>('step-size');
-    const syncUnit = () => {
-      const m = MOTORS.find((x) => x.id === jointSel.value)!;
-      $('step-unit').textContent = unitOf(m);
+    const stepSize = $<HTMLInputElement>('step-size');
+    const showLimit = (id: string, lim: string) => {
+      const row = panel.querySelector<HTMLElement>(`[data-step-row="${id}"]`);
+      if (!row) return;
+      row.classList.toggle('atlimit', lim !== '');
+      row.querySelector<HTMLElement>('[data-lim]')!.textContent = lim;
     };
-    jointSel.addEventListener('change', syncUnit);
-    const nudge = (dir: 1 | -1) => guard(() => {
+    const nudge = (id: string, dir: 1 | -1) => guard(() => {
+      const m = MOTORS.find((x) => x.id === id)!;
       const step = parseFloat(stepSize.value);
       if (!(step > 0)) return say('Step size must be a positive number', true);
-      const id = jointSel.value;
       const now = cmd.driver.targets()[id] ?? 0;
-      const applied = cmd.setJointTarget(id, now + dir * step);
+      const want = now + dir * step;
+      const applied = cmd.setJointTarget(id, want);
       const row = rows.find((r) => (r as HTMLElement).dataset.id === id);
       if (row) rowInput(row).value = String(Math.round(applied * 100) / 100);
-      say(Math.abs(applied - (now + dir * step)) > 1e-9 ? `Motor ${id} limited to ${applied}°` : '');
+      const hit = Math.abs(applied - want) > 1e-9;
+      showLimit(id, hit ? (dir > 0 ? 'max limit' : 'min limit') : '');
+      say(hit ? `Motor ${id} limited to ${applied}${unitOf(m)}` : '');
     });
-    $('step-plus').addEventListener('click', () => nudge(1));
-    $('step-minus').addEventListener('click', () => nudge(-1));
+    panel.querySelectorAll<HTMLButtonElement>('.steprow .stepbtn').forEach((b) => b.addEventListener('click', () => nudge(b.closest<HTMLElement>('.steprow')!.dataset.stepRow!, Number(b.dataset.dir) as 1 | -1)));
 
     panel.querySelectorAll<HTMLButtonElement>('.mode button').forEach((b) => b.addEventListener('click', async () => {
       try {
@@ -250,7 +256,7 @@ export const armScene: Scene = {
     const addAutoRow = (r: Row) => {
       const tr = document.createElement('tr');
       tr.className = r.result.success ? '' : 'fail';
-      tr.innerHTML = `<td>${r.n}</td><td>${r.result.success ? '✓ seated' : `✗ ${esc(r.result.reason)}`}</td><td>${r.result.posErrMm.toFixed(1)}</td><td>${r.result.tiltErrDeg.toFixed(1)}</td><td>${r.result.durationS.toFixed(1)}</td><td>${r.seed}</td>`;
+      tr.innerHTML = `<td data-label="#">${r.n}</td><td data-label="Result">${r.result.success ? '✓ seated' : `✗ ${esc(r.result.reason)}`}</td><td data-label="Pos mm">${r.result.posErrMm.toFixed(1)}</td><td data-label="Tilt °">${r.result.tiltErrDeg.toFixed(1)}</td><td data-label="Time s">${r.result.durationS.toFixed(1)}</td><td data-label="Seed">${r.seed}</td>`;
       autoRows.prepend(tr);
     };
 
@@ -316,7 +322,7 @@ export const armScene: Scene = {
           const sorted = [...rs].sort((a, b) => a.batchIndex - b.batchIndex || a.tsMs - b.tsMs);
           return `<details class="batch"><summary>${title} · ${esc(when)} · ${rs.length}${key !== 'single' ? ` / ${esc(rs[0].batchSize)}` : ''} runs · <strong>${Math.round(100 * ok / rs.length)}%</strong> success</summary>
             <table class="runs"><thead><tr><th>#</th><th>Result</th><th>Pos mm</th><th>Tilt °</th><th>Time s</th><th>Pod → slot (mm)</th></tr></thead><tbody>${sorted.map((r) => `
-              <tr class="${r.success ? '' : 'fail'}"><td>${esc(r.batchIndex + 1)}</td><td>${r.success ? '✓' : `✗ ${esc(r.reason)}`}</td><td>${esc(r.posErrMm)}</td><td>${esc(r.tiltErrDeg)}</td><td>${esc(r.durationS)}</td><td>${esc(Math.round(r.podXmm))},${esc(Math.round(r.podYmm))} → ${esc(Math.round(r.slotXmm))},${esc(Math.round(r.slotYmm))}</td></tr>`).join('')}</tbody></table></details>`;
+              <tr class="${r.success ? '' : 'fail'}"><td data-label="#">${esc(r.batchIndex + 1)}</td><td data-label="Result">${r.success ? '✓' : `✗ ${esc(r.reason)}`}</td><td data-label="Pos mm">${esc(r.posErrMm)}</td><td data-label="Tilt °">${esc(r.tiltErrDeg)}</td><td data-label="Time s">${esc(r.durationS)}</td><td data-label="Pod → slot">${esc(Math.round(r.podXmm))},${esc(Math.round(r.podYmm))} → ${esc(Math.round(r.slotXmm))},${esc(Math.round(r.slotYmm))}</td></tr>`).join('')}</tbody></table></details>`;
         }).join('');
       } catch (e) { runsList.textContent = `Could not load runs: ${e instanceof Error ? e.message : e}`; }
     };
