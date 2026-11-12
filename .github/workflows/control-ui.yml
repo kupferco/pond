@@ -76,3 +76,15 @@ jobs:
           projectId: pond-grow
           channelId: live
           entryPoint: control-ui
+      - name: Firestore and Storage rules (merge to main)
+        # Rules are only deployed from main, never from a pull request. Needs Firestore and Storage enabled in the
+        # Firebase console and the service account to hold Firebase Rules Admin; see the Viber #74 pull request.
+        if: github.event_name == 'push' && steps.creds.outputs.available == 'true'
+        continue-on-error: true
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POND_CONTROL }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/firebase-sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json" \
+            npx --yes firebase-tools@latest deploy --only firestore:rules,storage --project pond-grow --non-interactive \
+            || echo "::warning::Could not deploy Firestore/Storage rules. Is Firestore and Storage enabled in the console, and does the service account have Firebase Rules Admin?"

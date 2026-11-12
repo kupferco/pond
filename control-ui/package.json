@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@mujoco/mujoco": "^4.0.0",
+    "firebase": "^13.3.0",
     "three": "^0.187.0"
   },
   "devDependencies": {

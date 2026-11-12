@@ -1,0 +1,13 @@
+rules_version = '2';
+// Arm sim trajectories: create-only, one gzip JSON file per run, at most 300 kB. No reads, overwrites or deletes from a client.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /runs/{batchId}/{file} {
+      allow create: if batchId.matches('^[A-Za-z0-9_-]{8,40}$')
+        && file.matches('^[A-Za-z0-9_-]{8,40}[.]json[.]gz$')
+        && request.resource.size < 300 * 1024
+        && request.resource.contentType == 'application/gzip';
+      allow read, update, delete: if false;
+    }
+  }
+}
