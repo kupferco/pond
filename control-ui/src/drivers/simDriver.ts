@@ -45,6 +45,11 @@ export class SimDriver implements RobotDriver {
     return out;
   }
 
+  dispose(): void {
+    this.data.delete();
+    this.model.delete();
+  }
+
   /** Advance the sim by wall-clock dt seconds (real time), capped so a stalled tab does not spiral. */
   advance(dt: number): void {
     this.acc += Math.min(dt, 0.1);

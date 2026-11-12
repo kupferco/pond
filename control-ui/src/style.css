@@ -22,4 +22,21 @@ button:hover { background: var(--green-soft); }
 .mode button.on { background: var(--green); border-color: var(--green); color: #fff; }
 .msg { min-height: 1.2em; margin: 4px 0; color: var(--muted); }
 .msg.err { color: #b42318; }
-@media (max-width: 800px) { #app { flex-direction: column; } #view { flex: 0 0 45%; } #panel { border-right: 0; order: 2; } }
+@media (max-width: 800px) { #app { flex-direction: column; } #view { flex: 0 0 45%; } #scenebar { padding: 8px 12px; } #panel { border-right: 0; order: 2; } }
+
+/* Scene picker */
+#scenebar { padding: 8px 20px; border-bottom: 1px solid var(--line); background: var(--bg-soft); flex: 0 0 auto; }
+#picker { position: relative; display: inline-block; max-width: 100%; }
+#picker-btn { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 14px; background: #fff; font-size: 16px; }
+#picker-btn .caret { color: var(--muted); }
+#picker-list { position: absolute; z-index: 10; top: calc(100% + 4px); left: 0; min-width: 260px; max-width: calc(100vw - 24px); max-height: 70vh; overflow: auto; padding: 4px; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, .15); }
+#picker-list[hidden] { display: none; }
+#picker-list .grp { padding: 8px 10px 4px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+#picker-list [role=option] { display: block; width: 100%; min-height: 44px; text-align: left; border: 0; background: transparent; font-weight: 500; }
+#picker-list [role=option][aria-selected=true] { background: var(--green-soft); font-weight: 700; }
+#picker-list [role=option]:hover { background: var(--green-soft); }
+
+/* Placeholder scenes */
+#view.empty { background: var(--bg-soft); }
+.placeholder .group { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.placeholder .soon { display: inline-block; padding: 4px 12px; border-radius: 999px; background: var(--green-soft); font-weight: 700; }

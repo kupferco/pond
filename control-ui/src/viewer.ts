@@ -6,6 +6,7 @@ export class Viewer {
   private renderer = new THREE.WebGLRenderer({ antialias: true });
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(40, 1, 0.01, 10);
+  private ro: ResizeObserver;
   private meshes: THREE.Mesh[] = [];
   private orbit = { az: 0.9, el: 0.45, dist: 0.7 };
   private target = new THREE.Vector3(0.08, 0, 0.12);
@@ -20,7 +21,8 @@ export class Viewer {
     this.scene.add(sun);
     this.buildMeshes();
     this.bindOrbit();
-    new ResizeObserver(() => this.resize()).observe(host);
+    this.ro = new ResizeObserver(() => this.resize());
+    this.ro.observe(host);
     this.resize();
   }
 
@@ -84,6 +86,15 @@ export class Viewer {
     this.renderer.domElement.style.height = '100%';
     this.camera.aspect = w / Math.max(h, 1);
     this.camera.updateProjectionMatrix();
+  }
+
+  dispose() {
+    this.ro.disconnect();
+    this.scene.traverse((o) => {
+      if (o instanceof THREE.Mesh) { o.geometry.dispose(); (o.material as THREE.Material).dispose(); }
+    });
+    this.renderer.dispose();
+    this.renderer.domElement.remove();
   }
 
   render() {
