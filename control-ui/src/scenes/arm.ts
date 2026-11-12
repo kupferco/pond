@@ -53,15 +53,18 @@ export const armScene: Scene = {
     </div>
 
     <div class="tabpane" data-pane="step">
-      <div class="xy stepbar">
-        <label>Joint <select class="lock" id="step-joint">${MOTORS.map((m) => `<option value="${m.id}">${m.id} · ${m.label}</option>`).join('')}</select></label>
-        <label>Step <input class="lock" id="step-size" type="number" min="0.1" step="1" value="10"> <span id="step-unit">°</span></label>
+      <label class="stepsize">Step size <input class="lock" id="step-size" type="number" inputmode="decimal" min="0.1" step="any" value="10" aria-label="Step size"> <span class="hint">° (mm for linear joints)</span></label>
+      <div class="steprows">${MOTORS.map((m) => `
+        <div class="steprow" data-step-row="${m.id}">
+          <div class="sr-info"><span class="id">${m.id}</span><span class="sr-name">${m.label}<small>${m.min} to ${m.max}${unitOf(m)}</small></span></div>
+          <div class="sr-ctl">
+            <button class="lock stepbtn" data-dir="-1" aria-label="Motor ${m.id} minus step">−</button>
+            <span class="sr-val"><span class="now" data-target="${m.id}">0.0</span><small class="sr-lim" data-lim="${m.id}"></small></span>
+            <button class="lock stepbtn" data-dir="1" aria-label="Motor ${m.id} plus step">+</button>
+          </div>
+        </div>`).join('')}
       </div>
-      <div class="row"><button class="lock big" id="step-minus">− step</button><button class="lock big" id="step-plus">+ step</button><button class="lock" id="step-home">Home</button></div>
-      <table>
-        <thead><tr><th>Motor</th><th>Joint</th><th>Target</th><th>Now</th></tr></thead>
-        <tbody>${MOTORS.map((m) => `<tr><td class="id">${m.id}</td><td>${m.label}<small>${m.min} to ${m.max}${unitOf(m)}</small></td><td class="now" data-target="${m.id}">0.0</td><td class="now" data-now="${m.id}">0.0</td></tr>`).join('')}</tbody>
-      </table>
+      <div class="row"><button class="lock big" id="step-home">Home</button></div>
     </div>
 
     <div class="tabpane" data-pane="task" hidden>
@@ -175,31 +178,34 @@ export const armScene: Scene = {
     }));
     const goHome = () => guard(() => {
       cmd.home();
-      MOTORS.forEach((m, i) => { rowInput(rows[i]).value = String(m.home); });
+      MOTORS.forEach((m, i) => { rowInput(rows[i]).value = String(m.home); showLimit(m.id, ''); });
       say('');
     });
     $('home').addEventListener('click', goHome);
     $('step-home').addEventListener('click', goHome);
 
     // --- step tab ------------------------------------------------------------
-    const jointSel = $<HTMLSelectElement>('step-joint'), stepSize = $<HTMLInputElement>('step-size');
-    const syncUnit = () => {
-      const m = MOTORS.find((x) => x.id === jointSel.value)!;
-      $('step-unit').textContent = unitOf(m);
+    const stepSize = $<HTMLInputElement>('step-size');
+    const showLimit = (id: string, lim: string) => {
+      const row = panel.querySelector<HTMLElement>(`[data-step-row="${id}"]`);
+      if (!row) return;
+      row.classList.toggle('atlimit', lim !== '');
+      row.querySelector<HTMLElement>('[data-lim]')!.textContent = lim;
     };
-    jointSel.addEventListener('change', syncUnit);
-    const nudge = (dir: 1 | -1) => guard(() => {
+    const nudge = (id: string, dir: 1 | -1) => guard(() => {
+      const m = MOTORS.find((x) => x.id === id)!;
       const step = parseFloat(stepSize.value);
       if (!(step > 0)) return say('Step size must be a positive number', true);
-      const id = jointSel.value;
       const now = cmd.driver.targets()[id] ?? 0;
-      const applied = cmd.setJointTarget(id, now + dir * step);
+      const want = now + dir * step;
+      const applied = cmd.setJointTarget(id, want);
       const row = rows.find((r) => (r as HTMLElement).dataset.id === id);
       if (row) rowInput(row).value = String(Math.round(applied * 100) / 100);
-      say(Math.abs(applied - (now + dir * step)) > 1e-9 ? `Motor ${id} limited to ${applied}°` : '');
+      const hit = Math.abs(applied - want) > 1e-9;
+      showLimit(id, hit ? (dir > 0 ? 'max limit' : 'min limit') : '');
+      say(hit ? `Motor ${id} limited to ${applied}${unitOf(m)}` : '');
     });
-    $('step-plus').addEventListener('click', () => nudge(1));
-    $('step-minus').addEventListener('click', () => nudge(-1));
+    panel.querySelectorAll<HTMLButtonElement>('.steprow .stepbtn').forEach((b) => b.addEventListener('click', () => nudge(b.closest<HTMLElement>('.steprow')!.dataset.stepRow!, Number(b.dataset.dir) as 1 | -1)));
 
     panel.querySelectorAll<HTMLButtonElement>('.mode button').forEach((b) => b.addEventListener('click', async () => {
       try {
