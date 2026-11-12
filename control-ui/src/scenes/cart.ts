@@ -1,4 +1,4 @@
-// Cart scene: the cart riding a two-pipe track (vertical section, bend, horizontal section).
+// Cart scene: the cart riding a single pipe (up, bend, right).
 // Position is one coordinate, the distance along the track in cm; the cart's pose follows the path.
 import { cartMjcf, MARKER_HIDDEN_Z } from '../cart/model.ts';
 import {
@@ -18,7 +18,7 @@ export const cartScene: Scene = {
     const model = mujoco.MjModel.from_xml_string(cartMjcf());
     const data = new mujoco.MjData(model);
     const sim = { mujoco, model, data };
-    const viewer = new Viewer(view, sim, { target: [0.4, 0, 0.35], dist: 2.1, maxDist: 4, az: 0.45, el: 0.2, far: 20 });
+    const viewer = new Viewer(view, sim, { target: [0.3, 0, 0.4], dist: 2.1, maxDist: 4, az: 0.45, el: 0.2, far: 20 });
     const cartMocap = model.body_mocapid[model.body('cart').id];
     const markerMocap = model.body_mocapid[model.body('marker').id];
     status.textContent = '';
@@ -31,7 +31,7 @@ export const cartScene: Scene = {
         <dt>Section</dt><dd id="c-sec">Vertical section</dd>
         <dt>Goal</dt><dd id="c-goal">0.0 cm</dd>
       </dl>
-      <p class="hint">0 cm is the top of the vertical pipes. Vertical: 0 to ${L_VERT.toFixed(1)} cm, curve: ${L_VERT.toFixed(1)} to ${(L_VERT + L_ARC).toFixed(1)} cm, horizontal: ${(L_VERT + L_ARC).toFixed(1)} to ${TRACK_LENGTH_CM.toFixed(1)} cm.</p>
+      <p class="hint">0 cm is the bottom of the vertical pipe; the track goes up, bends and runs to the right. Vertical: 0 to ${L_VERT.toFixed(1)} cm, curve: ${L_VERT.toFixed(1)} to ${(L_VERT + L_ARC).toFixed(1)} cm, horizontal: ${(L_VERT + L_ARC).toFixed(1)} to ${TRACK_LENGTH_CM.toFixed(1)} cm.</p>
     </section>
 
     <div class="tabs" role="tablist">
@@ -45,10 +45,10 @@ export const cartScene: Scene = {
         <label>Speed <input class="tall" id="c-speed" type="number" inputmode="decimal" min="0.1" max="${MAX_SPEED_CM_S}" step="1" value="${DEFAULT_SPEED_CM_S}" aria-label="Speed cm per second"> cm/s</label>
       </div>
       <div class="row wrap">
-        <button class="big grow" id="c-up">▲ Up / back</button>
-        <button class="big grow" id="c-down">▼ Down / forward</button>
+        <button class="big grow" id="c-up">▲ Up / forward</button>
+        <button class="big grow" id="c-down">▼ Down / back</button>
       </div>
-      <p class="hint">Each tap moves the goal by one step (taps add up). Up / back moves toward 0 cm, Down / forward toward ${TRACK_LENGTH_CM.toFixed(1)} cm; the cart stops at the track ends.</p>
+      <p class="hint">Each tap moves the goal by one step (taps add up). Up / forward moves toward ${TRACK_LENGTH_CM.toFixed(1)} cm, Down / back toward 0 cm; the cart stops at the track ends.</p>
       <div class="row"><button class="big" id="c-stop">Stop</button><button class="big" id="c-home">Back to 0</button></div>
     </div>
 
@@ -91,8 +91,8 @@ export const cartScene: Scene = {
     // --- step tab
     const cancelTask = () => { task = null; };
     const nudge = (dir: 1 | -1) => { cancelTask(); motion.speed = readSpeed(); motion.nudge(dir * readStep()); };
-    $('c-down').addEventListener('click', () => nudge(1));
-    $('c-up').addEventListener('click', () => nudge(-1));
+    $('c-up').addEventListener('click', () => nudge(1));
+    $('c-down').addEventListener('click', () => nudge(-1));
     $('c-stop').addEventListener('click', () => { cancelTask(); motion.moveTo(motion.s); });
     $('c-home').addEventListener('click', () => { cancelTask(); motion.speed = readSpeed(); motion.moveTo(0); });
 

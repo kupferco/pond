@@ -1,10 +1,10 @@
-// Cart track: two straight pipe sections joined by a circular bend, and the cart's motion along it.
-// Pure maths, no MuJoCo or DOM. Track plane is X (horizontal) and Z (up, MuJoCo); the two pipes are PIPE_SPACING apart along Y.
-// Path coordinate s is in cm from the start (top) of the vertical section to the end of the horizontal section.
+// Cart track: ONE pipe that goes up, bends and runs to the right, and the cart's motion along it.
+// Pure maths, no MuJoCo or DOM. Track plane is X (right) and Z (up, MuJoCo); the pipe sits at y = 0.
+// Path coordinate s is in cm from the bottom of the vertical section to the end of the horizontal section.
 
 // Dimensions in mm. DECIDED numbers come from cad/hand_sleeve.py and cad/cart_dims.py; the rest are ASSUMED placeholders.
 export const PIPE_D_MM = 32;             // DECIDED (hand_sleeve.py PIPE_D)
-export const PIPE_SPACING_MM = 280;      // ASSUMED in cart_dims.py (pipe B to pipe C, centre to centre)
+export const PIPE_SPACING_MM = 280;      // ASSUMED in cart_dims.py: distance from the clamped (engaged) wheel to the free wheel across the cart
 export const BEND_R_MM = 150;            // DECIDED in cart_wheel_pairs.py (loop corner centreline radius)
 export const VERTICAL_MM = 600;          // ASSUMED: vertical section length
 export const HORIZONTAL_MM = 600;        // ASSUMED: horizontal section length
@@ -29,26 +29,30 @@ export const clampS = (s: number) => Math.min(TRACK_LENGTH_CM, Math.max(0, s));
 
 /**
  * Position (metres) and unit tangent of the track centre line at path distance s (cm). Clamped to the ends.
- * s = 0 is the top of the vertical section; the cart goes DOWN the vertical pipes, round the bend, then FORWARD (+X) along the horizontal pipes.
- * The horizontal section lies on z = 0; the bend centre is at (r, r).
+ * s = 0 is the bottom of the vertical section; the cart goes UP the pipe, round the bend, then to the RIGHT (+X).
+ * The vertical section lies on x = 0 from z = 0 up; the bend centre is at (r, lengthV); the horizontal section lies on z = lengthV + r.
  */
 export function pathAt(sCm: number): PathPoint {
   const s = clampS(sCm) / 100;
   const lv = L_VERT / 100, la = L_ARC / 100, r = cm(BEND_R_MM) / 100;
-  if (s <= lv) return { x: 0, z: r + lv - s, tx: 0, tz: -1, section: 'vertical' };
+  if (s <= lv) return { x: 0, z: s, tx: 0, tz: 1, section: 'vertical' };
   if (s <= lv + la) {
     const a = (s - lv) / r; // turned angle, 0..90 deg
-    return { x: r - r * Math.cos(a), z: r - r * Math.sin(a), tx: Math.sin(a), tz: -Math.cos(a), section: 'curve' };
+    return { x: r - r * Math.cos(a), z: lv + r * Math.sin(a), tx: Math.sin(a), tz: Math.cos(a), section: 'curve' };
   }
-  return { x: r + (s - lv - la), z: 0, tx: 1, tz: 0, section: 'horizontal' };
+  return { x: r + (s - lv - la), z: lv + r, tx: 1, tz: 0, section: 'horizontal' };
 }
 
 export const sectionAt = (sCm: number): Section => pathAt(sCm).section;
 
-/** MuJoCo quaternion (w x y z) for a frame with x along the tangent, y along world Y, z = x cross y (the inside of the bend: the cart sits on top of the horizontal pipes). */
+/**
+ * MuJoCo quaternion (w x y z) for the cart frame: x along the tangent, z toward the INSIDE of the bend (the cart body sits inside the bend),
+ * so -z is the outer side of the track, where the free wheel is. y = -world Y.
+ * Built as a rotation about +Y by th (x along the tangent) followed by a half turn about the cart x axis.
+ */
 export function frameQuat(p: PathPoint): [number, number, number, number] {
-  const th = Math.atan2(-p.tz, p.tx); // rotation about +Y
-  return [Math.cos(th / 2), 0, Math.sin(th / 2), 0];
+  const th = Math.atan2(-p.tz, p.tx);
+  return [0, Math.cos(th / 2), 0, -Math.sin(th / 2)];
 }
 
 export type MoveResult = { arrived: boolean };
