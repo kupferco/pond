@@ -1,5 +1,8 @@
 import * as THREE from 'three';
-import type { SimDriver } from './drivers/simDriver.ts';
+import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
+
+/** What the viewer needs from a simulation: a model, its data and the MuJoCo module. */
+export interface SimLike { mujoco: MainModule; model: MjModel; data: MjData }
 
 // Renders every MuJoCo geom as a three.js mesh and copies xpos/xmat each frame.
 export class Viewer {
@@ -9,9 +12,16 @@ export class Viewer {
   private ro: ResizeObserver;
   private meshes: THREE.Mesh[] = [];
   private orbit = { az: 0.9, el: 0.45, dist: 0.7 };
+  private maxDist = 2;
   private target = new THREE.Vector3(0.08, 0, 0.12);
 
-  constructor(private host: HTMLElement, private sim: SimDriver) {
+  constructor(private host: HTMLElement, private sim: SimLike, opts: { target?: [number, number, number]; dist?: number; maxDist?: number; az?: number; el?: number; far?: number } = {}) {
+    if (opts.target) this.target.set(...opts.target);
+    if (opts.dist) this.orbit.dist = opts.dist;
+    if (opts.az !== undefined) this.orbit.az = opts.az;
+    if (opts.el !== undefined) this.orbit.el = opts.el;
+    if (opts.maxDist) this.maxDist = opts.maxDist;
+    if (opts.far) { this.camera.far = opts.far; this.camera.updateProjectionMatrix(); }
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     host.appendChild(this.renderer.domElement);
     this.scene.background = new THREE.Color(0xf6f9fc);
@@ -94,7 +104,7 @@ export class Viewer {
     });
     el.addEventListener('wheel', (e) => {
       e.preventDefault();
-      this.orbit.dist = Math.min(2, Math.max(0.2, this.orbit.dist * Math.exp(e.deltaY * 0.001)));
+      this.orbit.dist = Math.min(this.maxDist, Math.max(0.2, this.orbit.dist * Math.exp(e.deltaY * 0.001)));
     }, { passive: false });
   }
 

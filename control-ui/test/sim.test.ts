@@ -9,6 +9,8 @@ import { Attempt } from '../src/arm/attempt.ts';
 import { graspPoint, solveDown } from '../src/arm/kinematics.ts';
 import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/placement.ts';
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
+import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
+import { cartMjcf } from '../src/cart/model.ts';
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
 
 const MOTORS_JOINT: Record<string, string> = { A: 'shoulder_pan', B: 'shoulder_lift', C: 'elbow_flex', D: 'wrist_flex', E: 'wrist_roll' };
@@ -107,6 +109,34 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   for (let i = 0; i < 20; i++) { const r = runOne(500 + i).result!; if (r.success) ok++; finite &&= Number.isFinite(r.posErrMm) && Number.isFinite(r.tiltErrDeg) && r.durationS > 0; }
   check('20 randomized attempts: at least 16 succeed', ok >= 16 && finite, `${ok}/20`);
   void REACH;
+}
+
+// Cart track: path continuity, clamping, motion and the model.
+{
+  let maxJump = 0, prev = pathAt(0);
+  for (let s = 0.1; s <= TRACK_LENGTH_CM; s += 0.1) { const p = pathAt(s); maxJump = Math.max(maxJump, Math.hypot(p.x - prev.x, p.z - prev.z) * 100); prev = p; }
+  check('cart path is continuous (0.1 cm steps move 0.1 cm)', maxJump < 0.1001, maxJump.toFixed(4));
+  check('cart path sections', pathAt(L_VERT - 1).section === 'vertical' && pathAt(L_VERT + L_ARC / 2).section === 'curve' && pathAt(L_VERT + L_ARC + 1).section === 'horizontal');
+  const mid = pathAt(L_VERT + L_ARC / 2);
+  check('bend mid-point tangent is 45 deg', Math.abs(mid.tx - Math.SQRT1_2) < 1e-9 && Math.abs(mid.tz - Math.SQRT1_2) < 1e-9);
+  check('path starts at the bottom and goes up', pathAt(5).z > pathAt(0).z && pathAt(0).tz === 1);
+  check('path clamps at the ends', pathAt(-5).z === pathAt(0).z && pathAt(1e6).x === pathAt(TRACK_LENGTH_CM).x);
+  const q = frameQuat(pathAt(TRACK_LENGTH_CM));
+  check('horizontal end: half turn about x (body inside the bend, below the pipe)', Math.abs(q[1] - 1) < 1e-9 && Math.abs(q[3]) < 1e-9);
+  const cm = new CartMotion(); cm.speed = 10;
+  cm.nudge(5); cm.nudge(5);
+  check('step taps accumulate', cm.goal === 10);
+  let t = 0; while (cm.moving) { cm.advance(0.01); t += 0.01; }
+  check('cart arrives at 10 cm in 1 s at 10 cm/s', cm.s === 10 && Math.abs(t - 1) < 0.02, `${cm.s} ${t.toFixed(2)}`);
+  cm.nudge(-100);
+  check('cart clamps at 0', cm.goal === 0);
+  cm.moveTo(1e6);
+  check('cart clamps at the far end', cm.goal === TRACK_LENGTH_CM);
+  const rt = Array.from({ length: 50 }, (_, i) => randomTarget(i));
+  check('random targets stay on the track and vary', rt.every((v) => v >= 0 && v <= TRACK_LENGTH_CM) && new Set(rt).size > 25);
+  const cartModel = mj.MjModel.from_xml_string(cartMjcf());
+  check('cart model loads with cart and marker mocap bodies', cartModel.nmocap === 2, String(cartModel.nmocap));
+  cartModel.delete();
 }
 
 const t0 = performance.now(); run(5); const ms = performance.now() - t0;
