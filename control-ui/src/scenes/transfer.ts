@@ -43,7 +43,7 @@ export const transferScene: Scene = {
         <dt>Riding on</dt><dd><strong id="t-pipe">Pipe B</strong></dd>
         <dt>Position</dt><dd><span id="t-pos">0.0</span> cm of ${maxS.toFixed(1)} cm</dd>
         <dt>Hands</dt><dd id="t-hands"></dd>
-        <dt>Motors</dt><dd>2 drive (wheel spin) + 2 rotation (swing about the pipe)</dd>
+        <dt>Motors</dt><dd>Per wheel system: A drive (wheel spin), B base rotation (swing about the pipe), C clamp (moves the one clamp pair)</dd>
         <dt>Swing</dt><dd><span id="t-swing">0</span>° (rotation motors holding; the cart only turns round the bends)</dd>
         <dt>Clamp / track</dt><dd id="t-hit">no contact</dd>
       </dl>

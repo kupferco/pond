@@ -135,7 +135,7 @@ export function cartTrims(p: Pipe, pose: { x: number; z: number; q: Quat }, swin
 export function applyCart(model: Parameters<typeof setCart>[0] & Parameters<typeof setMotors>[0], data: Parameters<typeof setMotors>[1], pipe: Pipe,
   pose: { plateSide: 1 | -1 }, tr: { hand1: number[]; hand2: number[] }, open: Record<Pipe, number>, spin: number[], hinge: number): void {
   const [o1, o2] = byHand(pipe, open[pipe], open[other(pipe)]), [s1, s2] = byHand(pipe, spin[0], spin[1]);
-  setCart(model, data.qpos, o1, o2, pose.plateSide, tr.hand1, tr.hand2);
+  setCart(model, data.qpos, o1, o2, pose.plateSide, tr.hand1, tr.hand2, { model, data: data.ctrl });
   setMotors(model, data, s1, s2, hinge, riderHand(pipe));
 }
 
