@@ -34,18 +34,23 @@ const RAIL_X0 = AXLE_R - 5, RAIL_X1 = AXLE_R + 7, RAIL_HL = ROW_Z + 7;
 const BAR_X0 = 22, BAR_X1 = 26, BAR_W = 16, BAR_HL = 16, SPR_Z = 14, SPR_OD = 8, SPR_INST = 7.5, CAP_T = 2.5;  // ASSUMED cross bar, springs, cap
 const GEAR_R = 7, WORM_R = 3.5, WORM_X = AXLE_R + GEAR_R + WORM_R, GEAR_Y = RAIL_Y0 + RAIL_T_DRIVEN + 3; // ASSUMED worm drive
 const MOTOR_R = 14, MOTOR_L = 55;                                          // ASSUMED motor placeholder
-const WALL_OUT_R = 34, R_BORE = PIPE_D_MM / 2 + 4;                          // hand_sleeve.py sleeve body
-const PAD = { z0: -24, z1: 0, y0: 21, y1: 40 };                            // hand_sleeve.py mounting pad (cart y 21..40, on the plate side)
+const WALL_OUT_R = 34, R_BORE = PIPE_D_MM / 2 + 8;                          // hand_sleeve.py sleeve body
+const PAD = { z0: -24, z1: 0, y0: R_BORE, y1: 40 };                        // hand_sleeve.py mounting pad (cart y 21..40 in the CAD; its inner face now starts at the bore so it clears the pipe on the bends)
 const PLATE_Y_MM = PAD.y1 + PLATE_MM.t / 2;                                // plate sits on the pads' outer face
 const ARM_Y = m(PLATE_Y_MM + PLATE_MM.t / 2) + 0.02;                        // arm base block: its centre 20 mm above the plate's outer face
 /** Closed wheels sit 0.3 mm off the CAD 26 mm radius so they never touch the pipe model. */
 export const CLEAR_M = 0.0003;
-export const WHEEL_OPEN_M = 0.010;     // ASSUMED: how far each pair backs off the pipe when the hand is open
+export const WHEEL_OPEN_M = 0.032;     // ASSUMED: how far each pair backs off when the hand is open: far enough that the pipe slides out sideways between the wheels
+const SLOT_DEG = 60;                    // ASSUMED: the sleeve is slotted either side (cart +y and -y), so an open hand can swing off a pipe sideways
 export const PAIR_ANGLES = { d: 180, p: 60, m: -60 } as const;  // driven, +60 idler, -60 idler (CAD angle from the gap, +X)
 type Pair = keyof typeof PAIR_ANGLES;
 const PAIRS: Pair[] = ['d', 'p', 'm'];
+/** Name of a driven wheel's spin joint (hand 1 or 2, row +1 or -1 along the pipe). */
+const wheelName = (hand: 1 | 2, z: number) => `w${hand}${z > 0 ? 'f' : 'b'}`;
+const WHEEL_JOINTS = [wheelName(1, 1), wheelName(1, -1), wheelName(2, 1), wheelName(2, -1)];
 const JOINTS = ['h1d', 'h1p', 'h1m', 'h2d', 'h2p', 'h2m'] as const;
 export type Vec3 = [number, number, number];
+export const ROT_MAX_RAD = Math.PI / 2;   // rotation motors: swing range about the pipe (rad)
 const CART_COL = 'contype="2" conaffinity="0"';   // cart geoms collide with pipes only (pipes: contype 1, conaffinity 2)
 
 /** Unit radial direction (cart y, z) of a pair on hand 1 or 2. Cart z points to hand 1's gap side; hand 2 is the mirror image, so the cart is symmetric. */
@@ -89,7 +94,7 @@ export function clampTrackContacts(data: { ncon: number; contact: { get(i: numbe
   for (let i = 0; i < data.ncon; i++) { const d = data.contact.get(i)?.dist ?? 0; if (d < -tolM) worst = Math.min(worst, d); }
   return worst;
 }
-export const CONTACT_TOL_M = 0.0002;   // the wheels sit 0.3 mm off the pipe, so any real penetration beyond 0.2 mm is a collision
+export const CONTACT_TOL_M = 0;   // the wheels sit 0.3 mm off the pipe, so ANY penetration of the track is a collision
 
 const rgba = (c: [number, number, number, number?]) => `rgba="${c[0]} ${c[1]} ${c[2]} ${c[3] ?? 1}"`;
 const GREY = rgba([0.12, 0.12, 0.12]), STEEL = rgba([0.75, 0.75, 0.78]), GOLD = rgba([0.85, 0.7, 0.2]), BLUE = rgba([0.2, 0.55, 0.85]);
@@ -106,15 +111,17 @@ function pairGeoms(hand: 1 | 2, pair: Pair): string {
   const box = (x: number, r: number, t: number, hx: number, hr: number, ht: number, col: string) =>
     g.push(`<geom type="box" pos="${at(x, r, t)}" ${axes} size="${f(m(hx))} ${f(m(hr))} ${f(m(ht))}" ${col} ${CART_COL}/>`);
   for (const z of [ROW_Z, -ROW_Z]) {
+    if (driven) g.push(`<body name="${wheelName(hand, z)}"><joint name="${wheelName(hand, z)}" type="hinge" pos="${at(z, AXLE_R, 0)}" axis="${f(0)} ${f(-uz)} ${f(uy)}" range="-100000 100000"/>`);
     cyl(z, AXLE_R, -WHEEL_W / 2, z, AXLE_R, WHEEL_W / 2, WHEEL_R, GREY);               // tyre
     cyl(z, AXLE_R, -WHEEL_W / 2 - 0.3, z, AXLE_R, WHEEL_W / 2 + 0.3, HUB_R, GOLD);     // hub with its two 623ZZ bearings
     const t1 = driven ? GEAR_Y + 2.5 : RAIL_Y0 + RAIL_T;                                 // axle: fixed on idlers, rotating and carrying a worm wheel on the driven pair
     cyl(z, AXLE_R, -(RAIL_Y0 + rt), z, AXLE_R, t1, 1.5, STEEL);
     if (driven) {
       cyl(z, AXLE_R, GEAR_Y - 2, z, AXLE_R, GEAR_Y + 2, GEAR_R + 1, rgba([0.9, 0.55, 0.15]));  // worm wheel
-      cyl(z - 4, WORM_X, GEAR_Y, z + 4, WORM_X, GEAR_Y, WORM_R + 1, rgba([0.9, 0.55, 0.15])); // worm
     }
+    if (driven) g.push('</body>');
   }
+  if (driven) for (const z of [ROW_Z, -ROW_Z]) cyl(z - 4, WORM_X, GEAR_Y, z + 4, WORM_X, GEAR_Y, WORM_R + 1, rgba([0.9, 0.55, 0.15])); // worms (fixed with the motor)
   for (const sg of [1, -1]) box(0, (RAIL_X0 + RAIL_X1) / 2, sg * (RAIL_Y0 + rt / 2), RAIL_HL, (RAIL_X1 - RAIL_X0) / 2, rt / 2, BLUE); // carrier rails
   box(0, (BAR_X0 + BAR_X1) / 2, 0, BAR_HL, (BAR_X1 - BAR_X0) / 2, BAR_W / 2, BLUE);                                                    // cross bar between the rows
   if (driven) {
@@ -137,6 +144,7 @@ function sleeveGeoms(hand: 1 | 2): string {
     for (let i = 0; i < N; i++) {
       const a = (i + 0.5) * seg, deg = (a * 180) / Math.PI;
       if (skipPockets && near(deg, 17)) continue;
+      if (Math.abs(deg - 90) < SLOT_DEG || Math.abs(deg - 270) < SLOT_DEG) continue;   // side slots
       const uy = -Math.sin(a), uz = zs * Math.cos(a);
       g.push(`<geom type="box" pos="${f(m((x0 + x1) / 2))} ${f(m(rc) * uy)} ${f(m(rc) * uz)}" xyaxes="1 0 0 0 ${f(uy)} ${f(uz)}" size="${f(m(x1 - x0) / 2)} ${f(m(WALL_OUT_R - R_BORE) / 2)} ${f(m(rc) * Math.tan(seg / 2))}" rgba="0.95 0.75 0.2 0.45" ${CART_COL}/>`);
     }
@@ -165,7 +173,11 @@ export function cartBody(spacingMm = PIPE_SPACING_MM): string {
       </body>`;
       }).join('\n      ')}
     </body>`;
+  // Two rotation motors (one per wheel set): hinges about the engaged pipe's axis (cart x), in series, carrying the whole assembly (both
+  // hands, pads, plate, arm base) as one rigid body. Each motor takes half of the swing. The motors/drive motors are rigid parts of the cart.
   return `<body name="cart" mocap="true" pos="0 0 0">
+   <body name="rot1"><inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.001"/><joint name="rot1" type="hinge" axis="1 0 0" range="-3.2 3.2"/>
+   <body name="rot2"><inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.001"/><joint name="rot2" type="hinge" axis="1 0 0" range="-3.2 3.2"/>
     ${hand(1)}
     ${hand(2)}
     <body name="padside"><joint name="padside" type="slide" axis="0 1 0" range="-1 1"/>
@@ -178,6 +190,8 @@ export function cartBody(spacingMm = PIPE_SPACING_MM): string {
     <body name="armside"><joint name="armside" type="slide" axis="0 1 0" range="-1 1"/>
       <geom name="armmount" type="box" pos="0 ${f(ARM_Y)} ${f(plateZ)}" size="0.03 0.02 0.03" rgba="0.9 0.65 0.2 1" ${CART_COL}/>
     </body>
+   </body>
+   </body>
   </body>`;
 }
 
@@ -195,6 +209,32 @@ export function setCart(model: { jnt(name: string): { id: number }; jnt_qposadr:
   set('padside', plateSide === 1 ? 0 : -2 * m((PAD.y0 + PAD.y1) / 2));
 }
 
+/** The four actuators: a drive motor per wheel set (spins its two wheels) and a rotation motor per wheel set (swings the cart about the pipe). */
+export const ACTUATORS = ['drive1', 'drive2', 'rot1', 'rot2'] as const;
+export function cartActuators(): string {
+  const tendon = (n: string, j: string[]) => `<fixed name="${n}">${j.map((x) => `<joint joint="${x}" coef="0.5"/>`).join('')}</fixed>`;   // mean spin of the set's two wheels
+  return `<tendon>
+    ${tendon('drive1', WHEEL_JOINTS.slice(0, 2))}
+    ${tendon('drive2', WHEEL_JOINTS.slice(2))}
+  </tendon>
+  <actuator>
+    <position name="drive1" tendon="drive1" kp="2" ctrlrange="-100000 100000"/>
+    <position name="drive2" tendon="drive2" kp="2" ctrlrange="-100000 100000"/>
+    <position name="rot1" joint="rot1" kp="20" ctrlrange="-3.2 3.2"/>
+    <position name="rot2" joint="rot2" kp="20" ctrlrange="-3.2 3.2"/>
+  </actuator>`;
+}
+
+/** Command the motors and place their joints: wheel spin angles (rad) for hand 1 / hand 2, and the cart swing angle (rad), shared by the two rotation motors. */
+export function setMotors(model: { jnt(name: string): { id: number }; jnt_qposadr: ArrayLike<number>; actuator(name: string): { id: number } },
+  data: { qpos: { [i: number]: number }; ctrl: { [i: number]: number } }, spin1: number, spin2: number, swing: number): void {
+  const set = (name: string, v: number) => { data.qpos[model.jnt_qposadr[model.jnt(name).id]] = v; };
+  const cmd = (name: string, v: number) => { data.ctrl[model.actuator(name).id] = v; };
+  WHEEL_JOINTS.forEach((j, i) => set(j, i < 2 ? spin1 : spin2));
+  cmd('drive1', spin1); cmd('drive2', spin2);
+  set('rot1', swing / 2); set('rot2', swing / 2); cmd('rot1', swing / 2); cmd('rot2', swing / 2);
+}
+
 export function cartMjcf(): string {
   const pipes = pipeGeoms();
   return `
@@ -208,5 +248,6 @@ export function cartMjcf(): string {
     </body>
     ${cartBody()}
   </worldbody>
+  ${cartActuators()}
 </mujoco>`;
 }
