@@ -21,7 +21,8 @@ import {
 
 export const HOLE_TOL = 0.0035;   // m, pin axis to hole axis (hole 7 mm radius, pin 3 mm radius, 0.5 mm margin)
 export const COLLAR_TOL = CELL_R - POD_R - 0.0004; // m, pod axis to the collar axis when it is lowered into the cell
-const APPROACH = 0.12;            // m above the pod, along its axis, where the pin waits before it goes in
+const SLIDE_DZ = 0.03;           // m, pod centre height over its seat while it slides over the tray (pod bottom 8 mm over the collars)
+const APPROACH = 0.1;             // m above the pod, along its axis, where the pin waits before it goes in
 
 type V3 = [number, number, number];
 type Mat = number[];
@@ -50,7 +51,7 @@ export class PodWorld {
 
   reset() {
     this.sim.reset();
-    this.violation = ''; this.seen = null; this.wasHeld = [];
+    this.violation = ''; this.seen = null; this.heldSteps = [];
     this.cartX = CART_HOME_X; this.cartAt = CART_HOME_X;
     this.last = null;
     this.pods.length = 0;
@@ -71,7 +72,7 @@ export class PodWorld {
   rowPods(row: number): number[] {
     const ids: number[] = [];
     this.pods.forEach((p, i) => {
-      if (p.state === 'store' && Math.abs(this.pos(i)[0] - rowX(row)) < ROW_PITCH / 2 && this.pos(i)[2] > 0.2) ids.push(i);
+      if (p.state === 'store' && Math.abs(this.pos(i)[0] - rowX(row)) < ROW_PITCH / 2 && this.pos(i)[0] > 0.03) ids.push(i);
     });
     return ids.sort((a, b) => this.slopePos(a) - this.slopePos(b));
   }
@@ -111,7 +112,7 @@ export class PodWorld {
   // arm (held) or by gravity on the store slope (free). Anything else is logged and recorded in `violation`.
   violation = '';
   private seen: V3[] | null = null;
-  private wasHeld: boolean[] = [];
+  private heldSteps: number[] = [];   // steps each pod has been held (the sim positions lag the writes by one step)
   private armGeoms: number[] | null = null;
   private hitAdr = -1;
 
@@ -142,8 +143,8 @@ export class PodWorld {
       const prev = this.seen?.[i];
       if (prev) {
         const d = Math.hypot(p[0] - prev[0], p[1] - prev[1], p[2] - prev[2]);
-        // free pods: at most 1.5 m/s; a pod hooked this step may jump by up to a pod half length onto the pin
-        const lim = held && !this.wasHeld[i] ? POD_LEN / 2 + HOLE_TOL : Math.max(0.003, 1.5 * h);
+        // free pods: at most 1.5 m/s; a pod hooked in the last steps may jump by up to a pod half length onto the pin
+        const lim = held && (this.heldSteps[i] ?? 0) < 3 ? POD_LEN / 2 + HOLE_TOL : Math.max(0.003, 1.5 * h);
         if (d > lim) return bad(`pod ${i} teleported ${(d * 1000).toFixed(1)} mm in one step (${st})`);
       }
       const reg = this.region(p), near = Math.hypot(p[0] - pin[0], p[1] - pin[1], p[2] - pin[2]);
@@ -151,7 +152,7 @@ export class PodWorld {
       if (st === 'store' && reg !== 'store') return bad(`pod ${i} left the store without being picked (now at ${p.map((v) => (v * 1000).toFixed(0)).join(', ')} mm)`);
       if (st === 'tray' && reg !== 'tray') return bad(`pod ${i} left the tray (now at ${p.map((v) => (v * 1000).toFixed(0)).join(', ')} mm)`);
       if (st === 'lost' && reg !== 'tray' && near > 0.01) return bad(`pod ${i} was dropped (now at ${p.map((v) => (v * 1000).toFixed(0)).join(', ')} mm)`);
-      this.wasHeld[i] = held;
+      this.heldSteps[i] = held ? (this.heldSteps[i] ?? 0) + 1 : 0;
     }
     this.seen = now;
     const inStore = this.pods.filter((p, i) => p.state !== 'held' && this.region(now[i]) === 'store').length;
@@ -173,7 +174,7 @@ export class PodWorld {
         const g1 = k.geom1, g2 = k.geom2;
         k.delete();
         if (this.armGeoms.includes(g1) !== this.armGeoms.includes(g2)) {
-          const nm = (g: number) => { const b = m.body(m.geom_bodyid[g]); const n = b.name; b.delete(); return n + ' geom ' + g; };
+          const nm = (g: number) => { const b = m.body(m.geom_bodyid[g]); const n = b.name; b.delete(); const gp = [0, 1, 2].map((k) => (m.geom_xpos?.[3 * g + k] ?? d.geom_xpos[3 * g + k]) * 1000).map(Math.round).join(','); return n + ' geom ' + g + ' at ' + gp + ' mm'; };
           return bad(`the arm hit the unit (${nm(g1)} / ${nm(g2)})`);
         }
       }
@@ -300,7 +301,7 @@ export class PodTask {
     const dn = (zw: number) => armR(zw), out = (yw: number) => armU(yw);
     const pin = (): V3 => w.pin();
     this.moves = [
-      { label: 'Raising the arm', r: dn(A[2]), z: out(A[1]), pitch: STORE_PITCH_DEG },
+      { label: 'Raising the arm', r: dn(A[2]), z: out(A[1]), pitch: -STORE_PITCH_DEG },
       { label: `Driving to store row ${row + 1}`, x: T[0], r: dn(A[2]), z: out(A[1]) },
       {
         label: 'Pin down through the lid and the pod hole', r: dn(T[2]), z: out(T[1]), speed: SEAT_SPEED,
@@ -315,9 +316,13 @@ export class PodTask {
       },
       { label: 'Lifting the pod up through the lid', r: dn(A[2]), z: out(A[1]), speed: SEAT_SPEED },
       { label: 'Clearing the lid', r: dn(TRANSIT_Z), z: out(A[1]), pitch: 0, speed: PIN_SPEED },
-      { label: `Driving to socket ${slotLabel(slot)}`, x: S[0], r: dn(TRANSIT_Z), z: out(S[1]) },
+      // the track pipe runs between the arm and the back rows of the tray: drive along the front, go down to just over the collars
+      // (low enough to pass under the pipe), slide over the socket and lower the pod
+      { label: `Driving to socket ${slotLabel(slot)}`, x: S[0], r: dn(TRANSIT_Z), z: out(A[1]) },
+      { label: 'Lowering to the collar tops', r: dn(S[2] + SLIDE_DZ), z: out(A[1]), speed: PIN_SPEED },
+      { label: `Sliding over socket ${slotLabel(slot)}`, r: dn(S[2] + SLIDE_DZ), z: out(S[1]), speed: PIN_SPEED },
       {
-        label: 'Lowering the pod into the silicone collar', r: dn(S[2]), speed: SEAT_SPEED,
+        label: 'Lowering the pod into the silicone collar', r: dn(S[2]), z: out(S[1]), speed: SEAT_SPEED,
         after: () => {
           const c = w.pos(id), e = Math.hypot(c[0] - seat[0], c[1] - seat[1]);
           if (e > COLLAR_TOL) return `missed the collar of socket ${slotLabel(slot)} (${(e * 1000).toFixed(1)} mm off)`;
@@ -356,7 +361,8 @@ export class PodTask {
 
   /** Planar IK for the pin point at (r down, u out) with the hand pitched by `pitch` degrees (0 = pin straight down). */
   private ik(r: number, u: number, pitch: number): Joints | null {
-    return solvePlanar(0, r, u, TOOL_X, 0, pitch);
+    // r is down from the arm base, u out along the arm's forward direction; the pan axis is vertical, pitch 90 = pin straight down
+    return solvePlanar(0, u, -r, TOOL_X, 0, pitch + 90);
   }
 
   private control() {
@@ -369,7 +375,7 @@ export class PodTask {
       this.moveTime = 0; this.dwell = 0;
       if (!this.inited) { this.inited = true; this.cmdJ = q.slice(0, 5); this.integ = [0, 0, 0, 0, 0]; }
       const p = toolPoint({ A: this.cmdJ[0], B: this.cmdJ[1], C: this.cmdJ[2], D: this.cmdJ[3] }, TOOL_X, 0);
-      this.from = { x: this.world.cartX, r: p[0], z: p[2], p: this.cmdJ[1] + this.cmdJ[2] + this.cmdJ[3] };
+      this.from = { x: this.world.cartX, r: -p[2], z: p[0], p: this.cmdJ[1] + this.cmdJ[2] + this.cmdJ[3] - 90 };
       this.goal = { x: mv.x ?? this.from.x, r: mv.r ?? this.from.r, z: mv.z ?? this.from.z, p: mv.pitch ?? this.from.p };
       if (mv.joint) { this.goal.r = mv.r ?? this.from.r; }
       this.goalJ = this.ik(this.goal.r, this.goal.z, this.goal.p);
