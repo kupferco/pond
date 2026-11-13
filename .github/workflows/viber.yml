@@ -15,6 +15,8 @@ on:
 permissions:
   contents: write
   actions: read
+  pull-requests: write
+  issues: write
 
 concurrency:
   group: viber-${{ inputs.branch }}
@@ -158,6 +160,9 @@ jobs:
       - name: Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
+        env:
+          # So the session can use gh to comment on or edit the PR (permissions above).
+          GH_TOKEN: ${{ github.token }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -238,6 +243,7 @@ jobs:
           PUSHED: ${{ steps.push.outputs.pushed }}
           PUSH_ERROR: ${{ steps.push.outputs.error }}
           PUSH_OUTCOME: ${{ steps.push.outcome }}
+          EXEC_FILE: ${{ steps.claude.outputs.execution_file }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           if [ "$PUSH_OUTCOME" = failure ] && [ -z "$PUSH_ERROR" ]; then
@@ -245,12 +251,17 @@ jobs:
           fi
           SUMMARY=""
           [ -f "$RUNNER_TEMP/viber-pr.md" ] && SUMMARY="$(cat "$RUNNER_TEMP/viber-pr.md")"
+          # The session's final message: the last "result" entry of the execution file.
+          FINAL=""
+          if [ -n "$EXEC_FILE" ] && [ -f "$EXEC_FILE" ]; then
+            FINAL="$(jq -r '[.. | objects | select(.type? == "result")] | last | (.result // "") | tostring | .[0:8000]' "$EXEC_FILE" 2>/dev/null || true)"
+          fi
           jq -n \
             --arg repo "${{ github.repository }}" --arg branch "$BRANCH" \
             --arg task "${{ inputs.task_id }}" --arg outcome "$OUTCOME" \
             --arg pushed "${PUSHED:-false}" --arg run "$RUN_URL" --arg summary "$SUMMARY" \
-            --arg pushError "$PUSH_ERROR" \
-            '{repo:$repo, branch:$branch, taskId:($task|tonumber), outcome:$outcome, pushed:($pushed=="true"), pushError:$pushError, runUrl:$run, summary:$summary}' \
+            --arg pushError "$PUSH_ERROR" --arg final "$FINAL" \
+            '{repo:$repo, branch:$branch, taskId:($task|tonumber), outcome:$outcome, pushed:($pushed=="true"), pushError:$pushError, runUrl:$run, summary:$summary, finalAnswer:$final}' \
           | curl -fsS -X POST "$VIBER_URL/hooks/run" \
               -H "Authorization: Bearer $VIBER_HOOK_SECRET" \
               -H "Content-Type: application/json" --data-binary @-
