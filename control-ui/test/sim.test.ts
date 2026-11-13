@@ -11,7 +11,7 @@ import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/pl
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
 import { cartMjcf } from '../src/cart/model.ts';
-import { LID_Z, PIPE_Z, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
+import { BASE_BOTTOM, DECK_PAD_TOP, LID_Z, PIPE_Z, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
 import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
 
@@ -165,6 +165,18 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     pg.step();
     const b = pg.model.body('base'), id = b.id; b.delete();
     const bx = pg.data.xpos[3 * id] - pg.data.xpos[3 * pg.model.body('cart').id];
+    // Rendered orientation: the base's up axis is the deck normal, and its underside touches the top of the deck pad.
+    {
+      const bid = pg.model.body('base').id, cid = pg.model.body('cart').id;
+      const xm = pg.data.xmat, R = (b: number, i: number, j: number) => xm[9 * b + 3 * i + j];
+      const up = [R(bid, 0, 2), R(bid, 1, 2), R(bid, 2, 2)], nrm = [R(cid, 0, 2), R(cid, 1, 2), R(cid, 2, 2)];
+      const dot = up[0] * nrm[0] + up[1] * nrm[1] + up[2] * nrm[2];
+      check('arm base up axis is parallel to the cart deck normal', Math.abs(Math.abs(dot) - 1) < 1e-6 && dot > 0, String(dot));
+      let padTop = NaN;                                    // top of the cart's mounting pad, read from the compiled geoms
+      for (let g = 0; g < pg.model.ngeom; g++) if (pg.model.geom_bodyid[g] === cid && Math.abs(pg.model.geom_size[3 * g + 2] - 0.0015) < 1e-9) padTop = pg.data.geom_xpos[3 * g + 2] + 0.0015;
+      const under = pg.data.xpos[3 * bid + 2] + BASE_BOTTOM;
+      check('arm base underside is in contact with the top of the cart deck', Math.abs(under - padTop) < 1e-6, `${under} ${padTop}`);
+    }
     check('arm base is on the middle of the cart base (not off its end)', Math.abs(bx) < 0.056, String(bx));
   }
   const pgCmd = new CommandLayer(pg, new RealDriver());
@@ -183,7 +195,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('roof: the second pod is not lifted or dragged while the first is picked', zMax < 0.002, String(zMax));
   for (let i = 0; i < 1000; i++) pg.step();
   const row2 = world.rowPods(2).map((i) => Math.round(world.slopePos(i) / POD_PITCH));
-  check('row 3 slid down one position', row2.join() === '0,1,2' && world.frontPod(2) === second, row2.join());
+  check('row 3 slid down one position', row2.join() === Array.from({ length: STORE_START - 1 }, (_, k) => k).join() && world.frontPod(2) === second, row2.join());
 
   check('pods conserved over the first pick', world.violation === '' && world.pods.length === POD_COUNT, world.violation);
 

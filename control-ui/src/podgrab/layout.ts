@@ -35,7 +35,7 @@ export const POD_LEN = 0.04;
 export const HOLE_R = 0.007;
 // claw gripper (replaces the pin): two flat fingers either side of the pod, along the hand, closing across the hand y axis (world x
 // in the working pose). ASSUMED dimensions: fingers 1.25 mm thick, 12 mm wide, open inner gap 28.6 mm (pod 25), outer 31.1 mm, which passes the 34 mm pick holes.
-export const TOOL_X = 0.115;                    // pod centre along the hand from the hand origin when carried
+export const TOOL_X = 0.130;                    // pod centre along the hand from the hand origin when carried
 export const CLAW_BASE = 0.07;                  // palm: where the fingers start along the hand
 export const CLAW_TIP = TOOL_X + 0.001;         // fingertips: the claw grips the upper half of the pod, so the guide walls of the store channel stay below it
 export const CLAW_T = 0.00125, CLAW_W = 0.012;
@@ -71,26 +71,28 @@ export const SLOT_W = 2 * HAND_R * Math.sin(Math.PI / 20) * 0.98;   // width of 
 export const HAND_DX = 0;                       // hand 1 and the plate are centred on the arm base (the arm base sits on the middle of the cart base)
 export const HAND2_DZ = 0.10;                   // ASSUMED: wheel set 2 axis below the pipe (drawing: 280 mm, but that would be inside the tank); its underside stays 14 mm over the lid
 export const PLATE_T = 0.006, PLATE_Y = -HAND_R - PLATE_T / 2;       // cart base plate on the front of the hands
-export const DECK_TOP = -0.125;                 // cart frame z of the top of the arm deck: the arm shoulder (95 mm over the base) is 30 mm under the pipe so the elbow clears the pipe when reaching the back rows
+export const DECK_TOP = -0.122;                 // cart frame z of the top of the arm deck: the arm shoulder (95 mm over the base) is 30 mm under the pipe so the elbow clears the pipe when reaching the back rows
 export const ARM_CY = -0.162;                   // arm base on the deck, cart frame y (the arm stays 162 mm in front of the pipe, as before)
 export const DECK_X0 = -0.056, DECK_X1 = 0.056, DECK_Y1 = -HAND_R - PLATE_T, DECK_Y0 = ARM_CY - 0.04;    // deck: as long as the plate, from the plate to 40 mm past the arm base
 export const ARM_Y = PIPE_Y + ARM_CY;           // arm base origin, world y
-export const ARM_BASE_Z = PIPE_Z + DECK_TOP;    // flat on the deck; the arm turns about the vertical axis
-export const BASE_XYAXES = '-1 0 0 0 -1 0';      // base turned 90 degrees counterclockwise from before: base x = -x (along the track), base y = -y, z = up
-export const PAN0 = -90;                        // pan angle (deg) that points the arm across the track, towards the back of the tank (+y)
+export const ARM_BASE_Z = PIPE_Z + DECK_TOP - 0.003;   // IK reference: the pick/place paths are tuned with the planned points 3 mm under the real base origin, so the claw runs 3 mm high over the store walls
+export const BASE_XYAXES = '0 1 0 -1 0 0';       // base x = +y (towards the back of the tank, so pan 0 is straight ahead), base y = -x, base z = up = the deck normal
+export const BASE_BOTTOM = 0.0085;               // the base servo's underside, in base coordinates (arm model: servo1 spans z 8.5..43.5 mm)
+export const DECK_PAD_TOP = DECK_TOP + BASE_BOTTOM;   // top of the mounting pad = the plane the base underside sits on (cart frame z)
+export const PAN0 = 0;                          // pan angle (deg) that points the arm across the track, towards the back of the tank (+y)
 /** World coordinates of a point for the arm planar IK: r down from the base, u out along the arm's forward direction (+y). */
 export const armR = (z: number) => ARM_BASE_Z - z;
 export const armU = (y: number) => y - ARM_Y;
 
 // --- store: rows along y; the pods slide down the slope to the pick line at y = 0
 export const STORE_ROWS = 6;
-export const STORE_CAP = 5;                     // pod positions per row
-export const STORE_START = 4;                   // pods per row at the start
+export const STORE_CAP = 8;                      // pod positions per row
+export const STORE_START = 6;                    // pods per row at the start
 export const POD_PITCH = POD_R * 2 + 0.0005;    // pods rest against each other on the slope
 export const ROW_PITCH = 0.035;
 export const ROW_X0 = 0.07 + ROW_PITCH / 2;
 export const SLOPE = 12 * Math.PI / 180;
-export const STORE_Z0 = 0.22;                   // floor of the channel under position 0 (the store stands on legs on the shelf, under the lid)
+export const STORE_Z0 = 0.205;                  // floor of the channel under position 0 (the store stands on legs on the shelf, under the lid)
 export const STORE_Y0 = -0.145;                 // y of the channel under position 0 (the pick line)
 export const LOAD_CLEAR = 0.5;                  // clear floor needed behind the unit to load the store from the back
 export const LIP_H = 0.018;                     // front stop above the channel floor
@@ -185,10 +187,10 @@ function cartMount(): { open: string; close: string; baseAttrs: string } {
       ${handRing(HAND_DX, 0, 0, SLOT_SEG, green).join('\n      ')}
       ${handRing(HAND_DX, 0, -HAND2_DZ, null, green).join('\n      ')}
       <geom type="box" pos="${f((px0 + px1) / 2)} ${f(PLATE_Y)} ${f((zTop + zBot) / 2)}" size="${f((px1 - px0) / 2)} ${PLATE_T / 2} ${f((zTop - zBot) / 2)}" ${steel}/>
-      <geom type="box" pos="${f((DECK_X0 + dx1) / 2)} ${f((DECK_Y0 + DECK_Y1) / 2)} ${f(DECK_TOP - PLATE_T / 2)}" size="${f((dx1 - DECK_X0) / 2)} ${f((DECK_Y1 - DECK_Y0) / 2)} ${PLATE_T / 2}" ${steel}/>
-      <geom type="box" pos="0 ${f(ARM_CY)} ${f(DECK_TOP + 0.0015)}" size="0.036 0.036 0.0015" ${rgba(0.3, 0.3, 0.33)}/>`;
+      <geom type="box" pos="${f((DECK_X0 + dx1) / 2)} ${f((DECK_Y0 + DECK_Y1) / 2)} ${f(DECK_PAD_TOP - 0.003 - PLATE_T / 2)}" size="${f((dx1 - DECK_X0) / 2)} ${f((DECK_Y1 - DECK_Y0) / 2)} ${PLATE_T / 2}" ${steel}/>
+      <geom type="box" pos="0 ${f(ARM_CY)} ${f(DECK_PAD_TOP - 0.0015)}" size="0.036 0.036 0.0015" ${rgba(0.3, 0.3, 0.33)}/>`;
   // no joint: the base is a fixed child of the cart body, flat on the deck
-  const baseAttrs = `pos="0 ${f(ARM_CY)} ${f(DECK_TOP + 0.003)}" xyaxes="${BASE_XYAXES}"`;
+  const baseAttrs = `pos="0 ${f(ARM_CY)} ${f(DECK_TOP)}" xyaxes="${BASE_XYAXES}"`;
   return { open, close: '</body>', baseAttrs };
 }
 
