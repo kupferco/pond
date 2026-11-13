@@ -1,93 +1,90 @@
 import loadMujoco from '@mujoco/mujoco';
 import wasmUrl from '@mujoco/mujoco/mujoco.wasm?url';
 import './style.css';
-import { CommandLayer, type Mode } from './commands.ts';
-import { SimDriver } from './drivers/simDriver.ts';
-import { RealDriver } from './drivers/realDriver.ts';
-import { MOTORS } from './model.ts';
-import { Viewer } from './viewer.ts';
+import { SCENES } from './scenes/index.ts';
+import { GROUPS, STORAGE_KEY, resolveSceneId } from './scenes/list.ts';
+import type { Scene, SceneInstance } from './scenes/scene.ts';
 
 const status = document.getElementById('status')!;
 const panel = document.getElementById('panel')!;
+const view = document.getElementById('view')!;
+const picker = document.getElementById('picker')!;
+
+const readStored = () => { try { return localStorage.getItem(STORAGE_KEY); } catch { return null; } };
+const writeStored = (id: string) => { try { localStorage.setItem(STORAGE_KEY, id); } catch { /* private mode: URL still works */ } };
 
 async function main() {
   const mujoco = await loadMujoco({ locateFile: (p: string) => (p.endsWith('.wasm') ? wasmUrl : p) });
-  const sim = new SimDriver(mujoco);
-  const cmd = new CommandLayer(sim, new RealDriver());
-  const viewer = new Viewer(document.getElementById('view')!, sim);
-  status.textContent = '';
+  const byId = (id: string) => SCENES.find((s) => s.id === id)!;
 
-  panel.innerHTML = `
-    <h1>Pond arm control</h1>
-    <div class="mode" role="group" aria-label="Driver">
-      <button data-mode="sim" class="on">Sim</button>
-      <button data-mode="real">Real</button>
-    </div>
-    <p id="msg" class="msg"></p>
-    <table>
-      <thead><tr><th>Motor</th><th>Joint</th><th>Target °</th><th></th><th>Now °</th></tr></thead>
-      <tbody>${MOTORS.map((m) => `
-        <tr data-id="${m.id}">
-          <td class="id">${m.id}</td>
-          <td>${m.label}<small>${m.min}° to ${m.max}°</small></td>
-          <td><input type="number" step="1" min="${m.min}" max="${m.max}" value="${m.home}" aria-label="Motor ${m.id} target degrees"></td>
-          <td><button class="go">Go</button></td>
-          <td class="now">0.0</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-    <div class="row"><button id="goall">Go all</button><button id="home">Home</button></div>`;
+  let current: SceneInstance | null = null;
+  let currentId = '';
+  let token = 0; // guards against overlapping loads when switching quickly
 
-  const msg = document.getElementById('msg')!;
-  const say = (t: string, err = false) => { msg.textContent = t; msg.className = err ? 'msg err' : 'msg'; };
-  const rowInput = (tr: Element) => tr.querySelector('input') as HTMLInputElement;
-  const rows = [...panel.querySelectorAll('tbody tr')];
-
-  const guard = (fn: () => void) => { try { fn(); } catch (e) { say((e as Error).message, true); } };
-
-  rows.forEach((tr) => {
-    const go = () => guard(() => {
-      const id = (tr as HTMLElement).dataset.id!;
-      const input = rowInput(tr);
-      const v = parseFloat(input.value);
-      if (Number.isNaN(v)) return say(`Motor ${id}: enter a number`, true);
-      const applied = cmd.setJointTarget(id, v);
-      input.value = String(applied);
-      say(applied !== v ? `Motor ${id} limited to ${applied}°` : '');
-    });
-    tr.querySelector('.go')!.addEventListener('click', go);
-    rowInput(tr).addEventListener('keydown', (e) => { if ((e as KeyboardEvent).key === 'Enter') go(); });
+  // --- picker -------------------------------------------------------------
+  picker.innerHTML = `
+    <button id="picker-btn" aria-haspopup="listbox" aria-expanded="false"><span class="label"></span><span class="caret" aria-hidden="true">▾</span></button>
+    <div id="picker-list" role="listbox" aria-label="Scene" hidden>${GROUPS.map((g) => `
+      <div class="grp" role="presentation">${g}</div>
+      ${SCENES.filter((s) => s.group === g).map((s) => `<button role="option" data-id="${s.id}">${s.name}</button>`).join('')}`).join('')}
+    </div>`;
+  const btn = document.getElementById('picker-btn')!;
+  const list = document.getElementById('picker-list')!;
+  const setOpen = (open: boolean) => { list.hidden = !open; btn.setAttribute('aria-expanded', String(open)); };
+  btn.addEventListener('click', () => setOpen(list.hasAttribute('hidden')));
+  document.addEventListener('pointerdown', (e) => { if (!picker.contains(e.target as Node)) setOpen(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { setOpen(false); btn.focus(); } });
+  list.addEventListener('click', (e) => {
+    const o = (e.target as HTMLElement).closest<HTMLElement>('[data-id]');
+    if (!o) return;
+    setOpen(false);
+    void select(o.dataset.id!, true);
   });
-  document.getElementById('goall')!.addEventListener('click', () => guard(() => {
-    const pose: Record<string, number> = {};
-    for (const tr of rows) {
-      const v = parseFloat(rowInput(tr).value);
-      if (!Number.isNaN(v)) pose[(tr as HTMLElement).dataset.id!] = v;
-    }
-    cmd.setAllTargets(pose);
-    say('');
-  }));
-  document.getElementById('home')!.addEventListener('click', () => guard(() => {
-    cmd.home();
-    MOTORS.forEach((m, i) => { rowInput(rows[i]).value = String(m.home); });
-    say('');
-  }));
-  panel.querySelectorAll<HTMLButtonElement>('.mode button').forEach((b) => b.addEventListener('click', async () => {
-    try {
-      await cmd.setMode(b.dataset.mode as Mode);
-      say('');
-    } catch (e) { say((e as Error).message, true); }
-    panel.querySelectorAll('.mode button').forEach((x) => x.classList.toggle('on', (x as HTMLElement).dataset.mode === cmd.mode));
-  }));
 
-  const nows = rows.map((tr) => tr.querySelector('.now')!);
+  const reflect = (s: Scene) => {
+    btn.querySelector('.label')!.textContent = s.name;
+    list.querySelectorAll<HTMLElement>('[data-id]').forEach((o) => o.setAttribute('aria-selected', String(o.dataset.id === s.id)));
+    document.title = `Pond — Sim: ${s.name}`;
+  };
+
+  // --- scene switching ----------------------------------------------------
+  async function select(id: string, push: boolean) {
+    if (id === currentId) return;
+    const scene = byId(id);
+    const mine = ++token;
+    currentId = id;
+    reflect(scene);
+    writeStored(id);
+    if (push) {
+      const url = new URL(location.href);
+      url.searchParams.set('scene', id);
+      history.pushState(null, '', url);
+    }
+    current?.dispose();
+    current = null;
+    status.textContent = 'Loading…';
+    try {
+      const inst = await scene.load({ mujoco, view, panel, status });
+      if (mine !== token) { inst.dispose(); return; }
+      current = inst;
+    } catch (e) {
+      if (mine === token) status.textContent = `Failed to load ${scene.name}: ${e instanceof Error ? e.message : e}`;
+    }
+  }
+
+  window.addEventListener('popstate', () => { void select(resolveSceneId(location.search, readStored()), false); });
+
+  const first = resolveSceneId(location.search, readStored());
+  // Make the URL carry the scene without adding a history entry.
+  const u = new URL(location.href);
+  if (u.searchParams.get('scene') !== first) { u.searchParams.set('scene', first); history.replaceState(null, '', u); }
+  await select(first, false);
+
   let last = performance.now();
   const frame = (now: number) => {
-    sim.advance((now - last) / 1000);
+    const dt = (now - last) / 1000;
     last = now;
-    const j = cmd.readJoints();
-    if (j) MOTORS.forEach((m, i) => { nows[i].textContent = j[m.id].toFixed(1); });
-    viewer.render();
+    current?.frame(dt);
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);

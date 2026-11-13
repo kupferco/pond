@@ -45,6 +45,36 @@ export class SimDriver implements RobotDriver {
     return out;
   }
 
+  /** Back to the initial state (arm home, mocap bodies at their model positions). */
+  reset(): void {
+    this.mujoco.mj_resetData(this.model, this.data);
+    this.home();
+    this.mujoco.mj_forward(this.model, this.data);
+    this.acc = 0;
+  }
+
+  /** One physics step of exactly model.opt.timestep seconds (no wall-clock involved). */
+  step(): void { this.mujoco.mj_step(this.model, this.data); }
+
+  /** World position and row-major 3x3 rotation of a body, copied out of the sim. */
+  bodyPose(name: string): { pos: number[]; rot: number[] } {
+    const id = this.model.body(name).id;
+    const x = this.data.xpos, r = this.data.xmat;
+    return { pos: [x[3 * id], x[3 * id + 1], x[3 * id + 2]], rot: Array.from({ length: 9 }, (_, k) => r[9 * id + k]) };
+  }
+
+  /** Place a mocap body (position metres, quaternion w x y z). */
+  setMocap(name: string, pos: number[], quat: number[] = [1, 0, 0, 0]): void {
+    const i = this.model.body_mocapid[this.model.body(name).id];
+    for (let k = 0; k < 3; k++) this.data.mocap_pos[3 * i + k] = pos[k];
+    for (let k = 0; k < 4; k++) this.data.mocap_quat[4 * i + k] = quat[k];
+  }
+
+  dispose(): void {
+    this.data.delete();
+    this.model.delete();
+  }
+
   /** Advance the sim by wall-clock dt seconds (real time), capped so a stalled tab does not spiral. */
   advance(dt: number): void {
     this.acc += Math.min(dt, 0.1);
