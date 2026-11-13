@@ -23,25 +23,41 @@ export function pipeGeoms(x0 = 0, dir: 1 | -1 = 1, horizMm = HORIZONTAL_MM, name
   return segs.join('\n    ');
 }
 
-/** The cart mocap body (see frame notes below). */
+export const JAW_OPEN_M = 0.019;   // how far each jaw slides out from the pipe
+const JAW_T = 0.01;                // jaw thickness across the pipe
+const JOINTS = ['h1a', 'h1b', 'h2a', 'h2b', 'plateside'] as const;
+
+/** The cart mocap body (see frame notes below). Two identical clamp hands, 'spacingMm' apart, with the plate centred between them. */
 export function cartBody(spacingMm = PIPE_SPACING_MM): string {
   const hy = m(spacingMm);
-  const { alongTrack, across, t } = PLATE_MM;
-  const sr = m(SLEEVE_R_MM), sl = m(SLEEVE_L_MM);
-  // Cart frame: x along the track, z toward the inside of the bend, -z the outer side. Origin on the pipe centre line.
-  // The plate lies parallel to the track plane (the X-Z plane the pipe is in), offset to one side of the pipe (cart y).
-  // The engaged (clamping) wheel sleeve is at the plate's inner edge, around the pipe; the plate extends to the outer side (-z).
-  // The free wheel hangs on the far outer edge, on the other side of the track plane, and never touches the pipe.
+  const { across, t } = PLATE_MM;
+  const sr = m(SLEEVE_R_MM), sl = m(SLEEVE_L_MM), pr = m(PIPE_D_MM) / 2;
+  // Cart frame: x along the track, z toward the inside of the bend, -z the outer side. Origin on the engaged hand's pipe centre line.
+  // The plate lies parallel to the track plane, to one side of the pipes (cart y), and is centred between the two hands, so each hand
+  // sits the same distance from its end. Each hand is two jaws that slide across the pipe: closed they grip it, open they release it.
   const plateY = sr + m(t) / 2;
-  const plateZ = -(m(across) / 2 - 0.05);
-  const fw = 0.03;
+  const plateZ = -hy / 2;
+  const jawC = pr + JAW_T / 2; // closed jaw centre distance from the pipe axis
+  const jaw = (name: string, zc: number, sign: 1 | -1) =>
+    `<body name="${name}" pos="0 0 ${f(zc)}"><joint name="${name}" type="slide" axis="0 0 ${sign}" range="0 ${JAW_OPEN_M}"/>` +
+    `<geom type="box" pos="0 ${f((sr - 0.02) / 2)} ${f(sign * jawC)}" size="${f(sl / 2)} ${f((sr + 0.02) / 2)} ${JAW_T / 2}" rgba="0.18 0.45 0.35 1"/></body>`;
   return `<body name="cart" mocap="true" pos="0 0 0">
-      <geom name="sleeve" type="cylinder" fromto="${-sl / 2} 0 0 ${sl / 2} 0 0" size="${sr}" rgba="0.18 0.45 0.35 1"/>
-      <geom name="plate" type="box" pos="0 ${f(plateY)} ${f(plateZ)}" size="${m(alongTrack) / 2} ${m(t) / 2} ${m(across) / 2}" rgba="0.25 0.27 0.3 1"/>
-      <geom name="armmount" type="box" pos="0 ${f(plateY + m(t) / 2 + 0.02)} ${f(plateZ)}" size="0.03 0.02 0.03" rgba="0.9 0.65 0.2 1"/>
-      <geom name="freebracket" type="box" pos="0 ${f((plateY - fw) / 2)} ${f(-hy)}" size="0.01 ${f((plateY + fw) / 2)} 0.005" rgba="0.25 0.27 0.3 1"/>
-      <geom name="freewheel" type="cylinder" fromto="0 ${-fw} ${f(-hy + 0.012)} 0 ${-fw} ${f(-hy - 0.012)}" size="${fw}" rgba="0.18 0.45 0.35 1"/>
+      ${jaw('h1a', 0, 1)}
+      ${jaw('h1b', 0, -1)}
+      ${jaw('h2a', -hy, 1)}
+      ${jaw('h2b', -hy, -1)}
+      <body name="plateside"><joint name="plateside" type="slide" axis="0 1 0" range="-1 1"/>
+        <geom name="plate" type="box" pos="0 ${f(plateY)} ${f(plateZ)}" size="${m(PLATE_MM.alongTrack) / 2} ${m(t) / 2} ${m(across) / 2}" rgba="0.25 0.27 0.3 1"/>
+        <geom name="armmount" type="box" pos="0 ${f(plateY + m(t) / 2 + 0.02)} ${f(plateZ)}" size="0.03 0.02 0.03" rgba="0.9 0.65 0.2 1"/>
+      </body>
     </body>`;
+}
+
+/** Set the clamp openings (0 closed on the pipe .. 1 open) of the cart's two hands and which side of the track plane the plate is on (cart y, +1 or -1). */
+export function setCart(model: { jnt(name: string): { id: number }; jnt_qposadr: ArrayLike<number> }, qpos: { [i: number]: number },
+  hand1Open: number, hand2Open: number, plateSide: 1 | -1 = 1): void {
+  const v = [hand1Open, hand1Open, hand2Open, hand2Open].map((o) => Math.min(1, Math.max(0, o)) * JAW_OPEN_M);
+  JOINTS.forEach((n, i) => { qpos[model.jnt_qposadr[model.jnt(n).id]] = i < 4 ? v[i] : (plateSide === 1 ? 0 : -2 * (m(SLEEVE_R_MM) + m(PLATE_MM.t) / 2)); });
 }
 
 export function cartMjcf(): string {

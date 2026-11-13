@@ -10,8 +10,8 @@ import { graspPoint, solveDown } from '../src/arm/kinematics.ts';
 import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/placement.ts';
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
-import { cartMjcf, cartBody, pipeGeoms } from '../src/cart/model.ts';
-import { PIPE_GAP_M, TRANSFER_HORIZ_MM, cartPose, pipePoint, transferPose } from '../src/cart/transfer.ts';
+import { cartMjcf, cartBody, pipeGeoms, setCart } from '../src/cart/model.ts';
+import { PIPE_GAP_M, TRANSFER_HORIZ_MM, cartPose, pipePoint } from '../src/cart/transfer.ts';
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
 
 const MOTORS_JOINT: Record<string, string> = { A: 'shoulder_pan', B: 'shoulder_lift', C: 'elbow_flex', D: 'wrist_flex', E: 'wrist_roll' };
@@ -140,11 +140,18 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   cartModel.delete();
   const xferModel = mj.MjModel.from_xml_string(`<mujoco><worldbody>${pipeGeoms(0, -1, TRANSFER_HORIZ_MM, 'b')}${pipeGeoms(PIPE_GAP_M, 1, TRANSFER_HORIZ_MM, 'c')}${cartBody(140)}</worldbody></mujoco>`);
   check('transfer model loads with one cart mocap body', xferModel.nmocap === 1, String(xferModel.nmocap));
+  const xd = new mj.MjData(xferModel); setCart(xferModel, xd.qpos, 0, 1, -1); mj.mj_forward(xferModel, xd);
+  check('clamp joints can be driven', xferModel.nq === 5 && Math.abs(xd.qpos[2] - 0.019) < 1e-9, String(xferModel.nq)); xd.delete();
   xferModel.delete();
   check('B top bar runs left, C top bar runs right', pipePoint('B', 200).x < -0.1 && pipePoint('C', 200).x > PIPE_GAP_M + 0.1);
-  const t0p = transferPose('B', 40, 0), t1p = transferPose('B', 40, 1), onC = cartPose('C', 40);
-  check('hand-over ends where riding on C begins', Math.abs(t1p.x - onC.x) < 1e-9 && t1p.q.every((v, i) => Math.abs(v - onC.q[i]) < 1e-9 || t1p.q.every((w, j) => Math.abs(w + onC.q[j]) < 1e-9)), JSON.stringify([t1p, onC]));
-  check('hand-over starts on B', Math.abs(t0p.x) < 1e-9);
+  // The cart is symmetric: riding on B and on C put both hands on the same two pipes and the plate in the same place.
+  const rot = (q: number[], v: number[]) => { const [w, x, y, z] = q; const t = [2 * (y * v[2] - z * v[1]), 2 * (z * v[0] - x * v[2]), 2 * (x * v[1] - y * v[0])];
+    return [v[0] + w * t[0] + (y * t[2] - z * t[1]), v[1] + w * t[1] + (z * t[0] - x * t[2]), v[2] + w * t[2] + (x * t[1] - y * t[0])]; };
+  const world = (p: 'B' | 'C', v: number[]) => { const c = cartPose(p, 40); const r = rot(c.q, v); return [c.x + r[0], r[1], c.z + r[2]]; };
+  const sameP = (a: number[], b: number[]) => a.every((n, i) => Math.abs(n - b[i]) < 1e-9);
+  check('hand 1 on B is hand 2 on C', sameP(world('B', [0, 0, 0]), world('C', [0, 0, -0.14])) && sameP(world('B', [0, 0, -0.14]), world('C', [0, 0, 0])));
+  const py = 0.036 + 0.003;
+  check('plate is centred between the hands on the same side on both pipes', sameP(world('B', [0, -py, -0.07]), world('C', [0, py, -0.07])) && Math.abs(world('C', [0, py, -0.07])[0] - PIPE_GAP_M / 2) < 1e-9);
 }
 
 const t0 = performance.now(); run(5); const ms = performance.now() - t0;

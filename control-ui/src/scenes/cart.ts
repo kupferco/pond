@@ -1,6 +1,6 @@
 // Cart scene: the cart riding a single pipe (up, bend, right).
 // Position is one coordinate, the distance along the track in cm; the cart's pose follows the path.
-import { cartMjcf, MARKER_HIDDEN_Z } from '../cart/model.ts';
+import { cartMjcf, setCart, MARKER_HIDDEN_Z } from '../cart/model.ts';
 import {
   ARRIVE_TOL_CM, CartMotion, DEFAULT_SPEED_CM_S, DEFAULT_STEP_CM, L_ARC, L_VERT, MAX_SPEED_CM_S, TRACK_LENGTH_CM,
   clampS, frameQuat, pathAt, randomTarget, type Section,
@@ -135,6 +135,7 @@ export const cartScene: Scene = {
     };
     const update = () => {
       place(cartMocap, motion.s);
+      setCart(model, data.qpos, 0, 1); // engaged hand clamped on the pipe, the other hand open
       if (targetMarker === null) data.mocap_pos[3 * markerMocap + 2] = MARKER_HIDDEN_Z;
       else place(markerMocap, targetMarker);
       mujoco.mj_forward(model, data);

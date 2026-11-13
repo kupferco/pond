@@ -8,7 +8,6 @@ export const PIPE_GAP_M = HAND_SPACING_MM / 1000;
 export const TRANSFER_HORIZ_MM = 450;    // shortened top bars: enough to show them
 export const TRANSFER_MIN_CM = 15;       // lowest point of the vertical section where a transfer is allowed
 export const TRANSFER_DEFAULT_CM = 40;   // transfers happen below the bend; the verticals carry no brackets
-export const TRANSFER_S = 2;             // seconds a hand-over takes
 
 export type Pipe = 'B' | 'C';
 export const other = (p: Pipe): Pipe => (p === 'B' ? 'C' : 'B');
@@ -35,23 +34,19 @@ const mul = (a: Quat, b: Quat): Quat => [
 
 /**
  * Cart pose on the pipe. C uses the Cart-scene frame (free hand on the outer side, facing B). On B the cart is rolled half a turn about its own
- * track axis, so its free hand faces C. roll (radians about the cart x axis) is added on top, for the hand-over.
+ * track axis, so its free hand faces C. The cart is symmetric (two identical hands, plate centred between them), so the two poses put the cart
+ * in the same place in the world: a hand-over needs no body motion, only the hands change role.
+ * plateSide is the cart-y side the plate slides to, so the plate stays on the same side of the track plane on both pipes.
  */
-export function cartPose(p: Pipe, s: number, rollRad = 0): { x: number; z: number; q: Quat } {
+export function cartPose(p: Pipe, s: number): { x: number; z: number; q: Quat; plateSide: 1 | -1 } {
   const pt = pipePoint(p, s);
   const base = frameQuat({ ...pt, tx: Math.abs(pt.tx) < 1e-9 ? 0 : pt.tx });
-  const half = (p === 'B' ? Math.PI : 0) + rollRad;
-  return { x: pt.x, z: pt.z, q: mul(base, [Math.cos(half / 2), Math.sin(half / 2), 0, 0]) };
+  return { x: pt.x, z: pt.z, q: p === 'B' ? mul(base, [0, 1, 0, 0]) : base, plateSide: p === 'B' ? -1 : 1 };
 }
 
-/** A hand-over between pipes at height s (cm): the cart rolls over and shifts 14 cm across. progress 0..1. */
-export function transferPose(from: Pipe, s: number, progress: number) {
-  const k = Math.min(1, Math.max(0, progress));
-  const eased = k * k * (3 - 2 * k);
-  const a = pipeX(from), b = pipeX(other(from));
-  const start = cartPose(from, s);
-  // Roll from the 'from' orientation to the 'to' orientation (half a turn either way), starting from the base frame of the from pipe.
-  const roll = Math.PI * eased * (from === 'B' ? 1 : -1);
-  const pose = cartPose(from, s, roll);
-  return { x: a + (b - a) * eased, z: start.z, q: pose.q };
-}
+/** Phases of a transfer: get to the straight part, close the free hand on the other pipe, release the old hand, then climb to the top. */
+export type XferPhase = 'approach' | 'grip' | 'release' | 'climb';
+export const HAND_MOVE_S = 1; // seconds each clamp takes to close or open
+
+/** The straight-part height to start the hand-over from, given where the cart is (cm). */
+export const handoverHeight = (s: number) => (canTransfer(s) ? s : TRANSFER_DEFAULT_CM);
