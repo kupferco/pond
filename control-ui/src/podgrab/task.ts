@@ -174,7 +174,7 @@ export class PodWorld {
         const g1 = k.geom1, g2 = k.geom2;
         k.delete();
         if (this.armGeoms.includes(g1) !== this.armGeoms.includes(g2)) {
-          const nm = (g: number) => { const b = m.body(m.geom_bodyid[g]); const n = b.name; b.delete(); const gp = [0, 1, 2].map((k) => (m.geom_xpos?.[3 * g + k] ?? d.geom_xpos[3 * g + k]) * 1000).map(Math.round).join(','); return n + ' geom ' + g + ' at ' + gp + ' mm'; };
+          const nm = (g: number) => { const b = m.body(m.geom_bodyid[g]); const n = b.name; b.delete(); const gp = [0, 1, 2].map((k) => d.geom_xpos[3 * g + k] * 1000).map(Math.round).join(','); return n + ' geom ' + g + ' at ' + gp + ' mm'; };
           return bad(`the arm hit the unit (${nm(g1)} / ${nm(g2)})`);
         }
       }
@@ -320,7 +320,7 @@ export class PodTask {
       // (low enough to pass under the pipe), slide over the socket and lower the pod
       { label: `Driving to socket ${slotLabel(slot)}`, x: S[0], r: dn(TRANSIT_Z), z: out(A[1]) },
       { label: 'Lowering to the collar tops', r: dn(S[2] + SLIDE_DZ), z: out(A[1]), speed: PIN_SPEED },
-      { label: `Sliding over socket ${slotLabel(slot)}`, r: dn(S[2] + SLIDE_DZ), z: out(S[1]), speed: PIN_SPEED },
+      { label: `Sliding over socket ${slotLabel(slot)}`, r: dn(S[2] + SLIDE_DZ), z: out(S[1]), pitch: -10, speed: PIN_SPEED },
       {
         label: 'Lowering the pod into the silicone collar', r: dn(S[2]), z: out(S[1]), speed: SEAT_SPEED,
         after: () => {
@@ -329,7 +329,7 @@ export class PodTask {
           this.podId = -1; w.release(); w.pods[id].state = 'lost';
         },
       },
-      { label: 'Backing the pin out', r: dn(TRANSIT_Z), speed: PIN_SPEED },
+      { label: 'Backing the pin out', r: dn(S[2] + SLIDE_DZ), speed: PIN_SPEED },
       {
         label: 'Letting the pod settle', wait: 0.5,
         after: () => {
