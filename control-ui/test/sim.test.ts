@@ -11,7 +11,7 @@ import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/pl
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
 import { cartMjcf, cartBody, pipeGeoms, setCart } from '../src/cart/model.ts';
-import { PIPE_GAP_M, TRANSFER_HORIZ_MM, cartPose, pipePoint } from '../src/cart/transfer.ts';
+import { PIPE_GAP_M, TRANSFER_HORIZ_MM, cartPose, cartTrims, other, pipePoint, type Pipe } from '../src/cart/transfer.ts';
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
 
 const MOTORS_JOINT: Record<string, string> = { A: 'shoulder_pan', B: 'shoulder_lift', C: 'elbow_flex', D: 'wrist_flex', E: 'wrist_roll' };
@@ -141,16 +141,38 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const xferModel = mj.MjModel.from_xml_string(`<mujoco><worldbody>${pipeGeoms(0, -1, TRANSFER_HORIZ_MM, 'b')}${pipeGeoms(PIPE_GAP_M, 1, TRANSFER_HORIZ_MM, 'c')}${cartBody(140)}</worldbody></mujoco>`);
   check('transfer model loads with one cart mocap body', xferModel.nmocap === 1, String(xferModel.nmocap));
   const xd = new mj.MjData(xferModel); setCart(xferModel, xd.qpos, 0, 1, -1); mj.mj_forward(xferModel, xd);
-  check('clamp joints can be driven', xferModel.nq === 5 && Math.abs(xd.qpos[2] - 0.019) < 1e-9, String(xferModel.nq)); xd.delete();
+  check('wheel pair joints can be driven', xferModel.nq === 8 && Math.abs(xd.qpos[3] - 0.01) < 1e-9, String(xferModel.nq)); xd.delete();
   xferModel.delete();
   check('B top bar runs left, C top bar runs right', pipePoint('B', 200).x < -0.1 && pipePoint('C', 200).x > PIPE_GAP_M + 0.1);
   // The cart is symmetric: riding on B and on C put both hands on the same two pipes and the plate in the same place.
   const rot = (q: number[], v: number[]) => { const [w, x, y, z] = q; const t = [2 * (y * v[2] - z * v[1]), 2 * (z * v[0] - x * v[2]), 2 * (x * v[1] - y * v[0])];
     return [v[0] + w * t[0] + (y * t[2] - z * t[1]), v[1] + w * t[1] + (z * t[0] - x * t[2]), v[2] + w * t[2] + (x * t[1] - y * t[0])]; };
   const world = (p: 'B' | 'C', v: number[]) => { const c = cartPose(p, 40); const r = rot(c.q, v); return [c.x + r[0], r[1], c.z + r[2]]; };
+  // Collisions: sweep the cart over both pipes with the hands closed, open and mixed; no cart geometry may enter a pipe.
+  const xm = mj.MjModel.from_xml_string(`<mujoco><worldbody>${pipeGeoms(0, -1, TRANSFER_HORIZ_MM, 'b')}${pipeGeoms(PIPE_GAP_M, 1, TRANSFER_HORIZ_MM, 'c')}${cartBody(140)}</worldbody></mujoco>`);
+  const xdd = new mj.MjData(xm), cmo = xm.body_mocapid[xm.body('cart').id];
+  const maxS = L_VERT + L_ARC + TRANSFER_HORIZ_MM / 10;
+  let worst = 0, hits = 0, probes = 0;
+  for (const pp of ['B', 'C'] as Pipe[]) for (let sc = 0; sc <= maxS; sc += 1) for (const [o1, o2] of [[0, 1], [0, 0.5], [0.5, 0]] as const) {
+    if (sc > L_VERT && o2 < 1 && o2 > 0) continue;
+    const c = cartPose(pp, sc), tr = cartTrims(pp, c);
+    xdd.mocap_pos[3 * cmo] = c.x; xdd.mocap_pos[3 * cmo + 1] = 0; xdd.mocap_pos[3 * cmo + 2] = c.z;
+    for (let k = 0; k < 4; k++) xdd.mocap_quat[4 * cmo + k] = c.q[k];
+    setCart(xm, xdd.qpos, o1, o2, c.plateSide, tr.hand1, tr.hand2); mj.mj_forward(xm, xdd);
+    probes++;
+    for (let i = 0; i < xdd.ncon; i++) { const d = xdd.contact.get(i)?.dist ?? 0; if (d < -0.0005) { hits++; worst = Math.min(worst, d); } }
+    if (o1 === 0 && o2 === 1) { /* nothing more */ }
+  }
+  check(`cart never goes into a pipe (${probes} poses, worst ${(worst * 1000).toFixed(2)} mm)`, hits === 0, `${hits} contacts`);
+  // The test must be able to fail: push the cart into pipe C and expect contacts.
+  { const c = cartPose('C', 40); xdd.mocap_pos[3 * cmo] = c.x + 0.012; xdd.mocap_pos[3 * cmo + 2] = c.z;
+    for (let k = 0; k < 4; k++) xdd.mocap_quat[4 * cmo + k] = c.q[k];
+    setCart(xm, xdd.qpos, 0, 1, c.plateSide); mj.mj_forward(xm, xdd);
+    check('collision check sees a cart pushed into the pipe', xdd.ncon > 0, String(xdd.ncon)); }
+  xdd.delete(); xm.delete();
   const sameP = (a: number[], b: number[]) => a.every((n, i) => Math.abs(n - b[i]) < 1e-9);
   check('hand 1 on B is hand 2 on C', sameP(world('B', [0, 0, 0]), world('C', [0, 0, -0.14])) && sameP(world('B', [0, 0, -0.14]), world('C', [0, 0, 0])));
-  const py = 0.036 + 0.003;
+  const py = 0.043;
   check('plate is centred between the hands on the same side on both pipes', sameP(world('B', [0, -py, -0.07]), world('C', [0, py, -0.07])) && Math.abs(world('C', [0, py, -0.07])[0] - PIPE_GAP_M / 2) < 1e-9);
 }
 

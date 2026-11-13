@@ -1,9 +1,10 @@
 // Cart scene: the cart riding a single pipe (up, bend, right).
 // Position is one coordinate, the distance along the track in cm; the cart's pose follows the path.
-import { cartMjcf, setCart, MARKER_HIDDEN_Z } from '../cart/model.ts';
+import { cartMjcf, handTrims, setCart, MARKER_HIDDEN_Z, type Vec3 } from '../cart/model.ts';
+import { rotate } from '../cart/transfer.ts';
 import {
   ARRIVE_TOL_CM, CartMotion, DEFAULT_SPEED_CM_S, DEFAULT_STEP_CM, L_ARC, L_VERT, MAX_SPEED_CM_S, TRACK_LENGTH_CM,
-  clampS, frameQuat, pathAt, randomTarget, type Section,
+  PIPE_SPACING_MM, clampS, distToPath, frameQuat, pathAt, randomTarget, type Section,
 } from '../cart/track.ts';
 import { Viewer } from '../viewer.ts';
 import { SCENE_INFOS } from './list.ts';
@@ -135,7 +136,10 @@ export const cartScene: Scene = {
     };
     const update = () => {
       place(cartMocap, motion.s);
-      setCart(model, data.qpos, 0, 1); // engaged hand clamped on the pipe, the other hand open
+      const q = frameQuat(pathAt(motion.s)), p0 = pathAt(motion.s);
+      const toWorld = (v: Vec3): Vec3 => { const r = rotate(q, v); return [p0.x + r[0], r[1], p0.z + r[2]]; };
+      const trims = handTrims(1, PIPE_SPACING_MM, toWorld, (w) => Math.hypot(distToPath(w[0], w[2]), w[1]));
+      setCart(model, data.qpos, 0, 1, 1, trims); // engaged hand clamped on the pipe (wheels follow the bend), the other hand open
       if (targetMarker === null) data.mocap_pos[3 * markerMocap + 2] = MARKER_HIDDEN_Z;
       else place(markerMocap, targetMarker);
       mujoco.mj_forward(model, data);

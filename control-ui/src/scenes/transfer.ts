@@ -3,7 +3,7 @@
 import { cartBody, pipeGeoms, setCart } from '../cart/model.ts';
 import { CartMotion, DEFAULT_SPEED_CM_S, DEFAULT_STEP_CM, L_VERT, MAX_SPEED_CM_S, L_ARC, clampS } from '../cart/track.ts';
 import {
-  HAND_MOVE_S, HAND_SPACING_MM, TRANSFER_DEFAULT_CM, TRANSFER_HORIZ_MM, TRANSFER_MIN_CM, cartPose, handoverHeight, other, pipeX,
+  HAND_MOVE_S, HAND_SPACING_MM, TRANSFER_DEFAULT_CM, TRANSFER_HORIZ_MM, TRANSFER_MIN_CM, cartPose, cartTrims, handoverHeight, other, pipeX,
   type Pipe, type XferPhase,
 } from '../cart/transfer.ts';
 import { Viewer } from '../viewer.ts';
@@ -29,7 +29,7 @@ export const transferScene: Scene = {
   async load({ mujoco, view, panel, status }) {
     const model = mujoco.MjModel.from_xml_string(transferMjcf());
     const data = new mujoco.MjData(model);
-    const viewer = new Viewer(view, { mujoco, model, data }, { target: [0.07, 0, 0.6], dist: 2.4, maxDist: 5, az: 0.3, el: 0.15, far: 20 });
+    const viewer = new Viewer(view, { mujoco, model, data }, { target: [0.07, 0, 0.6], dist: 2.4, maxDist: 5, az: Math.PI + 0.3, el: 0.15, far: 20 });
     const cartMocap = model.body_mocapid[model.body('cart').id];
     status.textContent = '';
     const maxS = L_VERT + L_ARC + TRANSFER_HORIZ_MM / 10; // end of the (shortened) top bar
@@ -100,7 +100,8 @@ export const transferScene: Scene = {
     const update = () => {
       const p = cartPose(pipe, motion.s);
       place(p.x, p.z, p.q);
-      setCart(model, data.qpos, open[pipe], open[other(pipe)], p.plateSide);
+      const tr = cartTrims(pipe, p);
+      setCart(model, data.qpos, open[pipe], open[other(pipe)], p.plateSide, tr.hand1, tr.hand2);
       mujoco.mj_forward(model, data);
     };
     update(); show();
