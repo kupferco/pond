@@ -10,7 +10,7 @@ export const VERTICAL_MM = 600;          // ASSUMED: vertical section length
 export const HORIZONTAL_MM = 600;        // ASSUMED: horizontal section length
 
 
-export const PLATE_MM = { alongTrack: 112, across: 380, t: 6, x0: -202, x1: 178 }; // cart_dims.py: 112 x 380 x 6 open frame, x0/x1 relative to the cart centre line (-spacing/2 - 62 to +spacing/2 + 38)
+export const PLATE_MM = { alongTrack: 112, t: 6 }; // cart_dims.py: 112 x 6 plate. Its length across the hands is set from the hand spacing in cartBody: clamp edge to clamp edge (spacing + 2 x 34 mm).
 
 /** Distance (m) in the track plane from (x, z) to the pipe's centre line (pipe-local frame of pathAt: x to the right of the vertical section). horizMm = length of the top bar. */
 export function distToPath(x: number, z: number, horizMm = HORIZONTAL_MM): number {

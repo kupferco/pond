@@ -37,6 +37,7 @@ const MOTOR_R = 14, MOTOR_L = 55;                                          // AS
 const WALL_OUT_R = 34, R_BORE = PIPE_D_MM / 2 + 4;                          // hand_sleeve.py sleeve body
 const PAD = { z0: -24, z1: 0, y0: 21, y1: 40 };                            // hand_sleeve.py mounting pad (cart y 21..40, on the plate side)
 const PLATE_Y_MM = PAD.y1 + PLATE_MM.t / 2;                                // plate sits on the pads' outer face
+const ARM_Y = m(PLATE_Y_MM + PLATE_MM.t / 2) + 0.02;                        // arm base block: its centre 20 mm above the plate's outer face
 /** Closed wheels sit 0.3 mm off the CAD 26 mm radius so they never touch the pipe model. */
 export const CLEAR_M = 0.0003;
 export const WHEEL_OPEN_M = 0.010;     // ASSUMED: how far each pair backs off the pipe when the hand is open
@@ -81,6 +82,14 @@ export function handTrims(hand: 1 | 2, spacingMm: number, toWorld: (v: Vec3) => 
     return worst;
   });
 }
+
+/** Deepest clamp–track penetration (m, negative) among the current contacts, or 0 when the clamps and wheels clear the track. */
+export function clampTrackContacts(data: { ncon: number; contact: { get(i: number): { dist: number } | undefined } }, tolM = CONTACT_TOL_M): number {
+  let worst = 0;
+  for (let i = 0; i < data.ncon; i++) { const d = data.contact.get(i)?.dist ?? 0; if (d < -tolM) worst = Math.min(worst, d); }
+  return worst;
+}
+export const CONTACT_TOL_M = 0.0002;   // the wheels sit 0.3 mm off the pipe, so any real penetration beyond 0.2 mm is a collision
 
 const rgba = (c: [number, number, number, number?]) => `rgba="${c[0]} ${c[1]} ${c[2]} ${c[3] ?? 1}"`;
 const GREY = rgba([0.12, 0.12, 0.12]), STEEL = rgba([0.75, 0.75, 0.78]), GOLD = rgba([0.85, 0.7, 0.2]), BLUE = rgba([0.2, 0.55, 0.85]);
@@ -141,7 +150,8 @@ function sleeveGeoms(hand: 1 | 2): string {
 /** The cart mocap body (see frame notes below). Two identical hands, 'spacingMm' apart, with the plate centred between them. */
 export function cartBody(spacingMm = PIPE_SPACING_MM): string {
   const hy = m(spacingMm);
-  const { across, t } = PLATE_MM;
+  const { t } = PLATE_MM;
+  const across = spacingMm + 2 * WALL_OUT_R;   // outer edge of one clamp sleeve to the outer edge of the other: nothing sticks out beyond them
   // Cart frame: x along the track, z toward the inside of the bend, -z the outer side. Origin on the engaged hand's pipe centre line.
   // The plate lies parallel to the track plane, to one side of the pipes (cart y), and is centred between the two hands, so each hand
   // sits the same distance from its end. Hand 2 is the mirror image of hand 1 (gap and wheels), so the whole cart is symmetric.
@@ -164,7 +174,9 @@ export function cartBody(spacingMm = PIPE_SPACING_MM): string {
     </body>
     <body name="plateside"><joint name="plateside" type="slide" axis="0 1 0" range="-1 1"/>
       <geom name="plate" type="box" pos="0 ${f(plateY)} ${f(plateZ)}" size="${m(PLATE_MM.alongTrack) / 2} ${m(t) / 2} ${m(across) / 2}" rgba="0.25 0.27 0.3 1" ${CART_COL}/>
-      <geom name="armmount" type="box" pos="0 ${f(plateY + m(t) / 2 + 0.02)} ${f(plateZ)}" size="0.03 0.02 0.03" rgba="0.9 0.65 0.2 1" ${CART_COL}/>
+    </body>
+    <body name="armside"><joint name="armside" type="slide" axis="0 1 0" range="-1 1"/>
+      <geom name="armmount" type="box" pos="0 ${f(ARM_Y)} ${f(plateZ)}" size="0.03 0.02 0.03" rgba="0.9 0.65 0.2 1" ${CART_COL}/>
     </body>
   </body>`;
 }
@@ -179,6 +191,7 @@ export function setCart(model: { jnt(name: string): { id: number }; jnt_qposadr:
   const pos = (open: number, trim: number) => { const o = Math.min(1, Math.max(0, open)); return (1 - o) * trim + o * WHEEL_OPEN_M; };
   JOINTS.forEach((n, i) => set(n, i < 3 ? pos(hand1Open, trims1[i]) : pos(hand2Open, trims2[i - 3])));
   set('plateside', plateSide === 1 ? 0 : -2 * m(PLATE_Y_MM));
+  set('armside', plateSide === 1 ? 0 : -2 * ARM_Y);   // mirrored with the plate, so the arm base stays on the same world side, on top of the plate
   set('padside', plateSide === 1 ? 0 : -2 * m((PAD.y0 + PAD.y1) / 2));
 }
 

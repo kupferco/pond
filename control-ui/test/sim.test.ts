@@ -10,8 +10,8 @@ import { graspPoint, solveDown } from '../src/arm/kinematics.ts';
 import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/placement.ts';
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
-import { cartMjcf, cartBody, pipeGeoms, setCart } from '../src/cart/model.ts';
-import { PIPE_GAP_M, TRANSFER_HORIZ_MM, cartPose, cartTrims, other, pipePoint, type Pipe } from '../src/cart/transfer.ts';
+import { cartMjcf, cartBody, clampTrackContacts, pipeGeoms, setCart } from '../src/cart/model.ts';
+import { PIPE_GAP_M, TRANSFER_HORIZ_MM, TransferRun, cartPose, cartTrims, other, pipePoint, type Pipe } from '../src/cart/transfer.ts';
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
 
 const MOTORS_JOINT: Record<string, string> = { A: 'shoulder_pan', B: 'shoulder_lift', C: 'elbow_flex', D: 'wrist_flex', E: 'wrist_roll' };
@@ -141,7 +141,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const xferModel = mj.MjModel.from_xml_string(`<mujoco><worldbody>${pipeGeoms(0, -1, TRANSFER_HORIZ_MM, 'b')}${pipeGeoms(PIPE_GAP_M, 1, TRANSFER_HORIZ_MM, 'c')}${cartBody(140)}</worldbody></mujoco>`);
   check('transfer model loads with one cart mocap body', xferModel.nmocap === 1, String(xferModel.nmocap));
   const xd = new mj.MjData(xferModel); setCart(xferModel, xd.qpos, 0, 1, -1); mj.mj_forward(xferModel, xd);
-  check('wheel pair joints can be driven', xferModel.nq === 8 && Math.abs(xd.qpos[3] - 0.01) < 1e-9, String(xferModel.nq)); xd.delete();
+  check('wheel pair joints can be driven', xferModel.nq === 9 && Math.abs(xd.qpos[3] - 0.01) < 1e-9, String(xferModel.nq)); xd.delete();
   xferModel.delete();
   check('B top bar runs left, C top bar runs right', pipePoint('B', 200).x < -0.1 && pipePoint('C', 200).x > PIPE_GAP_M + 0.1);
   // The cart is symmetric: riding on B and on C put both hands on the same two pipes and the plate in the same place.
@@ -169,7 +169,35 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     for (let k = 0; k < 4; k++) xdd.mocap_quat[4 * cmo + k] = c.q[k];
     setCart(xm, xdd.qpos, 0, 1, c.plateSide); mj.mj_forward(xm, xdd);
     check('collision check sees a cart pushed into the pipe', xdd.ncon > 0, String(xdd.ncon)); }
+  // Full transfers, stepped like the scene does, from several start heights and both pipes: no clamp–track contact at any frame.
+  for (const [startPipe, startS] of [['B', 0], ['B', 40], ['B', 100], ['B', 190], ['C', 5], ['C', 30], ['C', 150]] as [Pipe, number][]) {
+    const r = new TransferRun(); r.pipe = startPipe; r.open[startPipe] = 0; r.open[other(startPipe)] = 1; r.motion.s = startS; r.motion.goal = startS;
+    r.motion.speed = 10; r.start();
+    let frames = 0, deep = 0, bad = 0;
+    const armPos: number[][] = [];
+    while (!r.done && frames < 20000) {
+      r.advance(0.02); frames++;
+      const c = cartPose(r.pipe, r.motion.s), t = cartTrims(r.pipe, c);
+      xdd.mocap_pos[3 * cmo] = c.x; xdd.mocap_pos[3 * cmo + 1] = 0; xdd.mocap_pos[3 * cmo + 2] = c.z;
+      for (let k = 0; k < 4; k++) xdd.mocap_quat[4 * cmo + k] = c.q[k];
+      setCart(xm, xdd.qpos, r.open[r.pipe], r.open[other(r.pipe)], c.plateSide, t.hand1, t.hand2); mj.mj_forward(xm, xdd);
+      const h = clampTrackContacts(xdd); if (h < 0) { bad++; deep = Math.min(deep, h); }
+      // The arm base, relative to the cart's centre point in the world, must not move off the plate's world side.
+      const gi = xm.geom('armmount').id, gp = xdd.geom_xpos;
+      armPos.push([gp[3 * gi] - (c.x), gp[3 * gi + 1], gp[3 * gi + 2] - c.z]);
+    }
+    check(`transfer from ${startPipe} at ${startS} cm completes with no clamp–track contact (${frames} frames)`, r.done && bad === 0, `${bad} contact frames, worst ${(deep * 1000).toFixed(2)} mm`);
+    const gy = armPos.map((a) => a[1]);
+    check(`arm base stays on the same world side of the track plane during a transfer from ${startPipe}`, gy.every((y) => y > 0.04 || y < -0.04) && (gy.every((y) => y > 0) || gy.every((y) => y < 0)), `y ${Math.min(...gy).toFixed(3)}..${Math.max(...gy).toFixed(3)}`);
+  }
   xdd.delete(); xm.delete();
+  // Shorter cart: the plate ends where the clamps end; the arm base is a fixed block on the plate's outer face.
+  { const cm2 = mj.MjModel.from_xml_string(`<mujoco><worldbody>${cartBody(140)}</worldbody></mujoco>`), cd = new mj.MjData(cm2);
+    setCart(cm2, cd.qpos, 0, 0, 1); mj.mj_forward(cm2, cd);
+    const pl = cm2.geom('plate').id, am = cm2.geom('armmount').id;
+    check('cart plate is 208 mm long: 140 mm between the hands plus 34 mm sleeve radius at each end', Math.abs(cm2.geom_size[3 * pl + 2] * 2 - 0.208) < 1e-9 && Math.abs(cd.geom_xpos[3 * pl + 2] + 0.07) < 1e-9, String(cm2.geom_size[3 * pl + 2] * 2));
+    check('arm base sits on top of the plate (side +1)', Math.abs(cd.geom_xpos[3 * am + 1] - (cd.geom_xpos[3 * pl + 1] + 0.003 + 0.02)) < 1e-9);
+    cd.delete(); cm2.delete(); }
   const sameP = (a: number[], b: number[]) => a.every((n, i) => Math.abs(n - b[i]) < 1e-9);
   check('hand 1 on B is hand 2 on C', sameP(world('B', [0, 0, 0]), world('C', [0, 0, -0.14])) && sameP(world('B', [0, 0, -0.14]), world('C', [0, 0, 0])));
   const py = 0.043;

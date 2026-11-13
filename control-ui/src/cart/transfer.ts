@@ -1,7 +1,7 @@
 // Transfer scene maths: two neighbouring units' pipes B and C, and the cart handing over between them. No MuJoCo or DOM.
 // B is the right-hand pipe of unit 1 (its top bar runs LEFT); C is the left-hand pipe of unit 2 (its top bar runs RIGHT).
 // The hands are 14 cm apart, so B and C are 14 cm apart. The cart rides on one pipe and its free hand hangs towards the other.
-import { distToPath, frameQuat, pathAt, L_VERT, type PathPoint } from './track.ts';
+import { CartMotion, L_ARC, clampS, distToPath, frameQuat, pathAt, L_VERT, type PathPoint } from './track.ts';
 import { handTrims, type Vec3 } from './model.ts';
 
 export const HAND_SPACING_MM = 140;
@@ -71,4 +71,54 @@ export function cartTrims(p: Pipe, pose: { x: number; z: number; q: Quat }): { h
     hand1: handTrims(1, HAND_SPACING_MM, toWorld, (w) => distToPipe(p, w)),
     hand2: handTrims(2, HAND_SPACING_MM, toWorld, (w) => distToPipe(other(p), w)),
   };
+}
+
+/** End of the (shortened) top bar: the highest path coordinate on a transfer track (cm). */
+export const TRANSFER_MAX_S = L_VERT + L_ARC + TRANSFER_HORIZ_MM / 10;
+
+/**
+ * The transfer sequence as a state machine (no MuJoCo, no DOM): which pipe the cart rides, how far each clamp is open, and the
+ * approach / grip / release / climb phases. The cart's pose (cartPose) is driven from the path coordinate on every step, so the
+ * cart rotation is held the whole time; the pipe switch swaps the hands' roles without moving the body.
+ */
+export class TransferRun {
+  readonly motion = new CartMotion();
+  pipe: Pipe = 'B';
+  xfer: { from: Pipe; phase: XferPhase; t: number } | null = null;
+  /** Clamp opening per pipe: 0 closed on it, 1 open. The free hand waits open around the other pipe. */
+  readonly open: Record<Pipe, number> = { B: 0, C: 1 };
+  done = false;
+
+  clamp = (s: number) => Math.min(TRANSFER_MAX_S, clampS(s));
+  goTo(s: number, speed?: number) { if (speed !== undefined) this.motion.speed = speed; this.motion.goal = this.clamp(s); }
+  nudge(d: number, speed?: number) { if (!this.xfer) this.goTo(this.motion.goal + d, speed); }
+  start() {
+    if (this.xfer) return false;
+    this.done = false;
+    this.xfer = { from: this.pipe, phase: 'approach', t: 0 };
+    this.goTo(handoverHeight(this.motion.s));
+    return true;
+  }
+  /** Stop moving; the hand-over itself (grip, release) always finishes. */
+  stop() {
+    if (this.xfer && (this.xfer.phase === 'grip' || this.xfer.phase === 'release')) return;
+    this.xfer = null; this.motion.goal = this.motion.s;
+  }
+  advance(dt: number) {
+    const x = this.xfer;
+    if (!x) { this.motion.advance(dt); return; }
+    const k = Math.min(1, (x.t += dt) / HAND_MOVE_S);
+    if (x.phase === 'approach' || x.phase === 'climb') {
+      this.motion.advance(dt);
+      if (this.motion.moving) return;
+      if (x.phase === 'climb') { this.xfer = null; this.done = true; return; }
+      x.phase = 'grip'; x.t = 0;
+    } else if (x.phase === 'grip') {
+      this.open[other(x.from)] = 1 - k;
+      if (k >= 1) { x.phase = 'release'; x.t = 0; }
+    } else {
+      this.open[x.from] = k;
+      if (k >= 1) { this.pipe = other(x.from); x.phase = 'climb'; x.t = 0; this.goTo(TRANSFER_MAX_S); }
+    }
+  }
 }
