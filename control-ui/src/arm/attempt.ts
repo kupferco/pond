@@ -77,9 +77,6 @@ export interface AttemptConfig {
   pod: XY; slot: XY;
   seed: number;
   noiseMm?: number;
-  /** MJCF mocap body names for the pod and the slot (default 'pod' and 'slot', as in the Arm scene). */
-  podBody?: string;
-  slotBody?: string;
   /** Cap on how many samples to keep (default 2400 = 120 s). */
   maxSamples?: number;
 }
@@ -183,8 +180,8 @@ export class Attempt {
 
   // --- pod world -----------------------------------------------------------
   private writeScene() {
-    this.sim.setMocap(this.cfg.podBody ?? 'pod', this.podPos, quatOf(this.podRot));
-    this.sim.setMocap(this.cfg.slotBody ?? 'slot', [this.cfg.slot[0], this.cfg.slot[1], 0]);
+    this.sim.setMocap('pod', this.podPos, quatOf(this.podRot));
+    this.sim.setMocap('slot', [this.cfg.slot[0], this.cfg.slot[1], 0]);
   }
 
   private updatePod() {

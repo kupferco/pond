@@ -11,7 +11,8 @@ import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/pl
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
 import { cartMjcf } from '../src/cart/model.ts';
-import { STORE_PODS, TRAY_SLOTS, podGrabMjcf, podName, slotName } from '../src/podgrab/layout.ts';
+import { POD_COUNT, ROW_X0, STORE_CAP, STORE_ROWS, STORE_START, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
+import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
 
 const MOTORS_JOINT: Record<string, string> = { A: 'shoulder_pan', B: 'shoulder_lift', C: 'elbow_flex', D: 'wrist_flex', E: 'wrist_roll' };
@@ -140,20 +141,37 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   cartModel.delete();
 }
 
-// Pod grab: store and tray are in reach, and every pod -> socket pair is picked and seated.
+// Pod grab: the arm on the cart takes pods out of the sloped store rows and pushes them onto the 4 x 4 tray pegs.
 {
-  check('store pods and tray sockets are all in reach', [...STORE_PODS, ...TRAY_SLOTS].every((p) => inReach(p)));
-  check('store pods are at least 65 mm from every socket', STORE_PODS.every((p) => TRAY_SLOTS.every((s) => farEnough(p, s))));
   const pg = new SimDriver(mj, podGrabMjcf());
-  check('pod grab model has pods, sockets and two markers as mocap bodies', pg.model.nmocap === STORE_PODS.length + TRAY_SLOTS.length + 2, String(pg.model.nmocap));
+  check('pod grab model has the cart, the arm base and every pod as mocap bodies', pg.model.nmocap === POD_COUNT + 2, String(pg.model.nmocap));
+  check('store holds enough pods for the tray', STORE_ROWS * STORE_START >= TRAY_SLOTS && STORE_START < STORE_CAP);
+  check('store rows are sloped up towards the back and tray rows stack upwards', storePos(0, 1)[2] > storePos(0, 0)[2] && storePos(0, 0)[0] === ROW_X0 && seatPos(0)[2] < seatPos(TRAY_SLOTS - 1)[2]);
   const pgCmd = new CommandLayer(pg, new RealDriver());
-  let seated = 0, total = 0;
-  for (let p = 0; p < STORE_PODS.length; p++) for (let s = 0; s < TRAY_SLOTS.length; s++) {
-    const a = new Attempt(pg, pgCmd, { pod: STORE_PODS[p], slot: TRAY_SLOTS[s], seed: 100 + total, podBody: podName(p), slotBody: slotName(s) });
-    while (!a.done) a.advance(0.5);
-    total++; if (a.result!.success) seated++; else console.log('  failed', p, s, a.result!.reason);
-  }
-  check('every pod to every socket is seated', seated === total, `${seated}/${total}`);
+  const world = new PodWorld(pg);
+
+  // One pod: store row 1 -> socket A1; the row behind it slides forward one position.
+  let task = new PodTask(world, pgCmd, { jobs: [{ row: 0, slot: 0 }], seed: 1 });
+  while (!task.done) task.advance(0.5);
+  check('one pod is seated on peg A1', task.failReason === '' && world.trayPod(0) >= 0, task.failReason);
+  for (let i = 0; i < 300; i++) world.tick(0.002);
+  const row0 = world.rowPods(0).map((i) => (world.pods[i].where as { k: number }).k);
+  check('row 1 shifted forward by one position', row0.join() === '0,1,2' && world.pods[world.frontPod(0)].pos[1] === storePos(0, 0)[1], row0.join());
+
+  // Fill the whole tray from several rows.
+  world.reset();
+  task = new PodTask(world, pgCmd, { jobs: fillJobs(world), seed: 7 });
+  while (!task.done) task.advance(0.5);
+  const rowsUsed = new Set(task.cfg.jobs.map((j) => j.row)).size;
+  check('whole 4 x 4 tray filled', task.failReason === '' && world.trayCount === TRAY_SLOTS, `${world.trayCount}/${TRAY_SLOTS} ${task.failReason}`);
+  check('pods came from several rows', rowsUsed >= 2, String(rowsUsed));
+  check('every seated pod sits on its peg', task.results.every((r) => r.success && r.posErrMm <= 3.5), JSON.stringify(task.results.map((r) => r.posErrMm)));
+
+  // A pin that misses the hole fails the job instead of faking success.
+  world.reset();
+  task = new PodTask(world, pgCmd, { jobs: [{ row: 2, slot: 5 }], seed: 3, noiseMm: 8 });
+  while (!task.done) task.advance(0.5);
+  check('8 mm of perception error misses the hole', task.failReason.includes('missed'), task.failReason);
   pg.dispose();
 }
 
