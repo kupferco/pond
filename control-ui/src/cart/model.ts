@@ -35,9 +35,11 @@ const BAR_X0 = 22, BAR_X1 = 26, BAR_W = 16, BAR_HL = 16, SPR_Z = 14, SPR_OD = 8,
 const GEAR_R = 7, WORM_R = 3.5, WORM_X = AXLE_R + GEAR_R + WORM_R, GEAR_Y = RAIL_Y0 + RAIL_T_DRIVEN + 3; // ASSUMED worm drive
 const MOTOR_R = 14, MOTOR_L = 55;                                          // ASSUMED motor placeholder
 const WALL_OUT_R = 34, R_BORE = PIPE_D_MM / 2 + 8;                          // hand_sleeve.py sleeve body
-const PAD = { z0: -24, z1: 0, y0: R_BORE, y1: 40 };                        // hand_sleeve.py mounting pad (cart y 21..40 in the CAD; its inner face now starts at the bore so it clears the pipe on the bends)
+const PAD = { z0: -WALL_OUT_R, z1: WALL_OUT_R, y0: R_BORE, y1: 40 };               // hand_sleeve.py mounting pad (cart y 21..40 in the CAD; its inner face starts at the bore so it clears the pipe on the bends). Spans the sleeve's full width so it is bolted to both sleeve wedges
+const LUG_Z0 = 25, LUG_Y0 = 8;                                              // ASSUMED: bolted lugs from the pad down onto the sleeve wedges either side of the pipe
+const GUIDE_X = 10, GUIDE_R0 = 22, GUIDE_R0_IDLER = 34, STRUT_R = 38, GUIDE_R1 = 60, GUIDE_R = 2;               // ASSUMED: two guide pins per wheel pair, fixed in the sleeve, that the pair slides on
 const PLATE_Y_MM = PAD.y1 + PLATE_MM.t / 2;                                // plate sits on the pads' outer face
-const ARM_Y = m(PLATE_Y_MM + PLATE_MM.t / 2) + 0.02;                        // arm base block: its centre 20 mm above the plate's outer face
+const ARM_Y_MM = PLATE_Y_MM + PLATE_MM.t / 2 + 20;                          // arm base block: its centre 20 mm above the plate's outer face
 /** Closed wheels sit 0.3 mm off the CAD 26 mm radius so they never touch the pipe model. */
 export const CLEAR_M = 0.0003;
 export const WHEEL_OPEN_M = 0.032;     // ASSUMED: how far each pair backs off when the hand is open: far enough that the pipe slides out sideways between the wheels
@@ -125,7 +127,7 @@ function pairGeoms(hand: 1 | 2, pair: Pair): string {
   for (const sg of [1, -1]) box(0, (RAIL_X0 + RAIL_X1) / 2, sg * (RAIL_Y0 + rt / 2), RAIL_HL, (RAIL_X1 - RAIL_X0) / 2, rt / 2, BLUE); // carrier rails
   box(0, (BAR_X0 + BAR_X1) / 2, 0, BAR_HL, (BAR_X1 - BAR_X0) / 2, BAR_W / 2, BLUE);                                                    // cross bar between the rows
   if (driven) {
-    cyl(-42, WORM_X, GEAR_Y, 50, WORM_X, GEAR_Y, 1.5, rgba([0.9, 0.55, 0.15]));        // worm shaft
+    cyl(-42, WORM_X, GEAR_Y, 56, WORM_X, GEAR_Y, 1.5, rgba([0.9, 0.55, 0.15]));        // worm shaft
     cyl(45 + 8, WORM_X, GEAR_Y, 45 + 8 + MOTOR_L, WORM_X, GEAR_Y, MOTOR_R, rgba([0.85, 0.25, 0.25])); // drive motor beyond the sleeve end
   } else {
     for (const z of [SPR_Z, -SPR_Z]) cyl(z, BAR_X1, 0, z, BAR_X1 + SPR_INST, 0, SPR_OD / 2, rgba([0.9, 0.2, 0.2])); // two compression springs
@@ -152,18 +154,48 @@ function sleeveGeoms(hand: 1 | 2): string {
   ring(-45, -41, false); ring(41, 45, false);   // end walls
   ring(-41, -19, true); ring(19, 41, true);     // wheel rows: open at the pockets and the gap
   ring(-19, 19, false);                          // middle, closed except the gap
+  // Guide pins: each wheel pair slides on two pins fixed in the sleeve, so an open pair stays on the clamp. The two idler pairs sit in the
+  // side slots, so their pins stand on struts that run back to the sleeve wedge beside the C gap.
+  const cyl = (a: Vec3, b: Vec3, r: number) => g.push(`<geom type="cylinder" fromto="${a.map((v) => f(m(v))).join(' ')} ${b.map((v) => f(m(v))).join(' ')}" size="${f(m(r))}" ${STEEL} ${CART_COL}/>`);
+  for (const pair of PAIRS) {
+    const [uy, uz] = radialDir(hand, pair), a = PAIR_ANGLES[pair];
+    for (const x of [GUIDE_X, -GUIDE_X]) {
+      const r0 = pair === 'd' ? GUIDE_R0 : GUIDE_R0_IDLER;
+      cyl([x, r0 * uy, r0 * uz], [x, GUIDE_R1 * uy, GUIDE_R1 * uz], GUIDE_R);
+      if (pair !== 'd') {   // strut back to the wedge, kept outside the 16 mm pipe's path out through the side slot
+        const wa = ((a > 0 ? 22.5 : -22.5) * Math.PI) / 180, wy = -Math.sin(wa) * rc, wz = zs * Math.cos(wa) * rc;   // the wedge piece next to the gap
+        cyl([x, STRUT_R * uy, STRUT_R * uz], [x, wy, wz], GUIDE_R);
+      }
+    }
+  }
   return g.join('\n      ').replace(/\n\s*$/, '');
+}
+
+/**
+ * Pads, lugs, plate and arm base: ONE rigid body ("plateflip") hinged on the cart about the line through the plate's centre, so the plate can sit on either
+ * side of the track plane (the cart is rolled half a turn on pipe B) without any part moving relative to another. Coordinates are relative to the plate
+ * centre (local z = cart z + spacing / 2); every piece is touching its neighbour: arm base on plate, plate on both pads, pads bolted to the sleeve wedges by lugs.
+ */
+function plateGeoms(hy: number): string {
+  const across = hy * 1000 + 2 * WALL_OUT_R;   // outer edge of one clamp sleeve to the outer edge of the other: nothing sticks out beyond them
+  const g: string[] = [];
+  const box = (name: string, y: number, z: number, hx: number, hy_: number, hz: number, col: string) =>
+    g.push(`<geom ${name ? `name="${name}" ` : ''}type="box" pos="0 ${f(m(y))} ${f(m(z))}" size="${f(m(hx))} ${f(m(hy_))} ${f(m(hz))}" ${col} ${CART_COL}/>`);
+  for (const zc of [hy * 500, -hy * 500]) {   // each hand's centre, relative to the plate centre
+    box('', (PAD.y0 + PAD.y1) / 2, zc, 45, (PAD.y1 - PAD.y0) / 2, (PAD.z1 - PAD.z0) / 2, rgba([0.95, 0.75, 0.2]));
+    for (const sg of [1, -1]) box('', (LUG_Y0 + PAD.y0) / 2, zc + sg * (LUG_Z0 + PAD.z1) / 2, 45, (PAD.y0 - LUG_Y0) / 2, (PAD.z1 - LUG_Z0) / 2, rgba([0.95, 0.75, 0.2]));
+  }
+  box('plate', PLATE_Y_MM, 0, PLATE_MM.alongTrack / 2, PLATE_MM.t / 2, across / 2, rgba([0.25, 0.27, 0.3]));
+  box('armmount', ARM_Y_MM, 0, 30, 20, 30, rgba([0.9, 0.65, 0.2]));
+  return g.join('\n      ');
 }
 
 /** The cart mocap body (see frame notes below). Two identical hands, 'spacingMm' apart, with the plate centred between them. */
 export function cartBody(spacingMm = PIPE_SPACING_MM): string {
   const hy = m(spacingMm);
-  const { t } = PLATE_MM;
-  const across = spacingMm + 2 * WALL_OUT_R;   // outer edge of one clamp sleeve to the outer edge of the other: nothing sticks out beyond them
   // Cart frame: x along the track, z toward the inside of the bend, -z the outer side. Origin on the engaged hand's pipe centre line.
   // The plate lies parallel to the track plane, to one side of the pipes (cart y), and is centred between the two hands, so each hand
   // sits the same distance from its end. Hand 2 is the mirror image of hand 1 (gap and wheels), so the whole cart is symmetric.
-  const plateZ = -hy / 2, plateY = m(PLATE_Y_MM);
   const hand = (h: 1 | 2) => `<body name="hand${h}" pos="0 0 ${f(handZ(h, spacingMm))}">
       ${sleeveGeoms(h)}
       ${PAIRS.map((p) => {
@@ -180,15 +212,8 @@ export function cartBody(spacingMm = PIPE_SPACING_MM): string {
    <body name="rot2"><inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.001"/><joint name="rot2" type="hinge" axis="1 0 0" range="-3.2 3.2"/>
     ${hand(1)}
     ${hand(2)}
-    <body name="padside"><joint name="padside" type="slide" axis="0 1 0" range="-1 1"/>
-      <geom type="box" pos="${f(m(0))} ${f(m((PAD.y0 + PAD.y1) / 2))} ${f(m((PAD.z0 + PAD.z1) / 2))}" size="${m(45)} ${m((PAD.y1 - PAD.y0) / 2)} ${m((PAD.z1 - PAD.z0) / 2)}" rgba="0.95 0.75 0.2 1" ${CART_COL}/>
-      <geom type="box" pos="0 ${f(m((PAD.y0 + PAD.y1) / 2))} ${f(-hy - m((PAD.z0 + PAD.z1) / 2))}" size="${m(45)} ${m((PAD.y1 - PAD.y0) / 2)} ${m((PAD.z1 - PAD.z0) / 2)}" rgba="0.95 0.75 0.2 1" ${CART_COL}/>
-    </body>
-    <body name="plateside"><joint name="plateside" type="slide" axis="0 1 0" range="-1 1"/>
-      <geom name="plate" type="box" pos="0 ${f(plateY)} ${f(plateZ)}" size="${m(PLATE_MM.alongTrack) / 2} ${m(t) / 2} ${m(across) / 2}" rgba="0.25 0.27 0.3 1" ${CART_COL}/>
-    </body>
-    <body name="armside"><joint name="armside" type="slide" axis="0 1 0" range="-1 1"/>
-      <geom name="armmount" type="box" pos="0 ${f(ARM_Y)} ${f(plateZ)}" size="0.03 0.02 0.03" rgba="0.9 0.65 0.2 1" ${CART_COL}/>
+    <body name="plateflip" pos="0 0 ${f(-hy / 2)}"><joint name="plateflip" type="hinge" axis="1 0 0" range="-4 4"/>
+      ${plateGeoms(hy)}
     </body>
    </body>
    </body>
@@ -204,9 +229,7 @@ export function setCart(model: { jnt(name: string): { id: number }; jnt_qposadr:
   const set = (name: string, v: number) => { qpos[model.jnt_qposadr[model.jnt(name).id]] = v; };
   const pos = (open: number, trim: number) => { const o = Math.min(1, Math.max(0, open)); return (1 - o) * trim + o * WHEEL_OPEN_M; };
   JOINTS.forEach((n, i) => set(n, i < 3 ? pos(hand1Open, trims1[i]) : pos(hand2Open, trims2[i - 3])));
-  set('plateside', plateSide === 1 ? 0 : -2 * m(PLATE_Y_MM));
-  set('armside', plateSide === 1 ? 0 : -2 * ARM_Y);   // mirrored with the plate, so the arm base stays on the same world side, on top of the plate
-  set('padside', plateSide === 1 ? 0 : -2 * m((PAD.y0 + PAD.y1) / 2));
+  set('plateflip', plateSide === 1 ? 0 : Math.PI);   // pads, plate and arm base turn together, so the arm base stays on the same world side, on top of the plate
 }
 
 /** The four actuators: a drive motor per wheel set (spins its two wheels) and a rotation motor per wheel set (swings the cart about the pipe). */

@@ -3,9 +3,10 @@
 import { cartActuators, cartBody, clampTrackContacts, pipeGeoms, setCart, setMotors } from '../cart/model.ts';
 import { DEFAULT_SPEED_CM_S, DEFAULT_STEP_CM, L_VERT, MAX_SPEED_CM_S, L_ARC } from '../cart/track.ts';
 import {
-  HAND_SPACING_MM, SWING_STEP_DEG, TRANSFER_DEFAULT_CM, TRANSFER_HORIZ_MM, TRANSFER_MIN_CM, TransferRun, cartPose, cartTrims, other, pipeX,
+  HAND_SPACING_MM, SWING_STEP_DEG, buildSwingTable, TRANSFER_DEFAULT_CM, TRANSFER_HORIZ_MM, TRANSFER_MIN_CM, TransferRun, cartPose, cartTrims, other, pipeX,
   type Pipe, type XferPhase,
 } from '../cart/transfer.ts';
+import { makeClearCheck } from '../cart/clearance.ts';
 import { Viewer } from '../viewer.ts';
 import { SCENE_INFOS } from './list.ts';
 import type { Scene } from './scene.ts';
@@ -43,7 +44,7 @@ export const transferScene: Scene = {
         <dt>Position</dt><dd><span id="t-pos">0.0</span> cm of ${maxS.toFixed(1)} cm</dd>
         <dt>Hands</dt><dd id="t-hands"></dd>
         <dt>Motors</dt><dd>2 drive (wheel spin) + 2 rotation (swing about the pipe)</dd>
-        <dt>Swing</dt><dd><span id="t-swing">0</span>° (rotation motors holding)</dd>
+        <dt>Swing</dt><dd><span id="t-swing">0</span>° (rotation motors holding; the cart only turns round the bends)</dd>
         <dt>Clamp / track</dt><dd id="t-hit">no contact</dd>
       </dl>
       <p class="hint">Two units side by side, ${HAND_SPACING_MM / 10} cm apart: pipe B (right pipe of unit 1, top bar to the left) and pipe C (left pipe of unit 2, top bar to the right). 0 cm is the bottom of each pipe. Transfer takes the cart from wherever it is to the straight part (${TRANSFER_MIN_CM} to ${L_VERT.toFixed(0)} cm), closes its free clamp on the other pipe, releases the first one, then rides to the top of the other unit.</p>
@@ -68,7 +69,8 @@ export const transferScene: Scene = {
     <p id="t-msg" class="hint"></p>`;
 
     const $ = <T extends HTMLElement>(id: string) => panel.querySelector<T>('#' + id)!;
-    const run = new TransferRun();
+    // The least rotation that clears the other track at every point of the path, measured on this very model (see cart/clearance.ts).
+    const run = new TransferRun(buildSwingTable(makeClearCheck(mujoco, model, data)));
     const motion = run.motion;
     const msg = $('t-msg');
     const readNum = (id: string, fallback: number) => { const v = parseFloat($<HTMLInputElement>(id).value); return Number.isFinite(v) && v > 0 ? v : fallback; };
@@ -92,14 +94,10 @@ export const transferScene: Scene = {
       for (let k = 0; k < 4; k++) data.mocap_quat[4 * cartMocap + k] = q[k];
     };
     const PHASE_LABEL: Record<XferPhase, string> = {
-      swingout: 'Rotation motors swinging the clamp off the pipe',
-      approach: 'Going to the straight part',
-      swingin: 'Rotation motors swinging back to the pipe',
+      approach: 'Driving along the pipe to the straight part',
       grip: 'Free hand closing on the other pipe',
       release: 'Old hand opening',
-      swingout2: 'Rotation motors swinging the clamp off the pipe',
-      climb: 'Riding to the top',
-      swingin2: 'Rotation motors swinging back to the pipe',
+      climb: 'Driving to the top',
     };
     const show = () => {
       $('t-pipe').textContent = run.xfer ? `Pipe ${run.xfer.from} to ${other(run.xfer.from)}` : `Pipe ${run.pipe}`;

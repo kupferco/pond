@@ -8,6 +8,7 @@ export const HAND_SPACING_MM = 140;
 export const PIPE_GAP_M = HAND_SPACING_MM / 1000;
 export const TRANSFER_HORIZ_MM = 450;    // shortened top bars: enough to show them
 export const TRANSFER_MIN_CM = 15;       // lowest point of the vertical section where a transfer is allowed
+export const TRANSFER_MAX_HANDOVER_CM = L_VERT - 5;  // highest point of the vertical section where a hand-over may start: the tracks are still parallel here
 export const TRANSFER_DEFAULT_CM = 40;   // transfers happen below the bend; the verticals carry no brackets
 
 export type Pipe = 'B' | 'C';
@@ -23,7 +24,7 @@ export function pipePoint(p: Pipe, s: number): PathPoint {
   return { ...q, x: pipeX(p) + dir(p) * q.x, tx: dir(p) * q.tx };
 }
 
-export const canTransfer = (s: number) => s >= TRANSFER_MIN_CM && s <= L_VERT;
+export const canTransfer = (s: number) => s >= TRANSFER_MIN_CM && s <= TRANSFER_MAX_HANDOVER_CM;
 
 type Quat = [number, number, number, number];
 const mul = (a: Quat, b: Quat): Quat => [
@@ -45,16 +46,44 @@ export function cartPose(p: Pipe, s: number): { x: number; z: number; q: Quat; p
   return { x: pt.x, z: pt.z, q: p === 'B' ? mul(base, [0, 1, 0, 0]) : base, plateSide: p === 'B' ? -1 : 1 };
 }
 
-/** Phases of a transfer: get to the straight part, close the free hand on the other pipe, release the old hand, then climb to the top. */
-export type XferPhase = 'swingout' | 'approach' | 'swingin' | 'grip' | 'release' | 'swingout2' | 'climb' | 'swingin2';
+/** Phases of a transfer: drive in-plane to the straight part, close the free hand on the other pipe, release the old hand, then drive to the top. */
+export type XferPhase = 'approach' | 'grip' | 'release' | 'climb';
 export const HAND_MOVE_S = 1; // seconds each clamp takes to close or open
-export const SWING_OUT_RAD = (95 * Math.PI) / 180; // how far the rotation motors swing the cart off the pipe during travel
 export const SWING_RATE = 1.2;                       // rotation motor speed, rad/s
 export const SWING_STEP_DEG = 15;
 export const SWING_MAX_RAD = Math.PI;
-/** Over this stretch of the path (cm) the two pipes diverge round their bends, so the free clamp has to be swung off the pipe to clear the other track. */
-export const CLEAR_FROM_CM = 45, CLEAR_TO_CM = 100;
+export const SWING_MAX_NEEDED_RAD = (100 * Math.PI) / 180;   // the most the rotation motors ever need to swing the cart to clear the other track
+const SWING_GRID_RAD = (2.5 * Math.PI) / 180, SWING_MARGIN_RAD = (3 * Math.PI) / 180;
+const TABLE_STEP_CM = 0.5, TABLE_WINDOW = 3;         // the needed swing is held 1.5 cm either side of where it is needed, so the rotation motors are ready in time
 const WHEEL_R_MM = 10;                               // CAD wheel radius, to turn travel into wheel spin
+
+/** Whether the cart riding pipe p at path coordinate s (cm), its free hand open and swung away from the track by `swing` rad, touches the track (false) or not (true). */
+export type ClearCheck = (p: Pipe, s: number, swing: number) => boolean;
+/** The smallest swing (rad) that clears the other track at each path coordinate: [pipe][round(s / TABLE_STEP_CM)]. Zero where the plane of the tracks is already clear. */
+export type SwingTable = Record<Pipe, number[]>;
+
+export function buildSwingTable(clear: ClearCheck): SwingTable {
+  const out = {} as SwingTable;
+  for (const p of ['B', 'C'] as Pipe[]) {
+    const raw: number[] = [];
+    for (let i = 0; i * TABLE_STEP_CM <= TRANSFER_MAX_S + 1e-9; i++) {
+      const s = i * TABLE_STEP_CM;
+      let th = 0;
+      // first angle that is clear, including the margin on both sides, so the swing never rides along the edge of a collision
+      while (th < SWING_MAX_NEEDED_RAD && !(clear(p, s, th) && clear(p, s, th + SWING_MARGIN_RAD) && (th === 0 || clear(p, s, th - SWING_MARGIN_RAD)))) th += SWING_GRID_RAD;
+      raw.push(Math.min(th, SWING_MAX_NEEDED_RAD));
+    }
+    out[p] = raw.map((_, i) => Math.max(...raw.slice(Math.max(0, i - TABLE_WINDOW), i + TABLE_WINDOW + 1)));
+  }
+  return out;
+}
+
+/** Swing (rad) needed at path coordinate s, taking the larger of the two table cells around it. */
+export function swingNeeded(t: SwingTable | null, p: Pipe, s: number): number {
+  if (!t) return 0;
+  const a = t[p], f = Math.min(a.length - 1, Math.max(0, s / TABLE_STEP_CM)), i = Math.floor(f);
+  return Math.max(a[i], a[Math.min(a.length - 1, i + 1)]);
+}
 
 /** The straight-part height to start the hand-over from, given where the cart is (cm). */
 export const handoverHeight = (s: number) => (canTransfer(s) ? s : TRANSFER_DEFAULT_CM);
@@ -96,7 +125,7 @@ export class TransferRun {
   /** Clamp opening per pipe: 0 closed on it, 1 open. The free hand waits open around the other pipe. */
   readonly open: Record<Pipe, number> = { B: 0, C: 1 };
   done = false;
-  /** Rotation motors: cart swing about the pipe (rad, away from the track = SWING_OUT_RAD on either pipe) and its goal. The motors hold the goal the whole time. */
+  /** Rotation motors: cart swing about the pipe (rad, away from the track = positive on either pipe) and its goal. The motors hold the goal the whole time. */
   swingW = 0;
   swingGoal = 0;
   /** The hinge angle of the rotation motors in the cart frame. The cart is rolled half a turn on B, so the same swing away from the track is the opposite hinge angle there. */
@@ -104,28 +133,26 @@ export class TransferRun {
   /** Drive motors: wheel spin angle (rad) of hand 1 (on the riding pipe) and hand 2. Only a closed clamp's wheels turn. */
   readonly spin = [0, 0];
   private lastS = NaN;
-  private swingTo(g: number) { this.swingGoal = g; }
-  private get swung() { return this.swingW === this.swingGoal; }
-  /** Manual rotation: step the swing goal (rad), clamped. */
+  /** Manual rotation from the Step tab: step the swing goal (rad), clamped. */
   manualSwing = 0;
   turn(d: number) { if (!this.xfer) this.manualSwing = Math.min(SWING_MAX_RAD, Math.max(-SWING_MAX_RAD, this.manualSwing + d)); }
-  /** Free riding (no transfer): hold the manual swing, but swing out whenever the cart's travel crosses the diverging bends, and wait for it before entering them. */
-  private freeRide(dt: number) {
-    const m = this.motion, lo = Math.min(m.s, m.goal), hi = Math.max(m.s, m.goal);
-    const need = hi >= CLEAR_FROM_CM && lo <= CLEAR_TO_CM;
-    this.swingGoal = need ? SWING_OUT_RAD : this.manualSwing;
-    const g = m.goal;
-    if (need && this.swingW !== SWING_OUT_RAD) {
-      if (m.s < CLEAR_FROM_CM) m.goal = Math.min(g, CLEAR_FROM_CM);
-      else if (m.s > CLEAR_TO_CM) m.goal = Math.max(g, CLEAR_TO_CM);
-    }
-    m.advance(dt);
-    m.goal = g;
-    this.roll();
-  }
+  readonly table: SwingTable | null;
+  constructor(table: SwingTable | null = null) { this.table = table; }
+  private need = (s: number) => swingNeeded(this.table, this.pipe, s);
   private moveSwing(dt: number) {
     const e = this.swingGoal - this.swingW, st = SWING_RATE * dt;
     this.swingW = Math.abs(e) <= st ? this.swingGoal : this.swingW + Math.sign(e) * st;
+  }
+  /**
+   * Drive along the pipe in the plane of the tracks. The cart rotates only where the other track is in the way (round the bend) and exactly as far
+   * as it needs, and turns back as soon as it is clear. If the rotation motors are not yet at the angle the next step needs, the cart waits for them.
+   */
+  private ride(dt: number) {
+    const m = this.motion, ahead = m.s + Math.sign(m.goal - m.s) * Math.min(Math.abs(m.goal - m.s), Math.max(0, m.speed) * dt);
+    const need = m.moving ? Math.max(this.need(m.s), this.need(ahead)) : this.need(m.s);
+    this.swingGoal = this.xfer ? need : Math.max(need, this.manualSwing);
+    if (this.swingW >= need - 1e-9) m.advance(dt);
+    this.roll();
   }
   private roll() {
     const ds = Number.isNaN(this.lastS) ? 0 : this.motion.s - this.lastS; this.lastS = this.motion.s;
@@ -140,11 +167,11 @@ export class TransferRun {
     if (this.xfer) return false;
     this.done = false;
     this.manualSwing = 0;
-    this.xfer = { from: this.pipe, phase: 'swingout', t: 0 };
-    this.swingTo(SWING_OUT_RAD);   // swing the clamp clear of the track before the cart travels
+    this.xfer = { from: this.pipe, phase: 'approach', t: 0 };
+    this.goTo(handoverHeight(this.motion.s));
     return true;
   }
-  /** Stop moving; the hand-over itself (grip, release) and the swings always finish. */
+  /** Stop moving; the hand-over itself (grip, release) always finishes. */
   stop() {
     if (this.xfer && this.xfer.phase !== 'approach' && this.xfer.phase !== 'climb') return;
     this.xfer = null; this.motion.goal = this.motion.s;
@@ -152,20 +179,14 @@ export class TransferRun {
   advance(dt: number) {
     this.moveSwing(dt);
     const x = this.xfer;
-    if (!x) { this.freeRide(dt); return; }
+    if (!x) { this.ride(dt); return; }
     if (Number.isNaN(this.lastS)) this.lastS = this.motion.s;
     const k = Math.min(1, (x.t += dt) / HAND_MOVE_S);
     const go = (phase: XferPhase) => { x.phase = phase; x.t = 0; };
     switch (x.phase) {
-      case 'swingout':
-        if (this.swung) { this.goTo(handoverHeight(this.motion.s)); go('approach'); }
-        break;
       case 'approach':
-        this.motion.advance(dt); this.roll();
-        if (!this.motion.moving) { this.swingTo(0); go('swingin'); }
-        break;
-      case 'swingin':
-        if (this.swung) go('grip');
+        this.ride(dt);
+        if (!this.motion.moving && this.swingW === 0) go('grip');
         break;
       case 'grip':
         this.open[other(x.from)] = 1 - k;
@@ -173,17 +194,11 @@ export class TransferRun {
         break;
       case 'release':
         this.open[x.from] = k;
-        if (k >= 1) { this.pipe = other(x.from); this.swingTo(SWING_OUT_RAD); go('swingout2'); }
-        break;
-      case 'swingout2':
-        if (this.swung) { this.goTo(TRANSFER_MAX_S); go('climb'); }
+        if (k >= 1) { this.pipe = other(x.from); this.goTo(TRANSFER_MAX_S); go('climb'); }
         break;
       case 'climb':
-        this.motion.advance(dt); this.roll();
-        if (!this.motion.moving) { this.swingTo(0); go('swingin2'); }
-        break;
-      case 'swingin2':
-        if (this.swung) { this.xfer = null; this.done = true; }
+        this.ride(dt);
+        if (!this.motion.moving && this.swingW === 0) { this.xfer = null; this.done = true; }
         break;
     }
   }
