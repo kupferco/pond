@@ -226,6 +226,8 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     const pl = cm2.geom('plate').id, am = cm2.geom('armmount').id;
     check('cart plate is 208 mm long: 140 mm between the hands plus 34 mm sleeve radius at each end', Math.abs(cm2.geom_size[3 * pl + 2] * 2 - 0.208) < 1e-9 && Math.abs(cd.geom_xpos[3 * pl + 2] + 0.07) < 1e-9, String(cm2.geom_size[3 * pl + 2] * 2));
     check('arm base sits on top of the plate (side +1)', Math.abs(cd.geom_xpos[3 * am + 1] - (cd.geom_xpos[3 * pl + 1] + 0.003 + 0.02)) < 1e-9);
+    const slides: string[] = []; for (let j = 0; j < cm2.njnt; j++) if (cm2.jnt_type[j] === 2) slides.push(cm2.jnt(j).name);
+    check('exactly one wheel pair per wheel system is on a clamp joint (the other two are rigid)', slides.length === 2 && slides.some((n) => n.startsWith('h1')) && slides.some((n) => n.startsWith('h2')), slides.join(','));
     cd.delete(); cm2.delete(); }
   const sameP = (a: number[], b: number[]) => a.every((n, i) => Math.abs(n - b[i]) < 1e-9);
   check('on the straight the cart is in the same place on B and C: hand 2 rides B, hand 1 rides C (mirror-symmetric cart, no roll)', sameP(world('B', [0, 0, 0]), world('C', [0, 0, 0])) && sameP(world('B', [0, 0, -0.14]), world('C', [0, 0, -0.14])) && Math.abs(world('B', [0, 0, -0.14])[0]) < 1e-9);
