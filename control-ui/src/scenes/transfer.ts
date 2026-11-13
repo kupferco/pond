@@ -1,9 +1,9 @@
 // Transfer scene: two neighbouring units side by side, only pipes B and C with their top bars (B's runs left, C's runs right).
 // The cart rides one pipe and hands over to the other on a vertical section (Hand B clamps the neighbour, Hand A releases).
-import { cartActuators, cartBody, clampTrackContacts, pipeGeoms, setCart, setMotors } from '../cart/model.ts';
+import { cartActuators, cartBody, clampTrackContacts, pipeGeoms } from '../cart/model.ts';
 import { DEFAULT_SPEED_CM_S, DEFAULT_STEP_CM, L_VERT, MAX_SPEED_CM_S, L_ARC } from '../cart/track.ts';
 import {
-  HAND_SPACING_MM, SWING_STEP_DEG, buildSwingTable, TRANSFER_DEFAULT_CM, TRANSFER_HORIZ_MM, TRANSFER_MIN_CM, TransferRun, cartPose, cartTrims, other, pipeX,
+  HAND_SPACING_MM, SWING_STEP_DEG, buildSwingTable, TRANSFER_DEFAULT_CM, TRANSFER_HORIZ_MM, TRANSFER_MIN_CM, TransferRun, applyCart, cartPose, cartTrims, other, pipeX,
   type Pipe, type XferPhase,
 } from '../cart/transfer.ts';
 import { makeClearCheck } from '../cart/clearance.ts';
@@ -111,8 +111,7 @@ export const transferScene: Scene = {
       const p = cartPose(pipe, motion.s);
       place(p.x, p.z, p.q);
       const tr = cartTrims(pipe, p, run.swing);
-      setCart(model, data.qpos, open[pipe], open[other(pipe)], p.plateSide, tr.hand1, tr.hand2);
-      setMotors(model, data, run.spin[0], run.spin[1], run.swing);
+      applyCart(model, data, pipe, p, tr, open, run.spin, run.swing);
       mujoco.mj_forward(model, data);
       const hit = clampTrackContacts(data);
       if (hit < 0) failed++;

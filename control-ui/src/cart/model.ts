@@ -51,7 +51,7 @@ const PAIRS: Pair[] = ['d', 'p', 'm'];
 const wheelName = (hand: 1 | 2, z: number) => `w${hand}${z > 0 ? 'f' : 'b'}`;
 const WHEEL_JOINTS = [wheelName(1, 1), wheelName(1, -1), wheelName(2, 1), wheelName(2, -1)];
 /** Per wheel system exactly ONE of the three pairs is on the clamp joint (it slides towards / away from the pipe); the other two are rigid on the frame. */
-export const CLAMP_PAIR: Record<1 | 2, Pair> = { 1: 'm', 2: 'm' };   // each hand is the mirror image of the other, so the same pair (-60 deg) is the clamp pair on both and the cart is mirror-symmetric
+export const CLAMP_PAIR: Record<1 | 2, Pair> = { 1: 'p', 2: 'p' };   // the cart is mirror-symmetric (hand 2 is hand 1 mirrored): the same pair is the clamp pair on both hands, so riding B (hand 2) mirrors riding C (hand 1)
 /** Fixed radial offset (m, + = away from the pipe) of the two rigid pairs from the CAD 26 mm radius: enough that they clear the curved pipe all the way round the bend. */
 export const FIXED_PAIR_TRIM_M = 0.0045;
 export type Vec3 = [number, number, number];
@@ -228,7 +228,7 @@ export function cartBody(spacingMm = PIPE_SPACING_MM): string {
       }).join('\n      ')}
     </body>`;
   // Two rotation motors (one per wheel set): hinges about the engaged pipe's axis (cart x), in series, carrying the whole assembly (both
-  // hands, pads, plate, arm base) as one rigid body. Each motor takes half of the swing. The motors/drive motors are rigid parts of the cart.
+  // hands, pads, plate, arm base) as one rigid body. Each motor turns the cart about its own hand's pipe axis; the riding hand's motor turns it, the other holds zero. The motors/drive motors are rigid parts of the cart.
   // The rotation motors' stators are bodies on the cart frame itself (which does not turn); their rotors are rings on the hands, which do.
   const stator = (h: 1 | 2) => `<body name="motor_rot${h}" pos="0 0 ${f(handZ(h, spacingMm))}">
       ${ringGeoms(ROT_MOTOR.x0, ROT_MOTOR.x1, ROT_MOTOR.rIn, ROT_MOTOR.rOut, ROT_COL)}
@@ -236,8 +236,8 @@ export function cartBody(spacingMm = PIPE_SPACING_MM): string {
   return `<body name="cart" mocap="true" pos="0 0 0">
    ${stator(1)}
    ${stator(2)}
-   <body name="rot1"><inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.001"/><joint name="rot1" type="hinge" axis="1 0 0" range="-3.2 3.2"/>
-   <body name="rot2"><inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.001"/><joint name="rot2" type="hinge" axis="1 0 0" range="-3.2 3.2"/>
+   <body name="rot1"><inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.001"/><joint name="rot1" type="hinge" pos="0 0 ${f(handZ(1, spacingMm))}" axis="1 0 0" range="-3.2 3.2"/>
+   <body name="rot2"><inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.001"/><joint name="rot2" type="hinge" pos="0 0 ${f(handZ(2, spacingMm))}" axis="1 0 0" range="-3.2 3.2"/>
     ${hand(1)}
     ${hand(2)}
     <body name="plateflip" pos="0 0 ${f(-hy / 2)}"><joint name="plateflip" type="hinge" axis="1 0 0" range="-4 4"/>
@@ -278,14 +278,18 @@ export function cartActuators(): string {
   </actuator>`;
 }
 
-/** Command the motors and place their joints: wheel spin angles (rad) for hand 1 / hand 2, and the cart swing angle (rad), shared by the two rotation motors. */
+/**
+ * Command the motors and place their joints: wheel spin angles (rad) for hand 1 / hand 2, and the cart swing angle (rad). The swing is turned by the
+ * rotation motor of the hand that rides the pipe (`rider`): it pivots about that hand's pipe axis. The other rotation motor holds zero.
+ */
 export function setMotors(model: { jnt(name: string): { id: number }; jnt_qposadr: ArrayLike<number>; actuator(name: string): { id: number } },
-  data: { qpos: { [i: number]: number }; ctrl: { [i: number]: number } }, spin1: number, spin2: number, swing: number): void {
+  data: { qpos: { [i: number]: number }; ctrl: { [i: number]: number } }, spin1: number, spin2: number, swing: number, rider: 1 | 2 = 1): void {
   const set = (name: string, v: number) => { data.qpos[model.jnt_qposadr[model.jnt(name).id]] = v; };
   const cmd = (name: string, v: number) => { data.ctrl[model.actuator(name).id] = v; };
   WHEEL_JOINTS.forEach((j, i) => set(j, i < 2 ? spin1 : spin2));
   cmd('drive1', spin1); cmd('drive2', spin2);
-  set('rot1', swing / 2); set('rot2', swing / 2); cmd('rot1', swing / 2); cmd('rot2', swing / 2);
+  const r1 = rider === 1 ? swing : 0, r2 = rider === 2 ? swing : 0;
+  set('rot1', r1); set('rot2', r2); cmd('rot1', r1); cmd('rot2', r2);
 }
 
 export function cartMjcf(): string {

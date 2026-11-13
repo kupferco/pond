@@ -2,7 +2,7 @@
 // B is the right-hand pipe of unit 1 (its top bar runs LEFT); C is the left-hand pipe of unit 2 (its top bar runs RIGHT).
 // The hands are 14 cm apart, so B and C are 14 cm apart. The cart rides on one pipe and its free hand hangs towards the other.
 import { CartMotion, L_ARC, clampS, distToPath, frameQuat, pathAt, L_VERT, type PathPoint } from './track.ts';
-import { handTrims, type Vec3 } from './model.ts';
+import { handTrims, setCart, setMotors, type Vec3 } from './model.ts';
 
 /** Sign of the rotation-motor hinge for a swing away from the track, riding B (rolled half a turn) and C. */
 export const SB = -1, SC = 1;
@@ -29,23 +29,37 @@ export function pipePoint(p: Pipe, s: number): PathPoint {
 export const canTransfer = (s: number) => s >= TRANSFER_MIN_CM && s <= TRANSFER_MAX_HANDOVER_CM;
 
 type Quat = [number, number, number, number];
-const mul = (a: Quat, b: Quat): Quat => [
-  a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3],
-  a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2],
-  a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1],
-  a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + a[3] * b[0],
-];
+/** Rotation matrix columns (cart x, y, z in the world) to a quaternion (w x y z). */
+function quatFromAxes(ex: Vec3, ey: Vec3, ez: Vec3): Quat {
+  const m00 = ex[0], m10 = ex[1], m20 = ex[2], m01 = ey[0], m11 = ey[1], m21 = ey[2], m02 = ez[0], m12 = ez[1], m22 = ez[2];
+  const tr = m00 + m11 + m22;
+  let q: Quat;
+  if (tr > 0) { const S = Math.sqrt(tr + 1) * 2; q = [S / 4, (m21 - m12) / S, (m02 - m20) / S, (m10 - m01) / S]; }
+  else if (m00 > m11 && m00 > m22) { const S = Math.sqrt(1 + m00 - m11 - m22) * 2; q = [(m21 - m12) / S, S / 4, (m01 + m10) / S, (m02 + m20) / S]; }
+  else if (m11 > m22) { const S = Math.sqrt(1 + m11 - m00 - m22) * 2; q = [(m02 - m20) / S, (m01 + m10) / S, S / 4, (m12 + m21) / S]; }
+  else { const S = Math.sqrt(1 + m22 - m00 - m11) * 2; q = [(m10 - m01) / S, (m02 + m20) / S, (m12 + m21) / S, S / 4]; }
+  return q;
+}
+
+/** Which of the cart's two hands rides pipe p: hand 1 on C, hand 2 on B (the cart is mirror-symmetric, so B is the mirror image of C). */
+export const riderHand = (p: Pipe): 1 | 2 => (p === 'B' ? 2 : 1);
+/** Put a value for the riding hand and one for the free hand in hand 1 / hand 2 order. */
+export const byHand = <T>(p: Pipe, rider: T, free: T): [T, T] => (p === 'B' ? [free, rider] : [rider, free]);
 
 /**
- * Cart pose on the pipe. C uses the Cart-scene frame (free hand on the outer side, facing B). On B the cart is rolled half a turn about its own
- * track axis, so its free hand faces C. The cart is symmetric (two identical hands, plate centred between them), so the two poses put the cart
- * in the same place in the world: a hand-over needs no body motion, only the hands change role.
- * plateSide is the cart-y side the plate slides to, so the plate stays on the same side of the track plane on both pipes.
+ * Cart pose on the pipe. On C hand 1 rides the pipe (origin on its axis) and hand 2 hangs towards B. B is the exact mirror image of C about the
+ * plane half way between them, and the cart is symmetric under that mirror, so on B hand 2 rides the pipe and hand 1 hangs towards C: same
+ * orientation at the straights, no roll, the plate on the same world side. The same wheel pair is the clamp pair on both.
+ * plateSide is the cart-y side the plate slides to (the same on both pipes).
  */
 export function cartPose(p: Pipe, s: number): { x: number; z: number; q: Quat; plateSide: 1 | -1 } {
   const pt = pipePoint(p, s);
-  const base = frameQuat({ ...pt, tx: Math.abs(pt.tx) < 1e-9 ? 0 : pt.tx });
-  return { x: pt.x, z: pt.z, q: p === 'B' ? mul(base, [0, 1, 0, 0]) : base, plateSide: p === 'B' ? -1 : 1 };
+  const th = Math.atan2(-pt.tz, p === 'B' ? -pt.tx : pt.tx);       // C-frame angle of the (mirrored back) tangent, see frameQuat
+  const ex: Vec3 = [Math.cos(th), 0, -Math.sin(th)], ey: Vec3 = [0, -1, 0], ez: Vec3 = [-Math.sin(th), 0, -Math.cos(th)];
+  if (p === 'C') return { x: pt.x, z: pt.z, q: quatFromAxes(ex, ey, ez), plateSide: 1 };
+  // mirror x of the C frame: (m ex, m ey, -m ez); hand 2 is on the pipe, so the origin (hand 1) is one hand spacing along z' from it
+  const mx: Vec3 = [-ex[0], ex[1], ex[2]], my: Vec3 = [-ey[0], ey[1], ey[2]], mz: Vec3 = [ez[0], -ez[1], -ez[2]];
+  return { x: pt.x + PIPE_GAP_M * mz[0], z: pt.z + PIPE_GAP_M * mz[2], q: quatFromAxes(mx, my, mz), plateSide: 1 };
 }
 
 /** Phases of a transfer: drive in-plane to the straight part, close the free hand on the other pipe, release the old hand, then drive to the top. */
@@ -102,14 +116,27 @@ export function distToPipe(p: Pipe, pt: Vec3, horizMm = TRANSFER_HORIZ_MM): numb
   return Math.hypot(distToPath(dir(p) * (pt[0] - pipeX(p)), pt[2], horizMm), pt[1]);
 }
 
-/** Radial wheel adjustments for both hands at this pose: hand 1 rides pipe p, hand 2 hangs on the other pipe (see handTrims). */
+/** Radial wheel adjustments for both hands at this pose (see handTrims): the riding hand follows pipe p, the other hangs on the other pipe. In hand 1 / hand 2 order. */
 export function cartTrims(p: Pipe, pose: { x: number; z: number; q: Quat }, swing = 0): { hand1: number[]; hand2: number[] } {
   const c = Math.cos(swing), sn = Math.sin(swing);   // the rotation motors swing the cart about the pipe axis (cart x) before the pose is applied
-  const toWorld = (v: Vec3): Vec3 => { const r = rotate(pose.q, [v[0], v[1] * c - v[2] * sn, v[1] * sn + v[2] * c]); return [pose.x + r[0], r[1], pose.z + r[2]]; };
+  const pz = p === 'B' ? -PIPE_GAP_M : 0;             // the pivot is the riding hand's pipe axis: hand 2 on B
+  const toWorld = (v: Vec3): Vec3 => { const y = v[1], z = v[2] - pz; const r = rotate(pose.q, [v[0], y * c - z * sn, y * sn + z * c + pz]); return [pose.x + r[0], r[1], pose.z + r[2]]; };
+  const [on1, on2] = byHand<Pipe>(p, p, other(p));
   return {
-    hand1: handTrims(1, HAND_SPACING_MM, toWorld, (w) => distToPipe(p, w)),
-    hand2: handTrims(2, HAND_SPACING_MM, toWorld, (w) => distToPipe(other(p), w)),
+    hand1: handTrims(1, HAND_SPACING_MM, toWorld, (w) => distToPipe(on1, w)),
+    hand2: handTrims(2, HAND_SPACING_MM, toWorld, (w) => distToPipe(on2, w)),
   };
+}
+
+/**
+ * Put the whole cart into the model for the run state: the clamp openings, wheel spins and swing hinge, with the hands swapped for the pipe it rides.
+ * `open` is the opening per pipe, `spin` the wheel spin of the riding hand then the free one, `hinge` the rotation-motor angle.
+ */
+export function applyCart(model: Parameters<typeof setCart>[0] & Parameters<typeof setMotors>[0], data: Parameters<typeof setMotors>[1], pipe: Pipe,
+  pose: { plateSide: 1 | -1 }, tr: { hand1: number[]; hand2: number[] }, open: Record<Pipe, number>, spin: number[], hinge: number): void {
+  const [o1, o2] = byHand(pipe, open[pipe], open[other(pipe)]), [s1, s2] = byHand(pipe, spin[0], spin[1]);
+  setCart(model, data.qpos, o1, o2, pose.plateSide, tr.hand1, tr.hand2);
+  setMotors(model, data, s1, s2, hinge, riderHand(pipe));
 }
 
 /** End of the (shortened) top bar: the highest path coordinate on a transfer track (cm). */

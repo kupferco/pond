@@ -11,7 +11,7 @@ import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/pl
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
 import { cartMjcf, cartActuators, cartBody, clampTrackContacts, pipeGeoms, setCart, setMotors } from '../src/cart/model.ts';
-import { SB, SC, PIPE_GAP_M, TRANSFER_HORIZ_MM, TransferRun, buildSwingTable, cartPose, cartTrims, other, pipePoint, swingNeeded, type Pipe } from '../src/cart/transfer.ts';
+import { SB, SC, PIPE_GAP_M, TRANSFER_HORIZ_MM, TransferRun, applyCart, buildSwingTable, cartPose, cartTrims, other, pipePoint, swingNeeded, type Pipe } from '../src/cart/transfer.ts';
 import { makeClearCheck } from '../src/cart/clearance.ts';
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
 
@@ -167,7 +167,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     const c = cartPose(pp, sc), tr = cartTrims(pp, c, sw);
     xdd.mocap_pos[3 * cmo] = c.x; xdd.mocap_pos[3 * cmo + 1] = 0; xdd.mocap_pos[3 * cmo + 2] = c.z;
     for (let k = 0; k < 4; k++) xdd.mocap_quat[4 * cmo + k] = c.q[k];
-    setCart(xm, xdd.qpos, o1, o2, c.plateSide, tr.hand1, tr.hand2); setMotors(xm, xdd, 0, 0, sw); mj.mj_forward(xm, xdd);
+    applyCart(xm, xdd, pp, c, tr, { B: o2, C: o2, [pp]: o1 } as Record<Pipe, number>, [0, 0], sw); mj.mj_forward(xm, xdd);
     probes++;
     for (let i = 0; i < xdd.ncon; i++) { const d = xdd.contact.get(i)?.dist ?? 0; if (d < -0.0005) { hits++; worst = Math.min(worst, d); } }
     if (o1 === 0 && o2 === 1) { /* nothing more */ }
@@ -176,7 +176,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   // Without the swing the free clamp does hit the other pipe on the bends: the check sees it (the sleeves are real collision geoms).
   { const c = cartPose('B', 64), tr = cartTrims('B', c); xdd.mocap_pos[3 * cmo] = c.x; xdd.mocap_pos[3 * cmo + 2] = c.z;
     for (let k = 0; k < 4; k++) xdd.mocap_quat[4 * cmo + k] = c.q[k];
-    setCart(xm, xdd.qpos, 0, 1, c.plateSide, tr.hand1, tr.hand2); setMotors(xm, xdd, 0, 0, 0); mj.mj_forward(xm, xdd);
+    applyCart(xm, xdd, 'B', c, tr, { B: 0, C: 1 }, [0, 0], 0); mj.mj_forward(xm, xdd);
     check('unswung free clamp on the bend is reported as a clamp–track contact', clampTrackContacts(xdd) < -0.002, String(clampTrackContacts(xdd))); }
   // The test must be able to fail: push the cart into pipe C and expect contacts.
   { const c = cartPose('C', 40); xdd.mocap_pos[3 * cmo] = c.x + 0.012; xdd.mocap_pos[3 * cmo + 2] = c.z;
@@ -194,7 +194,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
       const c = cartPose(r.pipe, r.motion.s), t = cartTrims(r.pipe, c, r.swing);
       xdd.mocap_pos[3 * cmo] = c.x; xdd.mocap_pos[3 * cmo + 1] = 0; xdd.mocap_pos[3 * cmo + 2] = c.z;
       for (let k = 0; k < 4; k++) xdd.mocap_quat[4 * cmo + k] = c.q[k];
-      setCart(xm, xdd.qpos, r.open[r.pipe], r.open[other(r.pipe)], c.plateSide, t.hand1, t.hand2); setMotors(xm, xdd, r.spin[0], r.spin[1], r.swing); mj.mj_forward(xm, xdd);
+      applyCart(xm, xdd, r.pipe, c, t, r.open, r.spin, r.swing); mj.mj_forward(xm, xdd);
       maxSwing = Math.max(maxSwing, Math.abs(r.swingW)); if (r.swingW > 0) { rotated++; if (r.motion.s < 50 || r.motion.s > 80) outOfBend++; } if (r.swingW !== r.swingGoal || r.swingW === 0) { /* in motion or home */ } else held++;
       const h = clampTrackContacts(xdd); if (h < 0) { bad++; deep = Math.min(deep, h); }
       // The arm base, relative to the cart's centre point in the world, must not move off the plate's world side.
@@ -215,7 +215,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     for (const goal of [190, 0]) { r.goTo(goal); while (r.motion.s !== r.motion.goal && frames++ < 20000) {
       r.advance(0.02); const c = cartPose(r.pipe, r.motion.s), t = cartTrims(r.pipe, c, r.swing);
       xdd.mocap_pos[3 * cmo] = c.x; xdd.mocap_pos[3 * cmo + 2] = c.z; for (let k = 0; k < 4; k++) xdd.mocap_quat[4 * cmo + k] = c.q[k];
-      setCart(xm, xdd.qpos, r.open[r.pipe], r.open[other(r.pipe)], c.plateSide, t.hand1, t.hand2); setMotors(xm, xdd, r.spin[0], r.spin[1], r.swing); mj.mj_forward(xm, xdd);
+      applyCart(xm, xdd, r.pipe, c, t, r.open, r.spin, r.swing); mj.mj_forward(xm, xdd);
       if (clampTrackContacts(xdd) < 0) bad++; sw = Math.max(sw, Math.abs(r.swingW)); } }
     check(`riding ${startPipe} up and down with the step controls: no clamp–track contact, cart swung away on the bends`, bad === 0 && sw > 0.2 && r.motion.s === 0, `${bad} contact frames, swing ${sw.toFixed(2)}, end ${r.motion.s}`);
   }
@@ -228,9 +228,9 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     check('arm base sits on top of the plate (side +1)', Math.abs(cd.geom_xpos[3 * am + 1] - (cd.geom_xpos[3 * pl + 1] + 0.003 + 0.02)) < 1e-9);
     cd.delete(); cm2.delete(); }
   const sameP = (a: number[], b: number[]) => a.every((n, i) => Math.abs(n - b[i]) < 1e-9);
-  check('hand 1 on B is hand 2 on C', sameP(world('B', [0, 0, 0]), world('C', [0, 0, -0.14])) && sameP(world('B', [0, 0, -0.14]), world('C', [0, 0, 0])));
+  check('on the straight the cart is in the same place on B and C: hand 2 rides B, hand 1 rides C (mirror-symmetric cart, no roll)', sameP(world('B', [0, 0, 0]), world('C', [0, 0, 0])) && sameP(world('B', [0, 0, -0.14]), world('C', [0, 0, -0.14])) && Math.abs(world('B', [0, 0, -0.14])[0]) < 1e-9);
   const py = 0.043;
-  check('plate is centred between the hands on the same side on both pipes', sameP(world('B', [0, -py, -0.07]), world('C', [0, py, -0.07])) && Math.abs(world('C', [0, py, -0.07])[0] - PIPE_GAP_M / 2) < 1e-9);
+  check('plate is centred between the hands on the same side on both pipes', sameP(world('B', [0, py, -0.07]), world('C', [0, py, -0.07])) && Math.abs(world('C', [0, py, -0.07])[0] - PIPE_GAP_M / 2) < 1e-9);
 }
 
 const t0 = performance.now(); run(5); const ms = performance.now() - t0;
