@@ -86,8 +86,8 @@ export const armU = (y: number) => y - ARM_Y;
 
 // --- store: rows along y; the pods slide down the slope to the pick line at y = 0
 export const STORE_ROWS = 6;
-export const STORE_CAP = 8;                      // pod positions per row
-export const STORE_START = 6;                    // pods per row at the start
+export const STORE_CAP = 13;                     // pod positions per row: the channels run all the way to the back wall of the tank (end stop at y = 183 mm)
+export const STORE_START = 10;                  // pods per row at the start
 export const POD_PITCH = POD_R * 2 + 0.0005;    // pods rest against each other on the slope
 export const ROW_PITCH = 0.035;
 export const ROW_X0 = 0.07 + ROW_PITCH / 2;
