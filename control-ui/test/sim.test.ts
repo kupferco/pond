@@ -11,6 +11,7 @@ import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/pl
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
 import { cartMjcf } from '../src/cart/model.ts';
+import { STORE_PODS, TRAY_SLOTS, podGrabMjcf, podName, slotName } from '../src/podgrab/layout.ts';
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
 
 const MOTORS_JOINT: Record<string, string> = { A: 'shoulder_pan', B: 'shoulder_lift', C: 'elbow_flex', D: 'wrist_flex', E: 'wrist_roll' };
@@ -137,6 +138,23 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const cartModel = mj.MjModel.from_xml_string(cartMjcf());
   check('cart model loads with cart and marker mocap bodies', cartModel.nmocap === 2, String(cartModel.nmocap));
   cartModel.delete();
+}
+
+// Pod grab: store and tray are in reach, and every pod -> socket pair is picked and seated.
+{
+  check('store pods and tray sockets are all in reach', [...STORE_PODS, ...TRAY_SLOTS].every((p) => inReach(p)));
+  check('store pods are at least 65 mm from every socket', STORE_PODS.every((p) => TRAY_SLOTS.every((s) => farEnough(p, s))));
+  const pg = new SimDriver(mj, podGrabMjcf());
+  check('pod grab model has pods, sockets and two markers as mocap bodies', pg.model.nmocap === STORE_PODS.length + TRAY_SLOTS.length + 2, String(pg.model.nmocap));
+  const pgCmd = new CommandLayer(pg, new RealDriver());
+  let seated = 0, total = 0;
+  for (let p = 0; p < STORE_PODS.length; p++) for (let s = 0; s < TRAY_SLOTS.length; s++) {
+    const a = new Attempt(pg, pgCmd, { pod: STORE_PODS[p], slot: TRAY_SLOTS[s], seed: 100 + total, podBody: podName(p), slotBody: slotName(s) });
+    while (!a.done) a.advance(0.5);
+    total++; if (a.result!.success) seated++; else console.log('  failed', p, s, a.result!.reason);
+  }
+  check('every pod to every socket is seated', seated === total, `${seated}/${total}`);
+  pg.dispose();
 }
 
 const t0 = performance.now(); run(5); const ms = performance.now() - t0;

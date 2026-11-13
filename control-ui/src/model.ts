@@ -31,7 +31,7 @@ const act = (m: MotorSpec) =>
   `ctrlrange="${(m.min * Math.PI / 180).toFixed(5)} ${(m.max * Math.PI / 180).toFixed(5)}" ` +
   `forcelimited="true" forcerange="-${STALL_NM} ${STALL_NM}"/>`;
 
-export const MJCF = `
+export const armMjcf = (world: string) => `
 <mujoco model="so101">
   <compiler angle="radian" autolimits="true"/>
   <option timestep="0.002" gravity="0 0 -9.81"/>
@@ -42,17 +42,7 @@ export const MJCF = `
   <worldbody>
     <geom name="floor" type="plane" size="0.6 0.6 0.01" rgba="0.18 0.2 0.24 1"/>
     <geom name="base_plate" type="box" size="0.06 0.06 0.004" pos="0 0 0.004" rgba="0.3 0.3 0.3 1"/>
-    <!-- Pod and slot are mocap bodies: poses are set by the scene code, not by physics. -->
-    <body name="pod" mocap="true" pos="0.16 -0.06 ${POD_REST_Z}">
-      <geom name="pod_body" type="cylinder" size="${POD_R} ${POD_H / 2}" rgba="0.62 0.42 0.2 1"/>
-    </body>
-    <body name="slot" mocap="true" pos="0.16 0.08 0">
-      <geom name="slot_base" type="box" size="${SLOT_OPEN / 2 + SLOT_WALL} ${SLOT_OPEN / 2 + SLOT_WALL} ${SLOT_BASE / 2}" pos="0 0 ${SLOT_BASE / 2}" rgba="0.2 0.55 0.35 1"/>
-      <geom name="slot_wall_n" type="box" size="${SLOT_OPEN / 2 + SLOT_WALL} ${SLOT_WALL / 2} ${(SLOT_RIM_Z - SLOT_BASE) / 2}" pos="0 ${SLOT_OPEN / 2 + SLOT_WALL / 2} ${(SLOT_RIM_Z + SLOT_BASE) / 2}" rgba="0.3 0.7 0.45 1"/>
-      <geom name="slot_wall_s" type="box" size="${SLOT_OPEN / 2 + SLOT_WALL} ${SLOT_WALL / 2} ${(SLOT_RIM_Z - SLOT_BASE) / 2}" pos="0 ${-(SLOT_OPEN / 2 + SLOT_WALL / 2)} ${(SLOT_RIM_Z + SLOT_BASE) / 2}" rgba="0.3 0.7 0.45 1"/>
-      <geom name="slot_wall_e" type="box" size="${SLOT_WALL / 2} ${SLOT_OPEN / 2} ${(SLOT_RIM_Z - SLOT_BASE) / 2}" pos="${SLOT_OPEN / 2 + SLOT_WALL / 2} 0 ${(SLOT_RIM_Z + SLOT_BASE) / 2}" rgba="0.3 0.7 0.45 1"/>
-      <geom name="slot_wall_w" type="box" size="${SLOT_WALL / 2} ${SLOT_OPEN / 2} ${(SLOT_RIM_Z - SLOT_BASE) / 2}" pos="${-(SLOT_OPEN / 2 + SLOT_WALL / 2)} 0 ${(SLOT_RIM_Z + SLOT_BASE) / 2}" rgba="0.3 0.7 0.45 1"/>
-    </body>
+    ${world}
     <body name="base" pos="0 0 0">
       <geom name="servo1" type="box" size="0.0225 0.012 0.0175" pos="0 0 0.026" rgba="0.9 0.2 0.2 1" mass="0.06"/>
       <body name="turntable" pos="0 0 0.048">
@@ -90,3 +80,38 @@ export const MJCF = `
     ${MOTORS.map(act).join('\n    ')}
   </actuator>
 </mujoco>`;
+
+/** Arm scene: one pod and one slot (geometry unchanged, names fixed: the logged runs refer to them). */
+const ARM_SCENE_WORLD = `
+    <!-- Pod and slot are mocap bodies: poses are set by the scene code, not by physics. -->
+    <body name="pod" mocap="true" pos="0.16 -0.06 ${POD_REST_Z}">
+      <geom name="pod_body" type="cylinder" size="${POD_R} ${POD_H / 2}" rgba="0.62 0.42 0.2 1"/>
+    </body>
+    <body name="slot" mocap="true" pos="0.16 0.08 0">
+      <geom name="slot_base" type="box" size="${SLOT_OPEN / 2 + SLOT_WALL} ${SLOT_OPEN / 2 + SLOT_WALL} ${SLOT_BASE / 2}" pos="0 0 ${SLOT_BASE / 2}" rgba="0.2 0.55 0.35 1"/>
+      <geom name="slot_wall_n" type="box" size="${SLOT_OPEN / 2 + SLOT_WALL} ${SLOT_WALL / 2} ${(SLOT_RIM_Z - SLOT_BASE) / 2}" pos="0 ${SLOT_OPEN / 2 + SLOT_WALL / 2} ${(SLOT_RIM_Z + SLOT_BASE) / 2}" rgba="0.3 0.7 0.45 1"/>
+      <geom name="slot_wall_s" type="box" size="${SLOT_OPEN / 2 + SLOT_WALL} ${SLOT_WALL / 2} ${(SLOT_RIM_Z - SLOT_BASE) / 2}" pos="0 ${-(SLOT_OPEN / 2 + SLOT_WALL / 2)} ${(SLOT_RIM_Z + SLOT_BASE) / 2}" rgba="0.3 0.7 0.45 1"/>
+      <geom name="slot_wall_e" type="box" size="${SLOT_WALL / 2} ${SLOT_OPEN / 2} ${(SLOT_RIM_Z - SLOT_BASE) / 2}" pos="${SLOT_OPEN / 2 + SLOT_WALL / 2} 0 ${(SLOT_RIM_Z + SLOT_BASE) / 2}" rgba="0.3 0.7 0.45 1"/>
+      <geom name="slot_wall_w" type="box" size="${SLOT_WALL / 2} ${SLOT_OPEN / 2} ${(SLOT_RIM_Z - SLOT_BASE) / 2}" pos="${-(SLOT_OPEN / 2 + SLOT_WALL / 2)} 0 ${(SLOT_RIM_Z + SLOT_BASE) / 2}" rgba="0.3 0.7 0.45 1"/>
+    </body>
+`;
+export const MJCF = armMjcf(ARM_SCENE_WORLD);
+
+/** A pod (mocap body, standing on the floor at x y). Poses are set by the scene code, not by physics. */
+export const podBody = (name: string, x: number, y: number) =>
+  `<body name="${name}" mocap="true" pos="${x} ${y} ${POD_REST_Z}">
+      <geom type="cylinder" size="${POD_R} ${POD_H / 2}" rgba="0.62 0.42 0.2 1"/>
+    </body>`;
+
+/** One seedling-tray socket (mocap body, floor level at x y). */
+export const slotBody = (name: string, x: number, y: number) => {
+  const o = SLOT_OPEN / 2 + SLOT_WALL, h = (SLOT_RIM_Z - SLOT_BASE) / 2, zc = (SLOT_RIM_Z + SLOT_BASE) / 2;
+  const w = SLOT_OPEN / 2 + SLOT_WALL / 2;
+  return `<body name="${name}" mocap="true" pos="${x} ${y} 0">
+      <geom type="box" size="${o} ${o} ${SLOT_BASE / 2}" pos="0 0 ${SLOT_BASE / 2}" rgba="0.2 0.55 0.35 1"/>
+      <geom type="box" size="${o} ${SLOT_WALL / 2} ${h}" pos="0 ${w} ${zc}" rgba="0.3 0.7 0.45 1"/>
+      <geom type="box" size="${o} ${SLOT_WALL / 2} ${h}" pos="0 ${-w} ${zc}" rgba="0.3 0.7 0.45 1"/>
+      <geom type="box" size="${SLOT_WALL / 2} ${SLOT_OPEN / 2} ${h}" pos="${w} 0 ${zc}" rgba="0.3 0.7 0.45 1"/>
+      <geom type="box" size="${SLOT_WALL / 2} ${SLOT_OPEN / 2} ${h}" pos="${-w} 0 ${zc}" rgba="0.3 0.7 0.45 1"/>
+    </body>`;
+};

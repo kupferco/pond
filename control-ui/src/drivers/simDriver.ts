@@ -14,9 +14,9 @@ export class SimDriver implements RobotDriver {
   private ctrlIdx: Record<string, number> = {};
   private acc = 0;
 
-  constructor(mujoco: MainModule) {
+  constructor(mujoco: MainModule, mjcf: string = MJCF) {
     this.mujoco = mujoco;
-    this.model = mujoco.MjModel.from_xml_string(MJCF);
+    this.model = mujoco.MjModel.from_xml_string(mjcf);
     this.data = new mujoco.MjData(this.model);
     for (const m of MOTORS) {
       this.qposAdr[m.id] = this.model.jnt_qposadr[this.model.jnt(m.joint).id];
