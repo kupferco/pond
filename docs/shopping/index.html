@@ -3,75 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pond — Shopping list</title>
-<link rel="stylesheet" href="../assets/style.css">
-<style>
-  .sechead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px;margin-bottom:14px}
-  .sechead h2{margin:0}
-  .total{font-weight:700;color:var(--ink);font-size:15px}
-  .total small{font-weight:400;color:var(--muted)}
-  .item{display:flex;gap:12px;align-items:flex-start}
-  .tick{font-size:20px;line-height:1.2;flex:none}
-  .main{flex:1;min-width:0}
-  .top{display:flex;justify-content:space-between;gap:10px}
-  .price{font-weight:700;color:var(--ink);white-space:nowrap}
-  .price.tbc{font-weight:400;color:var(--muted)}
-  .note{font-size:14px;color:var(--body);margin-top:4px}
-  .buy{display:inline-block;margin-top:8px;font-weight:700;color:var(--green);text-decoration:none}
-  .nolink{display:inline-block;margin-top:8px;font-size:13px;color:var(--muted)}
-</style>
+<title>Pond — Part list</title>
+<meta http-equiv="refresh" content="0; url=../part-list/">
+<link rel="canonical" href="../part-list/">
+<script>location.replace('../part-list/');</script>
 </head>
-<body>
-<script src="../assets/site.js" data-root="../" data-page="shopping"></script>
-<header class="page-head">
-  <div class="inner">
-    <p class="label">Build</p>
-    <h1>Shopping list</h1>
-    <p class="updated" id="updated"></p>
-  </div>
-</header>
-<div id="list"></div>
-<footer class="site">Designed in London, being built in São Paulo.</footer>
-<script>
-const SYM={USD:'$',GBP:'£',BRL:'R$'};
-function money(v,c){return (SYM[c]||c+' ')+v.toLocaleString('en-GB',{maximumFractionDigits:2});}
-fetch('shopping.json').then(r=>r.json()).then(d=>{
-  document.getElementById('updated').textContent='Last updated '+d.updated;
-  const list=document.getElementById('list');
-  ['UK','Brazil'].forEach(w=>{
-    const items=d.items.filter(i=>i.where===w).sort((a,b)=>a.bought-b.bought);
-    if(!items.length)return;
-    const totals={};let unpriced=0;
-    items.forEach(i=>{if(i.bought)return;if(i.unit_price!=null){totals[i.currency]=(totals[i.currency]||0)+i.unit_price*(i.qty||1);}else unpriced++;});
-    const sec=document.createElement('section');sec.className='block';
-    const inner=document.createElement('div');inner.className='inner';
-    const head=document.createElement('div');head.className='sechead';
-    const h=document.createElement('h2');h.textContent='Buy in '+w;
-    const t=document.createElement('div');t.className='total';
-    const parts=Object.entries(totals).map(([c,v])=>'~'+money(v,c));
-    t.textContent=parts.length?parts.join(' + '):'No prices yet';
-    if(unpriced){const s=document.createElement('small');s.textContent=' + '+unpriced+' without a price';t.appendChild(s);}
-    head.append(h,t);inner.appendChild(head);
-    const lst=document.createElement('div');lst.className='list';
-    items.forEach(i=>{
-      const c=document.createElement('div');c.className='card item'+(i.bought?' done':'');
-      c.innerHTML='<div class="tick"></div><div class="main"><div class="top"><h3></h3><div class="price"></div></div><div class="chips"></div></div>';
-      c.querySelector('.tick').textContent=i.bought?'✅':'⬜';
-      c.querySelector('h3').textContent=(i.qty?i.qty+' × ':'')+i.item;
-      const p=c.querySelector('.price');
-      if(i.unit_price!=null){p.textContent=(i.approx?'~':'')+money(i.unit_price*(i.qty||1),i.currency);}
-      else{p.textContent='price tbc';p.classList.add('tbc');}
-      const m=c.querySelector('.main');const chips=c.querySelector('.chips');
-      if(i.unit_price!=null&&i.qty>1){const s=document.createElement('span');s.className='chip';s.textContent=money(i.unit_price,i.currency)+' each';chips.appendChild(s);}
-      const f=document.createElement('span');f.className='chip';f.textContent=i.for;chips.appendChild(f);
-      if(i.note){const n=document.createElement('div');n.className='note';n.textContent=i.note;m.appendChild(n);}
-      if(i.link){const a=document.createElement('a');a.className='buy';a.href=i.link;a.target='_blank';a.rel='noopener';a.textContent='Buy here →';m.appendChild(a);}
-      else{const s=document.createElement('span');s.className='nolink';s.textContent='No shop link yet';m.appendChild(s);}
-      lst.appendChild(c);
-    });
-    inner.appendChild(lst);sec.appendChild(inner);list.appendChild(sec);
-  });
-});
-</script>
-</body>
+<body><p>This page moved to the <a href="../part-list/">Part list</a>.</p></body>
 </html>

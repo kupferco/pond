@@ -17,7 +17,7 @@ Phase 1 moving into the first hardware: the arm is being built in the UK (two mo
 - **Decisions (why things are the way they are):** `docs/decisions/` (index in `docs.json`)
 - **Working notes:** `docs/notes/`
 - **Drawings:** `docs/gallery/` (built from `renders.json`)
-- **Shopping list and costs:** `docs/shopping/shopping.json`
+- **Part list and costs:** `docs/part-list/part-list.json`
 - **Live site:** https://kupferco.github.io/pond/ (moving to Firebase project `pond-grow`, pond-grow.web.app, once set up)
 - Google Drive ("Pond 2027") is an archive only.
 

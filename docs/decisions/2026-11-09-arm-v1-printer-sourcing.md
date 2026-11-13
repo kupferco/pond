@@ -20,4 +20,4 @@
 
 ## Where
 
-- Shopping list with links and totals: [Shopping](../shopping/)
+- Part list with links and totals: [Part list](../part-list/)

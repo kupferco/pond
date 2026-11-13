@@ -2,7 +2,7 @@
 // Tries the network first so the app shows the latest version, but waits at most 1.5 s:
 // if the network is slower than that, it shows the saved copy and updates it in the background.
 // Offline, it always uses the saved copy.
-const CACHE = 'pond-v3';
+const CACHE = 'pond-v4';
 const WAIT_MS = 1500;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
