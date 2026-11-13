@@ -51,7 +51,7 @@ const PAIRS: Pair[] = ['d', 'p', 'm'];
 const wheelName = (hand: 1 | 2, z: number) => `w${hand}${z > 0 ? 'f' : 'b'}`;
 const WHEEL_JOINTS = [wheelName(1, 1), wheelName(1, -1), wheelName(2, 1), wheelName(2, -1)];
 /** Per wheel system exactly ONE of the three pairs is on the clamp joint (it slides towards / away from the pipe); the other two are rigid on the frame. */
-export const CLAMP_PAIR: Record<1 | 2, Pair> = { 1: 'm', 2: 'p' };   // the two hands are mirror images turned half a turn, so the cart is the same whichever pipe it rides
+export const CLAMP_PAIR: Record<1 | 2, Pair> = { 1: 'm', 2: 'm' };   // each hand is the mirror image of the other, so the same pair (-60 deg) is the clamp pair on both and the cart is mirror-symmetric
 /** Fixed radial offset (m, + = away from the pipe) of the two rigid pairs from the CAD 26 mm radius: enough that they clear the curved pipe all the way round the bend. */
 export const FIXED_PAIR_TRIM_M = 0.0045;
 export type Vec3 = [number, number, number];

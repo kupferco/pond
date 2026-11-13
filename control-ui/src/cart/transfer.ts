@@ -4,7 +4,8 @@
 import { CartMotion, L_ARC, clampS, distToPath, frameQuat, pathAt, L_VERT, type PathPoint } from './track.ts';
 import { handTrims, type Vec3 } from './model.ts';
 
-export const SB = +(process.env.SB ?? -1), SC = +(process.env.SC ?? 1);
+/** Sign of the rotation-motor hinge for a swing away from the track, riding B (rolled half a turn) and C. */
+export const SB = -1, SC = 1;
 export const HAND_SPACING_MM = 140;
 export const PIPE_GAP_M = HAND_SPACING_MM / 1000;
 export const TRANSFER_HORIZ_MM = 450;    // shortened top bars: enough to show them
