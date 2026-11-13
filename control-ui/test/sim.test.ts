@@ -157,6 +157,16 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
       pg.model.body_parentid[baseBody.id] === cartBody.id && pg.model.body_jntnum[baseBody.id] === 0 && pg.model.body_mocapid[baseBody.id] === -1 && names.includes('xyaxes'));
     check('spine and brackets are in the scene', pg.model.ngeom > 200 && names.split('\n').filter((l) => l.includes('cylinder') && l.includes('fromto="0 0 ')).length >= 1);
   }
+  {
+    const names = podGrabMjcf();
+    check('spine is at least double the 33.7 mm tube', SPINE_R * 2 >= 2 * 0.0337);
+    check('end effector is a two-finger claw (no pin)', pg.model.nu === 8 && names.includes('claw_l') && names.includes('claw_r') && !names.includes('name="pin"'));
+    check('each store row has an end gate at the back', names.split('\n').filter((l) => l.includes('rgba="0.95 0.75 0.2 1"')).length >= STORE_ROWS);
+    pg.step();
+    const b = pg.model.body('base'), id = b.id; b.delete();
+    const bx = pg.data.xpos[3 * id] - pg.data.xpos[3 * pg.model.body('cart').id];
+    check('arm base is on the middle of the cart base (not off its end)', Math.abs(bx) < 0.056, String(bx));
+  }
   const pgCmd = new CommandLayer(pg, new RealDriver());
   const world = new PodWorld(pg);
 

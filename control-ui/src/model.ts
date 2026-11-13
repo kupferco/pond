@@ -44,6 +44,8 @@ export interface ArmMjcfOpts {
   armCollides?: boolean;
   /** Sensor elements (MJCF text) appended in a <sensor> block. */
   sensors?: string;
+  /** Extra actuator elements (MJCF text) appended after the six arm motors (a tool's own drives). */
+  actuators?: string;
 }
 
 export const armMjcf = (world: string, opts: ArmMjcfOpts = {}) => { const noJaw = opts.armCollides ? 'contype="0"' : ''; return `
@@ -96,6 +98,7 @@ export const armMjcf = (world: string, opts: ArmMjcfOpts = {}) => { const noJaw 
   </worldbody>
   <actuator>
     ${MOTORS.map(act).join('\n    ')}
+    ${opts.actuators ?? ''}
   </actuator>
   ${opts.sensors ? `<sensor>${opts.sensors}</sensor>` : ''}
 </mujoco>`; };

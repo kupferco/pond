@@ -79,6 +79,12 @@ export class SimDriver implements RobotDriver {
     for (let k = 0; k < 4; k++) this.data.mocap_quat[4 * i + k] = quat[k];
   }
 
+  /** Set a control by actuator name (a tool drive that is not one of the arm motors). */
+  setActuator(name: string, value: number): void {
+    const a = this.model.actuator(name), id = a.id; a.delete();
+    this.data.ctrl[id] = value;
+  }
+
   /** Place a free-joint body and give it a world-frame linear velocity (zero spin). For a body the scene carries by hand. */
   setFreeBody(name: string, pos: number[], quat: number[], vel: number[] = [0, 0, 0]): void {
     const jid = this.model.body_jntadr[this.model.body(name).id];

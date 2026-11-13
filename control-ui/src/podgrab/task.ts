@@ -4,22 +4,27 @@
 //  - The cart and the arm base are mocap bodies; the pods are free bodies with real contact: they slide down the store
 //    slope under gravity, stop at the front stop, are held back by the rails and the roof, and stand in the silicone
 //    collars of the tray when they are let go.
-//  - Hooking is kinematic: when the pin has been pushed through the hole of the pod in position 0 (within HOLE_TOL of
-//    the hole axis) the pod hangs on the pin (an expanding collet at the pin tip in the real hand) and the pod pose is
-//    written from the hand every step, with its velocity, so it pushes what it touches.
-//  - Perception noise: the controller sees hole and cell positions with a Gaussian error (default 0.8 mm per axis).
+//  - The end effector is a two-finger claw (two slide-jointed fingers driven by position actuators). The claw is lowered
+//    through the pick hole of the lid with the fingers open and closed on the pod in position 0. Gripping is kinematic: once
+//    the claw is closed (within CLAW_TOL across the fingers of the pod axis) the pod is held at the centre of the fingers and
+//    its pose is written from the hand every step, with its velocity, so it pushes what it touches. Opening the claw lets go.
+//  - The silicone collars are soft: the fingers may brush them; the rigid lid plates and everything else the arm must clear.
+//  - Perception noise: the controller sees hole and cell positions with a Gaussian error (default 0.8 mm per axis per reading)
+//    and takes the mean of nine readings.
 import type { CommandLayer } from '../commands.ts';
 import type { SimDriver } from '../drivers/simDriver.ts';
 import { MOTORS } from '../model.ts';
 import { solvePlanar, toolPoint, type Joints } from '../arm/kinematics.ts';
 import { gauss, rng } from '../arm/placement.ts';
 import {
-  CART_HOME_X, CART_SPEED, CART_X_MAX, CART_X_MIN, PIN_SPEED, PIPE_Y, PIPE_Z, POD_COUNT, POD_LEN, POD_R, armR, armU,
+  CART_HOME_X, CART_SPEED, CLAW_ACT, CLAW_GRIP, CLAW_OPEN, PAN0, CART_X_MAX, CART_X_MIN, PIN_SPEED, PIPE_Y, PIPE_Z, POD_COUNT, POD_LEN, POD_R, armR, armU,
   POD_PITCH, ROW_PITCH, SEAT_SPEED, TOOL_X, STORE_CAP, STORE_N, STORE_PITCH_DEG, STORE_ROWS, STORE_Y0, STORE_START, TRANSIT_Z, TRAY_SLOTS, CELL_R,
   READY_POSE, podName, rowX, seatPos, STORE_Z0, TRAY_CX, TRAY_HX, TRAY_HY, TRAY_TOP, slopeS, slotLabel, startPos, STORE_QUAT, UPRIGHT_QUAT,
 } from './layout.ts';
 
-export const HOLE_TOL = 0.0035;   // m, pin axis to hole axis (hole 7 mm radius, pin 3 mm radius, 0.5 mm margin)
+export const CLAW_TOL = CLAW_OPEN - POD_R;   // m, across the fingers: the pod must be between the open fingers (28.6 mm gap for a 25 mm pod)
+export const CLAW_TOL_ALONG = 0.005;  // m, along the fingers (12 mm wide) from the pod axis
+export const HOLE_TOL = CLAW_TOL;
 export const COLLAR_TOL = CELL_R - POD_R - 0.0004; // m, pod axis to the collar axis when it is lowered into the cell
 const SLIDE_DZ = 0.03;           // m, pod centre height over its seat while it slides over the tray (pod bottom 8 mm over the collars)
 const APPROACH = 0.1;             // m above the pod, along its axis, where the pin waits before it goes in
@@ -85,6 +90,9 @@ export class PodWorld {
   trayPod(slot: number): number { return this.pods.findIndex((p) => p.state === 'tray' && p.slot === slot); }
   get trayCount(): number { return this.pods.filter((p) => p.state === 'tray').length; }
   get storeCount(): number { return this.pods.filter((p) => p.state === 'store').length; }
+
+  /** Close (true) or open the claw: the fingers move by CLAW_GRIP towards the pod, from the open gap. */
+  setClaw(close: boolean) { for (const n of CLAW_ACT) this.sim.setActuator(n, close ? CLAW_GRIP : 0); }
 
   setCart(x: number) { this.cartX = Math.min(CART_X_MAX, Math.max(CART_X_MIN, x)); }
 
@@ -219,6 +227,7 @@ interface Move {
   /** Goal: cart x and the pin point in the arm plane: r down from the arm base axis, z (= u) out along it (see armR, armU). Missing = keep. */
   x?: number; r?: number; z?: number; pitch?: number;  // pitch: hand pitch in degrees, 0 = pin straight down
   wait?: number;              // s to stay at the goal (lets a released pod settle)
+  claw?: 'open' | 'close';    // claw command, given at the start of the move
   joint?: boolean;            // joint-space move to the IK pose of the goal
   speed?: number;             // pin speed m/s
   after?: () => string | void; // runs when the move has finished; a string fails the job
@@ -283,7 +292,7 @@ export class PodTask {
   }
 
   // --- planning
-  private noise(): number { return gauss(this.rand) * (this.cfg.noiseMm ?? 0.8) / 1000; }
+  private noise(): number { let s = 0; for (let k = 0; k < 9; k++) s += gauss(this.rand); return s / 9 * (this.cfg.noiseMm ?? 0.8) / 1000; }
 
   private planJob() {
     const { row, slot } = this.cfg.jobs[this.ji];
@@ -295,6 +304,7 @@ export class PodTask {
     const hole = w.pos(front), seat = seatPos(slot);
     // What the controller sees: the pod and the cell with a little noise.
     const T: V3 = [hole[0] + this.noise(), hole[1] + this.noise(), hole[2] + this.noise()];
+    T[0] = rowX(row) + this.noise();     // the claw is centred on the lid hole (known from the unit), not on the pod: the pod stands within 1 mm of it between the guide walls
     const S: V3 = [seat[0] + this.noise(), seat[1] + this.noise(), seat[2] + this.noise()];
     const A: V3 = [T[0], T[1] + APPROACH * STORE_N[1], T[2] + APPROACH * STORE_N[2]];   // above the pod, on its axis
     const id = front;
@@ -302,15 +312,22 @@ export class PodTask {
     const pin = (): V3 => w.pin();
     this.moves = [
       { label: 'Raising the arm', r: dn(A[2]), z: out(A[1]), pitch: -STORE_PITCH_DEG },
-      { label: `Driving to store row ${row + 1}`, x: T[0], r: dn(A[2]), z: out(A[1]) },
       {
-        label: 'Pin down through the lid and the pod hole', r: dn(T[2]), z: out(T[1]), speed: SEAT_SPEED,
+        label: `Driving to store row ${row + 1}`, x: T[0], r: dn(A[2]), z: out(A[1]),
+        // fine alignment over the hole: the cart takes out the sideways error of the arm (pan sag) that the camera sees at the claw
+        after: () => { w.setCart(w.cartX + (T[0] - pin()[0])); },
+      },
+      { label: 'Aligning the claw over the pick hole', wait: 0.4 },
+      { label: 'Claw down through the lid hole, round the pod', r: dn(T[2]), z: out(T[1]), speed: SEAT_SPEED },
+      {
+        label: 'Closing the claw on the pod', claw: 'close', wait: 0.5,
         after: () => {
           const p = pin(), c = w.pos(id), d = [p[0] - c[0], p[1] - c[1], p[2] - c[2]];
           const along = d[0] * STORE_N[0] + d[1] * STORE_N[1] + d[2] * STORE_N[2];
-          const lat = Math.hypot(d[0] - along * STORE_N[0], d[1] - along * STORE_N[1], d[2] - along * STORE_N[2]);
-          if (lat > HOLE_TOL) return 'missed the pod hole in the store';
-          if (Math.abs(along) > POD_LEN / 2) return 'pin not through the pod';
+          const lat = [d[0] - along * STORE_N[0], d[1] - along * STORE_N[1], d[2] - along * STORE_N[2]];
+          if (Math.abs(lat[0]) > CLAW_TOL) return `missed the pod: the claw fingers do not straddle it (${(lat[0] * 1000).toFixed(2)} mm off, row centre ${(rowX(row) * 1000).toFixed(1)}, pod ${(c[0] * 1000).toFixed(1)})`;
+          if (Math.hypot(lat[1], lat[2]) > CLAW_TOL_ALONG) return 'missed the pod: the claw is off the pod along the fingers';
+          if (Math.abs(along) > POD_LEN / 2) return 'claw not down round the pod';
           this.podId = id; w.pods[id].state = 'held';
         },
       },
@@ -326,10 +343,13 @@ export class PodTask {
         after: () => {
           const c = w.pos(id), e = Math.hypot(c[0] - seat[0], c[1] - seat[1]);
           if (e > COLLAR_TOL) return `missed the collar of socket ${slotLabel(slot)} (${(e * 1000).toFixed(1)} mm off)`;
-          this.podId = -1; w.release(); w.pods[id].state = 'lost';
         },
       },
-      { label: 'Backing the pin out', r: dn(S[2] + SLIDE_DZ), speed: PIN_SPEED },
+      {
+        label: 'Opening the claw', claw: 'open', wait: 0.5,
+        after: () => { this.podId = -1; w.release(); w.pods[id].state = 'lost'; },
+      },
+      { label: 'Backing the claw out', r: dn(S[2] + SLIDE_DZ), speed: PIN_SPEED },
       {
         label: 'Letting the pod settle', wait: 0.5,
         after: () => {
@@ -362,7 +382,7 @@ export class PodTask {
   /** Planar IK for the pin point at (r down, u out) with the hand pitched by `pitch` degrees (0 = pin straight down). */
   private ik(r: number, u: number, pitch: number): Joints | null {
     // r is down from the arm base, u out along the arm's forward direction; the pan axis is vertical, pitch 90 = pin straight down
-    return solvePlanar(0, u, -r, TOOL_X, 0, pitch + 90);
+    return solvePlanar(PAN0, u, -r, TOOL_X, 0, pitch + 90);
   }
 
   private control() {
@@ -373,8 +393,9 @@ export class PodTask {
     if (this.startOfMove) {
       this.startOfMove = false;
       this.moveTime = 0; this.dwell = 0;
+      if (mv.claw) this.world.setClaw(mv.claw === 'close');
       if (!this.inited) { this.inited = true; this.cmdJ = q.slice(0, 5); this.integ = [0, 0, 0, 0, 0]; }
-      const p = toolPoint({ A: this.cmdJ[0], B: this.cmdJ[1], C: this.cmdJ[2], D: this.cmdJ[3] }, TOOL_X, 0);
+      const p = toolPoint({ A: 0, B: this.cmdJ[1], C: this.cmdJ[2], D: this.cmdJ[3] }, TOOL_X, 0);
       this.from = { x: this.world.cartX, r: -p[2], z: p[0], p: this.cmdJ[1] + this.cmdJ[2] + this.cmdJ[3] - 90 };
       this.goal = { x: mv.x ?? this.from.x, r: mv.r ?? this.from.r, z: mv.z ?? this.from.z, p: mv.pitch ?? this.from.p };
       if (mv.joint) { this.goal.r = mv.r ?? this.from.r; }

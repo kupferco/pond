@@ -14,14 +14,14 @@
 //    the SO-101 base is on the plate centre at pipe height (the drawing puts the shoulder about 146 mm over the lid, which is
 //    the height of the bottom pipe), its base axis points out of the plate, so the arm works in the vertical plane across the
 //    track and the cart does the x motion.
-// ASSUMED here (no CAD yet): pod hole 14 mm and a 6 mm pin; tray 4 x 4 cells at 45 mm pitch with silicone collars, in the
+// ASSUMED here (no CAD yet): pod hole 14 mm (pods are gripped from outside by a two-finger claw); tray 4 x 4 cells at 45 mm pitch with silicone collars, in the
 // front half of the tray so that the arm reaches them; silicone collars round the lid pick holes; the roof and rails of the
 // store; the store placed right of the spine (x >= 50 mm), pick line at the front (y = -145 mm, the arm side), rows rising to the back; the tray and store brackets (flat bars from clamp collars on the spine, 4 mm thick); the spine drawn only
 // up to 0.78 m; the bottom pipe drawn straight and longer than the real straight run so the cart can reach the whole store
 // and tray; the cart does not collide with the track bracket (the real hands have a gap for it).
 //
-// The pods stand upright (hole axis vertical, or square to the store slope in the store). The arm points the pin down
-// through the silicone pick hole in the lid and the hole of the first pod, takes the pod up and out, drives along
+// The pods stand upright (hole axis vertical, or square to the store slope in the store). The arm points the claw down
+// through the silicone pick hole in the lid, closes it on the first pod, takes the pod up and out, drives along
 // the track and lowers it into a silicone collar of the horizontal seedling tray.
 import { PIPE_D_MM, PLATE_MM, SLEEVE_L_MM, SLEEVE_R_MM } from '../cart/track.ts';
 import { armMjcf } from '../model.ts';
@@ -33,23 +33,28 @@ const f = (n: number) => +n.toFixed(5);
 export const POD_R = 0.0125;
 export const POD_LEN = 0.04;
 export const HOLE_R = 0.007;
-export const PIN_R = 0.003;
-export const TOOL_X = 0.115;                    // pin axis point along the hand from the hand origin (pod centre when carried)
-export const PIN_BASE = 0.07;                   // where the pin starts along the hand
-export const PIN_TIP = POD_LEN / 2 - 0.004;     // pin tip beyond the pod centre when the pod is on the pin
+// claw gripper (replaces the pin): two flat fingers either side of the pod, along the hand, closing across the hand y axis (world x
+// in the working pose). ASSUMED dimensions: fingers 1.25 mm thick, 12 mm wide, open inner gap 28.6 mm (pod 25), outer 31.1 mm, which passes the 34 mm pick holes.
+export const TOOL_X = 0.115;                    // pod centre along the hand from the hand origin when carried
+export const CLAW_BASE = 0.07;                  // palm: where the fingers start along the hand
+export const CLAW_TIP = TOOL_X + 0.001;         // fingertips: the claw grips the upper half of the pod, so the guide walls of the store channel stay below it
+export const CLAW_T = 0.00125, CLAW_W = 0.012;
+export const CLAW_OPEN = 0.0143;                // open: half inner gap
+export const CLAW_GRIP = CLAW_OPEN - POD_R;     // finger travel from open to touching the pod (1.5 mm)
+export const CLAW_ACT = ['claw_l', 'claw_r'];
 
 // --- unit
 export const TANK_W = 0.7, TANK_D = 0.4, TANK_H = 0.3, SHELF_Z = 0.155, SHELF_T = 0.004;   // shelf slab z 155..159 (unit_v3_dimensioned.py)
 export const SHELF_TOP = SHELF_Z + SHELF_T;
 export const LID_Z = TANK_H, LID_T = 0.004;
-export const PIPE_Y = -0.06;                    // the track plane
+export const PIPE_Y = -0.075;                   // the track plane: -60 mm in the CAD, moved 15 mm further from the spine so the cart hands clear the 70 mm spine (ASSUMED)
 export const PIPE_Z = TANK_H + 0.15;            // bottom run of the track, 150 mm over the lid
 export const PIPE_R = m(PIPE_D_MM) / 2;
-export const PIPE_X0 = -0.34, PIPE_X1 = 0.42;
-export const CART_X_MIN = -0.33, CART_X_MAX = 0.26;   // arm plane; hand 1 is HAND_DX further along the pipe
+export const PIPE_X0 = -0.40, PIPE_X1 = 0.42;
+export const CART_X_MIN = -0.33, CART_X_MAX = 0.28;   // arm plane; hand 1 is HAND_DX further along the pipe
 export const CART_HOME_X = -0.1;
 // spine and brackets
-export const SPINE_R = 0.03370 / 2, SPINE_TOP = 0.78;
+export const SPINE_R = 0.070 / 2, SPINE_TOP = 0.78;   // 70 mm: more than double the 33.7 mm tube of unit_v3_dimensioned.py (follow-up request)
 export const BRACKET_T = 0.004;
 export const ROD_R = 0.004;                     // M8 rod (track_joint.py)
 export const SHELF_CAP_T = 0.004, SHELF_CAP_H = 0.03;   // ASSUMED shelf end caps
@@ -63,15 +68,16 @@ export const SHELF_CAP_T = 0.004, SHELF_CAP_H = 0.03;   // ASSUMED shelf end cap
 export const HAND_L = m(SLEEVE_L_MM), HAND_R = m(SLEEVE_R_MM), HAND_RIN = 0.022;
 export const SLOT_SEG = 0;                      // hand ring: 20 segments of 18 degrees, the one at 0 degrees (+y, towards the spine) left out for the rod
 export const SLOT_W = 2 * HAND_R * Math.sin(Math.PI / 20) * 0.98;   // width of that gap at the ring: ~11 mm
-export const HAND_DX = 0.075;                   // ASSUMED: hand centre along the track from the arm plane
+export const HAND_DX = 0;                       // hand 1 and the plate are centred on the arm base (the arm base sits on the middle of the cart base)
 export const HAND2_DZ = 0.10;                   // ASSUMED: wheel set 2 axis below the pipe (drawing: 280 mm, but that would be inside the tank); its underside stays 14 mm over the lid
 export const PLATE_T = 0.006, PLATE_Y = -HAND_R - PLATE_T / 2;       // cart base plate on the front of the hands
-export const DECK_TOP = -0.095;                 // cart frame z of the top of the arm deck: the arm shoulder (95 mm over the base) is at pipe height
-export const DECK_X0 = -0.045, DECK_Y1 = -HAND_R - PLATE_T, DECK_Y0 = -0.2;    // ASSUMED deck extent: from the plate to 200 mm in front of the pipe
-export const ARM_CY = -0.162;                   // arm base on the deck, cart frame y
+export const DECK_TOP = -0.125;                 // cart frame z of the top of the arm deck: the arm shoulder (95 mm over the base) is 30 mm under the pipe so the elbow clears the pipe when reaching the back rows
+export const ARM_CY = -0.162;                   // arm base on the deck, cart frame y (the arm stays 162 mm in front of the pipe, as before)
+export const DECK_X0 = -0.056, DECK_X1 = 0.056, DECK_Y1 = -HAND_R - PLATE_T, DECK_Y0 = ARM_CY - 0.04;    // deck: as long as the plate, from the plate to 40 mm past the arm base
 export const ARM_Y = PIPE_Y + ARM_CY;           // arm base origin, world y
 export const ARM_BASE_Z = PIPE_Z + DECK_TOP;    // flat on the deck; the arm turns about the vertical axis
-export const BASE_XYAXES = '0 1 0 -1 0 0';       // arm x = towards the back (+y), arm y = -x, arm z (pan axis) = up
+export const BASE_XYAXES = '-1 0 0 0 -1 0';      // base turned 90 degrees counterclockwise from before: base x = -x (along the track), base y = -y, z = up
+export const PAN0 = -90;                        // pan angle (deg) that points the arm across the track, towards the back of the tank (+y)
 /** World coordinates of a point for the arm planar IK: r down from the base, u out along the arm's forward direction (+y). */
 export const armR = (z: number) => ARM_BASE_Z - z;
 export const armU = (y: number) => y - ARM_Y;
@@ -82,11 +88,14 @@ export const STORE_CAP = 5;                     // pod positions per row
 export const STORE_START = 4;                   // pods per row at the start
 export const POD_PITCH = POD_R * 2 + 0.0005;    // pods rest against each other on the slope
 export const ROW_PITCH = 0.035;
-export const ROW_X0 = 0.05 + ROW_PITCH / 2;
+export const ROW_X0 = 0.07 + ROW_PITCH / 2;
 export const SLOPE = 12 * Math.PI / 180;
 export const STORE_Z0 = 0.22;                   // floor of the channel under position 0 (the store stands on legs on the shelf, under the lid)
 export const STORE_Y0 = -0.145;                 // y of the channel under position 0 (the pick line)
-export const LIP_H = 0.012;                     // front stop above the channel floor
+export const LOAD_CLEAR = 0.5;                  // clear floor needed behind the unit to load the store from the back
+export const LIP_H = 0.018;                     // front stop above the channel floor
+export const GUIDE_H = 0.017;                   // low guide walls between the rows: the pod stands within 0.5 mm of the row centre, below the fingertips
+export const GUIDE_HALF = ROW_PITCH / 2 - (POD_R + 0.0005);   // half thickness of a guide wall on a row boundary
 export const RAIL_H = POD_LEN + 0.0015;         // side rails and roof underside above the channel floor
 export const rowX = (row: number) => ROW_X0 + row * ROW_PITCH;
 const sinT = Math.sin(SLOPE), cosT = Math.cos(SLOPE);
@@ -101,7 +110,7 @@ export const STORE_N: [number, number, number] = [0, -sinT, cosT];
 export const STORE_PITCH_DEG = SLOPE * 180 / Math.PI;      // hand pitch (0 = pin straight down) with the pin along -STORE_N
 
 // --- lid pick holes, over position 0 of every row
-export const HOLE_HALF = 0.0165;
+export const HOLE_HALF = 0.017;
 export const COLLAR_H = 0.004;
 export const lidMid = LID_Z - LID_T / 2;
 export const pickHoleY = storePos(0, 0)[1] - (lidMid - storePos(0, 0)[2]) * Math.tan(SLOPE);
@@ -128,7 +137,7 @@ export const TRAY_SLOTS = TRAY_COLS * TRAY_ROWS;
 export const slotLabel = (slot: number) => `${String.fromCharCode(65 + Math.floor(slot / TRAY_COLS))}${(slot % TRAY_COLS) + 1}`;
 
 /** Ready pose of the arm (deg): pin straight down, pod point 90 mm below the arm base and 90 mm out, clear of the lid and the tray (an IK pose, so cartesian moves start on the right branch). */
-export const READY_POSE: Record<string, number> = { A: 0, B: 0.8, C: 27.9, D: 61.2, E: 0, F: 0 };
+export const READY_POSE: Record<string, number> = { A: PAN0, B: 0.8, C: 27.9, D: 61.2, E: 0, F: 0 };
 export const TRANSIT_Z = 0.35;                  // pin point height while driving with a pod
 export const PIN_SPEED = 0.1, SEAT_SPEED = 0.04, CART_SPEED = 0.25; // m/s
 
@@ -147,6 +156,8 @@ const SOLID = 'contype="1" conaffinity="1"';
 const OBST = 'contype="1" conaffinity="3"';
 const SLICK = `${OBST} friction="0.05 0.005 0.0001"`;   // store channel: pods slide (MuJoCo takes the larger friction of a pair)
 const SILICONE = rgba(0.95, 0.55, 0.2);
+// silicone collars are soft: pods collide with them, the arm (claw fingers) just brushes past
+const SOFT = 'contype="1" conaffinity="1"';
 
 /** A ring of boxes round the x axis (a hand sleeve): inner radius ri, outer ro, length len, segment k = skip left out (the C-gap). */
 function handRing(cx: number, cy: number, cz: number, skip: number | null, color: string): string[] {
@@ -169,7 +180,7 @@ function cartMount(): { open: string; close: string; baseAttrs: string } {
   const steel = rgba(0.25, 0.27, 0.3), green = rgba(0.18, 0.45, 0.35);
   const zTop = HAND_R, zBot = -HAND2_DZ - HAND_R;                      // plate: top of hand 1 to bottom of hand 2
   const px0 = HAND_DX - 0.056, px1 = HAND_DX + 0.056;
-  const dx1 = px0 + 0.012;                                             // the deck is joined to the plate over 12 mm
+  const dx1 = DECK_X1;
   const open = `<body name="cart" mocap="true" pos="${CART_HOME_X} ${PIPE_Y} ${PIPE_Z}">
       ${handRing(HAND_DX, 0, 0, SLOT_SEG, green).join('\n      ')}
       ${handRing(HAND_DX, 0, -HAND2_DZ, null, green).join('\n      ')}
@@ -233,16 +244,20 @@ function storeGeoms(): string[] {
   const out: string[] = [];
   const hw = ROW_PITCH / 2 - 0.0006;
   const sEnd = (STORE_CAP - 0.5) * POD_PITCH + 0.004, sFront = -POD_R - 0.003;
-  const blue = rgba(0.35, 0.55, 0.85), red = rgba(0.9, 0.3, 0.25);
+  const blue = rgba(0.35, 0.55, 0.85), red = rgba(0.9, 0.3, 0.25), amber = rgba(0.95, 0.75, 0.2);
   for (let r = 0; r < STORE_ROWS; r++) {
     out.push(slopeBox(r, (sEnd + sFront) / 2, -0.002, hw, (sEnd - sFront) / 2, 0.002, blue));
     out.push(slopeBox(r, -POD_R - 0.0015, LIP_H / 2, hw, 0.0015, LIP_H / 2, blue));
+    // the back end: a full-height end gate under the roof, so no pod can roll off the end of the row (the gate is taken out to load the row from behind)
+    out.push(slopeBox(r, sEnd + 0.002, (RAIL_H + 0.004) / 2, hw, 0.002, (RAIL_H + 0.004) / 2, amber));
     // the roof: from just behind position 0 to the back end, 1.5 mm over the top of the pods
     const s0 = POD_PITCH / 2;
     out.push(slopeBox(r, (s0 + sEnd) / 2, RAIL_H + 0.001, hw, (sEnd - s0) / 2, 0.001, red));
   }
   for (let r = 0; r <= STORE_ROWS; r++) {
     const x = rowX(0) - ROW_PITCH / 2 + r * ROW_PITCH;
+    const [, gy, gz] = slopePoint(0, (sEnd + sFront) / 2, GUIDE_H / 2);
+    out.push(`<geom type="box" pos="${f(x)} ${f(gy)} ${f(gz)}" size="${f(GUIDE_HALF)} ${f((sEnd - sFront) / 2)} ${f(GUIDE_H / 2)}" euler="${f(SLOPE)} 0 0" ${SLICK} ${rgba(0.28, 0.45, 0.75)}/>`);
     const [, y, z] = slopePoint(0, (sEnd + sFront) / 2, (RAIL_H + 0.002) / 2);
     out.push(`<geom type="box" pos="${f(x)} ${f(y)} ${f(z)}" size="0.001 ${f((sEnd - sFront) / 2)} ${f((RAIL_H + 0.002) / 2)}" euler="${f(SLOPE)} 0 0" ${SLICK} ${rgba(0.28, 0.45, 0.75)}/>`);
   }
@@ -255,7 +270,7 @@ function ring(cx: number, cy: number, z0: number, rIn: number, thick: number, h:
   const half = (rIn + thick) * Math.tan(Math.PI / n) + 0.0005;
   for (let k = 0; k < n; k++) {
     const a = 2 * Math.PI * k / n, rc = rIn + thick / 2;
-    out.push(`<geom type="box" pos="${f(cx + rc * Math.cos(a))} ${f(cy + rc * Math.sin(a))} ${f(z0 + h / 2)}" size="${f(half)} ${f(thick / 2)} ${f(h / 2)}" euler="0 0 ${f(a + Math.PI / 2)}" ${OBST} ${color}/>`);
+    out.push(`<geom type="box" pos="${f(cx + rc * Math.cos(a))} ${f(cy + rc * Math.sin(a))} ${f(z0 + h / 2)}" size="${f(half)} ${f(thick / 2)} ${f(h / 2)}" euler="0 0 ${f(a + Math.PI / 2)}" ${SOFT} ${color}/>`);
   }
   return out;
 }
@@ -317,10 +332,21 @@ export function podGrabMjcf(): string {
     wall(0, hy - t / 2, TANK_H / 2, hx, t / 2, TANK_H / 2),
     wall(-hx + t / 2, 0, TANK_H / 2, t / 2, hy, TANK_H / 2),
     wall(hx - t / 2, 0, TANK_H / 2, t / 2, hy, TANK_H / 2),
+    // loading zone behind the unit: 0.5 m of clear floor behind the tank back, where the store is loaded from (no collision)
+    `<geom type="box" pos="0 ${f(hy + LOAD_CLEAR / 2)} 0.0015" size="${f(hx)} ${f(LOAD_CLEAR / 2)} 0.0005" contype="0" conaffinity="0" ${rgba(0.95, 0.75, 0.2, 0.35)}/>`,
     ...spineGeoms(), ...lidGeoms(), ...storeGeoms(), ...trayGeoms(),
     ...Array.from({ length: POD_COUNT }, (_, i) => podMjcf(i)),
   ].join('\n    ');
-  const pin = `<geom name="pin" type="cylinder" fromto="0.07 0 0 ${f(TOOL_X + PIN_TIP)} 0 0" size="${PIN_R}" ${rgba(0.95, 0.8, 0.15)}/>`;
+  const gold = rgba(0.95, 0.8, 0.15);
+  const finger = (name: string, sgn: number) => `<body name="${name}" pos="0 ${f(sgn * (CLAW_OPEN + CLAW_T / 2))} 0">
+        <joint name="${name}" type="slide" axis="0 ${-sgn} 0" range="0 ${CLAW_GRIP * 3}" damping="5" armature="0.001" frictionloss="0"/>
+        <geom type="box" pos="${f((CLAW_BASE + CLAW_TIP) / 2)} 0 0" size="${f((CLAW_TIP - CLAW_BASE) / 2)} ${CLAW_T / 2} ${CLAW_W / 2}" mass="0.004" ${gold}/>
+      </body>`;
+  // palm across the root of the fingers, 24 mm wide so that it passes the 34 mm pick holes with the fingers
+  const claw = `<geom name="palm" type="box" pos="${CLAW_BASE - 0.003} 0 0" size="0.003 0.012 ${CLAW_W / 2}" mass="0.01" ${rgba(0.3, 0.3, 0.33)}/>
+      ${finger('claw_l', 1)}
+      ${finger('claw_r', -1)}`;
+  const clawActs = CLAW_ACT.map((n) => `<position name="${n}" joint="${n}" kp="100" ctrlrange="0 ${CLAW_GRIP * 3}"/>`).join('\n    ');
   const cart = cartMount();
   return armMjcf(world, {
     noGround: true,
@@ -328,6 +354,7 @@ export function podGrabMjcf(): string {
     sensors: '<contact name="arm_hit" subtree1="base" data="found" num="1"/>',
     mount: { open: cart.open, close: cart.close },
     baseAttrs: cart.baseAttrs,
-    handExtra: pin,
+    handExtra: claw,
+    actuators: clawActs,
   });
 }
