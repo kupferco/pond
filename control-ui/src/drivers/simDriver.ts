@@ -70,6 +70,14 @@ export class SimDriver implements RobotDriver {
     for (let k = 0; k < 4; k++) this.data.mocap_quat[4 * i + k] = quat[k];
   }
 
+  /** Place a free-joint body and give it a world-frame linear velocity (zero spin). For a body the scene carries by hand. */
+  setFreeBody(name: string, pos: number[], quat: number[], vel: number[] = [0, 0, 0]): void {
+    const jid = this.model.body_jntadr[this.model.body(name).id];
+    const q = this.model.jnt_qposadr[jid], v = this.model.jnt_dofadr[jid];
+    for (let k = 0; k < 3; k++) { this.data.qpos[q + k] = pos[k]; this.data.qvel[v + k] = vel[k]; this.data.qvel[v + 3 + k] = 0; }
+    for (let k = 0; k < 4; k++) this.data.qpos[q + 3 + k] = quat[k];
+  }
+
   dispose(): void {
     this.data.delete();
     this.model.delete();

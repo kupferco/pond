@@ -1,5 +1,5 @@
 // Pod-grab scene: a close-up of the bottom of a unit. The cart rides the bottom pipe, the arm on it reaches into the tank,
-// takes pods out of the sloped store rows by a pin through the pod hole and pushes them onto the pegs of the 4 x 4 seedling tray.
+// takes pods out of the sloped store rows by a pin through the lid and the pod hole and lowers them into the silicone collars of the horizontal 4 × 4 seedling tray.
 // Same layout as the Cart scene (status card, Step and Task tabs).
 import { CommandLayer } from '../commands.ts';
 import { SimDriver } from '../drivers/simDriver.ts';
@@ -8,7 +8,7 @@ import { MOTORS } from '../model.ts';
 import { Viewer } from '../viewer.ts';
 import { rng } from '../arm/placement.ts';
 import { CART_X_MAX, CART_X_MIN, STORE_ROWS, TRAY_COLS, TRAY_SLOTS, podGrabMjcf, slotLabel } from '../podgrab/layout.ts';
-import { PEG_TOL, PodTask, PodWorld, fillJobs, type JobResult } from '../podgrab/task.ts';
+import { COLLAR_TOL, HOLE_TOL, PodTask, PodWorld, fillJobs, type JobResult } from '../podgrab/task.ts';
 import { SCENE_INFOS } from './list.ts';
 import type { Scene } from './scene.ts';
 
@@ -24,7 +24,7 @@ export const podGrabScene: Scene = {
     const sim = new SimDriver(mujoco, podGrabMjcf());
     const cmd = new CommandLayer(sim, new RealDriver());
     const world = new PodWorld(sim);
-    const viewer = new Viewer(view, sim, { target: [0.4, 0.3, 0.36], dist: 1.25, maxDist: 3, az: 0.35, el: 0.28, far: 20 });
+    const viewer = new Viewer(view, sim, { target: [-0.1, -0.02, 0.33], dist: 1.0, maxDist: 3, az: 0.5, el: 0.3, far: 20 });
     status.textContent = '';
 
     const slotOptions = Array.from({ length: TRAY_SLOTS }, (_, i) => `<option value="${i}">Socket ${slotLabel(i)}</option>`).join('');
@@ -38,7 +38,7 @@ export const podGrabScene: Scene = {
         <dt>Cart</dt><dd id="g-cart"></dd>
         <dt>State</dt><dd id="g-state">Idle</dd>
       </dl>
-      <p class="hint">A close-up of the bottom of a unit. The cart rides the bottom pipe; the arm on it reaches into the tank. Left: the pod store, ${STORE_ROWS} sloped rows (the roof keeps the second pod in place while the first is lifted out). Right: the seedling tray, ${TRAY_COLS} × ${TRAY_SLOTS / TRAY_COLS} pegs, rows A to D from the bottom. The pin goes through the hole of the pod.</p>
+      <p class="hint">A close-up of the bottom of a Pond unit, in its real layout. The cart rides the bottom track pipe above the tank; the arm on it reaches down into the tank through the silicone pick holes in the lid. Right: the pod store, ${STORE_ROWS} rows under the lid, sloped so the pods slide to the pick hole (the little roof keeps the second pod in place while the first is lifted out). Left: the seedling tray, flat, ${TRAY_COLS} × ${TRAY_SLOTS / TRAY_COLS} silicone collars, rows A to D from the front.</p>
     </section>
     <p id="g-msg" class="msg"></p>
 
@@ -72,7 +72,7 @@ export const podGrabScene: Scene = {
     </div>
 
     <div class="tabpane" data-pane="task" hidden>
-      <p><strong>Fill the seedling tray.</strong> For each socket the cart drives to a store row, the pin goes through the hole of the first pod, lifts it off the channel and pulls it out (the pods behind slide forward one place), the cart drives to the socket and the pod is pushed onto its peg. Pods are taken row by row, so the tray ends up filled from several rows.</p>
+      <p><strong>Fill the seedling tray.</strong> For each socket the cart drives to a store row, the pin goes down through the lid and the hole of the first pod and lifts it up and out (the pods behind slide down one place), the cart drives to the socket and the pod is lowered into its silicone collar. Pods are taken row by row, so the tray ends up filled from several rows.</p>
       <div class="xy stepbar">
         <label>Speed <select class="lock tall" id="g-speed" aria-label="Speed"><option value="1">1×</option><option value="4" selected>4×</option><option value="0">Max</option></select></label>
       </div>
@@ -89,7 +89,7 @@ export const podGrabScene: Scene = {
         <button class="lock big grow" id="g-rand">Randomize</button>
       </div>
       <div class="row"><button class="lock big" id="g-reset">Reset scene</button></div>
-      <details class="more"><summary>How success is judged</summary><p class="hint">A pod counts as seated when it ends up within ${PEG_TOL * 1000} mm of its place on the peg (the hole is 14 mm, the pin and the peg 6 mm). The controller sees the hole and the peg with 0.8 mm of simulated perception noise, and the pin must be within 3.5 mm of the hole axis to get through. Hooking and seating are kinematic (no contact physics yet). Pod 25 × 30 mm with a 14 mm hole, a 34 mm pitch in the rows and a 5° slope are assumed, as in cad/pod_store.py.</p></details>
+      <details class="more"><summary>How success is judged</summary><p class="hint">The controller sees the hole and the collar with 0.8 mm of simulated perception noise. The pin must be within ${HOLE_TOL * 1000} mm of the hole axis to get through, and the pod must be within ${(COLLAR_TOL * 1000).toFixed(1)} mm of the collar axis when it is lowered; then it is let go and has to stay standing in the collar. The pods are real bodies: they slide down the 12° slope, stop at the front stop and are held by the rails and the roof. Carrying a pod on the pin is kinematic (the real hand has an expanding collet). Pod 25 × 40 mm with a 14 mm hole is assumed, as in cad/pod_store.py; the layout follows cad/unit_v3_dimensioned.py and cad/pod_store_reach.py.</p></details>
       <div id="g-result" class="result" hidden></div>
     </div>`;
 

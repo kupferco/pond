@@ -11,7 +11,7 @@ import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/pl
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
 import { cartMjcf } from '../src/cart/model.ts';
-import { POD_COUNT, ROW_X0, STORE_CAP, STORE_ROWS, STORE_START, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
+import { LID_Z, PIPE_Z, POD_COUNT, POD_PITCH, ROW_X0, STORE_CAP, STORE_ROWS, STORE_START, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
 import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
 
@@ -141,22 +141,30 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   cartModel.delete();
 }
 
-// Pod grab: the arm on the cart takes pods out of the sloped store rows and pushes them onto the 4 x 4 tray pegs.
+// Pod grab: the arm on the cart takes pods out of the sloped store rows and lowers them into the silicone collars of the 4 x 4 tray.
 {
   const pg = new SimDriver(mj, podGrabMjcf());
-  check('pod grab model has the cart, the arm base and every pod as mocap bodies', pg.model.nmocap === POD_COUNT + 2, String(pg.model.nmocap));
+  check('pod grab model has the cart and the arm base as mocap bodies; the pods are free bodies', pg.model.nmocap === 2 && pg.model.nbody > POD_COUNT, String(pg.model.nmocap));
   check('store holds enough pods for the tray', STORE_ROWS * STORE_START >= TRAY_SLOTS && STORE_START < STORE_CAP);
-  check('store rows are sloped up towards the back and tray rows stack upwards', storePos(0, 1)[2] > storePos(0, 0)[2] && storePos(0, 0)[0] === ROW_X0 && seatPos(0)[2] < seatPos(TRAY_SLOTS - 1)[2]);
+  check('unit layout: track 150 mm over the lid, store slopes down to the pick line, tray flat and left of the store',
+    Math.abs(PIPE_Z - LID_Z - 0.15) < 1e-9 && storePos(0, 1)[2] > storePos(0, 0)[2] && storePos(0, 1)[1] < storePos(0, 0)[1] && seatPos(0)[2] === seatPos(TRAY_SLOTS - 1)[2] && seatPos(TRAY_SLOTS - 1)[0] < ROW_X0);
   const pgCmd = new CommandLayer(pg, new RealDriver());
   const world = new PodWorld(pg);
 
-  // One pod: store row 1 -> socket A1; the row behind it slides forward one position.
-  let task = new PodTask(world, pgCmd, { jobs: [{ row: 0, slot: 0 }], seed: 1 });
-  while (!task.done) task.advance(0.5);
-  check('one pod is seated on peg A1', task.failReason === '' && world.trayPod(0) >= 0, task.failReason);
-  for (let i = 0; i < 300; i++) world.tick(0.002);
-  const row0 = world.rowPods(0).map((i) => (world.pods[i].where as { k: number }).k);
-  check('row 1 shifted forward by one position', row0.join() === '0,1,2' && world.pods[world.frontPod(0)].pos[1] === storePos(0, 0)[1], row0.join());
+  // Settled store: every pod rests on its channel, none above the roof or out of its row.
+  for (let i = 0; i < 1500; i++) { pg.step(); }
+  check('store pods rest in position 0..3 of their row', world.rowCount(0) === STORE_START && world.frontPod(0) >= 0 && world.frontPod(5) >= 0);
+  const second = world.rowPods(2)[1], z1 = world.pos(second);
+
+  // One pod: store row 3 -> socket A1; the roof keeps the second pod down, the row behind slides one place.
+  let task = new PodTask(world, pgCmd, { jobs: [{ row: 2, slot: 0 }], seed: 1 });
+  let zMax = 0, yMove = 0;
+  while (!task.done) { task.advance(0.1); const p = world.pos(second); zMax = Math.max(zMax, p[2] - z1[2]); yMove = Math.max(yMove, Math.abs(p[1] - z1[1]) + Math.abs(p[0] - z1[0])); if (world.pods[second].state !== 'store') break; }
+  check('one pod is seated in collar A1', task.failReason === '' && world.trayPod(0) >= 0, task.failReason);
+  check('roof: the second pod is not lifted or dragged while the first is picked', zMax < 0.002, String(zMax));
+  for (let i = 0; i < 1000; i++) pg.step();
+  const row2 = world.rowPods(2).map((i) => Math.round(world.slopePos(i) / POD_PITCH));
+  check('row 3 slid down one position', row2.join() === '0,1,2' && world.frontPod(2) === second, row2.join());
 
   // Fill the whole tray from several rows.
   world.reset();
@@ -165,7 +173,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const rowsUsed = new Set(task.cfg.jobs.map((j) => j.row)).size;
   check('whole 4 x 4 tray filled', task.failReason === '' && world.trayCount === TRAY_SLOTS, `${world.trayCount}/${TRAY_SLOTS} ${task.failReason}`);
   check('pods came from several rows', rowsUsed >= 2, String(rowsUsed));
-  check('every seated pod sits on its peg', task.results.every((r) => r.success && r.posErrMm <= 3.5), JSON.stringify(task.results.map((r) => r.posErrMm)));
+  check('every seated pod stands in its collar', task.results.every((r) => r.success && r.posErrMm <= 4), JSON.stringify(task.results.map((r) => r.posErrMm)));
 
   // A pin that misses the hole fails the job instead of faking success.
   world.reset();
