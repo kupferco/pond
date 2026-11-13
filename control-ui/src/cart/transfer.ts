@@ -4,6 +4,7 @@
 import { CartMotion, L_ARC, clampS, distToPath, frameQuat, pathAt, L_VERT, type PathPoint } from './track.ts';
 import { handTrims, type Vec3 } from './model.ts';
 
+export const SB = +(process.env.SB ?? -1), SC = +(process.env.SC ?? 1);
 export const HAND_SPACING_MM = 140;
 export const PIPE_GAP_M = HAND_SPACING_MM / 1000;
 export const TRANSFER_HORIZ_MM = 450;    // shortened top bars: enough to show them
@@ -129,7 +130,7 @@ export class TransferRun {
   swingW = 0;
   swingGoal = 0;
   /** The hinge angle of the rotation motors in the cart frame. The cart is rolled half a turn on B, so the same swing away from the track is the opposite hinge angle there. */
-  get swing() { return this.pipe === 'B' ? -this.swingW : this.swingW; }
+  get swing() { return (this.pipe === 'B' ? SB : SC) * this.swingW; }
   /** Drive motors: wheel spin angle (rad) of hand 1 (on the riding pipe) and hand 2. Only a closed clamp's wheels turn. */
   readonly spin = [0, 0];
   private lastS = NaN;

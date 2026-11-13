@@ -50,7 +50,10 @@ const PAIRS: Pair[] = ['d', 'p', 'm'];
 /** Name of a driven wheel's spin joint (hand 1 or 2, row +1 or -1 along the pipe). */
 const wheelName = (hand: 1 | 2, z: number) => `w${hand}${z > 0 ? 'f' : 'b'}`;
 const WHEEL_JOINTS = [wheelName(1, 1), wheelName(1, -1), wheelName(2, 1), wheelName(2, -1)];
-const JOINTS = ['h1d', 'h1p', 'h1m', 'h2d', 'h2p', 'h2m'] as const;
+/** Per wheel system exactly ONE of the three pairs is on the clamp joint (it slides towards / away from the pipe); the other two are rigid on the frame. */
+export const CLAMP_PAIR: Record<1 | 2, Pair> = { 1: 'm', 2: 'p' };   // the two hands are mirror images turned half a turn, so the cart is the same whichever pipe it rides
+/** Fixed radial offset (m, + = away from the pipe) of the two rigid pairs from the CAD 26 mm radius: enough that they clear the curved pipe all the way round the bend. */
+export const FIXED_PAIR_TRIM_M = 0.0045;
 export type Vec3 = [number, number, number];
 export const ROT_MAX_RAD = Math.PI / 2;   // rotation motors: swing range about the pipe (rad)
 const CART_COL = 'contype="2" conaffinity="0"';   // cart geoms collide with pipes only (pipes: contype 1, conaffinity 2)
@@ -128,7 +131,11 @@ function pairGeoms(hand: 1 | 2, pair: Pair): string {
   box(0, (BAR_X0 + BAR_X1) / 2, 0, BAR_HL, (BAR_X1 - BAR_X0) / 2, BAR_W / 2, BLUE);                                                    // cross bar between the rows
   if (driven) {
     cyl(-42, WORM_X, GEAR_Y, 56, WORM_X, GEAR_Y, 1.5, rgba([0.9, 0.55, 0.15]));        // worm shaft
-    cyl(45 + 8, WORM_X, GEAR_Y, 45 + 8 + MOTOR_L, WORM_X, GEAR_Y, MOTOR_R, rgba([0.85, 0.25, 0.25])); // drive motor beyond the sleeve end
+    // Drive motor: a body bolted to the wheel system's frame (no joint); only its output, the worm and wheels, spins.
+    g.push(`<body name="motor_drive${hand}">`);
+    cyl(45 + 8, WORM_X, GEAR_Y, 45 + 8 + MOTOR_L, WORM_X, GEAR_Y, MOTOR_R, rgba([0.85, 0.25, 0.25]));
+    cyl(45 + 8 + MOTOR_L, WORM_X, GEAR_Y, 45 + 8 + MOTOR_L + 6, WORM_X, GEAR_Y, MOTOR_R - 3, rgba([0.3, 0.3, 0.32])); // rear cap
+    g.push('</body>');
   } else {
     for (const z of [SPR_Z, -SPR_Z]) cyl(z, BAR_X1, 0, z, BAR_X1 + SPR_INST, 0, SPR_OD / 2, rgba([0.9, 0.2, 0.2])); // two compression springs
     box(0, BAR_X1 + SPR_INST + CAP_T / 2, 0, BAR_HL + 4 + 25, CAP_T / 2, BAR_W / 2 + 3, rgba([0.6, 0.6, 0.62]));        // spring cap
@@ -190,6 +197,19 @@ function plateGeoms(hy: number): string {
   return g.join('\n      ');
 }
 
+const VISUAL = 'contype="0" conaffinity="0"';   // motor housings are drawn only: the clamp–track check is about the clamp and wheels
+/** A hollow-shaft ring (a rotation motor's housing or rotor) round the pipe axis from x0 to x1 (mm), as boxes. */
+function ringGeoms(x0: number, x1: number, rIn: number, rOut: number, col: string, N = 16): string {
+  const g: string[] = [], seg = (2 * Math.PI) / N, rc = (rIn + rOut) / 2;
+  for (let i = 0; i < N; i++) {
+    const a = (i + 0.5) * seg, uy = -Math.sin(a), uz = Math.cos(a);
+    g.push(`<geom type="box" pos="${f(m((x0 + x1) / 2))} ${f(m(rc) * uy)} ${f(m(rc) * uz)}" xyaxes="1 0 0 0 ${f(uy)} ${f(uz)}" size="${f(m(x1 - x0) / 2)} ${f(m(rOut - rIn) / 2)} ${f(m(rc) * Math.tan(seg / 2))}" ${col} ${VISUAL}/>`);
+  }
+  return g.join('\n      ');
+}
+const ROT_MOTOR = { x0: -60, x1: -48, rIn: 22, rOut: 38 };   // ASSUMED: hollow-shaft servo ring at the sleeve's far end from the drive motor; its rotor ring bolts to the sleeve end wall
+const ROT_COL = rgba([0.1, 0.65, 0.6]), ROT_ROTOR_COL = rgba([0.95, 0.95, 0.95]);
+
 /** The cart mocap body (see frame notes below). Two identical hands, 'spacingMm' apart, with the plate centred between them. */
 export function cartBody(spacingMm = PIPE_SPACING_MM): string {
   const hy = m(spacingMm);
@@ -198,16 +218,24 @@ export function cartBody(spacingMm = PIPE_SPACING_MM): string {
   // sits the same distance from its end. Hand 2 is the mirror image of hand 1 (gap and wheels), so the whole cart is symmetric.
   const hand = (h: 1 | 2) => `<body name="hand${h}" pos="0 0 ${f(handZ(h, spacingMm))}">
       ${sleeveGeoms(h)}
+      ${ringGeoms(ROT_MOTOR.x1, -45, ROT_MOTOR.rIn, ROT_MOTOR.rOut, ROT_ROTOR_COL)}
       ${PAIRS.map((p) => {
         const [uy, uz] = radialDir(h, p);
-        return `<body name="h${h}${p}" ><joint name="h${h}${p}" type="slide" axis="0 ${f(uy)} ${f(uz)}" range="-0.02 0.05"/>
+        const clamp = p === CLAMP_PAIR[h];   // the clamp pair slides on its guide pins; the other two are welded to the frame, set back by the fixed trim
+        return `<body name="h${h}${p}" ${clamp ? '' : `pos="0 ${f(uy * FIXED_PAIR_TRIM_M)} ${f(uz * FIXED_PAIR_TRIM_M)}"`}>${clamp ? `<joint name="h${h}${p}" type="slide" axis="0 ${f(uy)} ${f(uz)}" range="-0.02 0.05"/>` : ''}
         ${pairGeoms(h, p)}
       </body>`;
       }).join('\n      ')}
     </body>`;
   // Two rotation motors (one per wheel set): hinges about the engaged pipe's axis (cart x), in series, carrying the whole assembly (both
   // hands, pads, plate, arm base) as one rigid body. Each motor takes half of the swing. The motors/drive motors are rigid parts of the cart.
+  // The rotation motors' stators are bodies on the cart frame itself (which does not turn); their rotors are rings on the hands, which do.
+  const stator = (h: 1 | 2) => `<body name="motor_rot${h}" pos="0 0 ${f(handZ(h, spacingMm))}">
+      ${ringGeoms(ROT_MOTOR.x0, ROT_MOTOR.x1, ROT_MOTOR.rIn, ROT_MOTOR.rOut, ROT_COL)}
+    </body>`;
   return `<body name="cart" mocap="true" pos="0 0 0">
+   ${stator(1)}
+   ${stator(2)}
    <body name="rot1"><inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.001"/><joint name="rot1" type="hinge" axis="1 0 0" range="-3.2 3.2"/>
    <body name="rot2"><inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.001"/><joint name="rot2" type="hinge" axis="1 0 0" range="-3.2 3.2"/>
     ${hand(1)}
@@ -228,7 +256,9 @@ export function setCart(model: { jnt(name: string): { id: number }; jnt_qposadr:
   hand1Open: number, hand2Open: number, plateSide: 1 | -1 = 1, trims1: number[] = [CLEAR_M, CLEAR_M, CLEAR_M], trims2: number[] = [CLEAR_M, CLEAR_M, CLEAR_M]): void {
   const set = (name: string, v: number) => { qpos[model.jnt_qposadr[model.jnt(name).id]] = v; };
   const pos = (open: number, trim: number) => { const o = Math.min(1, Math.max(0, open)); return (1 - o) * trim + o * WHEEL_OPEN_M; };
-  JOINTS.forEach((n, i) => set(n, i < 3 ? pos(hand1Open, trims1[i]) : pos(hand2Open, trims2[i - 3])));
+  // only each hand's clamp pair has a joint; trims for the rigid pairs are ignored
+  set('h1' + CLAMP_PAIR[1], pos(hand1Open, trims1[PAIRS.indexOf(CLAMP_PAIR[1])]));
+  set('h2' + CLAMP_PAIR[2], pos(hand2Open, trims2[PAIRS.indexOf(CLAMP_PAIR[2])]));
   set('plateflip', plateSide === 1 ? 0 : Math.PI);   // pads, plate and arm base turn together, so the arm base stays on the same world side, on top of the plate
 }
 

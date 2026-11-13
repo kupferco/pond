@@ -11,7 +11,7 @@ import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/pl
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
 import { cartMjcf, cartActuators, cartBody, clampTrackContacts, pipeGeoms, setCart, setMotors } from '../src/cart/model.ts';
-import { PIPE_GAP_M, TRANSFER_HORIZ_MM, TransferRun, buildSwingTable, cartPose, cartTrims, other, pipePoint, swingNeeded, type Pipe } from '../src/cart/transfer.ts';
+import { SB, SC, PIPE_GAP_M, TRANSFER_HORIZ_MM, TransferRun, buildSwingTable, cartPose, cartTrims, other, pipePoint, swingNeeded, type Pipe } from '../src/cart/transfer.ts';
 import { makeClearCheck } from '../src/cart/clearance.ts';
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
 
@@ -142,12 +142,12 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const xferModel = mj.MjModel.from_xml_string(`<mujoco><worldbody>${pipeGeoms(0, -1, TRANSFER_HORIZ_MM, 'b')}${pipeGeoms(PIPE_GAP_M, 1, TRANSFER_HORIZ_MM, 'c')}${cartBody(140)}</worldbody>${cartActuators()}</mujoco>`);
   check('transfer model loads with one cart mocap body', xferModel.nmocap === 1, String(xferModel.nmocap));
   const xd = new mj.MjData(xferModel); setCart(xferModel, xd.qpos, 0, 1, -1); mj.mj_forward(xferModel, xd);
-  check('wheel pair joints can be driven', xferModel.nq === 13 && xferModel.nu === 4 && Math.abs(xd.qpos[xferModel.jnt_qposadr[xferModel.jnt('h2d').id]] - 0.032) < 1e-9, String(xferModel.nq)); xd.delete();
+  check('wheel pair joints can be driven', xferModel.nq === 9 && xferModel.nu === 4 && Math.abs(xd.qpos[xferModel.jnt_qposadr[xferModel.jnt('h2p').id]] - 0.032) < 1e-9, String(xferModel.nq)); xd.delete();
   xferModel.delete();
   { const am = mj.MjModel.from_xml_string(`<mujoco><worldbody>${cartBody(140)}</worldbody>${cartActuators()}</mujoco>`), ad = new mj.MjData(am);
     check('cart has 4 motors: 2 drive and 2 rotation actuators', ['drive1', 'drive2', 'rot1', 'rot2'].every((n) => am.actuator(n).id >= 0) && am.nu === 4);
     setMotors(am, ad, 1.5, -0.5, 0.7); mj.mj_forward(am, ad);
-    check('drive motors turn only wheel joints; motor bodies are rigid (no joint on any motor/worm geom body)', am.jnt_type.length === 13 && ad.qpos[am.jnt_qposadr[am.jnt('w1f').id]] === 1.5 && ad.ctrl[am.actuator('drive1').id] === 1.5);
+    check('drive motors turn only wheel joints; motor bodies are rigid (no joint on any motor/worm geom body)', am.jnt_type.length === 9 && ad.qpos[am.jnt_qposadr[am.jnt('w1f').id]] === 1.5 && ad.ctrl[am.actuator('drive1').id] === 1.5);
     check('both rotation motors share the swing about the pipe axis', Math.abs(ad.qpos[am.jnt_qposadr[am.jnt('rot1').id]] + ad.qpos[am.jnt_qposadr[am.jnt('rot2').id]] - 0.7) < 1e-9);
     ad.delete(); am.delete(); }
   check('B top bar runs left, C top bar runs right', pipePoint('B', 200).x < -0.1 && pipePoint('C', 200).x > PIPE_GAP_M + 0.1);
@@ -163,7 +163,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   let worst = 0, hits = 0, probes = 0;
   for (const pp of ['B', 'C'] as Pipe[]) for (let sc = 0; sc <= maxS; sc += 1) for (const [o1, o2] of [[0, 1], [0, 0.5], [0.5, 0]] as const) {
     if (sc > L_VERT && o2 < 1 && o2 > 0) continue;
-    const sw = (pp === 'B' ? -1 : 1) * swingNeeded(table, pp, sc);   // the rotation motors swing the free clamp just clear over the diverging bends
+    const sw = (pp === 'B' ? SB : SC) * swingNeeded(table, pp, sc);   // the rotation motors swing the free clamp just clear over the diverging bends
     const c = cartPose(pp, sc), tr = cartTrims(pp, c, sw);
     xdd.mocap_pos[3 * cmo] = c.x; xdd.mocap_pos[3 * cmo + 1] = 0; xdd.mocap_pos[3 * cmo + 2] = c.z;
     for (let k = 0; k < 4; k++) xdd.mocap_quat[4 * cmo + k] = c.q[k];
