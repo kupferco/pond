@@ -49,7 +49,7 @@
     <div class="rows">
       <a class="row" href="gallery/"><div>Drawings<small>Every CAD render, with versions</small></div></a>
       <a class="row" href="decisions/"><div>Decisions<small>Why things are the way they are</small></div></a>
-      <a class="row" href="shopping/"><div>Shopping list<small id="shopsum">What to buy in the UK and Brazil</small></div></a>
+      <a class="row" href="part-list/"><div>Part list<small id="shopsum">What to buy or print, in the UK and Brazil</small></div></a>
       <a class="row" href="history/"><div>History<small>What was done, and when</small></div></a>
     </div>
   </div>
@@ -76,9 +76,9 @@ fetch('roadmap/roadmap.json').then(r=>r.json()).then(d=>{
     a.appendChild(div);next.appendChild(a);
   });
 });
-fetch('shopping/shopping.json').then(r=>r.json()).then(d=>{
-  const left=d.items.filter(i=>!i.bought).length;
-  document.getElementById('shopsum').textContent=left+' of '+d.items.length+' items still to buy';
+fetch('part-list/part-list.json').then(r=>r.json()).then(d=>{
+  const left=d.items.filter(i=>i.status==='to get').length;
+  document.getElementById('shopsum').textContent=left+' of '+d.items.length+' parts still to get';
 });
 </script>
 </body>
