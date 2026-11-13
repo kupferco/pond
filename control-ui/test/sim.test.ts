@@ -10,7 +10,7 @@ import { graspPoint, solveDown } from '../src/arm/kinematics.ts';
 import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/placement.ts';
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
-import { cartMjcf, cartActuators, cartBody, clampTrackContacts, pipeGeoms, setCart, setMotors } from '../src/cart/model.ts';
+import { cartMjcf, WHEEL_OPEN_M, cartActuators, cartBody, clampTrackContacts, pipeGeoms, setCart, setMotors } from '../src/cart/model.ts';
 import { SB, SC, PIPE_GAP_M, TRANSFER_HORIZ_MM, TransferRun, applyCart, buildSwingTable, cartPose, cartTrims, other, pipePoint, swingNeeded, type Pipe } from '../src/cart/transfer.ts';
 import { makeClearCheck } from '../src/cart/clearance.ts';
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
@@ -142,13 +142,27 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const xferModel = mj.MjModel.from_xml_string(`<mujoco><worldbody>${pipeGeoms(0, -1, TRANSFER_HORIZ_MM, 'b')}${pipeGeoms(PIPE_GAP_M, 1, TRANSFER_HORIZ_MM, 'c')}${cartBody(140)}</worldbody>${cartActuators()}</mujoco>`);
   check('transfer model loads with one cart mocap body', xferModel.nmocap === 1, String(xferModel.nmocap));
   const xd = new mj.MjData(xferModel); setCart(xferModel, xd.qpos, 0, 1, -1); mj.mj_forward(xferModel, xd);
-  check('wheel pair joints can be driven', xferModel.nq === 9 && xferModel.nu === 6 && Math.abs(xd.qpos[xferModel.jnt_qposadr[xferModel.jnt('h2p').id]] - 0.032) < 1e-9, String(xferModel.nq)); xd.delete();
+  check('wheel pair joints can be driven', xferModel.nq === 9 && xferModel.nu === 6 && Math.abs(xd.qpos[xferModel.jnt_qposadr[xferModel.jnt('h2p').id]] - WHEEL_OPEN_M) < 1e-9, String(xferModel.nq)); xd.delete();
   xferModel.delete();
   { const am = mj.MjModel.from_xml_string(`<mujoco><worldbody>${cartBody(140)}</worldbody>${cartActuators()}</mujoco>`), ad = new mj.MjData(am);
     check('each wheel system has 3 motors (A drive, B rotation, C clamp): 6 actuators and 6 motor bodies', ['drive1', 'drive2', 'rot1', 'rot2', 'clamp1', 'clamp2'].every((n) => am.actuator(n).id >= 0) && am.nu === 6 && ['motor_drive1', 'motor_drive2', 'motor_rot1', 'motor_rot2', 'motor_clamp1', 'motor_clamp2'].every((n) => am.body(n).id > 0));
     setMotors(am, ad, 1.5, -0.5, 0.7); mj.mj_forward(am, ad);
     check('drive motors turn only wheel joints; motor bodies are rigid (no joint on any motor/worm geom body)', am.jnt_type.length === 9 && ad.qpos[am.jnt_qposadr[am.jnt('w1f').id]] === 1.5 && ad.ctrl[am.actuator('drive1').id] === 1.5);
     check('both rotation motors share the swing about the pipe axis', Math.abs(ad.qpos[am.jnt_qposadr[am.jnt('rot1').id]] + ad.qpos[am.jnt_qposadr[am.jnt('rot2').id]] - 0.7) < 1e-9);
+    // Nothing may encircle the pipe: every ring-shaped part of the rotation motors (stator and rotor) is an open C, so the pipe can leave sideways.
+    for (const h of [1, 2]) {
+      const angs: number[] = [];
+      for (let g = 0; g < am.ngeom; g++) {
+        const bn = am.body(am.geom_bodyid[g]).name, x = am.geom_pos[3 * g], y = am.geom_pos[3 * g + 1], z = am.geom_pos[3 * g + 2];
+        const r = Math.hypot(y, z);
+        if ((bn === `motor_rot${h}` || bn === `hand${h}`) && am.geom_type[g] === 6 && x < -0.045 && r > 0.02 && r < 0.06) angs.push(Math.atan2(y, z) * 180 / Math.PI);
+      }
+      angs.sort((a, b) => a - b);
+      let gap = 360 - (angs[angs.length - 1] - angs[0]);
+      for (let i = 1; i < angs.length; i++) gap = Math.max(gap, angs[i] - angs[i - 1]);
+      check(`rotation motor ${h}: ring parts form an open C (no closed ring round the pipe)`, angs.length > 4 && gap >= 90, `${angs.length} parts, widest opening ${gap.toFixed(0)} deg`);
+    }
+    check('clamp travel is only what clamping needs (at most 25 mm)', WHEEL_OPEN_M <= 0.025, String(WHEEL_OPEN_M));
     ad.delete(); am.delete(); }
   check('B top bar runs left, C top bar runs right', pipePoint('B', 200).x < -0.1 && pipePoint('C', 200).x > PIPE_GAP_M + 0.1);
   // The cart is symmetric: riding on B and on C put both hands on the same two pipes and the plate in the same place.

@@ -42,7 +42,7 @@ const PLATE_Y_MM = PAD.y1 + PLATE_MM.t / 2;                                // pl
 const ARM_Y_MM = PLATE_Y_MM + PLATE_MM.t / 2 + 20;                          // arm base block: its centre 20 mm above the plate's outer face
 /** Closed wheels sit 0.3 mm off the CAD 26 mm radius so they never touch the pipe model. */
 export const CLEAR_M = 0.0003;
-export const WHEEL_OPEN_M = 0.032;     // ASSUMED: how far each pair backs off when the hand is open: far enough that the pipe slides out sideways between the wheels
+export const WHEEL_OPEN_M = 0.018;     // ASSUMED: how far each pair backs off when the hand is open: far enough that the pipe slides out sideways between the wheels
 const SLOT_DEG = 60;                    // ASSUMED: the sleeve is slotted either side (cart +y and -y), so an open hand can swing off a pipe sideways
 export const PAIR_ANGLES = { d: 180, p: 60, m: -60 } as const;  // driven, +60 idler, -60 idler (CAD angle from the gap, +X)
 type Pair = keyof typeof PAIR_ANGLES;
@@ -200,14 +200,16 @@ function plateGeoms(hy: number): string {
 const VISUAL = 'contype="0" conaffinity="0"';   // motor housings are drawn only: the clamp–track check is about the clamp and wheels
 /** A hollow-shaft ring (a rotation motor's housing or rotor) round the pipe axis from x0 to x1 (mm), as boxes. */
 function ringGeoms(x0: number, x1: number, rIn: number, rOut: number, col: string, N = 16): string {
+  // Open C-shape: the same side slots as the sleeve are left out, so nothing encircles the pipe and it can leave sideways in a transfer.
   const g: string[] = [], seg = (2 * Math.PI) / N, rc = (rIn + rOut) / 2;
   for (let i = 0; i < N; i++) {
-    const a = (i + 0.5) * seg, uy = -Math.sin(a), uz = Math.cos(a);
-    g.push(`<geom type="box" pos="${f(m((x0 + x1) / 2))} ${f(m(rc) * uy)} ${f(m(rc) * uz)}" xyaxes="1 0 0 0 ${f(uy)} ${f(uz)}" size="${f(m(x1 - x0) / 2)} ${f(m(rOut - rIn) / 2)} ${f(m(rc) * Math.tan(seg / 2))}" ${col} ${VISUAL}/>`);
+    const a = (i + 0.5) * seg, uy = -Math.sin(a), uz = Math.cos(a), deg = (a * 180) / Math.PI;
+    if (Math.abs(deg - 90) < SLOT_DEG || Math.abs(deg - 270) < SLOT_DEG) continue;
+    g.push(`<geom type="box" pos="${f(m((x0 + x1) / 2))} ${f(m(rc) * uy)} ${f(m(rc) * uz)}" xyaxes="1 0 0 0 ${f(uy)} ${f(uz)}" size="${f(m(x1 - x0) / 2)} ${f(m(rOut - rIn) / 2)} ${f(m(rc) * Math.tan(seg / 2))}" ${col} ${CART_COL}/>`);
   }
   return g.join('\n      ');
 }
-const ROT_MOTOR = { x0: -90, x1: -52, rIn: 22, rOut: 46 };   // ASSUMED: hollow-shaft servo ring at the sleeve's far end from the drive motor; its rotor ring bolts to the sleeve end wall
+const ROT_MOTOR = { x0: -90, x1: -52, rIn: 34, rOut: 54 };   // ASSUMED: hollow-shaft servo ring at the sleeve's far end from the drive motor; its rotor ring bolts to the sleeve end wall
 const ROT_COL = rgba([0.1, 0.65, 0.6]), ROT_ROTOR_COL = rgba([0.95, 0.95, 0.95]);
 
 /** The rotation motor's servo: a block on the ring's outside (cart +y, the plate side) with a dark cap, so the motor that turns the base reads as a motor. */
@@ -252,7 +254,7 @@ export function cartBody(spacingMm = PIPE_SPACING_MM): string {
       ${PAIRS.map((p) => {
         const [uy, uz] = radialDir(h, p);
         const clamp = p === CLAMP_PAIR[h];   // the clamp pair slides on its guide pins; the other two are welded to the frame, set back by the fixed trim
-        return `<body name="h${h}${p}" ${clamp ? '' : `pos="0 ${f(uy * FIXED_PAIR_TRIM_M)} ${f(uz * FIXED_PAIR_TRIM_M)}"`}>${clamp ? `<joint name="h${h}${p}" type="slide" axis="0 ${f(uy)} ${f(uz)}" range="-0.02 0.05"/>` : ''}
+        return `<body name="h${h}${p}" ${clamp ? '' : `pos="0 ${f(uy * FIXED_PAIR_TRIM_M)} ${f(uz * FIXED_PAIR_TRIM_M)}"`}>${clamp ? `<joint name="h${h}${p}" type="slide" axis="0 ${f(uy)} ${f(uz)}" range="-0.006 0.022"/>` : ''}
         ${pairGeoms(h, p)}
         ${clamp ? clampScrewGeom(h) : ''}
       </body>`;
@@ -310,8 +312,8 @@ export function cartActuators(): string {
     <position name="drive2" tendon="drive2" kp="2" ctrlrange="-100000 100000"/>
     <position name="rot1" joint="rot1" kp="20" ctrlrange="-3.2 3.2"/>
     <position name="rot2" joint="rot2" kp="20" ctrlrange="-3.2 3.2"/>
-    <position name="clamp1" joint="h1${CLAMP_PAIR[1]}" kp="2000" ctrlrange="-0.02 0.05"/>
-    <position name="clamp2" joint="h2${CLAMP_PAIR[2]}" kp="2000" ctrlrange="-0.02 0.05"/>
+    <position name="clamp1" joint="h1${CLAMP_PAIR[1]}" kp="2000" ctrlrange="-0.006 0.022"/>
+    <position name="clamp2" joint="h2${CLAMP_PAIR[2]}" kp="2000" ctrlrange="-0.006 0.022"/>
   </actuator>`;
 }
 
