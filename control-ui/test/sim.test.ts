@@ -10,7 +10,8 @@ import { graspPoint, solveDown } from '../src/arm/kinematics.ts';
 import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/placement.ts';
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
-import { cartMjcf } from '../src/cart/model.ts';
+import { cartMjcf, cartBody, pipeGeoms } from '../src/cart/model.ts';
+import { PIPE_GAP_M, TRANSFER_HORIZ_MM, cartPose, pipePoint, transferPose } from '../src/cart/transfer.ts';
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
 
 const MOTORS_JOINT: Record<string, string> = { A: 'shoulder_pan', B: 'shoulder_lift', C: 'elbow_flex', D: 'wrist_flex', E: 'wrist_roll' };
@@ -137,6 +138,13 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const cartModel = mj.MjModel.from_xml_string(cartMjcf());
   check('cart model loads with cart and marker mocap bodies', cartModel.nmocap === 2, String(cartModel.nmocap));
   cartModel.delete();
+  const xferModel = mj.MjModel.from_xml_string(`<mujoco><worldbody>${pipeGeoms(0, -1, TRANSFER_HORIZ_MM, 'b')}${pipeGeoms(PIPE_GAP_M, 1, TRANSFER_HORIZ_MM, 'c')}${cartBody(140)}</worldbody></mujoco>`);
+  check('transfer model loads with one cart mocap body', xferModel.nmocap === 1, String(xferModel.nmocap));
+  xferModel.delete();
+  check('B top bar runs left, C top bar runs right', pipePoint('B', 200).x < -0.1 && pipePoint('C', 200).x > PIPE_GAP_M + 0.1);
+  const t0p = transferPose('B', 40, 0), t1p = transferPose('B', 40, 1), onC = cartPose('C', 40);
+  check('hand-over ends where riding on C begins', Math.abs(t1p.x - onC.x) < 1e-9 && t1p.q.every((v, i) => Math.abs(v - onC.q[i]) < 1e-9 || t1p.q.every((w, j) => Math.abs(w + onC.q[j]) < 1e-9)), JSON.stringify([t1p, onC]));
+  check('hand-over starts on B', Math.abs(t0p.x) < 1e-9);
 }
 
 const t0 = performance.now(); run(5); const ms = performance.now() - t0;
