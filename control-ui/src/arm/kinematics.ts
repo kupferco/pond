@@ -36,8 +36,11 @@ export const graspPoint = (j: { A: number; B: number; C: number; D: number }) =>
  * Returns null when the point is out of reach or needs a joint beyond its limit.
  */
 export function solveTool(x: number, y: number, z: number, tx: number, tz: number, pitch: number): Joints | null {
-  const pan = Math.atan2(y, x) * DEG;
-  const rG = Math.hypot(x, y);
+  return solvePlanar(Math.atan2(y, x) * DEG, Math.hypot(x, y), z, tx, tz, pitch);
+}
+
+/** Planar part of solveTool with the pan given and a signed reach r (the tool may be behind the shoulder axis). */
+export function solvePlanar(pan: number, rG: number, z: number, tx: number, tz: number, pitch: number): Joints | null {
   const phi = pitch * RAD;
   // Wrist joint = tool point minus the tool offsets rotated by the tool pitch.
   const wr = rG - (tx * Math.cos(phi) + tz * Math.sin(phi)) - WRIST_TO_HAND * Math.cos(phi);

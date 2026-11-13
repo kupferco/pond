@@ -24,7 +24,7 @@ export const podGrabScene: Scene = {
     const sim = new SimDriver(mujoco, podGrabMjcf());
     const cmd = new CommandLayer(sim, new RealDriver());
     const world = new PodWorld(sim);
-    const viewer = new Viewer(view, sim, { target: [-0.1, -0.02, 0.33], dist: 1.0, maxDist: 3, az: 0.5, el: 0.3, far: 20 });
+    const viewer = new Viewer(view, sim, { target: [-0.05, -0.06, 0.4], dist: 1.15, maxDist: 3, az: 0.5, el: 0.3, far: 20 });
     status.textContent = '';
 
     const slotOptions = Array.from({ length: TRAY_SLOTS }, (_, i) => `<option value="${i}">Socket ${slotLabel(i)}</option>`).join('');
@@ -38,7 +38,7 @@ export const podGrabScene: Scene = {
         <dt>Cart</dt><dd id="g-cart"></dd>
         <dt>State</dt><dd id="g-state">Idle</dd>
       </dl>
-      <p class="hint">A close-up of the bottom of a Pond unit, in its real layout. The cart rides the bottom track pipe above the tank; the arm on it reaches down into the tank through the silicone pick holes in the lid. Right: the pod store, ${STORE_ROWS} rows under the lid, sloped so the pods slide to the pick hole (the little roof keeps the second pod in place while the first is lifted out). Left: the seedling tray, flat, ${TRAY_COLS} × ${TRAY_SLOTS / TRAY_COLS} silicone collars, rows A to D from the front.</p>
+      <p class="hint">A close-up of the bottom of a Pond unit, in its real layout. The cart rides the bottom track pipe above the tank; the SO-101 arm is fixed on top of its plate and reaches down into the tank through the silicone pick holes in the lid. The grey pillar in the middle is the unit spine; the trays hang off it on flat brackets and stand clear of it. Right: the pod store, ${STORE_ROWS} rows under the lid, sloped so the pods slide to the pick hole at the front (the little roof keeps the second pod in place while the first is lifted out). Left: the seedling tray, flat, ${TRAY_COLS} × ${TRAY_SLOTS / TRAY_COLS} silicone collars, rows A to D from the front.</p>
     </section>
     <p id="g-msg" class="msg"></p>
 
@@ -89,7 +89,7 @@ export const podGrabScene: Scene = {
         <button class="lock big grow" id="g-rand">Randomize</button>
       </div>
       <div class="row"><button class="lock big" id="g-reset">Reset scene</button></div>
-      <details class="more"><summary>How success is judged</summary><p class="hint">The controller sees the hole and the collar with 0.8 mm of simulated perception noise. The pin must be within ${HOLE_TOL * 1000} mm of the hole axis to get through, and the pod must be within ${(COLLAR_TOL * 1000).toFixed(1)} mm of the collar axis when it is lowered; then it is let go and has to stay standing in the collar. The pods are real bodies: they slide down the 12° slope, stop at the front stop and are held by the rails and the roof. Carrying a pod on the pin is kinematic (the real hand has an expanding collet). Pod 25 × 40 mm with a 14 mm hole is assumed, as in cad/pod_store.py; the layout follows cad/unit_v3_dimensioned.py and cad/pod_store_reach.py.</p></details>
+      <details class="more"><summary>How success is judged</summary><p class="hint">The controller sees the hole and the collar with 0.8 mm of simulated perception noise. The pin must be within ${HOLE_TOL * 1000} mm of the hole axis to get through, and the pod must be within ${(COLLAR_TOL * 1000).toFixed(1)} mm of the collar axis when it is lowered; then it is let go and has to stay standing in the collar. The pods are real bodies: they slide down the 12° slope, stop at the front stop and are held by the rails and the roof. Carrying a pod on the pin is kinematic (the real hand has an expanding collet). Every step checks that no pod appears, disappears or jumps, and that the arm touches nothing of the unit; a run fails with the reason if one does. Pod 25 × 40 mm with a 14 mm hole is assumed, as in cad/pod_store.py; the layout follows cad/unit_v3_dimensioned.py, cad/pod_store_reach.py and the arm-on-cart drawing cad/cart_arm.py.</p></details>
       <div id="g-result" class="result" hidden></div>
     </div>`;
 

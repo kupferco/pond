@@ -31,8 +31,16 @@ export class SimDriver implements RobotDriver {
   setJointTarget(motorId: string, degrees: number): void {
     this.data.ctrl[this.ctrlIdx[motorId]] = degrees * RAD;
   }
+  /** Scene-specific home pose in degrees by motor id (default: each motor's own home). */
+  private homePose: Record<string, number> = {};
+  setHomePose(pose: Record<string, number>): void {
+    this.homePose = pose;
+    this.home();
+    for (const m of MOTORS) this.data.qpos[this.qposAdr[m.id]] = (pose[m.id] ?? m.home) * RAD;
+    this.mujoco.mj_forward(this.model, this.data);
+  }
   home(): void {
-    for (const m of MOTORS) this.setJointTarget(m.id, m.home);
+    for (const m of MOTORS) this.setJointTarget(m.id, this.homePose[m.id] ?? m.home);
   }
   readJoints(): Record<string, number> {
     const out: Record<string, number> = {};
@@ -49,6 +57,7 @@ export class SimDriver implements RobotDriver {
   reset(): void {
     this.mujoco.mj_resetData(this.model, this.data);
     this.home();
+    for (const m of MOTORS) this.data.qpos[this.qposAdr[m.id]] = (this.homePose[m.id] ?? m.home) * RAD;
     this.mujoco.mj_forward(this.model, this.data);
     this.acc = 0;
   }

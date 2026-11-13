@@ -11,17 +11,17 @@
 import type { CommandLayer } from '../commands.ts';
 import type { SimDriver } from '../drivers/simDriver.ts';
 import { MOTORS } from '../model.ts';
-import { solveTool, toolPoint, type Joints } from '../arm/kinematics.ts';
+import { solvePlanar, toolPoint, type Joints } from '../arm/kinematics.ts';
 import { gauss, rng } from '../arm/placement.ts';
 import {
-  ARM_BASE_Z, ARM_Y, CART_HOME_X, CART_SPEED, CART_X_MAX, CART_X_MIN, PIN_SPEED, PIPE_Y, PIPE_Z, POD_COUNT, POD_LEN, POD_R,
-  POD_PITCH, ROW_PITCH, SEAT_SPEED, TOOL_X, STORE_CAP, STORE_N, STORE_PITCH_DEG, STORE_ROWS, STORE_START, TRANSIT_Z, TRAY_SLOTS, CELL_R,
-  YAW_QUAT, armBasePos, podName, rowX, seatPos, slopeS, slotLabel, startPos, STORE_QUAT, UPRIGHT_QUAT,
+  CART_HOME_X, CART_SPEED, CART_X_MAX, CART_X_MIN, PIN_SPEED, PIPE_Y, PIPE_Z, POD_COUNT, POD_LEN, POD_R, armR, armU,
+  POD_PITCH, ROW_PITCH, SEAT_SPEED, TOOL_X, STORE_CAP, STORE_N, STORE_PITCH_DEG, STORE_ROWS, STORE_Y0, STORE_START, TRANSIT_Z, TRAY_SLOTS, CELL_R,
+  READY_POSE, podName, rowX, seatPos, STORE_Z0, TRAY_CX, TRAY_HX, TRAY_HY, TRAY_TOP, slopeS, slotLabel, startPos, STORE_QUAT, UPRIGHT_QUAT,
 } from './layout.ts';
 
 export const HOLE_TOL = 0.0035;   // m, pin axis to hole axis (hole 7 mm radius, pin 3 mm radius, 0.5 mm margin)
 export const COLLAR_TOL = CELL_R - POD_R - 0.0004; // m, pod axis to the collar axis when it is lowered into the cell
-const APPROACH = 0.09;            // m above the pod, along its axis, where the pin waits before it goes in
+const APPROACH = 0.12;            // m above the pod, along its axis, where the pin waits before it goes in
 
 type V3 = [number, number, number];
 type Mat = number[];
@@ -41,15 +41,17 @@ interface Pod { state: State; slot: number }
 /** Pods (free bodies in the sim), the cart position and the bookkeeping of where each pod is. */
 export class PodWorld {
   readonly pods: Pod[] = [];
-  cartX = CART_HOME_X;
+  cartX = CART_HOME_X;                // commanded cart position
+  private cartAt = CART_HOME_X;      // where the cart body is: it follows the command at the cart speed, so it never jumps
   private last: V3 | null = null;
 
   readonly sim: SimDriver;
-  constructor(sim: SimDriver) { this.sim = sim; this.reset(); }
+  constructor(sim: SimDriver) { this.sim = sim; sim.setHomePose(READY_POSE); this.reset(); }
 
   reset() {
     this.sim.reset();
-    this.cartX = CART_HOME_X;
+    this.violation = ''; this.seen = null; this.wasHeld = [];
+    this.cartX = CART_HOME_X; this.cartAt = CART_HOME_X;
     this.last = null;
     this.pods.length = 0;
     for (let i = 0; i < POD_COUNT; i++) this.pods.push({ state: 'store', slot: -1 });
@@ -57,7 +59,11 @@ export class PodWorld {
   }
 
   /** Current pod centre, from the sim. */
-  pos(i: number): V3 { return this.sim.bodyPose(podName(i)).pos as V3; }
+  pos(i: number): V3 {
+    const id = (this.podIds ??= Array.from({ length: POD_COUNT }, (_, k) => { const b = this.sim.model.body(podName(k)); const v = b.id; b.delete(); return v; }))[i], x = this.sim.data.xpos;
+    return [x[3 * id], x[3 * id + 1], x[3 * id + 2]];
+  }
+  private podIds: number[] | null = null;
   /** Position of a pod along the store slope: 0 at the pick line, one pitch per pod. */
   slopePos(i: number): number { const p = this.pos(i); return slopeS(p[1], p[2]); }
 
@@ -83,7 +89,7 @@ export class PodWorld {
 
   /** The pod on the pin follows the hand (pose and velocity), pod axis along the pin. */
   carry(i: number, h: number) {
-    const R = this.sim.bodyPose('hand').rot, hp = this.sim.bodyPose('hand').pos;
+    const hd = this.handPose(), R = hd.rot, hp = hd.pos;
     const o = mulV(R, [TOOL_X, 0, 0]);
     const pos: V3 = [hp[0] + o[0], hp[1] + o[1], hp[2] + o[2]];
     const RQ = [-R[2], R[1], R[0], -R[5], R[4], R[3], -R[8], R[7], R[6]];
@@ -94,16 +100,103 @@ export class PodWorld {
   /** Let go of a carried pod: it is a free body again. */
   release() { this.last = null; }
 
-  tick(_h: number) { this.write(); }
+  tick(h: number) {
+    const d = this.cartX - this.cartAt, lim = CART_SPEED * 1.5 * h;
+    this.cartAt += Math.abs(d) <= lim ? d : Math.sign(d) * lim;
+    this.write();
+    this.audit(h);
+  }
+
+  // --- integrity: pods are conserved. Each pod is in exactly one place its bookkeeping state allows, and moves only by the
+  // arm (held) or by gravity on the store slope (free). Anything else is logged and recorded in `violation`.
+  violation = '';
+  private seen: V3[] | null = null;
+  private wasHeld: boolean[] = [];
+  private armGeoms: number[] | null = null;
+  private hitAdr = -1;
+
+  /** Where a pod centre is: the store channel, above the tray, or neither. */
+  private region(p: V3): 'store' | 'tray' | 'air' {
+    const s = slopeS(p[1], p[2]);
+    const h = (p[1] - STORE_Y0) * STORE_N[1] + (p[2] - STORE_Z0) * STORE_N[2];
+    const row = Math.round((p[0] - rowX(0)) / ROW_PITCH);
+    if (row >= 0 && row < STORE_ROWS && Math.abs(p[0] - rowX(row)) < ROW_PITCH / 2 && s > -0.02 && s < (STORE_CAP + 0.5) * POD_PITCH
+      && h > 0.005 && h < POD_LEN / 2 + 0.012) return 'store';
+    if (Math.abs(p[0] - TRAY_CX) < TRAY_HX && Math.abs(p[1]) < TRAY_HY && p[2] > TRAY_TOP + 0.005 && p[2] < TRAY_TOP + POD_LEN / 2 + 0.01) return 'tray';
+    return 'air';
+  }
+
+  /** Check pod conservation and arm collisions once per physics step; returns the first violation ('' if none). */
+  audit(h: number): string {
+    if (this.violation) return this.violation;
+    const bad = (msg: string) => { this.violation = msg; console.error(`[pod-grab] ${msg}`); return msg; };
+    const names = this.pods.length;
+    if (names !== POD_COUNT) return bad(`pod count changed: ${names} of ${POD_COUNT}`);
+    const pin = this.pin();
+    const now: V3[] = [];
+    for (let i = 0; i < POD_COUNT; i++) {
+      const p = this.pos(i), st = this.pods[i].state;
+      now.push(p);
+      if (!p.every(Number.isFinite)) return bad(`pod ${i} has no position`);
+      const held = st === 'held';
+      const prev = this.seen?.[i];
+      if (prev) {
+        const d = Math.hypot(p[0] - prev[0], p[1] - prev[1], p[2] - prev[2]);
+        // free pods: at most 1.5 m/s; a pod hooked this step may jump by up to a pod half length onto the pin
+        const lim = held && !this.wasHeld[i] ? POD_LEN / 2 + HOLE_TOL : Math.max(0.003, 1.5 * h);
+        if (d > lim) return bad(`pod ${i} teleported ${(d * 1000).toFixed(1)} mm in one step (${st})`);
+      }
+      const reg = this.region(p), near = Math.hypot(p[0] - pin[0], p[1] - pin[1], p[2] - pin[2]);
+      if (held && near > 0.01) return bad(`pod ${i} is held but is ${(near * 1000).toFixed(0)} mm from the pin`);
+      if (st === 'store' && reg !== 'store') return bad(`pod ${i} left the store without being picked (now at ${p.map((v) => (v * 1000).toFixed(0)).join(', ')} mm)`);
+      if (st === 'tray' && reg !== 'tray') return bad(`pod ${i} left the tray (now at ${p.map((v) => (v * 1000).toFixed(0)).join(', ')} mm)`);
+      if (st === 'lost' && reg !== 'tray' && near > 0.01) return bad(`pod ${i} was dropped (now at ${p.map((v) => (v * 1000).toFixed(0)).join(', ')} mm)`);
+      this.wasHeld[i] = held;
+    }
+    this.seen = now;
+    const inStore = this.pods.filter((p, i) => p.state !== 'held' && this.region(now[i]) === 'store').length;
+    const stored = this.pods.filter((p) => p.state === 'store').length;
+    if (inStore !== stored) return bad(`a pod appeared in the store: ${inStore} in the store, ${stored} expected`);
+    const inTray = this.pods.filter((p, i) => p.state !== 'held' && this.region(now[i]) === 'tray').length;
+    const trayed = this.pods.filter((p) => p.state === 'tray' || p.state === 'lost').length;
+    if (inTray !== trayed) return bad(`a pod appeared in the tray: ${inTray} in the tray, ${trayed} expected`);
+    // the arm must not touch the unit
+    const m = this.sim.model, d = this.sim.data;
+    if (this.hitAdr < 0) { const sn = m.sensor('arm_hit'); this.hitAdr = m.sensor_adr[sn.id]; sn.delete(); }
+    if (!this.armGeoms) {
+      const bb = m.body('base'), baseId = bb.id; bb.delete(); const inArm = (b: number) => { for (; b > 0; b = m.body_parentid[b]) if (b === baseId) return true; return false; };
+      this.armGeoms = Array.from({ length: m.ngeom }, (_, g) => g).filter((g) => inArm(m.geom_bodyid[g]));
+    }
+    if (d.sensordata[this.hitAdr] > 0) {
+      for (let c = 0; c < d.ncon; c++) {
+        const k = d.contact.get(c)!;
+        const g1 = k.geom1, g2 = k.geom2;
+        k.delete();
+        if (this.armGeoms.includes(g1) !== this.armGeoms.includes(g2)) {
+          const nm = (g: number) => { const b = m.body(m.geom_bodyid[g]); const n = b.name; b.delete(); return n + ' geom ' + g; };
+          return bad(`the arm hit the unit (${nm(g1)} / ${nm(g2)})`);
+        }
+      }
+      return bad('the arm hit the unit');
+    }
+    return '';
+  }
 
   write() {
-    this.sim.setMocap('cart', [this.cartX, PIPE_Y, PIPE_Z]);
-    this.sim.setMocap('base', armBasePos(this.cartX), YAW_QUAT);
+    this.sim.setMocap('cart', [this.cartAt, PIPE_Y, PIPE_Z]);
   }
+
+  /** Hand pose from the sim data (the body id is looked up once). */
+  handPose(): { pos: number[]; rot: number[] } {
+    if (this.handId < 0) { const b = this.sim.model.body('hand'); this.handId = b.id; b.delete(); }
+    const id = this.handId, x = this.sim.data.xpos, r = this.sim.data.xmat;
+    return { pos: [x[3 * id], x[3 * id + 1], x[3 * id + 2]], rot: Array.from({ length: 9 }, (_, k) => r[9 * id + k]) };
+  }
+  private handId = -1;
 
   /** Pin axis point in world coordinates, from the real hand pose. */
   pin(): V3 {
-    const h = this.sim.bodyPose('hand');
+    const h = this.handPose();
     const o = mulV(h.rot, [TOOL_X, 0, 0]);
     return [h.pos[0] + o[0], h.pos[1] + o[1], h.pos[2] + o[2]];
   }
@@ -122,8 +215,8 @@ export interface JobResult { job: Job; success: boolean; reason: string; posErrM
 
 interface Move {
   label: string;
-  /** Goal: cart x, pin reach r (from the arm axis) and pin height z (world). Missing = keep. */
-  x?: number; r?: number; z?: number; pitch?: number;  // pitch: hand pitch in degrees, 90 = pin straight down
+  /** Goal: cart x and the pin point in the arm plane: r down from the arm base axis, z (= u) out along it (see armR, armU). Missing = keep. */
+  x?: number; r?: number; z?: number; pitch?: number;  // pitch: hand pitch in degrees, 0 = pin straight down
   wait?: number;              // s to stay at the goal (lets a released pod settle)
   joint?: boolean;            // joint-space move to the IK pose of the goal
   speed?: number;             // pin speed m/s
@@ -147,8 +240,8 @@ export class PodTask {
   private steps = 0;
   private cmdJ: number[] = [0, 0, 0, 0, 0];
   private integ = [0, 0, 0, 0, 0];
-  private from = { x: 0, r: 0, z: 0, p: 90 };
-  private goal = { x: 0, r: 0, z: 0, p: 90 };
+  private from = { x: 0, r: 0, z: 0, p: 0 };
+  private goal = { x: 0, r: 0, z: 0, p: 0 };
   private goalJ: Joints | null = null;
   private dur = 0;
   private rand: () => number;
@@ -182,6 +275,7 @@ export class PodTask {
       this.steps++;
       if (this.podId >= 0) this.world.carry(this.podId, h);
       this.world.tick(h);
+      if (this.world.violation) this.fail(`pod integrity: ${this.world.violation}`);
       if (this.time > RUN_TIMEOUT) this.fail('timeout (run)');
     }
     return this.done;
@@ -203,13 +297,13 @@ export class PodTask {
     const S: V3 = [seat[0] + this.noise(), seat[1] + this.noise(), seat[2] + this.noise()];
     const A: V3 = [T[0], T[1] + APPROACH * STORE_N[1], T[2] + APPROACH * STORE_N[2]];   // above the pod, on its axis
     const id = front;
-    const r = (y: number) => y - ARM_Y;
+    const dn = (zw: number) => armR(zw), out = (yw: number) => armU(yw);
     const pin = (): V3 => w.pin();
     this.moves = [
-      { label: 'Raising the arm', joint: true, r: r(A[1]), z: A[2], pitch: STORE_PITCH_DEG },
-      { label: `Driving to store row ${row + 1}`, x: T[0], r: r(A[1]), z: A[2] },
+      { label: 'Raising the arm', r: dn(A[2]), z: out(A[1]), pitch: STORE_PITCH_DEG },
+      { label: `Driving to store row ${row + 1}`, x: T[0], r: dn(A[2]), z: out(A[1]) },
       {
-        label: 'Pin down through the lid and the pod hole', r: r(T[1]), z: T[2], speed: SEAT_SPEED,
+        label: 'Pin down through the lid and the pod hole', r: dn(T[2]), z: out(T[1]), speed: SEAT_SPEED,
         after: () => {
           const p = pin(), c = w.pos(id), d = [p[0] - c[0], p[1] - c[1], p[2] - c[2]];
           const along = d[0] * STORE_N[0] + d[1] * STORE_N[1] + d[2] * STORE_N[2];
@@ -219,18 +313,18 @@ export class PodTask {
           this.podId = id; w.pods[id].state = 'held';
         },
       },
-      { label: 'Lifting the pod up through the lid', r: r(A[1]), z: A[2], speed: SEAT_SPEED },
-      { label: 'Clearing the lid', r: r(A[1]), z: TRANSIT_Z, pitch: 90, speed: PIN_SPEED },
-      { label: `Driving to socket ${slotLabel(slot)}`, x: S[0], r: r(S[1]), z: TRANSIT_Z },
+      { label: 'Lifting the pod up through the lid', r: dn(A[2]), z: out(A[1]), speed: SEAT_SPEED },
+      { label: 'Clearing the lid', r: dn(TRANSIT_Z), z: out(A[1]), pitch: 0, speed: PIN_SPEED },
+      { label: `Driving to socket ${slotLabel(slot)}`, x: S[0], r: dn(TRANSIT_Z), z: out(S[1]) },
       {
-        label: 'Lowering the pod into the silicone collar', z: S[2], speed: SEAT_SPEED,
+        label: 'Lowering the pod into the silicone collar', r: dn(S[2]), speed: SEAT_SPEED,
         after: () => {
           const c = w.pos(id), e = Math.hypot(c[0] - seat[0], c[1] - seat[1]);
           if (e > COLLAR_TOL) return `missed the collar of socket ${slotLabel(slot)} (${(e * 1000).toFixed(1)} mm off)`;
           this.podId = -1; w.release(); w.pods[id].state = 'lost';
         },
       },
-      { label: 'Backing the pin out', z: TRANSIT_Z, speed: PIN_SPEED },
+      { label: 'Backing the pin out', r: dn(TRANSIT_Z), speed: PIN_SPEED },
       {
         label: 'Letting the pod settle', wait: 0.5,
         after: () => {
@@ -260,9 +354,9 @@ export class PodTask {
 
   private send(q: number[]) { MOTORS.forEach((m, i) => { this.cmd.setJointTarget(m.id, q[i] ?? 0); }); }
 
-  /** Planar IK for the pin point at (r, z) with the hand pitched by `pitch` degrees (90 = pin straight down). */
-  private ik(r: number, z: number, pitch: number): Joints | null {
-    return solveTool(r, 0, z - ARM_BASE_Z, TOOL_X, 0, pitch);
+  /** Planar IK for the pin point at (r down, u out) with the hand pitched by `pitch` degrees (0 = pin straight down). */
+  private ik(r: number, u: number, pitch: number): Joints | null {
+    return solvePlanar(0, r, u, TOOL_X, 0, pitch);
   }
 
   private control() {
@@ -275,7 +369,7 @@ export class PodTask {
       this.moveTime = 0; this.dwell = 0;
       if (!this.inited) { this.inited = true; this.cmdJ = q.slice(0, 5); this.integ = [0, 0, 0, 0, 0]; }
       const p = toolPoint({ A: this.cmdJ[0], B: this.cmdJ[1], C: this.cmdJ[2], D: this.cmdJ[3] }, TOOL_X, 0);
-      this.from = { x: this.world.cartX, r: p[0], z: p[2] + ARM_BASE_Z, p: this.cmdJ[1] + this.cmdJ[2] + this.cmdJ[3] };
+      this.from = { x: this.world.cartX, r: p[0], z: p[2], p: this.cmdJ[1] + this.cmdJ[2] + this.cmdJ[3] };
       this.goal = { x: mv.x ?? this.from.x, r: mv.r ?? this.from.r, z: mv.z ?? this.from.z, p: mv.pitch ?? this.from.p };
       if (mv.joint) { this.goal.r = mv.r ?? this.from.r; }
       this.goalJ = this.ik(this.goal.r, this.goal.z, this.goal.p);

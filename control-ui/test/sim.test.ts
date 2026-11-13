@@ -11,7 +11,7 @@ import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/pl
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
 import { cartMjcf } from '../src/cart/model.ts';
-import { LID_Z, PIPE_Z, POD_COUNT, POD_PITCH, ROW_X0, STORE_CAP, STORE_ROWS, STORE_START, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
+import { LID_Z, PIPE_Z, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
 import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
 
@@ -144,10 +144,19 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
 // Pod grab: the arm on the cart takes pods out of the sloped store rows and lowers them into the silicone collars of the 4 x 4 tray.
 {
   const pg = new SimDriver(mj, podGrabMjcf());
-  check('pod grab model has the cart and the arm base as mocap bodies; the pods are free bodies', pg.model.nmocap === 2 && pg.model.nbody > POD_COUNT, String(pg.model.nmocap));
+  check('pod grab model has the cart as its one mocap body (the arm base is rigid in it); the pods are free bodies', pg.model.nmocap === 1 && pg.model.nbody > POD_COUNT, String(pg.model.nmocap));
   check('store holds enough pods for the tray', STORE_ROWS * STORE_START >= TRAY_SLOTS && STORE_START < STORE_CAP);
   check('unit layout: track 150 mm over the lid, store slopes down to the pick line, tray flat and left of the store',
-    Math.abs(PIPE_Z - LID_Z - 0.15) < 1e-9 && storePos(0, 1)[2] > storePos(0, 0)[2] && storePos(0, 1)[1] < storePos(0, 0)[1] && seatPos(0)[2] === seatPos(TRAY_SLOTS - 1)[2] && seatPos(TRAY_SLOTS - 1)[0] < ROW_X0);
+    Math.abs(PIPE_Z - LID_Z - 0.15) < 1e-9 && storePos(0, 1)[2] > storePos(0, 0)[2] && storePos(0, 1)[1] > storePos(0, 0)[1] && seatPos(0)[2] === seatPos(TRAY_SLOTS - 1)[2] && seatPos(TRAY_SLOTS - 1)[0] < ROW_X0);
+  check('trays clear of the spine: seedling tray left of it, store right of it, neither touching',
+    TRAY_CX + TRAY_HX < -SPINE_R - 0.05 && ROW_X0 - ROW_PITCH / 2 > SPINE_R + 0.02);
+  {
+    const names = podGrabMjcf();
+    const baseBody = pg.model.body('base'), cartBody = pg.model.body('cart');
+    check('arm base is a rigid child of the cart (no joint, no mocap of its own)',
+      pg.model.body_parentid[baseBody.id] === cartBody.id && pg.model.body_jntnum[baseBody.id] === 0 && pg.model.body_mocapid[baseBody.id] === -1 && names.includes('xyaxes'));
+    check('spine and brackets are in the scene', pg.model.ngeom > 200 && names.split('\n').filter((l) => l.includes('cylinder') && l.includes('fromto="0 0 ')).length >= 1);
+  }
   const pgCmd = new CommandLayer(pg, new RealDriver());
   const world = new PodWorld(pg);
 
@@ -166,6 +175,22 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const row2 = world.rowPods(2).map((i) => Math.round(world.slopePos(i) / POD_PITCH));
   check('row 3 slid down one position', row2.join() === '0,1,2' && world.frontPod(2) === second, row2.join());
 
+  check('pods conserved over the first pick', world.violation === '' && world.pods.length === POD_COUNT, world.violation);
+
+  // The integrity check catches a pod that teleports and a pod that appears.
+  world.reset();
+  for (let i = 0; i < 20; i++) { pg.step(); world.tick(0.002); }
+  check('quiet store: no violation', world.violation === '');
+  const dropped = world.pos(3);
+  pg.setFreeBody('pod_3', [dropped[0] + 0.1, dropped[1], dropped[2] + 0.2], [1, 0, 0, 0]);
+  pg.step(); world.tick(0.002);
+  check('a teleported pod is caught', world.violation.includes('pod 3 teleported'), world.violation);
+  world.reset();
+  for (let i = 0; i < 20; i++) { pg.step(); world.tick(0.002); }
+  world.pods[5].state = 'tray'; world.pods[5].slot = 0;           // bookkeeping says the pod left the store, but it is still there
+  pg.step(); world.tick(0.002);
+  check('a pod that is not where the books say is caught', world.violation !== '', world.violation);
+
   // Fill the whole tray from several rows.
   world.reset();
   task = new PodTask(world, pgCmd, { jobs: fillJobs(world), seed: 7 });
@@ -173,6 +198,8 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const rowsUsed = new Set(task.cfg.jobs.map((j) => j.row)).size;
   check('whole 4 x 4 tray filled', task.failReason === '' && world.trayCount === TRAY_SLOTS, `${world.trayCount}/${TRAY_SLOTS} ${task.failReason}`);
   check('pods came from several rows', rowsUsed >= 2, String(rowsUsed));
+  check('full run: no pod appeared, disappeared or teleported, and the arm hit nothing', world.violation === '', world.violation);
+  check('pod count conserved: 16 in the tray, the rest in the store', world.trayCount === TRAY_SLOTS && world.storeCount === POD_COUNT - TRAY_SLOTS, `${world.trayCount} ${world.storeCount}`);
   check('every seated pod stands in its collar', task.results.every((r) => r.success && r.posErrMm <= 4), JSON.stringify(task.results.map((r) => r.posErrMm)));
 
   // A pin that misses the hole fails the job instead of faking success.
