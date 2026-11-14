@@ -28,13 +28,13 @@ export function pipeGeoms(x0 = 0, dir: 1 | -1 = 1, horizMm = HORIZONTAL_MM, name
 // at 180 deg (towards the other hand, with its worm wheels and motor) and two SPRING IDLER pairs at +/-60 deg either side of the C gap
 // (which faces away from the other hand). A pair slides radially: closed, its wheels touch the pipe; open, they back off and release it.
 // Dimensions in mm, DECIDED unless marked ASSUMED, same as the CAD file.
-const WHEEL_R = 10, WHEEL_W = 8, AXLE_R = 26, ROW_Z = 30, HUB_R = 5;      // DECIDED: 20 x 8 wheels on a 26 mm radius, rows 60 mm apart
+export const WHEEL_R = 10, WHEEL_W = 8, AXLE_R = 26, ROW_Z = 30, HUB_R = 5;      // DECIDED: 20 x 8 wheels on a 26 mm radius, rows 60 mm apart
 const RAIL_Y0 = WHEEL_W / 2 + 0.5, RAIL_T = 3, RAIL_T_DRIVEN = 4;          // ASSUMED carrier rails either side of each wheel row
 const RAIL_X0 = AXLE_R - 5, RAIL_X1 = AXLE_R + 7, RAIL_HL = ROW_Z + 7;
 const BAR_X0 = 22, BAR_X1 = 26, BAR_W = 16, BAR_HL = 16, SPR_Z = 14, SPR_OD = 8, SPR_INST = 7.5, CAP_T = 2.5;  // ASSUMED cross bar, springs, cap
 const GEAR_R = 7, WORM_R = 3.5, WORM_X = AXLE_R + GEAR_R + WORM_R, GEAR_Y = RAIL_Y0 + RAIL_T_DRIVEN + 3; // ASSUMED worm drive
 const MOTOR_R = 14, MOTOR_L = 55;                                          // ASSUMED motor placeholder
-const WALL_OUT_R = 34, R_BORE = PIPE_D_MM / 2 + 8;                          // hand_sleeve.py sleeve body
+export const WALL_OUT_R = 34, R_BORE = PIPE_D_MM / 2 + 8;                          // hand_sleeve.py sleeve body
 const PAD = { z0: -WALL_OUT_R, z1: WALL_OUT_R, y0: R_BORE, y1: 40 };               // hand_sleeve.py mounting pad (cart y 21..40 in the CAD; its inner face starts at the bore so it clears the pipe on the bends). Spans the sleeve's full width so it is bolted to both sleeve wedges
 const LUG_Z0 = 25, LUG_Y0 = 8;                                              // ASSUMED: bolted lugs from the pad down onto the sleeve wedges either side of the pipe
 const GUIDE_X = 10, GUIDE_R0 = 22, GUIDE_R0_IDLER = 34, STRUT_R = 38, GUIDE_R1 = 60, GUIDE_R = 2;               // ASSUMED: two guide pins per wheel pair, fixed in the sleeve, that the pair slides on
@@ -56,11 +56,12 @@ export const CLAMP_PAIR: Record<1 | 2, Pair> = { 1: 'p', 2: 'p' };   // the cart
 export const FIXED_PAIR_TRIM_M = 0.0045;
 export type Vec3 = [number, number, number];
 export const ROT_MAX_RAD = Math.PI / 2;   // rotation motors: swing range about the pipe (rad)
-const CART_COL = 'contype="2" conaffinity="0"';   // cart geoms collide with pipes only (pipes: contype 1, conaffinity 2)
+export const CART_COL = 'contype="2" conaffinity="0"';   // cart geoms collide with pipes only (pipes: contype 1, conaffinity 2)
 
 /** Unit radial direction (cart y, z) of a pair on hand 1 or 2. Cart z points to hand 1's gap side; hand 2 is the mirror image, so the cart is symmetric. */
+const ZS: Record<1 | 2, 1 | -1> = { 1: 1, 2: -1 };   // which way each hand's gap faces: the old cart mirrors hand 2, the v2 cart (identical hands, as in the CAD) does not
 function radialDir(hand: 1 | 2, pair: Pair): [number, number] {
-  const a = (PAIR_ANGLES[pair] * Math.PI) / 180, zs = hand === 1 ? 1 : -1;
+  const a = (PAIR_ANGLES[pair] * Math.PI) / 180, zs = ZS[hand];
   return [-Math.sin(a), zs * Math.cos(a)];
 }
 const handZ = (hand: 1 | 2, spacingMm: number) => (hand === 1 ? 0 : -m(spacingMm));
@@ -101,11 +102,11 @@ export function clampTrackContacts(data: { ncon: number; contact: { get(i: numbe
 }
 export const CONTACT_TOL_M = 0;   // the wheels sit 0.3 mm off the pipe, so ANY penetration of the track is a collision
 
-const rgba = (c: [number, number, number, number?]) => `rgba="${c[0]} ${c[1]} ${c[2]} ${c[3] ?? 1}"`;
+export const rgba = (c: [number, number, number, number?]) => `rgba="${c[0]} ${c[1]} ${c[2]} ${c[3] ?? 1}"`;
 const GREY = rgba([0.12, 0.12, 0.12]), STEEL = rgba([0.75, 0.75, 0.78]), GOLD = rgba([0.85, 0.7, 0.2]), BLUE = rgba([0.2, 0.55, 0.85]);
 
 /** One pair's geoms, relative to the hand origin, in the cart frame. Radial u = (0, uy, uz); tangent t = (0, -uz, uy); box local axes = (x along pipe, y radial, z tangent). */
-function pairGeoms(hand: 1 | 2, pair: Pair): string {
+function pairGeoms(hand: 1 | 2, pair: Pair, driveMotor = true): string {
   const [uy, uz] = radialDir(hand, pair), ty = -uz, tz = uy;
   const at = (x: number, r: number, t: number) => `${f(m(x))} ${f(m(r) * uy + m(t) * ty)} ${f(m(r) * uz + m(t) * tz)}`;
   const axes = `xyaxes="1 0 0 0 ${f(uy)} ${f(uz)}"`;
@@ -131,11 +132,13 @@ function pairGeoms(hand: 1 | 2, pair: Pair): string {
   box(0, (BAR_X0 + BAR_X1) / 2, 0, BAR_HL, (BAR_X1 - BAR_X0) / 2, BAR_W / 2, BLUE);                                                    // cross bar between the rows
   if (driven) {
     cyl(-42, WORM_X, GEAR_Y, 56, WORM_X, GEAR_Y, 1.5, rgba([0.9, 0.55, 0.15]));        // worm shaft
-    // Drive motor: a body bolted to the wheel system's frame (no joint); only its output, the worm and wheels, spins.
-    g.push(`<body name="motor_drive${hand}">`);
-    cyl(45 + 8, WORM_X, GEAR_Y, 45 + 8 + MOTOR_L, WORM_X, GEAR_Y, MOTOR_R, rgba([0.85, 0.25, 0.25]));
-    cyl(45 + 8 + MOTOR_L, WORM_X, GEAR_Y, 45 + 8 + MOTOR_L + 6, WORM_X, GEAR_Y, MOTOR_R - 3, rgba([0.3, 0.3, 0.32])); // rear cap
-    g.push('</body>');
+    if (driveMotor) {
+      // Drive motor: a body bolted to the wheel system's frame (no joint); only its output, the worm and wheels, spins.
+      g.push(`<body name="motor_drive${hand}">`);
+      cyl(45 + 8, WORM_X, GEAR_Y, 45 + 8 + MOTOR_L, WORM_X, GEAR_Y, MOTOR_R, rgba([0.85, 0.25, 0.25]));
+      cyl(45 + 8 + MOTOR_L, WORM_X, GEAR_Y, 45 + 8 + MOTOR_L + 6, WORM_X, GEAR_Y, MOTOR_R - 3, rgba([0.3, 0.3, 0.32])); // rear cap
+      g.push('</body>');
+    }
   } else {
     for (const z of [SPR_Z, -SPR_Z]) cyl(z, BAR_X1, 0, z, BAR_X1 + SPR_INST, 0, SPR_OD / 2, rgba([0.9, 0.2, 0.2])); // two compression springs
     box(0, BAR_X1 + SPR_INST + CAP_T / 2, 0, BAR_HL + 4 + 25, CAP_T / 2, BAR_W / 2 + 3, rgba([0.6, 0.6, 0.62]));        // spring cap
@@ -145,17 +148,17 @@ function pairGeoms(hand: 1 | 2, pair: Pair): string {
 
 /** The sleeve of a hand (hand_sleeve.py): a tube round the pipe with a C gap facing away from the other hand and pockets for the six wheels. Drawn translucent. */
 function sleeveGeoms(hand: 1 | 2): string {
-  const g: string[] = [], N = 24, seg = (2 * Math.PI) / N, rc = (R_BORE + WALL_OUT_R) / 2;
+  const g: string[] = [], N = 24, seg = (2 * Math.PI) / N, rc = (R_BORE + WALL_OUT_R) / 2;   // g holds only sleeve boxes until the guide pins below, so g.length numbers the boxes
   const pocketAngs = [PAIR_ANGLES.d, PAIR_ANGLES.p, PAIR_ANGLES.m, 0]; // 0 is the C gap
   const near = (deg: number, lim: number) => pocketAngs.some((p) => { const d = Math.abs(((deg - p + 540) % 360) - 180); return 180 - d < lim; });
-  const zs = hand === 1 ? 1 : -1;
+  const zs = ZS[hand];
   const ring = (x0: number, x1: number, skipPockets: boolean) => {
     for (let i = 0; i < N; i++) {
       const a = (i + 0.5) * seg, deg = (a * 180) / Math.PI;
       if (skipPockets && near(deg, 17)) continue;
       if (Math.abs(deg - 90) < SLOT_DEG || Math.abs(deg - 270) < SLOT_DEG) continue;   // side slots
       const uy = -Math.sin(a), uz = zs * Math.cos(a);
-      g.push(`<geom type="box" pos="${f(m((x0 + x1) / 2))} ${f(m(rc) * uy)} ${f(m(rc) * uz)}" xyaxes="1 0 0 0 ${f(uy)} ${f(uz)}" size="${f(m(x1 - x0) / 2)} ${f(m(WALL_OUT_R - R_BORE) / 2)} ${f(m(rc) * Math.tan(seg / 2))}" rgba="0.95 0.75 0.2 0.45" ${CART_COL}/>`);
+      g.push(`<geom name="sl${hand}_${g.length}" type="box" pos="${f(m((x0 + x1) / 2))} ${f(m(rc) * uy)} ${f(m(rc) * uz)}" xyaxes="1 0 0 0 ${f(uy)} ${f(uz)}" size="${f(m(x1 - x0) / 2)} ${f(m(WALL_OUT_R - R_BORE) / 2)} ${f(m(rc) * Math.tan(seg / 2))}" rgba="0.95 0.75 0.2 0.45" ${CART_COL}/>`);
     }
   };
   ring(-45, -41, false); ring(41, 45, false);   // end walls
@@ -256,6 +259,26 @@ function clampScrewGeom(hand: 1 | 2): string {
   return `<geom type="cylinder" fromto="${at(BAR_X1 + SPR_INST + CAP_T)} ${at(CLAMP_MOTOR.r0 + 10)}" size="${f(m(2.5))}" ${STEEL} ${VISUAL}/>`;
 }
 
+/** A wheel system (hand): sleeve, clamp motor C and the three wheel pairs (one clamp pair on its slide joint, two rigid), in the hand's own frame. driveMotor = false leaves the drive motor to the caller (the v2 cart carries it on the plate). */
+export function handInner(h: 1 | 2, driveMotor = true, zs: 1 | -1 = ZS[h]): string {
+  const prev = ZS[h]; ZS[h] = zs;
+  try { return handInnerOf(h, driveMotor); } finally { ZS[h] = prev; }
+}
+function handInnerOf(h: 1 | 2, driveMotor: boolean): string {
+  return `${sleeveGeoms(h)}
+      <body name="motor_clamp${h}">
+      ${clampMotorGeoms(h)}
+      </body>
+      ${PAIRS.map((p) => {
+        const [uy, uz] = radialDir(h, p);
+        const clamp = p === CLAMP_PAIR[h];   // the clamp pair slides on its guide pins; the other two are welded to the frame, set back by the fixed trim
+        return `<body name="h${h}${p}" ${clamp ? '' : `pos="0 ${f(uy * FIXED_PAIR_TRIM_M)} ${f(uz * FIXED_PAIR_TRIM_M)}"`}>${clamp ? `<joint name="h${h}${p}" type="slide" axis="0 ${f(uy)} ${f(uz)}" range="-0.006 0.04"/>` : ''}
+        ${pairGeoms(h, p, driveMotor)}
+        ${clamp ? clampScrewGeom(h) : ''}
+      </body>`;
+      }).join('\n      ')}`;
+}
+
 /** The cart mocap body (see frame notes below). Two identical hands, 'spacingMm' apart, with the plate centred between them. */
 export function cartBody(spacingMm = PIPE_SPACING_MM): string {
   const hy = m(spacingMm);
@@ -263,21 +286,10 @@ export function cartBody(spacingMm = PIPE_SPACING_MM): string {
   // The plate lies parallel to the track plane, to one side of the pipes (cart y), and is centred between the two hands, so each hand
   // sits the same distance from its end. Hand 2 is the mirror image of hand 1 (gap and wheels), so the whole cart is symmetric.
   const hand = (h: 1 | 2) => `<body name="hand${h}" pos="0 0 ${f(handZ(h, spacingMm))}"><joint name="bh${h}" type="hinge" pos="0 0 0" axis="1 0 0" range="-3.2 3.2"/>
-      ${sleeveGeoms(h)}
       <body name="motor_rot${h}">
       ${rotStatorGeoms(h)}
       </body>
-      <body name="motor_clamp${h}">
-      ${clampMotorGeoms(h)}
-      </body>
-      ${PAIRS.map((p) => {
-        const [uy, uz] = radialDir(h, p);
-        const clamp = p === CLAMP_PAIR[h];   // the clamp pair slides on its guide pins; the other two are welded to the frame, set back by the fixed trim
-        return `<body name="h${h}${p}" ${clamp ? '' : `pos="0 ${f(uy * FIXED_PAIR_TRIM_M)} ${f(uz * FIXED_PAIR_TRIM_M)}"`}>${clamp ? `<joint name="h${h}${p}" type="slide" axis="0 ${f(uy)} ${f(uz)}" range="-0.006 0.022"/>` : ''}
-        ${pairGeoms(h, p)}
-        ${clamp ? clampScrewGeom(h) : ''}
-      </body>`;
-      }).join('\n      ')}
+      ${handInner(h)}
     </body>`;
   // Two rotation motors (one per wheel set), as in the CAD: each wheel system (hand) stays on its pipe, and the BASE (plate, pads, arm base, with the
   // other hand) swings about the pipe axis on a hinge between base and hand. The hinge joint bh<h> is that motor's output (its stator, motor_rot<h>, is rigid

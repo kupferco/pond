@@ -44,6 +44,7 @@ export class Viewer {
     const T = this.sim.mujoco.mjtGeom;
     for (let i = 0; i < m.ngeom; i++) {
       const type = m.geom_type[i];
+      if (m.geom_rgba[4 * i + 3] === 0) continue; // invisible helper geoms (collision envelopes) are not drawn
       const s = [m.geom_size[3 * i], m.geom_size[3 * i + 1], m.geom_size[3 * i + 2]];
       let geo: THREE.BufferGeometry;
       if (type === T.mjGEOM_PLANE.value) {

@@ -1,109 +1,18 @@
-// Transfer scene maths: two neighbouring units' pipes B and C, and the cart handing over between them. No MuJoCo or DOM.
-// B is the right-hand pipe of unit 1 (its top bar runs LEFT); C is the left-hand pipe of unit 2 (its top bar runs RIGHT).
-// The hands are 14 cm apart, so B and C are 14 cm apart. The cart rides on one pipe and its free hand hangs towards the other.
-import { CartMotion, L_ARC, clampS, distToPath, frameQuat, pathAt, L_VERT, type PathPoint } from './track.ts';
-import { handTrims, setCart, setMotors, type Vec3 } from './model.ts';
+// Transfer scene logic (v2 cart, cad/cart_base.py): the plate hangs on a hinge at each hand and ONE rigid plate swings on the hand that stays clamped.
+// Pure maths and a state machine, no DOM; applyPose writes a state into a MuJoCo model.
+//
+// Mechanism (lengths in mm, CAD axes: x across, y out of the pipe plane, z up the pipes; the hinge axes and the pipes are all parallel to z, so the swing is planar).
+// At rest the hands clamp pipe B (hand 2) and pipe C (hand 1), 120 mm apart. Hinge 1 is on the far side of C, hinge 2 on the far side of B, 156 mm apart and 43 mm in
+// front of the pipe plane. Transfer (decided by Dani): the arm folds in; hand 2 releases B; the cart lifts on pipe C (hand 1's drive wheels) until hand 2 is above
+// the end of B; the plate swings half a turn about hinge 1, OUT TO -y, hand 2 following it round (its own hinge turns it back so it arrives the way it left);
+// the cart lowers, hand 2 drops over the end of pipe D, which is where its pipe offset lands (252 mm: hinge 1 + 156 + 30); hand 2 clamps D.
+// Going back is the same in reverse. A hand swung the other way (hand 1 about hinge 2) is not supported: see the notes in the pull request.
+import { HINGE_Y, hingeX, HINGE_DEG_S_CAD } from './dims.ts';
+import { CLEAR_M } from './model.ts';
+import { TOP_S_M, LIFT_M } from './transfer-model.ts';
 
-/** Sign of the rotation-motor hinge for a swing away from the track, riding B (rolled half a turn) and C. */
-export const SB = -1, SC = 1;
-export const HAND_SPACING_MM = 140;
-export const PIPE_GAP_M = HAND_SPACING_MM / 1000;
-export const TRANSFER_HORIZ_MM = 450;    // shortened top bars: enough to show them
-export const TRANSFER_MIN_CM = 15;       // lowest point of the vertical section where a transfer is allowed
-export const TRANSFER_MAX_HANDOVER_CM = L_VERT - 5;  // highest point of the vertical section where a hand-over may start: the tracks are still parallel here
-export const TRANSFER_DEFAULT_CM = 40;   // transfers happen below the bend; the verticals carry no brackets
-
-export type Pipe = 'B' | 'C';
-export const other = (p: Pipe): Pipe => (p === 'B' ? 'C' : 'B');
-
-/** B at x = 0 bends left, C at x = 14 cm bends right. */
-export const pipeX = (p: Pipe) => (p === 'B' ? 0 : PIPE_GAP_M);
-const dir = (p: Pipe) => (p === 'B' ? -1 : 1);
-
-/** Pipe centre line at path distance s (cm), in world X/Z. */
-export function pipePoint(p: Pipe, s: number): PathPoint {
-  const q = pathAt(s);
-  return { ...q, x: pipeX(p) + dir(p) * q.x, tx: dir(p) * q.tx };
-}
-
-export const canTransfer = (s: number) => s >= TRANSFER_MIN_CM && s <= TRANSFER_MAX_HANDOVER_CM;
-
+export type Vec3 = [number, number, number];
 type Quat = [number, number, number, number];
-/** Rotation matrix columns (cart x, y, z in the world) to a quaternion (w x y z). */
-function quatFromAxes(ex: Vec3, ey: Vec3, ez: Vec3): Quat {
-  const m00 = ex[0], m10 = ex[1], m20 = ex[2], m01 = ey[0], m11 = ey[1], m21 = ey[2], m02 = ez[0], m12 = ez[1], m22 = ez[2];
-  const tr = m00 + m11 + m22;
-  let q: Quat;
-  if (tr > 0) { const S = Math.sqrt(tr + 1) * 2; q = [S / 4, (m21 - m12) / S, (m02 - m20) / S, (m10 - m01) / S]; }
-  else if (m00 > m11 && m00 > m22) { const S = Math.sqrt(1 + m00 - m11 - m22) * 2; q = [(m21 - m12) / S, S / 4, (m01 + m10) / S, (m02 + m20) / S]; }
-  else if (m11 > m22) { const S = Math.sqrt(1 + m11 - m00 - m22) * 2; q = [(m02 - m20) / S, (m01 + m10) / S, S / 4, (m12 + m21) / S]; }
-  else { const S = Math.sqrt(1 + m22 - m00 - m11) * 2; q = [(m10 - m01) / S, (m02 + m20) / S, (m12 + m21) / S, S / 4]; }
-  return q;
-}
-
-/** Which of the cart's two hands rides pipe p: hand 1 on C, hand 2 on B (the cart is mirror-symmetric, so B is the mirror image of C). */
-export const riderHand = (p: Pipe): 1 | 2 => (p === 'B' ? 2 : 1);
-/** Put a value for the riding hand and one for the free hand in hand 1 / hand 2 order. */
-export const byHand = <T>(p: Pipe, rider: T, free: T): [T, T] => (p === 'B' ? [free, rider] : [rider, free]);
-
-/**
- * Cart pose on the pipe. On C hand 1 rides the pipe (origin on its axis) and hand 2 hangs towards B. B is the exact mirror image of C about the
- * plane half way between them, and the cart is symmetric under that mirror, so on B hand 2 rides the pipe and hand 1 hangs towards C: same
- * orientation at the straights, no roll, the plate on the same world side. The same wheel pair is the clamp pair on both.
- * plateSide is the cart-y side the plate slides to (the same on both pipes).
- */
-export function cartPose(p: Pipe, s: number): { x: number; z: number; q: Quat; plateSide: 1 | -1 } {
-  const pt = pipePoint(p, s);
-  const th = Math.atan2(-pt.tz, p === 'B' ? -pt.tx : pt.tx);       // C-frame angle of the (mirrored back) tangent, see frameQuat
-  const ex: Vec3 = [Math.cos(th), 0, -Math.sin(th)], ey: Vec3 = [0, -1, 0], ez: Vec3 = [-Math.sin(th), 0, -Math.cos(th)];
-  if (p === 'C') return { x: pt.x, z: pt.z, q: quatFromAxes(ex, ey, ez), plateSide: 1 };
-  // mirror x of the C frame: (m ex, m ey, -m ez); hand 2 is on the pipe, so the origin (hand 1) is one hand spacing along z' from it
-  const mx: Vec3 = [-ex[0], ex[1], ex[2]], my: Vec3 = [-ey[0], ey[1], ey[2]], mz: Vec3 = [ez[0], -ez[1], -ez[2]];
-  return { x: pt.x + PIPE_GAP_M * mz[0], z: pt.z + PIPE_GAP_M * mz[2], q: quatFromAxes(mx, my, mz), plateSide: 1 };
-}
-
-/** Phases of a transfer: drive in-plane to the straight part, close the free hand on the other pipe, release the old hand, then drive to the top. */
-export type XferPhase = 'approach' | 'grip' | 'release' | 'climb';
-export const HAND_MOVE_S = 1; // seconds each clamp takes to close or open
-export const SWING_RATE = 1.2;                       // rotation motor speed, rad/s
-export const SWING_STEP_DEG = 15;
-export const SWING_MAX_RAD = Math.PI;
-export const SWING_MAX_NEEDED_RAD = (100 * Math.PI) / 180;   // the most the rotation motors ever need to swing the cart to clear the other track
-const SWING_GRID_RAD = (2.5 * Math.PI) / 180, SWING_MARGIN_RAD = (3 * Math.PI) / 180;
-const TABLE_STEP_CM = 0.5, TABLE_WINDOW = 3;         // the needed swing is held 1.5 cm either side of where it is needed, so the rotation motors are ready in time
-const WHEEL_R_MM = 10;                               // CAD wheel radius, to turn travel into wheel spin
-
-/** Whether the cart riding pipe p at path coordinate s (cm), its free hand open and swung away from the track by `swing` rad, touches the track (false) or not (true). */
-export type ClearCheck = (p: Pipe, s: number, swing: number) => boolean;
-/** The smallest swing (rad) that clears the other track at each path coordinate: [pipe][round(s / TABLE_STEP_CM)]. Zero where the plane of the tracks is already clear. */
-export type SwingTable = Record<Pipe, number[]>;
-
-export function buildSwingTable(clear: ClearCheck): SwingTable {
-  const out = {} as SwingTable;
-  for (const p of ['B', 'C'] as Pipe[]) {
-    const raw: number[] = [];
-    for (let i = 0; i * TABLE_STEP_CM <= TRANSFER_MAX_S + 1e-9; i++) {
-      const s = i * TABLE_STEP_CM;
-      let th = 0;
-      // first angle that is clear, including the margin on both sides, so the swing never rides along the edge of a collision
-      while (th < SWING_MAX_NEEDED_RAD && !(clear(p, s, th) && clear(p, s, th + SWING_MARGIN_RAD) && (th === 0 || clear(p, s, th - SWING_MARGIN_RAD)))) th += SWING_GRID_RAD;
-      raw.push(Math.min(th, SWING_MAX_NEEDED_RAD));
-    }
-    out[p] = raw.map((_, i) => Math.max(...raw.slice(Math.max(0, i - TABLE_WINDOW), i + TABLE_WINDOW + 1)));
-  }
-  return out;
-}
-
-/** Swing (rad) needed at path coordinate s, taking the larger of the two table cells around it. */
-export function swingNeeded(t: SwingTable | null, p: Pipe, s: number): number {
-  if (!t) return 0;
-  const a = t[p], f = Math.min(a.length - 1, Math.max(0, s / TABLE_STEP_CM)), i = Math.floor(f);
-  return Math.max(a[i], a[Math.min(a.length - 1, i + 1)]);
-}
-
-/** The straight-part height to start the hand-over from, given where the cart is (cm). */
-export const handoverHeight = (s: number) => (canTransfer(s) ? s : TRANSFER_DEFAULT_CM);
-
 /** Rotate v by the quaternion q (w x y z). */
 export function rotate(q: Quat, v: Vec3): Vec3 {
   const [w, x, y, z] = q;
@@ -111,127 +20,191 @@ export function rotate(q: Quat, v: Vec3): Vec3 {
   return [v[0] + w * t[0] + (y * t[2] - z * t[1]), v[1] + w * t[1] + (z * t[0] - x * t[2]), v[2] + w * t[2] + (x * t[1] - y * t[0])];
 }
 
-/** Distance (m) from a world point to pipe p's centre line. */
-export function distToPipe(p: Pipe, pt: Vec3, horizMm = TRANSFER_HORIZ_MM): number {
-  return Math.hypot(distToPath(dir(p) * (pt[0] - pipeX(p)), pt[2], horizMm), pt[1]);
+/** How far the clamp pair backs off (m) when a hand is open: the hand then drops over a pipe end with the fixed pairs 4 mm clear all round. */
+export const WHEEL_OPEN_V2_M = 0.03;
+export const TOP_S_CM = TOP_S_M * 100, LIFT_CM = LIFT_M * 100;
+export const SWING_RATE_DEG_S = 30;           // default hinge speed for the preview; the CAD worm drive gives HINGE_DEG_S_CAD (about 9.5)
+export const DEFAULT_SPEED_CM_S = 10, MAX_SPEED_CM_S = 50, DEFAULT_STEP_CM = 5, MIN_S_CM = 15;
+export const ARM_FOLD_S = 3;                  // seconds the arm takes to fold or unfold
+export const HAND_MOVE_S = 1;                 // seconds each clamp takes to close or open
+const WHEEL_R_MM = 10;                        // CAD wheel radius, to turn travel into wheel spin
+export { HINGE_DEG_S_CAD };
+
+/** Swing coordinate t: 0 = at rest (hands on B and C), 1 = hand 2 swung about hinge 1 onto D. */
+export interface Kin { alpha: number; ox: number; oy: number; hinge1: number; hinge2: number; freeYaw: number }
+const smooth = (u: number) => u * u * (3 - 2 * u);
+
+/** Swing coordinate t: 0 = at rest (hands on B and C), 1 = hand 2 swung about hinge 1 onto D. */
+export interface Kin { alpha: number; ox: number; oy: number; hinge1: number; hinge2: number; freeYaw: number }
+export const HAND_NODES = [0, 0.04, 0.08, 0.12, 0.16, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.84, 0.88, 0.92, 0.96, 1];
+export const HAND_TURNS = [0, 0.004, 0.01, 0.02, 0.03, 0.05, 0.08, 0.2, 0.4, 0.6, 0.78, 0.9, 0.93, 0.96, 0.98, 0.995, 1];
+export function handTurn(u: number, knots = HAND_TURNS): number {
+  const n = HAND_NODES, k = Math.min(1, Math.max(0, u));
+  let i = 0; while (i < n.length - 2 && k > n[i + 1]) i++;
+  const h = (j: number) => n[j + 1] - n[j], d = (j: number) => (knots[j + 1] - knots[j]) / h(j);
+  const slope = (j: number) => { if (j === 0 || j === n.length - 1) return 0; const a = d(j - 1), b = d(j); return a * b <= 0 ? 0 : (2 * a * b) / (a + b); };
+  const x = (k - n[i]) / h(i), x2 = x * x, x3 = x2 * x;
+  return (2 * x3 - 3 * x2 + 1) * knots[i] + (x3 - 2 * x2 + x) * h(i) * slope(i) + (-2 * x3 + 3 * x2) * knots[i + 1] + (x3 - x2) * h(i) * slope(i + 1);
+}
+export function kinematics(t: number): Kin {
+  const u = Math.min(1, Math.max(0, t)), alpha = Math.PI * u;
+  const hx = hingeX(1) / 1000, hy = HINGE_Y / 1000, c = Math.cos(alpha), s = Math.sin(alpha);
+  // the plate is rotated by alpha about hand 1's hinge point: origin O = h - R h
+  const ox = hx - (c * hx - s * hy), oy = hy - (s * hx + c * hy);
+  // hand 2's own hinge turns it half a turn the other way round the plate as the plate turns half a turn: its yaw in the world goes from 0 to a full turn, so it arrives as it left
+  const turn = Math.PI * smooth(u);
+  return { alpha, ox, oy, hinge1: -alpha, hinge2: turn, freeYaw: alpha + turn };
 }
 
-/** Radial wheel adjustments for both hands at this pose (see handTrims): the riding hand follows pipe p, the other hangs on the other pipe. In hand 1 / hand 2 order. */
-export function cartTrims(p: Pipe, pose: { x: number; z: number; q: Quat }, swing = 0): { hand1: number[]; hand2: number[] } {
-  // The base swings about the riding hand's pipe axis (cart x); the riding hand itself stays on its pipe (its motor turns the base against it), the free hand swings with the base.
-  const pz = p === 'B' ? -PIPE_GAP_M : 0;             // the pivot is the riding hand's pipe axis: hand 2 on B
-  const toWorld = (turn: number) => (v: Vec3): Vec3 => {
-    const c = Math.cos(turn), sn = Math.sin(turn), y = v[1], z = v[2] - pz;
-    const r = rotate(pose.q, [v[0], y * c - z * sn, y * sn + z * c + pz]); return [pose.x + r[0], r[1], pose.z + r[2]];
-  };
-  const [on1, on2] = byHand<Pipe>(p, p, other(p)), rider = riderHand(p);
-  return {
-    hand1: handTrims(1, HAND_SPACING_MM, toWorld(rider === 1 ? 0 : swing), (w) => distToPipe(on1, w)),
-    hand2: handTrims(2, HAND_SPACING_MM, toWorld(rider === 2 ? 0 : swing), (w) => distToPipe(on2, w)),
-  };
+type ModelLike = { jnt(name: string): { id: number }; jnt_qposadr: ArrayLike<number>; actuator(name: string): { id: number }; body(name: string): { id: number }; body_mocapid: ArrayLike<number> };
+type DataLike = { qpos: { [i: number]: number }; ctrl: { [i: number]: number }; mocap_pos: { [i: number]: number }; mocap_quat: { [i: number]: number } };
+
+/** The cart: height (cm, the hands' mid height), swing t, clamp openings (0 closed .. 1 open), arm fold (0 out .. 1 stowed), wheel spins (rad). */
+export interface CartState { s: number; t: number; open1: number; open2: number; fold: number; spin1: number; spin2: number }
+export const initialState = (): CartState => ({ s: TOP_S_CM, t: 0, open1: 0, open2: 0, fold: 0, spin1: 0, spin2: 0 });
+
+/** Write a cart state into the model: the plate's mocap pose, both hinges, both clamps, the arm and the drive wheels, and the matching actuator targets. */
+export function applyPose(model: ModelLike, data: DataLike, st: CartState): Kin {
+  const k = kinematics(st.t), mc = model.body_mocapid[model.body('cart').id];
+  data.mocap_pos[3 * mc] = k.ox; data.mocap_pos[3 * mc + 1] = k.oy; data.mocap_pos[3 * mc + 2] = st.s / 100;
+  data.mocap_quat[4 * mc] = Math.cos(k.alpha / 2); data.mocap_quat[4 * mc + 1] = 0; data.mocap_quat[4 * mc + 2] = 0; data.mocap_quat[4 * mc + 3] = Math.sin(k.alpha / 2);
+  const q = (n: string) => model.jnt_qposadr[model.jnt(n).id], a = (n: string) => model.actuator(n).id;
+  const clamp = (open: number) => { const o = Math.min(1, Math.max(0, open)); return (1 - o) * CLEAR_M + o * WHEEL_OPEN_V2_M; };
+  const c1 = clamp(st.open1), c2 = clamp(st.open2);
+  data.qpos[q('hinge1')] = k.hinge1; data.qpos[q('hinge2')] = k.hinge2;
+  data.qpos[q('h1p')] = c1; data.qpos[q('h2p')] = c2;
+  data.qpos[q('arm_lift')] = 0; data.qpos[q('arm_elbow')] = Math.PI * st.fold; data.qpos[q('arm_wrist')] = -Math.PI * st.fold;
+  for (const w of ['w1f', 'w1b']) data.qpos[q(w)] = st.spin1;
+  for (const w of ['w2f', 'w2b']) data.qpos[q(w)] = st.spin2;
+  data.ctrl[a('hinge1')] = k.hinge1; data.ctrl[a('hinge2')] = k.hinge2; data.ctrl[a('clamp1')] = c1; data.ctrl[a('clamp2')] = c2;
+  data.ctrl[a('drive1')] = st.spin1; data.ctrl[a('drive2')] = st.spin2;
+  return k;
 }
+
+/** Where the cart is, as a name for the display: the pipe each hand is on (or over). */
+export const pipeOf = (hand: 1 | 2, t: number) => (hand === 1 ? 'C' : t >= 0.5 ? 'D' : 'B');
+
+export type StepName = 'fold' | 'release' | 'lift' | 'swing' | 'lower' | 'clamp' | 'unfold';
+export const STEP_LABEL: Record<StepName, string> = {
+  fold: 'Folding the arm in close to the hinge', release: 'Releasing the free hand', lift: 'Lifting the cart on pipe C so the free hand clears its pipe',
+  swing: 'Swinging the plate on hand C\'s hinge', lower: 'Lowering the free hand onto the new pipe', clamp: 'Clamping the free hand', unfold: 'Unfolding the arm',
+};
+const EPS = 1e-9;
+interface Goal { s: number; t: number; open1: number; open2: number; fold: number }
 
 /**
- * Put the whole cart into the model for the run state: the clamp openings, wheel spins and swing hinge, with the hands swapped for the pipe it rides.
- * `open` is the opening per pipe, `spin` the wheel spin of the riding hand then the free one, `hinge` the rotation-motor angle.
- */
-export function applyCart(model: Parameters<typeof setCart>[0] & Parameters<typeof setMotors>[0], data: Parameters<typeof setMotors>[1], pipe: Pipe,
-  pose: { plateSide: 1 | -1 }, tr: { hand1: number[]; hand2: number[] }, open: Record<Pipe, number>, spin: number[], hinge: number): void {
-  const [o1, o2] = byHand(pipe, open[pipe], open[other(pipe)]), [s1, s2] = byHand(pipe, spin[0], spin[1]);
-  setCart(model, data.qpos, o1, o2, pose.plateSide, tr.hand1, tr.hand2, { model, data: data.ctrl });
-  setMotors(model, data, s1, s2, hinge, riderHand(pipe));
-}
-
-/** End of the (shortened) top bar: the highest path coordinate on a transfer track (cm). */
-export const TRANSFER_MAX_S = L_VERT + L_ARC + TRANSFER_HORIZ_MM / 10;
-
-/**
- * The transfer sequence as a state machine (no MuJoCo, no DOM): which pipe the cart rides, how far each clamp is open, and the
- * approach / grip / release / climb phases. The cart's pose (cartPose) is driven from the path coordinate on every step, so the
- * cart rotation is held the whole time; the pipe switch swaps the hands' roles without moving the body.
+ * Cart controller. Every continuous quantity (height, swing, clamp openings, arm fold) moves towards its goal at its own rate, behind interlocks:
+ * the plate swings only with the arm folded, hand 2 open, hand 1 closed and the cart lifted; nothing else moves mid-swing; hand 2 closes only over a pipe end.
+ * A full transfer is a queue of goals, run one after the other. `msg` carries the reason when an interlock refuses something.
  */
 export class TransferRun {
-  readonly motion = new CartMotion();
-  pipe: Pipe = 'B';
-  xfer: { from: Pipe; phase: XferPhase; t: number } | null = null;
-  /** Clamp opening per pipe: 0 closed on it, 1 open. The free hand waits open around the other pipe. */
-  readonly open: Record<Pipe, number> = { B: 0, C: 1 };
+  readonly st = initialState();
+  goal: Goal = { s: TOP_S_CM, t: 0, open1: 0, open2: 0, fold: 0 };
+  speed = DEFAULT_SPEED_CM_S;                 // cm/s
+  swingDegS = SWING_RATE_DEG_S;               // top speed (deg/s) of either hinge's output, the worm drive's limit
+  queue: { name: StepName; goal: Partial<Goal> }[] = [];
+  current: StepName | null = null;
+  msg = '';
   done = false;
-  /** Rotation motors: cart swing about the pipe (rad, away from the track = positive on either pipe) and its goal. The motors hold the goal the whole time. */
-  swingW = 0;
-  swingGoal = 0;
-  /** The hinge angle of the rotation motors in the cart frame. The cart is rolled half a turn on B, so the same swing away from the track is the opposite hinge angle there. */
-  get swing() { return (this.pipe === 'B' ? SB : SC) * this.swingW; }
-  /** Drive motors: wheel spin angle (rad) of hand 1 (on the riding pipe) and hand 2. Only a closed clamp's wheels turn. */
-  readonly spin = [0, 0];
-  private lastS = NaN;
-  /** Manual rotation from the Step tab: step the swing goal (rad), clamped. */
-  manualSwing = 0;
-  turn(d: number) { if (!this.xfer) this.manualSwing = Math.min(SWING_MAX_RAD, Math.max(-SWING_MAX_RAD, this.manualSwing + d)); }
-  readonly table: SwingTable | null;
-  constructor(table: SwingTable | null = null) { this.table = table; }
-  private need = (s: number) => swingNeeded(this.table, this.pipe, s);
-  private moveSwing(dt: number) {
-    const e = this.swingGoal - this.swingW, st = SWING_RATE * dt;
-    this.swingW = Math.abs(e) <= st ? this.swingGoal : this.swingW + Math.sign(e) * st;
-  }
-  /**
-   * Drive along the pipe in the plane of the tracks. The cart rotates only where the other track is in the way (round the bend) and exactly as far
-   * as it needs, and turns back as soon as it is clear. If the rotation motors are not yet at the angle the next step needs, the cart waits for them.
-   */
-  private ride(dt: number) {
-    const m = this.motion, ahead = m.s + Math.sign(m.goal - m.s) * Math.min(Math.abs(m.goal - m.s), Math.max(0, m.speed) * dt);
-    const need = m.moving ? Math.max(this.need(m.s), this.need(ahead)) : this.need(m.s);
-    this.swingGoal = this.xfer ? need : Math.max(need, this.manualSwing);
-    if (this.swingW >= need - 1e-9) m.advance(dt);
-    this.roll();
-  }
-  private roll() {
-    const ds = Number.isNaN(this.lastS) ? 0 : this.motion.s - this.lastS; this.lastS = this.motion.s;
-    if (this.open[this.pipe] < 0.5) this.spin[0] -= (ds * 10) / WHEEL_R_MM;
-    if (this.open[other(this.pipe)] < 0.5) this.spin[1] -= (ds * 10) / WHEEL_R_MM;
-  }
+  /** Hinge angles (rad) of both hinges last frame, to check the worm drives never exceed their speed. */
+  private prev = { h1: 0, h2: 0 };
+  maxHingeStep = 0;
 
-  clamp = (s: number) => Math.min(TRANSFER_MAX_S, clampS(s));
-  goTo(s: number, speed?: number) { if (speed !== undefined) this.motion.speed = speed; this.motion.goal = this.clamp(s); }
-  nudge(d: number, speed?: number) { if (!this.xfer) this.goTo(this.motion.goal + d, speed); }
-  start() {
-    if (this.xfer) return false;
-    this.done = false;
-    this.manualSwing = 0;
-    this.xfer = { from: this.pipe, phase: 'approach', t: 0 };
-    this.goTo(handoverHeight(this.motion.s));
-    return true;
+  /** Swing progress per second: hinge 2 turns up to 1.5 times as fast as the plate (it also turns the hand back round), so the swing is paced by that hinge and neither exceeds `swingDegS`. */
+  get swingRate() { return (this.swingDegS * Math.PI) / 180 / (1.5 * Math.PI); }
+  get swinging() { return this.st.t > EPS && this.st.t < 1 - EPS; }
+  get atEnd(): 0 | 1 | null { return this.st.t <= EPS ? 0 : this.st.t >= 1 - EPS ? 1 : null; }
+  get busy() { return this.current !== null; }
+  /** Highest height the cart may be at: with hand 2 clamped on its pipe it must stay over the pipe end; with hand 2 open it may lift over it. */
+  get maxS() { return this.st.open2 >= 1 - EPS || this.goal.open2 >= 1 ? TOP_S_CM + LIFT_CM : TOP_S_CM; }
+
+  private refuse(why: string) { this.msg = why; return false; }
+  setSpeed(v: number) { this.speed = Math.min(MAX_SPEED_CM_S, Math.max(0.1, v)); }
+
+  /** Step buttons: move the cart up or down the pipes by d cm. */
+  nudge(d: number): boolean {
+    if (this.busy) return this.refuse('Wait for the running transfer to finish.');
+    if (this.swinging) return this.refuse('The plate is mid-swing: finish the rotation first.');
+    const top = this.st.open2 >= 1 - EPS ? TOP_S_CM + LIFT_CM : TOP_S_CM;
+    if (d > 0 && this.st.open2 < 1 - EPS && this.st.s >= TOP_S_CM - EPS) return this.refuse('Hand ' + pipeOf(2, this.st.t) + ' is clamped and the pipe ends here: release it to lift the cart higher.');
+    this.goal.s = Math.min(top, Math.max(MIN_S_CM, this.goal.s + d)); this.msg = ''; return true;
   }
-  /** Stop moving; the hand-over itself (grip, release) always finishes. */
-  stop() {
-    if (this.xfer && this.xfer.phase !== 'approach' && this.xfer.phase !== 'climb') return;
-    this.xfer = null; this.motion.goal = this.motion.s;
+  fold(on: boolean): boolean {
+    if (this.busy) return this.refuse('Wait for the running transfer to finish.');
+    if (this.swinging) return this.refuse('The plate is mid-swing.');
+    this.goal.fold = on ? 1 : 0; this.msg = ''; return true;
   }
+  /** hand 1 or 2: open (release) or close (clamp). */
+  clampHand(hand: 1 | 2, open: boolean): boolean {
+    if (this.busy) return this.refuse('Wait for the running transfer to finish.');
+    if (this.swinging) return this.refuse('The plate is mid-swing: a hand cannot open or close in the air.');
+    if (open && hand === 1 && (this.st.open2 > EPS || this.goal.open2 > EPS)) return this.refuse('Hand 2 is not clamped: releasing hand C as well would let go of the track.');
+    if (open && hand === 2 && (this.st.open1 > EPS || this.goal.open1 > EPS)) return this.refuse('Hand C is not clamped: releasing hand ' + pipeOf(2, this.st.t) + ' as well would let go of the track.');
+    if (!open && hand === 2 && this.st.s > TOP_S_CM + EPS) return this.refuse('Hand ' + pipeOf(2, this.st.t) + ' is above its pipe end: lower the cart first.');
+    this.goal[hand === 1 ? 'open1' : 'open2'] = open ? 1 : 0; this.msg = ''; return true;
+  }
+  /** Rotate: swing the plate to the other end (toward = 1: hand 2 over onto D, 0: back to B). */
+  rotate(toward: 0 | 1): boolean {
+    if (this.busy) return this.refuse('Wait for the running transfer to finish.');
+    if (this.st.fold < 1 - EPS) return this.refuse('Fold the arm in first: the plate swings with the arm on it.');
+    if (this.st.open1 > EPS) return this.refuse('Hand C must stay clamped: the plate swings on its hinge.');
+    if (this.st.open2 < 1 - EPS) return this.refuse('Release the free hand (hand ' + pipeOf(2, this.st.t) + ') first.');
+    if (this.st.s < TOP_S_CM + LIFT_CM - EPS) return this.refuse('Lift the cart so the free hand clears its pipe end first.');
+    this.goal.t = toward; this.msg = ''; return true;
+  }
+  stop() { this.queue = []; this.current = null; this.goal = { s: this.st.s, t: this.st.t, open1: this.st.open1, open2: this.st.open2, fold: this.st.fold }; this.msg = 'Stopped.'; }
+
+  /** Run the whole transfer from where the cart is: to the other pipe, whichever end it is at. Needs the cart at rest at one end. */
+  start(): boolean {
+    if (this.busy) return this.refuse('A transfer is already running.');
+    const end = this.atEnd;
+    if (end === null) return this.refuse('The plate is mid-swing: finish the rotation first.');
+    if (this.st.open1 > EPS || this.st.open2 > EPS) return this.refuse('Clamp both hands first.');
+    const to: 0 | 1 = end === 0 ? 1 : 0, top = TOP_S_CM + LIFT_CM;
+    this.queue = [
+      { name: 'fold', goal: { fold: 1 } }, { name: 'release', goal: { s: TOP_S_CM, open2: 1 } }, { name: 'lift', goal: { s: top } },
+      { name: 'swing', goal: { t: to } }, { name: 'lower', goal: { s: TOP_S_CM } }, { name: 'clamp', goal: { open2: 0 } }, { name: 'unfold', goal: { fold: 0 } },
+    ];
+    if (this.st.s < TOP_S_CM - EPS) this.queue.splice(1, 0, { name: 'lift', goal: { s: TOP_S_CM } });   // from lower down: ride up to the pipe end first
+    this.done = false; this.msg = ''; this.next(); return true;
+  }
+  private next() {
+    const n = this.queue.shift();
+    if (!n) { this.current = null; this.done = true; return; }
+    this.current = n.name; Object.assign(this.goal, n.goal);
+  }
+  private reached() { const g = this.goal, s = this.st; return Math.abs(g.s - s.s) < EPS && Math.abs(g.t - s.t) < EPS && Math.abs(g.open1 - s.open1) < EPS && Math.abs(g.open2 - s.open2) < EPS && Math.abs(g.fold - s.fold) < EPS; }
+
+  private toward(cur: number, goal: number, rate: number, dt: number) { const e = goal - cur, step = rate * dt; return Math.abs(e) <= step ? goal : cur + Math.sign(e) * step; }
   advance(dt: number) {
-    this.moveSwing(dt);
-    const x = this.xfer;
-    if (!x) { this.ride(dt); return; }
-    if (Number.isNaN(this.lastS)) this.lastS = this.motion.s;
-    const k = Math.min(1, (x.t += dt) / HAND_MOVE_S);
-    const go = (phase: XferPhase) => { x.phase = phase; x.t = 0; };
-    switch (x.phase) {
-      case 'approach':
-        this.ride(dt);
-        if (!this.motion.moving && this.swingW === 0) go('grip');
-        break;
-      case 'grip':
-        this.open[other(x.from)] = 1 - k;
-        if (k >= 1) go('release');
-        break;
-      case 'release':
-        this.open[x.from] = k;
-        if (k >= 1) { this.pipe = other(x.from); this.goTo(TRANSFER_MAX_S); go('climb'); }
-        break;
-      case 'climb':
-        this.ride(dt);
-        if (!this.motion.moving && this.swingW === 0) { this.xfer = null; this.done = true; }
-        break;
+    const s = this.st, g = this.goal;
+    // arm and clamps
+    s.fold = this.toward(s.fold, g.fold, 1 / ARM_FOLD_S, dt);
+    s.open1 = this.toward(s.open1, g.open1, 1 / HAND_MOVE_S, dt);
+    s.open2 = this.toward(s.open2, g.open2, 1 / HAND_MOVE_S, dt);
+    // the swing: hinge speed limited, and only with everything in place
+    const swingOk = s.fold >= 1 - EPS && s.open1 <= EPS && s.open2 >= 1 - EPS && s.s >= TOP_S_CM + LIFT_CM - EPS;
+    if (g.t !== s.t) { if (swingOk) s.t = this.toward(s.t, g.t, this.swingRate, dt); else if (!this.busy) { g.t = s.t; } }
+    // driving up or down the pipes: not mid-swing, and the hand over its pipe end must not be clamped while above it
+    if (!this.swinging && g.s !== s.s) {
+      const ds = this.toward(s.s, Math.min(g.s, this.maxS), this.speed, dt) - s.s;
+      s.s += ds;
+      if (s.open1 < 0.5) s.spin1 -= (ds * 10) / WHEEL_R_MM;   // hand 1's drive wheels roll it up the tall pipe
+      if (s.open2 < 0.5) s.spin2 -= (ds * 10) / WHEEL_R_MM;
     }
+    if (this.current && this.reached()) this.next();
   }
+  /** Hinge speed bookkeeping for the tests: call with the hinge angles written this frame. */
+  track(h1: number, h2: number) { this.maxHingeStep = Math.max(this.maxHingeStep, Math.abs(h1 - this.prev.h1), Math.abs(h2 - this.prev.h2)); this.prev = { h1, h2 }; }
 }
+
+/** Deepest penetration (m, negative) among the current contacts and the first pair's geom names, or 0 when nothing touches. */
+export function worstContact(model: { geom(id: number): { name: string }; body(id: number): { name: string }; geom_bodyid: ArrayLike<number> }, data: { ncon: number; contact: { get(i: number): { dist: number; geom1: number; geom2: number } | undefined } }): { depth: number; names: string } {
+  let depth = 0, names = '';
+  for (let i = 0; i < data.ncon; i++) {
+    const c = data.contact.get(i);
+    if (c && c.dist < depth) { depth = c.dist; names = [c.geom1, c.geom2].map((g: number) => model.geom(g).name || model.body(model.geom_bodyid[g]).name).join(' / '); }
+  }
+  return { depth, names };
+}
+

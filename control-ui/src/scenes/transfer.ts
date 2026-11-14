@@ -1,134 +1,118 @@
-// Transfer scene: two neighbouring units side by side, only pipes B and C with their top bars (B's runs left, C's runs right).
-// The cart rides one pipe and hands over to the other on a vertical section (Hand B clamps the neighbour, Hand A releases).
-import { cartActuators, cartBody, clampTrackContacts, pipeGeoms } from '../cart/model.ts';
-import { DEFAULT_SPEED_CM_S, DEFAULT_STEP_CM, L_VERT, MAX_SPEED_CM_S, L_ARC } from '../cart/track.ts';
+// Transfer scene (v2 cart, cad/cart_base.py): the cart hangs between two neighbouring pipes (B and C, 120 mm apart) on one rigid plate with a hinge at each hand.
+// Hand B releases its pipe, the cart lifts on C, the plate swings half a turn on hand C's hinge and hand B lands on pipe D and clamps it. Each step has a control, and one button runs the lot.
+import { transferMjcf } from '../cart/transfer-model.ts';
+import { PIPE_X } from '../cart/dims.ts';
 import {
-  HAND_SPACING_MM, SWING_STEP_DEG, buildSwingTable, TRANSFER_DEFAULT_CM, TRANSFER_HORIZ_MM, TRANSFER_MIN_CM, TransferRun, applyCart, cartPose, cartTrims, other, pipeX,
-  type Pipe, type XferPhase,
+  DEFAULT_SPEED_CM_S, DEFAULT_STEP_CM, HINGE_DEG_S_CAD, LIFT_CM, MAX_SPEED_CM_S, STEP_LABEL, SWING_RATE_DEG_S, TOP_S_CM, TransferRun, applyPose, kinematics, pipeOf, worstContact,
 } from '../cart/transfer.ts';
-import { makeClearCheck } from '../cart/clearance.ts';
 import { Viewer } from '../viewer.ts';
 import { SCENE_INFOS } from './list.ts';
 import type { Scene } from './scene.ts';
 
 const info = SCENE_INFOS.find((s) => s.id === 'transfer')!;
-function transferMjcf(): string {
-  return `
-<mujoco model="pond_transfer">
-  <option timestep="0.002" gravity="0 0 -9.81"/>
-  <worldbody>
-    <geom name="floor" type="plane" pos="0.07 0 -0.05" size="1.4 0.9 0.1" rgba="0.82 0.86 0.9 1"/>
-    ${pipeGeoms(pipeX('B'), -1, TRANSFER_HORIZ_MM, 'b')}
-    ${pipeGeoms(pipeX('C'), 1, TRANSFER_HORIZ_MM, 'c')}
-    ${cartBody(HAND_SPACING_MM)}
-  </worldbody>
-  ${cartActuators()}
-</mujoco>`;
-}
 
 export const transferScene: Scene = {
   ...info,
   async load({ mujoco, view, panel, status }) {
     const model = mujoco.MjModel.from_xml_string(transferMjcf());
     const data = new mujoco.MjData(model);
-    const viewer = new Viewer(view, { mujoco, model, data }, { target: [0.07, 0, 0.6], dist: 2.4, maxDist: 5, az: Math.PI + 0.3, el: 0.15, far: 20 });
-    const cartMocap = model.body_mocapid[model.body('cart').id];
+    // Camera behind the pipes (+y), a little to one side, looking at the hands near the pipe ends; the plate swings out to the front.
+    const viewer = new Viewer(view, { mujoco, model, data }, { target: [0.06, 0, TOP_S_CM / 100], dist: 1.1, maxDist: 4, az: Math.PI + 0.55, el: 0.25, far: 20 });
     status.textContent = '';
-    const maxS = L_VERT + L_ARC + TRANSFER_HORIZ_MM / 10; // end of the (shortened) top bar
 
     panel.innerHTML = `
     <h1>Pond cart transfer</h1>
     <section class="card cartstat" aria-live="off">
       <dl>
-        <dt>Riding on</dt><dd><strong id="t-pipe">Pipe B</strong></dd>
-        <dt>Position</dt><dd><span id="t-pos">0.0</span> cm of ${maxS.toFixed(1)} cm</dd>
         <dt>Hands</dt><dd id="t-hands"></dd>
-        <dt>Motors</dt><dd>Per wheel system: A drive (wheel spin), B base rotation (swing about the pipe), C clamp (moves the one clamp pair)</dd>
-        <dt>Swing</dt><dd><span id="t-swing">0</span>° (rotation motors holding; the cart only turns round the bends)</dd>
-        <dt>Clamp / track</dt><dd id="t-hit">no contact</dd>
+        <dt>Height</dt><dd><span id="t-pos">0.0</span> cm (pipe ends at ${TOP_S_CM + 5} cm)</dd>
+        <dt>Plate swing</dt><dd><span id="t-swing">0</span>° of 180°, hinge angles <span id="t-hinges"></span></dd>
+        <dt>Arm</dt><dd id="t-arm"></dd>
+        <dt>Step</dt><dd id="t-step-now">Idle</dd>
+        <dt>Contacts</dt><dd id="t-hit">none</dd>
       </dl>
-      <p class="hint">Two units side by side, ${HAND_SPACING_MM / 10} cm apart: pipe B (right pipe of unit 1, top bar to the left) and pipe C (left pipe of unit 2, top bar to the right). 0 cm is the bottom of each pipe. Transfer takes the cart from wherever it is to the straight part (${TRANSFER_MIN_CM} to ${L_VERT.toFixed(0)} cm), closes its free clamp on the other pipe, releases the first one, then rides to the top of the other unit.</p>
+      <p class="hint">Pipes B and C are ${PIPE_X.C - PIPE_X.B} mm apart (cad/cart_dims.py), the plate hangs between the two hinge axes. A transfer: fold the arm in, release hand B, lift the cart on pipe C so hand B clears the end of its pipe, swing the plate half a turn on hand C's hinge, lower hand B onto pipe D (${PIPE_X.D - PIPE_X.C} mm from C) and clamp it. Rotation only happens during a transfer; the hinge worm drives hold the plate with the motors off.</p>
     </section>
     <div class="xy stepbar">
       <label>Step <input class="tall" id="t-step" type="number" inputmode="decimal" min="0.1" step="1" value="${DEFAULT_STEP_CM}" aria-label="Step size cm"> cm</label>
       <label>Speed <input class="tall" id="t-speed" type="number" inputmode="decimal" min="0.1" max="${MAX_SPEED_CM_S}" step="1" value="${DEFAULT_SPEED_CM_S}" aria-label="Speed cm per second"> cm/s</label>
     </div>
     <div class="row wrap">
-      <button class="big grow" id="t-up">▲ Up / forward</button>
-      <button class="big grow" id="t-down">▼ Down / back</button>
+      <button class="big grow" id="t-up">▲ Up</button>
+      <button class="big grow" id="t-down">▼ Down</button>
     </div>
-    <div class="xy stepbar">
-      <label>Rotation step <input class="tall" id="t-rstep" type="number" inputmode="decimal" min="1" max="90" step="5" value="${SWING_STEP_DEG}" aria-label="Rotation step degrees"> °</label>
+    <p class="hint">Up and down drive the cart along the pipes on the drive wheels. With hand <span class="t-free">B</span> released it can lift ${LIFT_CM} cm above the pipe end.</p>
+    <h2>Transfer, step by step</h2>
+    <div class="row wrap">
+      <button class="big grow" id="t-fold">1. Fold arm</button>
+      <button class="big grow" id="t-unfold">Unfold arm</button>
     </div>
     <div class="row wrap">
-      <button class="big grow" id="t-rplus">⟳ Rotate +</button>
-      <button class="big grow" id="t-rminus">⟲ Rotate −</button>
+      <button class="big grow" id="t-relfree">2. Release hand <span class="t-free">B</span></button>
+      <button class="big grow" id="t-relc">Release hand C</button>
     </div>
-    <div class="row"><button class="big" id="t-stop">Stop</button><button class="big" id="t-ready">Go to ${TRANSFER_DEFAULT_CM} cm</button></div>
-    <div class="row"><button class="big grow" id="t-transfer">Transfer to the other unit</button></div>
+    <div class="xy stepbar">
+      <label>Hinge speed <input class="tall" id="t-hspeed" type="number" inputmode="decimal" min="1" max="60" step="1" value="${SWING_RATE_DEG_S}" aria-label="Hinge speed degrees per second"> °/s</label>
+    </div>
+    <div class="row wrap">
+      <button class="big grow" id="t-rplus">3. Rotate ⟳ onto D</button>
+      <button class="big grow" id="t-rminus">Rotate ⟲ back to B</button>
+    </div>
+    <p class="hint">The CAD worm drive turns a hinge at ${HINGE_DEG_S_CAD.toFixed(1)}°/s (60 rpm motor, 38:1); the field sets the limit used here.</p>
+    <div class="row wrap">
+      <button class="big grow" id="t-clampfree">4. Clamp hand <span class="t-free">B</span></button>
+      <button class="big grow" id="t-clampc">Clamp hand C</button>
+    </div>
+    <div class="row"><button class="big" id="t-stop">Stop</button></div>
+    <div class="row"><button class="big grow" id="t-transfer">Run full transfer</button></div>
     <p id="t-msg" class="hint"></p>`;
 
     const $ = <T extends HTMLElement>(id: string) => panel.querySelector<T>('#' + id)!;
-    // The least rotation that clears the other track at every point of the path, measured on this very model (see cart/clearance.ts).
-    const run = new TransferRun(buildSwingTable(makeClearCheck(mujoco, model, data)));
-    const motion = run.motion;
-    const msg = $('t-msg');
-    const readNum = (id: string, fallback: number) => { const v = parseFloat($<HTMLInputElement>(id).value); return Number.isFinite(v) && v > 0 ? v : fallback; };
-    const readSpeed = () => Math.min(readNum('t-speed', DEFAULT_SPEED_CM_S), MAX_SPEED_CM_S);
+    const run = new TransferRun();
+    const num = (id: string, fallback: number) => { const v = parseFloat($<HTMLInputElement>(id).value); return Number.isFinite(v) && v > 0 ? v : fallback; };
+    const sync = () => { run.setSpeed(num('t-speed', DEFAULT_SPEED_CM_S)); run.swingDegS = Math.min(60, num('t-hspeed', SWING_RATE_DEG_S)); };
+    const act = (id: string, fn: () => unknown) => $(id).addEventListener('click', () => { sync(); fn(); });
+    act('t-up', () => run.nudge(num('t-step', DEFAULT_STEP_CM)));
+    act('t-down', () => run.nudge(-num('t-step', DEFAULT_STEP_CM)));
+    act('t-fold', () => run.fold(true));
+    act('t-unfold', () => run.fold(false));
+    act('t-relfree', () => run.clampHand(2, true));
+    act('t-relc', () => run.clampHand(1, true));
+    act('t-clampfree', () => run.clampHand(2, false));
+    act('t-clampc', () => run.clampHand(1, false));
+    act('t-rplus', () => run.rotate(1));
+    act('t-rminus', () => run.rotate(0));
+    act('t-stop', () => run.stop());
+    act('t-transfer', () => run.start());
 
-    $('t-up').addEventListener('click', () => run.nudge(readNum('t-step', DEFAULT_STEP_CM), readSpeed()));
-    $('t-down').addEventListener('click', () => run.nudge(-readNum('t-step', DEFAULT_STEP_CM), readSpeed()));
-    const rot = (sign: number) => run.turn((sign * readNum('t-rstep', SWING_STEP_DEG) * Math.PI) / 180);
-    $('t-rplus').addEventListener('click', () => rot(1));
-    $('t-rminus').addEventListener('click', () => rot(-1));
-    $('t-stop').addEventListener('click', () => run.stop());
-    $('t-ready').addEventListener('click', () => { if (!run.xfer) run.goTo(TRANSFER_DEFAULT_CM, readSpeed()); });
-    $('t-transfer').addEventListener('click', () => {
-      msg.textContent = '';
-      motion.speed = readSpeed();
-      run.start();
-    });
-
-    const place = (x: number, z: number, q: number[]) => {
-      data.mocap_pos[3 * cartMocap] = x; data.mocap_pos[3 * cartMocap + 1] = 0; data.mocap_pos[3 * cartMocap + 2] = z;
-      for (let k = 0; k < 4; k++) data.mocap_quat[4 * cartMocap + k] = q[k];
-    };
-    const PHASE_LABEL: Record<XferPhase, string> = {
-      approach: 'Driving along the pipe to the straight part',
-      grip: 'Free hand closing on the other pipe',
-      release: 'Old hand opening',
-      climb: 'Driving to the top',
+    let failed = 0, lastNames = ''; // frames with any contact of the cart with the pipes (or its own plate with a hand): a failure of the run
+    const update = () => {
+      applyPose(model, data, run.st);
+      mujoco.mj_forward(model, data);
+      const { depth, names } = worstContact(model, data);
+      if (depth < 0) { failed++; lastNames = names; }
+      const el = $('t-hit');
+      el.textContent = failed ? `FAIL: ${lastNames} touched (${(-depth * 1000).toFixed(1)} mm now, ${failed} frames)` : 'none (cart, plate and hands against the pipes and each other)';
+      el.style.color = failed ? '#c0392b' : '';
     };
     const show = () => {
-      $('t-pipe').textContent = run.xfer ? `Pipe ${run.xfer.from} to ${other(run.xfer.from)}` : `Pipe ${run.pipe}`;
-      $('t-pos').textContent = motion.s.toFixed(1);
-      $('t-swing').textContent = ((run.swingW * 180) / Math.PI).toFixed(0);
-      $('t-hands').textContent = run.xfer ? PHASE_LABEL[run.xfer.phase] : `Riding on pipe ${run.pipe}`;
-    };
-    let failed = 0; // frames with a clamp–track contact: a failure of the run
-    const update = () => {
-      const { pipe, open } = run;
-      const p = cartPose(pipe, motion.s);
-      place(p.x, p.z, p.q);
-      const tr = cartTrims(pipe, p, run.swing);
-      applyCart(model, data, pipe, p, tr, open, run.spin, run.swing);
-      mujoco.mj_forward(model, data);
-      const hit = clampTrackContacts(data);
-      if (hit < 0) failed++;
-      const el = $('t-hit');
-      el.textContent = failed ? `FAIL: clamp touched the track (${(-hit * 1000).toFixed(1)} mm now, ${failed} frames)` : 'no contact';
-      el.style.color = failed ? '#c0392b' : '';
+      const st = run.st, free = pipeOf(2, st.t);
+      panel.querySelectorAll('.t-free').forEach((e) => { e.textContent = free; });
+      $('t-hands').textContent = `hand ${free}: ${st.open2 < 0.01 ? 'clamped' : st.open2 > 0.99 ? 'released' : 'moving'} on pipe ${st.t > 0 && st.t < 1 ? '(in the air)' : free}; hand C: ${st.open1 < 0.01 ? 'clamped' : st.open1 > 0.99 ? 'released' : 'moving'} on pipe C`;
+      $('t-pos').textContent = st.s.toFixed(1);
+      $('t-swing').textContent = (st.t * 180).toFixed(0);
+      const k = kinematics(st.t), deg = (r: number) => ((r * 180) / Math.PI).toFixed(0);
+      $('t-hinges').textContent = `C ${deg(k.hinge1)}°, ${free} ${deg(k.hinge2)}°`;
+      $('t-arm').textContent = st.fold < 0.01 ? 'unfolded' : st.fold > 0.99 ? 'folded in close' : `folding (${(st.fold * 100).toFixed(0)}%)`;
+      $('t-step-now').textContent = run.current ? STEP_LABEL[run.current] : 'Idle';
+      const m = $('t-msg'); m.textContent = run.done && !run.busy ? `Transfer done: hand ${free} is clamped on pipe ${free}.` : run.msg;
     };
     update(); show();
 
     return {
       frame(dt: number) {
-        const d = Math.min(dt, 0.1);
-        const was = run.done;
-        run.advance(d);
-        if (run.done && !was) msg.textContent = `Transferred: riding on pipe ${run.pipe}, at the top.`;
-        update();
-        show();
+        run.advance(Math.min(dt, 0.1));
+        update(); show();
         viewer.render();
       },
       dispose() {
