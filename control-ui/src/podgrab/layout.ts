@@ -48,7 +48,7 @@ export const TANK_W = 0.7, TANK_D = 0.4, TANK_H = 0.3, SHELF_Z = 0.155, SHELF_T 
 export const SHELF_TOP = SHELF_Z + SHELF_T;
 export const LID_Z = TANK_H, LID_T = 0.004;
 export const PIPE_Y = 0.04;                     // the track plane. CAD: -60 mm. MOVED 115 mm towards the back so that all 16 sockets are in front of the cart plate and the arm, mounted flat on that plate, reaches them (ASSUMED, see the PR)
-export const PIPE_Z = TANK_H + 0.30;            // bottom run of the track, 300 mm over the lid (CAD: 150): raised 150 mm in all so that the arm, now centred on the cart plate, keeps the same height over the store and tray and lifts the pods clear of the lid (ASSUMED, see the PR)
+export const PIPE_Z = TANK_H + 0.32;            // bottom run of the track, 320 mm over the lid (CAD: 150): raised 170 mm in all so that the arm, now centred on the cart plate, keeps the same height over the store and tray and lifts the pods clear of the lid (ASSUMED, see the PR)
 export const PIPE_R = m(PIPE_D_MM) / 2;
 export const PIPE_X0 = -0.40, PIPE_X1 = 0.42;
 export const CART_X_MIN = -0.33, CART_X_MAX = 0.28;   // arm plane; hand 1 is HAND_DX further along the pipe
@@ -74,7 +74,7 @@ export const HAND2_DZ = 0.10;                   // ASSUMED: wheel set 2 axis bel
 export const PLATE_T = 0.006, PLATE_Y = -HAND_R - PLATE_T / 2;       // cart base plate on the front of the hands
 export const PLATE_FACE_Y = -HAND_R - PLATE_T;  // cart frame y of the plate's front face, the plane the arm base is bolted to
 export const BASE_BOTTOM = 0.0085;               // the base servo's underside, in base coordinates (arm model: servo1 spans z 8.5..43.5 mm)
-export const ARM_CZ = -0.03;                     // cart frame z of the arm base origin: the base servo (45 mm along base x, down the plate) is centred on the plate (plate spans +36 .. -136 mm, middle -50 mm)
+export const ARM_CZ = -0.05;                     // cart frame z of the arm base origin: the base servo box is centred on that origin (+-22.5 mm along base x), so the origin is on the middle of the plate (plate spans +36 .. -136 mm, middle -50 mm)
 export const ARM_Y = PIPE_Y + PLATE_FACE_Y + BASE_BOTTOM;   // arm base origin, world y: its underside (base z = 8.5 mm) is on the plate face, the arm axis (base z) is the plate normal, pointing out of the plate (-y)
 export const ARM_BASE_Z = PIPE_Z + ARM_CZ - 0.004;   // IK reference: the pick/place paths are planned with the points 4 mm above the real ones, so the claw runs a few mm high over the store walls (arm sag)
 export const BASE_XYAXES = '0 0 -1 1 0 0';       // base x = world down (pan 0 points down the plate), base y = +x along the track, base z = base x cross base y = -y: out of the plate
