@@ -1,9 +1,11 @@
 import cadquery as cq
 # cad/unit_v3_dimensioned.py — v1 (7 Nov 2026)
+# v2 (14 Nov 2026, Viber #97): track loop widened, TX 250 -> 290 (pipes 60 mm in from the tank edge, so two touching
+# tanks put pipe B and pipe C 120 mm apart); loop label 532 -> 612.
 # Unit v3 (simplified: no store rows, buckets, pod sites) with 3D dimension lines and labels in blue.
 TW, TD, TH = 700.0, 400.0, 300.0
 SHELF = 155.0; GP = 75.0; SP = 33.7
-TX = 250.0; TR = 16.0; R = 150.0; LOOP_Y = -60.0
+TX = 290.0; TR = 16.0; R = 150.0; LOOP_Y = -60.0
 ZB = TH + 150.0; ZT = 1900.0 - TR
 def box(sx, sy, sz, cx, cy, z0):
     return cq.Workplane("XY").box(sx, sy, sz, centered=(True, True, False)).translate((cx, cy, z0))
@@ -51,7 +53,7 @@ dims = dims.union(vdim(-430, 0, TH, "300", -1))
 dims = dims.union(vdim(-430, TH, ZB, "150", -1))
 dims = dims.union(vdim(-430, ZB - TR, ZT + TR, "1466 loop", -1))
 dims = dims.union(hdim(-350, 350, -90, "700"))
-dims = dims.union(hdim(-TX - TR, TX + TR, 1990, "532 loop"))
+dims = dims.union(hdim(-TX - TR, TX + TR, 1990, "612 loop"))
 dims = dims.union(box(4, 400, 4, 420, 0, -40))
 add(dims, "dimensions", B)
 result = assy

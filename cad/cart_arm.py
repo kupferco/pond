@@ -16,7 +16,7 @@
 #   result_stowed   the same cart with the arm folded for travel.
 #
 # ASSUMED (all marked "ASSUMED" below; nothing here is decided):
-#  0. Pipe spacing: the two pipes the cart clamps are 280 mm apart, centre to centre (ASSUMED; the real
+#  0. Pipe spacing: the two pipes the cart clamps are 120 mm apart (v3, Viber #97; was 280), centre to centre (ASSUMED; the real
 #     spacing between neighbouring units is not decided). One hand per pipe, both facing the same way.
 #  1. Arm mount, hands, wheels, sleeves: as cart_assembly.py (itself assumed). Base plate redrawn across the
 #     two pipes: 112 mm (Z) x PIPE_SPACING + 100 (X) x 6 mm, same open-frame idea, bosses round each hand's
@@ -57,6 +57,7 @@ import cadquery as cq
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hand_sleeve as hs          # reused via cart_assembly
 import cart_assembly as ca        # reused, not redrawn
+import cart_hinge as ch           # plate hinge and worm drive of each hand (Viber #97)
 
 # ---------------- Numbers ----------------
 L1, L2, L3 = 120.0, 130.0, 100.0        # ASSUMED: shoulder-elbow, elbow-wrist, wrist-gripper tip (350 total)
@@ -66,7 +67,7 @@ REACH = L1 + L2 + L3                    # 350, as pod_store_reach.py
 # Store numbers from pod_store_reach.py (world frame: z up, pipe A at x = -250)
 TH = 400.0; LID_T = 4.0
 LID_TOP = TH + LID_T
-PIPE_XW = -250.0
+PIPE_XW = -290.0
 STORE_X0 = -140.0; ROW_P = 35.0; POD_D = 25.0
 FRONT_Y = -200.0
 SEED_X0, SEED_X1, SEED_Y = -345.0, -145.0, 190.0     # seedling tray 200 x 380
@@ -243,6 +244,7 @@ def xshift(shape, x):
 PLATE_X0, PLATE_X1, PLATE_CY = ca.PLATE_X0, ca.PLATE_X1, ca.PLATE_CY
 plate, battery, motors = ca.plate, ca.battery, ca.motors    # the same parts as the whole-cart drawing
 BATT_C = ca.BATT_X
+BATT, BATT_Y = ca.BATT, ca.BATT[1]
 
 cart = [("base_plate", plate, (0.35, 0.35, 0.38, 1)),
         ("battery", battery, (0.2, 0.45, 0.85, 1)),
@@ -252,20 +254,21 @@ for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):
                  (0.75, 0.78, 0.8, 1)))
     cart.append(("hand_on_%s_sleeve" % tag, xshift(hs.result, sgn * HX), (0.95, 0.75, 0.2, 1)))
     cart.append(("hand_on_%s_wheels" % tag, xshift(ca.WHEELS, sgn * HX), (0.15, 0.15, 0.15, 1)))
+    for nm, shp, col in ch.hinge_parts(sgn):
+        cart.append(("hinge_%s_%s" % (tag, nm), shp, col))
 
 # ---------------- Waveshare board and bracket ----------------
 BOARD = (42.0, 12.0, 33.0)                       # ASSUMED: X (along plate), out from plate, Z
-BOARD_X = ca.ARM_X - 58.0                        # ASSUMED: towards pipe B, beside the arm block
-TAB_T, STAND = 3.0, 6.0
-board_c = (BOARD_X, ca.PLATE_Y0 - TAB_T - STAND - BOARD[1] / 2, 0.0)
-tab = box(56.0, TAB_T, 33.0, (ca.ARM_X - 65.0, ca.PLATE_Y0 - TAB_T / 2, 0.0))   # x -105..-49: clear of the arm base (to -47), bolted to the arm block (to x -54)
-standoffs = fuse([cyl(2.5, STAND, "y", (BOARD_X + sx * 16.0, ca.PLATE_Y0 - TAB_T - STAND / 2, sz * 13.0))
-                  for sx in (-1, 1) for sz in (-1, 1)])
+BOARD_X = ca.BATT_X                              # ASSUMED (v3, Viber #97): on the battery's front face on 6 mm foam pads
+STAND = 6.0                                      # (the plate no longer has room for a board beside the arm)
+board_c = (BOARD_X, ca.PLATE_Y0 - BATT_Y - STAND - BOARD[1] / 2, ca.BATT_Z)
+foam = fuse([box(8.0, STAND, 8.0, (BOARD_X + sx * 16.0, ca.PLATE_Y0 - BATT_Y - STAND / 2, ca.BATT_Z + sz * 11.0))
+             for sx in (-1, 1) for sz in (-1, 1)])
 board = box(BOARD[0], BOARD[1], BOARD[2], board_c)
-# 12 V lead: board -> down past the arm base (below z -35) -> battery
-power_pts = [(BOARD_X, board_c[1], -BOARD[2] / 2), (BOARD_X, ca.PLATE_Y0 - 12.0, -48.0),
-             (BATT_C, ca.PLATE_Y0 - 12.0, -48.0), (BATT_C, ca.PLATE_Y0 - 12.0, -20.0)]
-usb_pts = [(BOARD_X, board_c[1], BOARD[2] / 2), (BOARD_X, board_c[1], PLATE_ZH + 10.0)]
+# 12 V lead: board -> battery's front-bottom edge (a 20 mm run)
+power_pts = [(BOARD_X + 10.0, board_c[1], ca.BATT_Z - BOARD[2] / 2),
+             (BOARD_X + 10.0, ca.PLATE_Y0 - BATT_Y, ca.BATT_Z - BATT[2] / 2 + 6.0)]
+usb_pts = [(BOARD_X, board_c[1], ca.BATT_Z + BOARD[2] / 2), (BOARD_X, board_c[1], ca.BATT_Z + BATT[2] / 2 + 10.0)]
 
 def polyline(pts, r=2.0):
     out = []
@@ -379,8 +382,7 @@ def scene(working=True):
     assy = cq.Assembly()
     for name, obj, col in cart:
         assy.add(obj, name=name, color=cq.Color(*col))
-    assy.add(tab, name="board_bracket_tab", color=cq.Color(0.35, 0.35, 0.38, 1))
-    assy.add(standoffs, name="board_standoffs", color=cq.Color(0.8, 0.8, 0.8, 1))
+    assy.add(foam, name="board_foam_pads", color=cq.Color(0.8, 0.8, 0.8, 1))
     assy.add(board, name="waveshare_board", color=cq.Color(0.1, 0.5, 0.25, 1))
     info = {}
     if working:

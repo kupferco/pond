@@ -60,17 +60,19 @@ HX = cb.HX
 YF = cb.PLATE_Y0
 OVERLAYS = {
     "front": [
-        ("dim", (X0, YF, -ZH), (X1, YF, -ZH), 66, "plate 380 (ASSUMED)"),
-        ("dim", (-HX, YF, -ZH), (HX, YF, -ZH), 88, "pipes 280 apart (ASSUMED)"),
+        ("dim", (X0, YF, -ZH), (X1, YF, -ZH), 66, "plate 142 (ASSUMED)"),
+        ("dim", (-HX, YF, -ZH), (HX, YF, -ZH), 88, "pipes 120 apart (ASSUMED)"),
         ("dim", (X1, YF, -ZH), (X1, YF, ZH), 40, "112"),
-        ("tag", (-HX + cb.PAD_CX, YF, 15), 50, -128, "hand B: M4 pair, 30 apart"),
-        ("tag", (HX + cb.PAD_CX, YF, 15), -50, -128, "hand C: M4 pair, 30 apart"),
+        ("tag", (cb.ca.hinge_x(-1), YF, 15), -50, -128, "hinge B: pad -X edge"),
+        ("tag", (cb.ca.hinge_x(1), YF, 15), 50, -128, "hinge C: pad +X edge"),
         ("tag", (cb.ARM_X + 25, YF, 25), 60, -78, "arm M4 square 50 (ASSUMED)"),
-        ("tag", (cb.BATT_C, YF, -29), 30, 96, "battery bars + strap slots (ASSUMED)"),
-        ("tag", (-HX + cb.MOTOR_DX, YF, -20), 30, 70, "motor saddles (ASSUMED)"),
+        ("tag", (cb.BATT_C, YF, cb.BATT_Z), 30, 96, "battery shelf + strap slots (ASSUMED)"),
+        ("tag", (cb.MOTOR_XS[-1], YF, -20), 30, 70, "motor saddles (ASSUMED)"),
+        ("tag", (cb.ch.servo_x_range(-1)[0] + 6, YF, cb.ch.SERVO_Z0 + 18), -50, -20, "rotation servo B on hinge axis (ASSUMED)"),
+        ("tag", (cb.ch.servo_x_range(1)[1] - 6, YF, cb.ch.SERVO_Z0 + 18), 50, -20, "rotation servo C (ASSUMED)"),
     ],
     "top": [
-        ("dim", (X0, YF, 0), (X1, YF, 0), 0, "380"),
+        ("dim", (X0, YF, 0), (X1, YF, 0), 0, "142"),
     ],
     "right": [
         ("dim", (0, YF - cb.BATT[1], -ZH), (0, YF, -ZH), 30, "battery 50 out (ASSUMED)"),
