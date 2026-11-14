@@ -57,7 +57,7 @@ import cadquery as cq
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hand_sleeve as hs          # reused via cart_assembly
 import cart_assembly as ca        # reused, not redrawn
-import cart_hinge as ch           # plate hinge and rotation servo of each hand (Viber #97)
+import cart_hinge as ch           # plate hinge and worm drive of each hand (Viber #97)
 
 # ---------------- Numbers ----------------
 L1, L2, L3 = 120.0, 130.0, 100.0        # ASSUMED: shoulder-elbow, elbow-wrist, wrist-gripper tip (350 total)

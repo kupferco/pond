@@ -1,8 +1,18 @@
-# cad/cart_base.py: Pond cart BASE plate hung on a hinge at each hand (DRAFT v2, 14 Nov 2026, Viber #97).
+# cad/cart_base.py: Pond cart BASE plate hung on a hinge at each hand (DRAFT v3, 14 Nov 2026, Viber #97).
 # Drawing 2 of 5 planned cart drawings (whole cart, base, sleeve/hand systems, wheel pairs, arm on cart).
-# Not production geometry: a readable drawing of the plate, its hinges, rotation servos and where the parts sit.
+# Not production geometry: a readable drawing of the plate, its hinges, worm-gear rotation drives and where the parts sit.
 #
-# DRAFT v2 (14 Nov 2026), changes from v1 (11 Nov):
+# DRAFT v3 (14 Nov 2026), changes from v2 (same day):
+#   - HINGE DRIVE: the direct-drive servo per hand is replaced by a WORM GEAR: brass wheel (module 1, 38 teeth) on the
+#     hinge axis fixed to the sleeve, steel worm (single start, self-locking) in a bracket on a plate tongue, driven
+#     by a 28 x 55 mm worm-gear motor, the same part as the hand drives. Ratio 38:1. Parts: cart_hinge.py.
+#   - Rotation happens only during a transfer: one hand releases its pipe, the plate swings on the other hand's
+#     hinge, one rigid plate (decided by Dani). This closes the kinematic open point of v2 (see below).
+#   - The arm folds in close to the plate before rotating (folded pose ASSUMED in cart_dims.py).
+#   - TORQUE BUDGET in cart_dims.py (torque_budget(), printed below by `python cart_base.py`): about 2.2 N m needed
+#     at the hinge, 4.0 N m available, margin 1.85. Every mass is ASSUMED. No spring needed.
+#
+# Changes of v2 from v1 (11 Nov):
 #   - Pipes 120 mm apart (was 280): neighbouring units' pipes B and C, tanks touching, pipes 60 mm in from the tank
 #     edge (unit drawings TX 250 -> 290). Spacing set in cart_dims.py, with the budget that limits it (see there).
 #   - HINGE on each hand: on the sleeve's pad edge, axis parallel to the pipe. Sleeve leaf + 2 knuckles on the
@@ -15,7 +25,7 @@
 #     two drive motors (28 each) are in a row on it; the battery moved ABOVE the arm on a shelf tongue; the
 #     Waveshare board moved onto the battery's front face (cart_arm.py).
 #
-# KNOWN OPEN POINT (kinematics): with ONE rigid plate and two hinges whose axes are 120 + 36 - ... mm apart (not
+# SOLVED IN v3 (was: KNOWN OPEN POINT, kinematics): with ONE rigid plate and two hinges whose axes are 120 + 36 - ... mm apart (not
 # the same line), the plate cannot swing while BOTH hands are clamped on their parallel pipes: the two hinge axes
 # are not coaxial, so the plate is locked. It can swing only with one hand released from its pipe, or if the plate
 # is split into two half-doors (one per hand) that meet at a latch. Decide before the transfer scene (#81).
@@ -26,8 +36,8 @@
 # ASSUMED (nothing below is decided; all marked "ASSUMED" in the code):
 #  1. Pipe spacing 120 mm, pipe B to pipe C (cart_dims.py; limited by arm 70 + two 28 mm motors on the plate).
 #  2. Plate 142 (X) x 112 (Z) x 6 mm solid (aluminium or steel not chosen), shown as a single solid, with a
-#     notch at each hinge end for the servo horn, a battery shelf tongue and two servo tongues above the top edge.
-#  3. Hinge and servo sizes: listed in cart_hinge.py (barrel 10 mm, pin 4 mm, leaves 3 mm, servo 45.2 x 24.7 x 35.5).
+#     notch at each hinge end for the wheel flange, a battery shelf tongue and two worm-bracket tongues above the top edge.
+#  3. Hinge and worm drive sizes: listed in cart_hinge.py (barrel 10 mm, pin 4 mm, leaves 3 mm, M1 38T wheel, 10 mm worm).
 #  4. Arm mount: four M4 holes on a 50 mm square plus a 20 mm cable hole, at x = -12 (SO-101 base footprint 70 x 70;
 #     the real SO-101 base hole pattern is to confirm).
 #  5. Battery 70 x 50 x 70 mm on the shelf tongue above the arm: four corner stops, two strap slots, 20 mm strap.
@@ -38,8 +48,8 @@
 #  7. Cable routing: the 12 V lead, motor leads and USB lead use 3 x 8 mm tie slots in the plate's top and bottom
 #     10 mm band; the servo bus goes up through the 20 mm arm hole. Cable lengths and strain relief not designed.
 #  8. Cart height: plate centre at the arm shoulder level used by cart_arm.py (pipes end 70 below it).
-# Not drawn: drive transmission, wheel pairs, board bracket (board now velcro-ed to the battery), servo wiring
-# and the gear stage the hinge servo would need to lift the plate with arm and battery on it.
+# Not drawn: drive transmission, wheel pairs, board bracket (board now velcro-ed to the battery), motor wiring,
+# worm bearings and coupling, limit switches for the swing end positions.
 import os
 import sys
 import cadquery as cq
@@ -77,7 +87,7 @@ def slot(w, l, x, z):                       # rectangular slot through the plate
     return box(w, PLATE_T + 2, l, (x, PLATE_CY, z))
 
 def build_plate():
-    p = ca.plate                            # solid plate + battery shelf + servo tongues + horn notches (cart_assembly.py)
+    p = ca.plate                            # solid plate + battery shelf + worm-bracket tongues + flange notches (cart_assembly.py)
     # ---- arm mount (centre) ----
     h = ARM_HOLE_SQ / 2
     for sx in (-1, 1):
@@ -89,9 +99,9 @@ def build_plate():
         xh, d = ca.hinge_x(sgn), -sgn
         for dz in (ch.PLATE_SCREW_DZ, -ch.PLATE_SCREW_DZ):
             p = p.cut(hole(ARM_HOLE_D, xh + d * ch.PLATE_SCREW_DX, dz)).cut(ch.csk_cut(xh + d * ch.PLATE_SCREW_DX, PLATE_Y0, dz))
-    # ---- servo tongue ear screws (M3 through the frame) ----
+    # ---- worm-bracket tongue: two M4 holes per hand ----
     for ex, z in ch.tongue_holes():
-        p = p.cut(hole(M3_D, ex, z))
+        p = p.cut(hole(ARM_HOLE_D, ex, z))
     # ---- battery shelf: strap slots either side of the battery ----
     for dz in (-BATT[2] / 4, BATT[2] / 4):
         for dx in (-22.0, 22.0):
@@ -165,7 +175,7 @@ def build(show_context=True):
                 "track_%s" % tag, (0.75, 0.78, 0.8, 1))
             add(xshift(hs.result, sgn * HX), "hand_on_%s_sleeve" % tag, (0.95, 0.75, 0.2, 1))
             add(xshift(ca.WHEELS, sgn * HX), "hand_on_%s_wheels" % tag, (0.15, 0.15, 0.15, 1))
-    for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):      # the hinge and its rotation servo are the point of v2: always shown
+    for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):      # the hinge and its worm drive are the point of v2/v3: always shown
         for nm, shp, col in ch.hinge_parts(sgn):
             add(shp, "hinge_%s_%s" % (tag, nm), col)
     add(arm.foam, "board_foam_pads", (0.8, 0.8, 0.8, 1))
@@ -180,6 +190,13 @@ def build(show_context=True):
 result = build()
 
 if __name__ == "__main__":
+    import cart_dims as _cd
+    _t = _cd.torque_budget()
+    print("TORQUE BUDGET (ASSUMED masses), plate driven by hand %s's hinge, arm folded:" % _t["driving_hand"])
+    for n, m, r, tq in _t["rows"]:
+        print("  %-36s %.2f kg at r %3.0f mm -> %.3f N m" % (n, m, r, tq))
+    print("  required %.2f N m, available %.2f N m (motor %.2f N m x ratio %d x eff %.2f), margin %.2f, 90 deg in %.1f s"
+          % (_t["required_Nm"], _t["available_Nm"], _cd.MOTOR_RATED_NM, _t["ratio"], _cd.WORM_EFF, _t["margin"], _t["t90_s"]))
     bb = plate.val().BoundingBox()
     print("plate %.0f x %.0f x %.0f mm (X x Y x Z), pipes %.0f mm apart" % (bb.xlen, bb.ylen, bb.zlen, PIPE_SPACING))
     print("cart_base OK, bbox %.0f x %.0f x %.0f mm"

@@ -41,7 +41,7 @@ HINGE_CLEAR = 2.0                       # plate edge to barrel gap beyond the ba
 #                                      = PIPE_SPACING + 36 - 14 = PIPE_SPACING + 22.
 #   So PIPE_SPACING >= 142 - 22 = 120. At 115 the plate is 137 wide and the arm or a motor would overlap.
 # The battery (70 x 50 x 70) does NOT fit between the hands at any spacing near this: it goes above the arm
-#   (BATT_Z) on a shelf tongue of the plate. The two hinge servos also go above the sleeves (z > 60).
+#   (BATT_Z) on a shelf tongue of the plate. The two hinge worm drives also go above the sleeves (z > 60).
 ARM_BASE_W = 70.0                       # SO-101 base footprint (given, 70 x 70 mm)
 MOTOR_R, MOTOR_L = 14.0, 55.0           # ASSUMED worm-gear motor placeholder, 28 x 55 mm
 PART_GAP, END_GAP = 4.0, 4.0            # ASSUMED gaps: between plate parts, motor to plate end
@@ -66,16 +66,70 @@ BATT_X = ARM_X                          # battery sits above the arm, same x
 BATT_Z = PLATE_ZH + 6.0 + BATT[2] / 2   # ASSUMED: on a shelf tongue above the plate's top rim (centre z)
 PIPE_STUB_L = 330.0                     # ASSUMED: pipe stub length in the assembly
 
-# ---------------- Hinge servo (ASSUMED sizes, drawn in cart_hinge.py) ----------------
-SERVO = (45.2, 24.7, 35.5)              # ASSUMED: SO-101-class bus servo body, X length, Y width, Z (along the output shaft)
-SERVO_SHAFT_OFF = 11.0                  # ASSUMED: shaft axis from the body's outer end
-HORN_R, HORN_T = 10.0, 3.0              # ASSUMED: horn disc bolted to the top of the sleeve knuckle
-SERVO_Z0 = 60.0                         # ASSUMED: servo body bottom (clear of the plate's top rim at 56)
+# ---------------- Hinge worm drive (v3, ASSUMED sizes, drawn in cart_hinge.py) ----------------
+# v3 (Viber #97, 14 Nov 2026): the direct-drive servo is gone. Each hinge has a worm WHEEL fixed on the hinge axis
+# (bolted to the sleeve's top knuckle) and a WORM carried by the plate, driven by the same 28 x 55 mm worm-gear
+# motor as the hand drives. Turning the worm walks the plate round the wheel. Single-start worm: it self-locks.
+WORM_M = 1.0                            # ASSUMED: module 1 brass wheel and steel worm (standard M1 hobby set)
+WHEEL_Z = 38                            # ASSUMED: wheel teeth -> ratio 38:1
+WHEEL_PD = WORM_M * WHEEL_Z             # 38 mm pitch diameter
+WHEEL_OD = WHEEL_PD + 2 * WORM_M        # 40
+WORM_PD = 10.0                          # ASSUMED worm pitch diameter (lead angle 5.7 deg: self-locking)
+WORM_OD = WORM_PD + 2 * WORM_M          # 12
+WORM_L = 24.0                           # ASSUMED worm length
+WHEEL_T = 8.0                           # ASSUMED wheel face width
+CENTRE_DIST = (WHEEL_PD + WORM_PD) / 2  # 24: worm axis this far in front (-Y) of the hinge axis
+WHEEL_Z0 = 62.0                         # ASSUMED wheel underside (above the plate's top rim 56; hub from the knuckle at 45)
+WORM_ZC = WHEEL_Z0 + WHEEL_T / 2        # 66: worm axis height
+HORN_R, HORN_T = 10.0, 3.0              # ASSUMED: hub flange bolted to the top of the sleeve knuckle
 KNUCKLE_Z = 45.0                        # sleeve knuckles run to the sleeve end
-FRAME_W = 4.0                           # tongue frame round the servo
 BATT_SHELF_T = 3.0                      # battery corner stops
+TONGUE_DX0, TONGUE_W = 21.0, 30.0       # worm-bracket tongue on the plate: starts 21 mm from the hinge axis (beyond the wheel), 30 wide
+TONGUE_Z1 = 86.0                        # tongue top
+
+# ---------------- TORQUE BUDGET (ASSUMED masses; rotation only during a transfer) ----------------
+# Decided: one hand lets go of its pipe, the plate (one rigid piece) swings on the OTHER hand's hinge; that hand's worm
+# motor drives. Worst case: hinge axis horizontal, so every mass counts at its full distance r from the axis
+# (r = in-plane lever and out-of-plane offset combined, the max over the swing angle), all summed as if aligned.
+# ARM FOLDED POSE (ASSUMED): upper arm vertical and forearm folded back on it, wrist and gripper tucked, so the arm's centre
+# of mass is 55 mm out from the plate (dy) and 20 mm off the arm base centre along the plate (dx). Unfolded
+# (centre of mass about 300 mm out) the same arm would need about 3x the torque.
+G = 9.81
+WORM_EFF = 0.35                         # ASSUMED worm efficiency (steel on brass, lead angle 5.7 deg, mu 0.15)
+MOTOR_RATED_NM = 0.30                   # ASSUMED rated (continuous) torque of the 28 x 55 mm 12 V worm-gear motor, 3 kg cm
+MOTOR_RPM = 60.0                        # ASSUMED output speed at rated load
 
 
 def hinge_x(sgn):
     """x of the hinge axis of the hand on pipe B (sgn -1) or pipe C (sgn +1)."""
     return sgn * HX + (HINGE_OFF_B if sgn < 0 else HINGE_OFF_C)
+
+
+def torque_budget():
+    """Return dict: required torque (N m) at the driving hinge, available torque, margin, swing time for 90 deg."""
+    import math
+    arm_x = -12.0
+    xb, xc = hinge_x(-1), hinge_x(1)
+    best = None
+    for drv, x_ax, other_x in (("B", xb, xc), ("C", xc, xb)):
+        tot, rows = 0.0, []
+        items = [("plate 142x112x6 + hinge leaves", 0.30, arm_x, 6.0, 1.0),
+                 ("battery 70x50x70", 0.35, arm_x, 34.0, 1.0),
+                 ("arm SO-101, folded pose", 0.80, arm_x + 20.0 * (1 if drv == "B" else -1), 64.0, 1.0),
+                 ("drive motor B", 0.15, -65.0, 23.0, 1.0),
+                 ("drive motor C", 0.15, 41.0, 23.0, 1.0),
+                 ("other hand's worm motor + bracket", 0.30, other_x, 30.0, 1.0)]
+        for n, m, x, dy, _ in items:
+            r = math.hypot(abs(x - x_ax), dy) / 1000.0
+            t = m * G * r
+            rows.append((n, m, r * 1000.0, t))
+            tot += t
+        if best is None or tot > best[0]:
+            best = (tot, drv, rows)
+    req, drv, rows = best
+    ratio = WHEEL_Z
+    avail = MOTOR_RATED_NM * ratio * WORM_EFF
+    return {"driving_hand": drv, "rows": rows, "required_Nm": req, "available_Nm": avail,
+            "margin": avail / req, "ratio": ratio, "motor_torque_needed_Nm": req / (ratio * WORM_EFF),
+            "t90_s": 0.25 * 60.0 / (MOTOR_RPM / ratio),
+            "tooth_force_N": req / (WHEEL_PD / 2000.0)}

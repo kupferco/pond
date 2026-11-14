@@ -10,7 +10,9 @@
 # Frame: the hand_sleeve.py frame. Track pipes run along Z (vertical sides of the loop), the cart's
 # mounting pads face -Y, so the cart base plate and everything on it sits on the -Y side of the pipes.
 # Pipe B at x = -60, pipe C at x = +60 (v4, Viber #97: was +/-140).
-# v4 (Viber #97): pipes 120 mm apart; the plate hangs on a hinge at each hand with a rotation servo (cart_hinge.py,
+# v5 (Viber #97, 14 Nov 2026): the hinge is now driven by a worm gear and a worm-gear motor per hand (cart_hinge.py v3,
+# torque budget in cart_dims.py), not a direct-drive servo. Plate tongues carry the worm brackets.
+# v4 (Viber #97): pipes 120 mm apart; the plate hangs on a hinge at each hand with a worm-gear rotation drive (cart_hinge.py,
 # drawn in detail in cart_base.py); the battery moved above the arm. The "no swivel yet" gap is closed by that hinge.
 #
 # DECIDED (from cad/hand_sleeve.py v4.1 and the decision docs): 90 mm sleeves, outer R 34, pipe OD 32,
@@ -23,7 +25,7 @@
 #     budget that sets it is in cart_dims.py).
 #     One hand per pipe, both facing the same way (no 90 deg swivel yet).
 #  2. Base plate: solid, 112 (Z) x 142 (X) x 6 mm, hung between the two hinge axes (not bolted to the pads any
-#     more; the pads carry the hinge leaves). Tongues above it carry the battery and the two hinge servos.
+#     more; the pads carry the hinge leaves). Tongues above it carry the battery and the two worm brackets.
 #  3. Battery: 70 (X) x 50 (out from plate) x 70 (Z) mm block, above the arm on a shelf tongue (no room beside it).
 #  4. Drive motors: one worm-gear motor per hand, on the plate beside the hand (+X of each pipe), shaft along
 #     the pipe, 28 mm diameter x 55 mm placeholder cylinder with a gearbox block. Positions are an open
@@ -38,7 +40,7 @@ import sys
 import cadquery as cq
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import cart_hinge as ch     # plate hinge and rotation servo of each hand (Viber #97)
+import cart_hinge as ch     # plate hinge and worm drive of each hand (Viber #97)
 import hand_sleeve as hs   # reused, not redrawn; importing runs the model and exposes hs.result and dims
 
 # ---------------- Layout (mm): all shared numbers come from cart_dims.py ----------------
@@ -76,8 +78,8 @@ def window(x0, x1, z0, z1):
 
 def build_plate():
     """Plate hung between the two hinge axes: a solid 142 x 112 x 6 mm plate (at this width there is nothing left to
-    open up), a battery shelf tongue above the arm, a servo frame tongue above each hinge, and a notch at each hinge
-    end where the servo horn sits. Holes and cable slots are added in cart_base.py."""
+    open up), a battery shelf tongue above the arm, a worm-bracket tongue above each hinge, and a notch at each hinge
+    end where the worm wheel flange sits. Holes and cable slots are added in cart_base.py."""
     plate = box(PLATE_X1 - PLATE_X0, PLATE_T, 2 * PLATE_ZH, ((PLATE_X0 + PLATE_X1) / 2, PLATE_CY, 0))
     top = PLATE_ZH
     # battery shelf tongue, above the arm (battery drawn on its front face)
@@ -85,13 +87,10 @@ def build_plate():
     plate = plate.union(box(BATT[0] + 2 * BATT_SHELF_T, PLATE_T, bz1 - top + 1.0, (BATT_X, PLATE_CY, (bz1 + top - 1.0) / 2)))
     for sgn in (-1, 1):
         xh, d = hinge_x(sgn), -sgn
-        # servo frame tongue: window sized to the servo body (+0.4 mm), frame FRAME_W round it
-        bx0, bx1 = (xh - SERVO_SHAFT_OFF, xh - SERVO_SHAFT_OFF + SERVO[0]) if d > 0 else (xh + SERVO_SHAFT_OFF - SERVO[0], xh + SERVO_SHAFT_OFF)
-        fz1 = SERVO_Z0 + SERVO[2] + FRAME_W
-        tongue = box(bx1 - bx0 + 2 * FRAME_W, PLATE_T, fz1 - top + 1.0, ((bx0 + bx1) / 2, PLATE_CY, (fz1 + top - 1.0) / 2))
-        tongue = tongue.cut(box(SERVO[0] + 0.4, PLATE_T + 2, SERVO[2] + 0.4, ((bx0 + bx1) / 2, PLATE_CY, SERVO_Z0 + SERVO[2] / 2)))
-        plate = plate.union(tongue)
-        # notch at the hinge end for the servo horn (below the tongue)
+        # worm-bracket tongue: starts 21 mm from the hinge axis (clear of the worm wheel), from the top rim up to TONGUE_Z1
+        tx0, tx1 = ch.tongue_x_range(sgn)
+        plate = plate.union(box(tx1 - tx0, PLATE_T, TONGUE_Z1 - top + 1.0, ((tx0 + tx1) / 2, PLATE_CY, (TONGUE_Z1 + top - 1.0) / 2)))
+        # notch at the hinge end for the worm wheel flange (below the tongue)
         n0, n1 = sorted((xh + d * (HINGE_R + HINGE_CLEAR - 1.0), xh + d * (HORN_R + 2.0)))
         plate = plate.cut(box(n1 - n0, PLATE_T + 2, top - (KNUCKLE_Z - 2.0), ((n0 + n1) / 2, PLATE_CY, (top + KNUCKLE_Z - 2.0) / 2)))
     return plate
