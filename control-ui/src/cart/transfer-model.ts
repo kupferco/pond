@@ -1,8 +1,9 @@
-// MJCF for the v2 transfer scene: three horizontal pipes (B C D), and the cart as drawn in cad/cart_base.py, cart_hinge.py and hand_sleeve.py:
+// MJCF for the v2 transfer scene: the Cart scene's track (pipe B bending left, pipe C bending right, plus a straight pipe D), and the cart as drawn in cad/cart_base.py, cart_hinge.py and hand_sleeve.py:
 // one rigid PLATE (a mocap body) with, on it, the arm base and arm, the battery on its shelf and the two drive motors; each of the two HANDS
 // hangs on the plate through its own HINGE (axis parallel to the pipe, on the pad edge) and carries its sleeve, wheel pairs, clamp motor and the
 // worm wheel of its hinge. The hinge worm and its motor ride on the plate. Frame: x across, y out of the pipe plane (plate on -y), z up the pipes.
-import { CART_COL, handInner, rgba } from './model.ts';
+import { CART_COL, handInner, pipeGeoms, rgba } from './model.ts';
+import { PIPE_D_MM, VERTICAL_MM } from './track.ts';
 import * as D from './dims.ts';
 
 const m = (mm: number) => +(mm / 1000).toFixed(5);
@@ -10,14 +11,14 @@ const f = (n: number) => +n.toFixed(5);
 const PLATE_COL = rgba([0.35, 0.35, 0.38]), BATT_COL = rgba([0.2, 0.45, 0.85]), MOTOR_COL = rgba([0.85, 0.25, 0.25]);
 const HINGE_COL = rgba([0.9, 0.55, 0.15]), PAD_COL = rgba([0.95, 0.75, 0.2]), ARM_COL = rgba([0.88, 0.88, 0.9]);
 const HIDDEN = 'rgba="0 0 0 0" contype="0" conaffinity="0"';
-/** World frame of the scene: the CAD frame turned so the pipes lie HORIZONTAL, as in the Cart scene's horizontal section. CAD x (across the pipes) is world -z (pipe B above pipe C),
- *  CAD y (out of the pipe plane) is world y (the plate hangs on the -y side) and CAD z (along the pipes) is world x. WORLD_Z0 is the height of the cart centre line (CAD x = 0). */
-export const WORLD_Z0 = 0.45;
-export const S_MIN_CM = 15, S_MAX_CM = 75, S_START_CM = 45, PIPE_END_M = 0.9, PIPE_START_M = 0;   // where the hands' mid point may be along the pipes (cm) and where the pipes run (m)
+/** World frame of the scene: the CAD frame as it is. The pipes stand upright as in the Cart scene (CAD x across the pipes is world x, B on the left, CAD y out of the pipe plane is
+ *  world y, the plate hangs on the -y side, CAD z along the pipes is world z). The track is the Cart scene's own: pipe B bends LEFT at the top, pipe C bends RIGHT (pipeGeoms). */
+export const S_MIN_CM = 15, S_MAX_CM = 45, S_START_CM = 30;   // where the hands' mid point may be along the pipes (cm): the straight parts, below the bends
+export const TRACK_HORIZ_MM = 450;                            // length of the top bars (shortened, as in the earlier Transfer scene)
 /** CAD-frame point (m) to world. */
-export const cadToWorld = (v: [number, number, number]): [number, number, number] => [v[2], v[1], WORLD_Z0 - v[0]];
+export const cadToWorld = (v: [number, number, number]): [number, number, number] => [v[0], v[1], v[2]];
 /** World point back to the CAD frame (m). */
-export const worldToCad = (v: ArrayLike<number>): [number, number, number] => [WORLD_Z0 - v[2], v[1], v[0]];
+export const worldToCad = (v: ArrayLike<number>): [number, number, number] => [v[0], v[1], v[2]];
 
 /** Geoms in the plate frame (mm, CAD axes). */
 const pbox = (name: string, cx: number, cy: number, cz: number, hx: number, hy: number, hz: number, col: string, extra = CART_COL) =>
@@ -104,13 +105,13 @@ export function plateHandPairs(): string {
   return `<contact>${out.join('')}</contact>`;
 }
 
-/** The three horizontal pipes (B, C, D), as in the Cart scene's pipe geoms: same radius, colour and collision flags. They run along world x, one above the other. */
+/** The track, from the Cart scene's pipeGeoms: pipe B runs up and bends LEFT, pipe C runs up and bends RIGHT (both with their top bars). Pipe D, the pipe the free hand lands on, is
+ *  the straight part only (same pipe, same radius, vertical section without a bend). */
 export function pipesXml(): string {
-  const pr = m(D.PIPE_R * 2) / 2;
-  return (Object.keys(D.PIPE_X) as D.PipeName[]).map((n) => {
-    const z = f(WORLD_Z0 - m(D.PIPE_X[n]));
-    return `<geom name="pipe${n}" type="cylinder" fromto="${PIPE_START_M} 0 ${z} ${PIPE_END_M} 0 ${z}" size="${pr}" rgba="0.62 0.66 0.70 1" contype="1" conaffinity="2"/>`;
-  }).join('\n    ');
+  const x = (n: D.PipeName) => f(m(D.PIPE_X[n]));
+  const pr = m(PIPE_D_MM) / 2;
+  const stub = `<geom name="pipeD" type="cylinder" fromto="${x('D')} 0 0 ${x('D')} 0 ${f(m(VERTICAL_MM))}" size="${pr}" rgba="0.62 0.66 0.70 1" contype="1" conaffinity="2"/>`;
+  return [pipeGeoms(m(D.PIPE_X.B), -1, TRACK_HORIZ_MM, 'pipeB'), pipeGeoms(m(D.PIPE_X.C), 1, TRACK_HORIZ_MM, 'pipeC'), stub].join('\n    ');
 }
 
 /** The cart: the plate (mocap) with arm, and the two hands on their hinges. Hand 1 rides the pipe at +x (C), hand 2 the one at -x (B). Neither hand is mirrored (as in the CAD). */
@@ -154,7 +155,7 @@ export function transferMjcf(): string {
 <mujoco model="pond_transfer_v2">
   <option timestep="0.002" gravity="0 0 -9.81"/>
   <worldbody>
-    <geom name="floor" type="plane" pos="0.45 0 -0.05" size="1.2 0.9 0.1" rgba="0.82 0.86 0.9 1"/>
+    <geom name="floor" type="plane" pos="0.05 0 -0.05" size="1.4 0.9 0.1" rgba="0.82 0.86 0.9 1"/>
     ${pipesXml()}
     ${transferCartBody()}
   </worldbody>

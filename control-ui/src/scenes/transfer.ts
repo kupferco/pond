@@ -1,7 +1,7 @@
 // Transfer scene (v2 cart, cad/cart_base.py): the cart hangs between two neighbouring pipes (B and C, 120 mm apart) on one rigid plate with a hinge at each hand.
-// The pipes are horizontal, one above the other. Hand B releases its pipe, the plate swings half a turn on hand C's hinge and hand B lands on pipe D and clamps it; only the hinge moves,
+// The track is the Cart scene's: pipe B runs up and bends left, pipe C runs up and bends right. Hand B releases its pipe, the plate swings half a turn on hand C's hinge and hand B lands on pipe D and clamps it; only the hinge moves,
 // the arm stays stowed on the plate. Each step has a control, and one button runs the lot.
-import { S_MAX_CM, S_MIN_CM, WORLD_Z0, transferMjcf } from '../cart/transfer-model.ts';
+import { S_MAX_CM, S_MIN_CM, transferMjcf } from '../cart/transfer-model.ts';
 import { PIPE_X } from '../cart/dims.ts';
 import {
   DEFAULT_SPEED_CM_S, DEFAULT_STEP_CM, HINGE_DEG_S_CAD, MAX_SPEED_CM_S, STEP_LABEL, SWING_RATE_DEG_S, TransferRun, applyPose, kinematics, pipeOf, worstContact,
@@ -18,7 +18,7 @@ export const transferScene: Scene = {
     const model = mujoco.MjModel.from_xml_string(transferMjcf());
     const data = new mujoco.MjData(model);
     // Camera behind the pipes (+y), a little to one side, looking at the hands; the plate swings out to the front.
-    const viewer = new Viewer(view, { mujoco, model, data }, { target: [0.45, 0, WORLD_Z0 - 0.06], dist: 1.2, maxDist: 4, az: Math.PI + 0.55, el: 0.25, far: 20 });
+    const viewer = new Viewer(view, { mujoco, model, data }, { target: [0.05, 0, 0.35], dist: 1.6, maxDist: 4, az: Math.PI + 0.55, el: 0.25, far: 20 });
     status.textContent = '';
 
     panel.innerHTML = `

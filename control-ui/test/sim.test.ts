@@ -210,8 +210,8 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   // CAD-frame coordinates (x across, y out of the pipe plane, z along the pipes) of a world point; the scene itself has the pipes horizontal
   const cadOf = (a: ArrayLike<number>, o: number) => worldToCad([a[o], a[o + 1], a[o + 2]]);
   const gx = (n: string, i: number) => cadOf(td.geom_xpos, 3 * g(n))[i];
-  check('pipes B and C are 120 mm apart in the scene, horizontal, one above the other', Math.abs(gx('pipeC', 0) - gx('pipeB', 0) - 0.12) < 1e-9 && Math.abs(td.geom_xpos[3 * g('pipeB') + 2] - td.geom_xpos[3 * g('pipeC') + 2] - 0.12) < 1e-9);
-  const hingeAt = (j: string) => { const id = tm.jnt(j).id, a = cadOf(td.xanchor, 3 * id); return [a[0], a[1], Math.abs(td.xaxis[3 * id])]; };   // axis: |world x| = 1 means along the horizontal pipes
+  check('pipes B and C are 120 mm apart, both upright, in the same plane', Math.abs(gx('pipeCv', 0) - gx('pipeBv', 0) - 0.12) < 1e-9 && Math.abs(td.geom_xpos[3 * g('pipeBv') + 1]) < 1e-9 && Math.abs(td.geom_xpos[3 * g('pipeCv') + 1]) < 1e-9);
+  const hingeAt = (j: string) => { const id = tm.jnt(j).id, a = cadOf(td.xanchor, 3 * id); return [a[0], a[1], Math.abs(td.xaxis[3 * id + 2])]; };   // axis: |world z| = 1 means along the upright pipes
   check('each hinge axis is parallel to the pipes (horizontal), on the pad edge: x -0.09 and +0.066, 43 mm in front', hingeAt('hinge2').every((v, i) => Math.abs(v - [-0.09, -0.043, 1][i]) < 1e-9) && hingeAt('hinge1').every((v, i) => Math.abs(v - [0.066, -0.043, 1][i]) < 1e-9));
   check('the plate hangs between the hinge axes', gx('plate', 0) - 0.071 > -0.09 && gx('plate', 0) + 0.071 < 0.066);
   check('drive motors, arm base and battery are on the plate (rigid: no joint between)', ['motor_drive1', 'motor_drive2', 'armbase', 'armcolumn', 'battery'].every((n) => bodyOf(n) === 'plate'));
@@ -221,9 +221,9 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('exactly one wheel pair per hand moves (clamp slide joints h1p, h2p)', [...Array(tm.njnt).keys()].filter((j) => tm.jnt_type[j] === 2).map((j) => tm.jnt(j).name).sort().join() === 'h1p,h2p');
 
   // Kinematics: hand C never moves; the plate turns half a turn about hinge C; hand B arrives on pipe D, in the orientation it started.
-  const handAt = (st: CartState, h: 1 | 2) => { applyPose(tm, td, st); mj.mj_forward(tm, td); const b = tm.body('hand' + h).id, p = cadOf(td.xpos, 3 * b), qw = td.xquat[4 * b], qx = td.xquat[4 * b + 1], qy = td.xquat[4 * b + 2], qz = td.xquat[4 * b + 3], r = Math.SQRT1_2;
-    // orientation in the CAD frame: undo the scene's quarter turn about y (conjugate of (r 0 r 0) times q)
-    return { x: p[0], y: p[1], z: p[2], qw: r * qw + r * qy, qz: r * qz - r * qx }; };
+  const handAt = (st: CartState, h: 1 | 2) => { applyPose(tm, td, st); mj.mj_forward(tm, td); const b = tm.body('hand' + h).id, p = cadOf(td.xpos, 3 * b), qw = td.xquat[4 * b], qx = td.xquat[4 * b + 1], qy = td.xquat[4 * b + 2], qz = td.xquat[4 * b + 3];
+    // orientation in the CAD frame: the scene frame is the CAD frame
+    return { x: p[0], y: p[1], z: p[2], qw, qz }; };
   { let worstC = 0; const rest1 = handAt(initialState(), 1);
     for (let i = 0; i <= 100; i++) { const st = initialState(); st.t = i / 100; const h = handAt(st, 1); worstC = Math.max(worstC, Math.hypot(h.x - 0.06, h.y, h.z - st.s / 100), Math.abs(h.qz - rest1.qz), Math.abs(h.qw - rest1.qw)); }
     check('hand C stays exactly where it is (on pipe C, not turning) through the whole swing', worstC < 1e-9, String(worstC));
@@ -237,7 +237,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     check('at the far end the plate has turned half a turn and hinge B a further half turn', Math.abs(k1.alpha - Math.PI) < 1e-12 && Math.abs(k1.hinge2 - Math.PI) < 1e-12 && Math.abs(k1.hinge1 + Math.PI) < 1e-12); }
 
   // Contact check can fail: a cart pushed into a pipe, a hand turned into the plate.
-  { const st = initialState(); applyPose(tm, td, st); const mc = tm.body_mocapid[tm.body('cart').id]; td.mocap_pos[3 * mc + 2] += 0.015; mj.mj_forward(tm, td);   // world z is the CAD x axis: across the pipes
+  { const st = initialState(); applyPose(tm, td, st); const mc = tm.body_mocapid[tm.body('cart').id]; td.mocap_pos[3 * mc] += 0.015; mj.mj_forward(tm, td);   // world x is across the pipes
     check('contact check sees the cart pushed 15 mm into the pipes', worstContact(tm, td).depth < -0.005, String(worstContact(tm, td).depth));
     applyPose(tm, td, st); td.qpos[tm.jnt_qposadr[tm.jnt('hinge2').id]] = -0.5; mj.mj_forward(tm, td);
     const touching: string[] = []; for (let i = 0; i < td.ncon; i++) { const c = td.contact.get(i)!; if (c.dist < 0) touching.push(tm.geom(c.geom1).name + '/' + tm.geom(c.geom2).name); }
@@ -253,7 +253,10 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     for (let s = S_MIN_CM; s <= S_MAX_CM; s += 0.5) { const st = initialState(); st.s = s; applyPose(tm, td, st); mj.mj_forward(tm, td); if (worstContact(tm, td).depth < 0) bad++; }
     check('riding along both pipes: no contact', bad === 0, `${bad} poses`); }
   check('the arm is rigid on the plate: no arm joints, links and pins on the plate body, folded close to the hinge', ![...Array(tm.njnt).keys()].some((j) => tm.jnt(j).name.startsWith('arm')) && ['arm_l1', 'arm_l2', 'arm_l3', 'arm_pin1', 'arm_pin2'].every((n) => bodyOf(n) === 'plate'));
-  check('there are no vertical posts: every pipe geom lies along the world x axis (horizontal)', ['B', 'C', 'D'].every((n) => { const i = g('pipe' + n); return Math.abs(Math.abs(td.geom_xmat[9 * i + 2]) - 1) < 1e-9 || Math.abs(Math.abs(td.geom_xmat[9 * i]) - 1) < 1e-9; }) && tm.geom_size[3 * g('pipeB') + 1] > 0.3);
+  // The track is the Cart scene's: B runs straight and bends LEFT, C runs straight and bends RIGHT. Geom centres of the arcs tell which way.
+  { const xh = (n: string) => td.geom_xpos[3 * g(n)], zh = (n: string) => td.geom_xpos[3 * g(n) + 2];
+    check('pipe B runs straight up and bends LEFT (its top bar lies left of pipe B), pipe C bends RIGHT (its top bar lies right of pipe C)', xh('pipeBh') < -0.06 - 0.1 && xh('pipeCh') > 0.06 + 0.1 && Math.abs(xh('pipeBv') + 0.06) < 1e-9 && Math.abs(xh('pipeCv') - 0.06) < 1e-9);
+    check('the straight parts stand on the floor, the bends and top bars are at the top: the Cart scene track, no extra posts', Math.abs(zh('pipeBv') - 0.3) < 1e-9 && Math.abs(zh('pipeCv') - 0.3) < 1e-9 && zh('pipeBh') > 0.74 && zh('pipeCh') > 0.74 && tm.geom_size[3 * g('pipeBv') + 1] > 0.25); }
 
   // Interlocks of the controls.
   { const r = new TransferRun();

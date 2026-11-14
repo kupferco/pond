@@ -2,14 +2,14 @@
 // Pure maths and a state machine, no DOM; applyPose writes a state into a MuJoCo model.
 //
 // Mechanism (lengths in mm, CAD axes: x across, y out of the pipe plane, z along the pipes; the hinge axes and the pipes are all parallel, so the swing is planar; the scene
-// turns this frame so the pipes are horizontal, see cadToWorld). At rest the hands clamp pipe B (hand 2) and pipe C (hand 1), 120 mm apart. Hinge 1 is on the far side of C,
+// is used as it is in the scene: pipes upright, B on the left bending left, C bending right). At rest the hands clamp pipe B (hand 2) and pipe C (hand 1), 120 mm apart. Hinge 1 is on the far side of C,
 // hinge 2 on the far side of B, 156 mm apart and 43 mm in front of the pipe plane. Transfer (decided by Dani): ONLY THE HINGE MOVES. Hand 2 releases B; the plate swings
 // half a turn about hinge 1, OUT TO -y, hand 2 following it round (its own hinge turns it back so it arrives the way it left); hand 2 clamps pipe D, which is where its pipe
 // offset lands (252 mm: hinge 1 + 156 + 30). Going back is the same in reverse. The arm stays stowed on the plate throughout. A hand swung the other way (hand 1 about hinge 2)
 // is not supported: see the notes in the pull request.
 import { HINGE_Y, hingeX, HINGE_DEG_S_CAD } from './dims.ts';
 import { CLEAR_M } from './model.ts';
-import { S_MAX_CM, S_MIN_CM, S_START_CM, WORLD_Z0 } from './transfer-model.ts';
+import { S_MAX_CM, S_MIN_CM, S_START_CM } from './transfer-model.ts';
 
 export type Vec3 = [number, number, number];
 type Quat = [number, number, number, number];
@@ -63,18 +63,13 @@ type DataLike = { qpos: { [i: number]: number }; ctrl: { [i: number]: number }; 
 export interface CartState { s: number; t: number; open1: number; open2: number; spin1: number; spin2: number }
 export const initialState = (): CartState => ({ s: S_START_CM, t: 0, open1: 0, open2: 0, spin1: 0, spin2: 0 });
 
-/** The world frame is the CAD frame turned about y by 90 degrees (cadToWorld): world quaternion (w x y z) of that turn. */
-const QR: Quat = [Math.SQRT1_2, 0, Math.SQRT1_2, 0];
-
 /** Write a cart state into the model: the plate's mocap pose, both hinges, both clamps and the drive wheels, and the matching actuator targets. */
 export function applyPose(model: ModelLike, data: DataLike, st: CartState): Kin {
   const k = kinematics(st.t), mc = model.body_mocapid[model.body('cart').id];
-  // plate pose in the CAD frame: origin (ox, oy, s), turned by alpha about the pipe direction; then into the world
-  data.mocap_pos[3 * mc] = st.s / 100; data.mocap_pos[3 * mc + 1] = k.oy; data.mocap_pos[3 * mc + 2] = WORLD_Z0 - k.ox;
-  const h = k.alpha / 2, qz: Quat = [Math.cos(h), 0, 0, Math.sin(h)];
-  const [aw, ax, ay, az] = QR, [bw, bx, by, bz] = qz;
-  data.mocap_quat[4 * mc] = aw * bw - ax * bx - ay * by - az * bz; data.mocap_quat[4 * mc + 1] = aw * bx + ax * bw + ay * bz - az * by;
-  data.mocap_quat[4 * mc + 2] = aw * by - ax * bz + ay * bw + az * bx; data.mocap_quat[4 * mc + 3] = aw * bz + ax * by - ay * bx + az * bw;
+  // plate pose: origin (ox, oy, s), turned by alpha about the pipe direction (the world frame is the CAD frame)
+  data.mocap_pos[3 * mc] = k.ox; data.mocap_pos[3 * mc + 1] = k.oy; data.mocap_pos[3 * mc + 2] = st.s / 100;
+  const h = k.alpha / 2;
+  data.mocap_quat[4 * mc] = Math.cos(h); data.mocap_quat[4 * mc + 1] = 0; data.mocap_quat[4 * mc + 2] = 0; data.mocap_quat[4 * mc + 3] = Math.sin(h);
   const q = (n: string) => model.jnt_qposadr[model.jnt(n).id], a = (n: string) => model.actuator(n).id;
   const clamp = (open: number) => { const o = Math.min(1, Math.max(0, open)); return (1 - o) * CLEAR_M + o * WHEEL_OPEN_V2_M; };
   const c1 = clamp(st.open1), c2 = clamp(st.open2);
