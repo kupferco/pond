@@ -10,6 +10,8 @@ export const VERTICAL_MM = 600;          // ASSUMED: vertical section length
 export const HORIZONTAL_MM = 600;        // ASSUMED: horizontal section length
 
 
+export const SLEEVE_L_MM = 90;           // hand_sleeve.py SLEEVE_L (used by the pod grab layout)
+export const SLEEVE_R_MM = 36;           // wheel centre radius 26 + wheel radius 10 (hand_sleeve.py)
 export const PLATE_MM = { alongTrack: 112, t: 6 }; // cart_dims.py: 112 x 6 plate. Its length across the hands is set from the hand spacing in cartBody: clamp edge to clamp edge (spacing + 2 x 34 mm).
 
 /** Distance (m) in the track plane from (x, z) to the pipe's centre line (pipe-local frame of pathAt: x to the right of the vertical section). horizMm = length of the top bar. */
