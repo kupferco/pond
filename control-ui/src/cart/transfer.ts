@@ -1,12 +1,11 @@
 // Transfer scene logic (v2 cart, cad/cart_base.py): the plate hangs on a hinge at each hand and ONE rigid plate swings on the hand that stays clamped.
 // Pure maths and a state machine, no DOM; applyPose writes a state into a MuJoCo model.
 //
-// Mechanism (lengths in mm, CAD axes: x across, y out of the pipe plane, z along the pipes; the hinge axes and the pipes are all parallel, so the swing is planar; the scene
-// is used as it is in the scene: pipes upright, B on the left bending left, C bending right). At rest the hands clamp pipe B (hand 2) and pipe C (hand 1), 120 mm apart. Hinge 1 is on the far side of C,
-// hinge 2 on the far side of B, 156 mm apart and 43 mm in front of the pipe plane. Transfer (decided by Dani): ONLY THE HINGE MOVES. Hand 2 releases B; the plate swings
-// half a turn about hinge 1, OUT TO -y, hand 2 following it round (its own hinge turns it back so it arrives the way it left); hand 2 clamps pipe D, which is where its pipe
-// offset lands (252 mm: hinge 1 + 156 + 30). Going back is the same in reverse. The arm stays stowed on the plate throughout. A hand swung the other way (hand 1 about hinge 2)
-// is not supported: see the notes in the pull request.
+// Mechanism (lengths in mm, CAD axes: x across, y out of the pipe plane, z along the pipes; the hinge axes and the pipes are all parallel, so the rotation is planar; the scene
+// is used as it is: pipes upright, B on the left bending left, C bending right). At rest the hands clamp pipe B (hand 2) and pipe C (hand 1), 120 mm apart. Hinge 1 is on the far side of C,
+// hinge 2 on the far side of B, 156 mm apart and 43 mm in front of the pipe plane. Transfer (decided by Dani): ONLY THE HINGE MOVES, and only a little. Hand 2 releases B; the plate rotates
+// a few degrees about hinge 1 (just enough for hand 2 to leave the pipe and clear its curved part, CLEAR_DEG); the cart moves along pipe C past the curve; the plate rotates back;
+// hand 2 clamps again. The arm stays stowed on the plate throughout. A hand swung the other way (hand 1 about hinge 2) is not supported.
 import { HINGE_Y, hingeX, HINGE_DEG_S_CAD } from './dims.ts';
 import { CLEAR_M } from './model.ts';
 import { S_MAX_CM, S_MIN_CM, S_START_CM } from './transfer-model.ts';
@@ -29,17 +28,19 @@ export { S_MAX_CM, S_MIN_CM, S_START_CM };
 const WHEEL_R_MM = 10;                        // CAD wheel radius, to turn travel into wheel spin
 export { HINGE_DEG_S_CAD };
 
-/** Swing coordinate t: 0 = at rest (hands on B and C), 1 = hand 2 swung about hinge 1 onto D. */
-export interface Kin { alpha: number; ox: number; oy: number; hinge1: number; hinge2: number; freeYaw: number }
+/** Rotation coordinate t: 0 = at rest (hands on B and C), 1 = plate rotated CLEAR_DEG about hinge 1, hand 2 clear of pipe B. */
+export interface Kin { alpha: number; ox: number; oy: number; hinge1: number; hinge2: number }
 
 /**
- * Swing path as (plate angle alpha, hand 2's own hinge angle) in degrees. The plate turns half a turn about hinge 1 while hinge 2 turns hand 2 so the sleeve slides sideways off
- * pipe B and arrives on pipe D the way it left (hinge 2 ends at 180 as well). Found by searching the (alpha, hinge 2) plane of the model for a route with no contact (at least 1 mm
- * from the pipes); the sleeve is only 8 mm bigger than the pipe, so the hand has to turn the other way a few degrees first, then turn twice as fast as the plate,
- * and the last 50 degrees of hinge 2 are made with the plate standing still (hand 2 is then clear of both pipes). Each leg is paced so neither hinge exceeds the speed limit.
+ * Rotation path as (plate angle alpha, hand 2's own hinge angle) in degrees. Found by searching the (alpha, hinge 2) plane of the model with contact detection: the sleeve is only
+ * 8 mm bigger than the pipe, so hand 2 has to turn the other way a few degrees on its own hinge while the plate rotates; the corridor is narrow, so the path follows its middle.
+ * The last point is the smallest plate angle at which hand 2 is completely off pipe B (found 22 deg; 2 deg margin added): CLEAR_DEG.
  */
-export const SWING_PATH: readonly (readonly [number, number])[] = [[0, 0], [2, -2], [7, -5], [10, -4], [149, 135], [149, 196], [166, 196], [170, 193], [172, 191], [174, 188], [176, 185], [178, 182], [180, 180]];
-/** Cumulative path length in degrees (the larger of the two hinges' travel on each leg, i.e. the time at the hinge speed limit in seconds per deg/s). */
+export const SWING_PATH: readonly (readonly [number, number])[] = [[0, 0], [4, -4], [8, -5], [12, -5], [16, -4], [20, -4], [24, -4]];
+export const CLEAR_DEG = SWING_PATH[SWING_PATH.length - 1][0];
+/** The largest hinge angle (deg) either hinge uses. */
+export const MAX_HINGE_DEG = Math.max(...SWING_PATH.map(([a, h]) => Math.max(Math.abs(a), Math.abs(h))));
+/** Path length in degrees (the larger of the two hinges' travel on each leg: the time at the hinge speed limit in seconds per deg/s). */
 const LEG = SWING_PATH.slice(1).map(([a, h], i) => Math.max(Math.abs(a - SWING_PATH[i][0]), Math.abs(h - SWING_PATH[i][1])));
 export const SWING_DEG = LEG.reduce((x, y) => x + y, 0);
 const swingAt = (u: number): [number, number] => {
@@ -53,7 +54,7 @@ export function kinematics(t: number): Kin {
   const hx = hingeX(1) / 1000, hy = HINGE_Y / 1000, c = Math.cos(alpha), s = Math.sin(alpha);
   // the plate is rotated by alpha about hand 1's hinge point: origin O = h - R h
   const ox = hx - (c * hx - s * hy), oy = hy - (s * hx + c * hy);
-  return { alpha, ox, oy, hinge1: -alpha, hinge2: turn, freeYaw: alpha + turn };
+  return { alpha, ox, oy, hinge1: -alpha, hinge2: turn };
 }
 
 type ModelLike = { jnt(name: string): { id: number }; jnt_qposadr: ArrayLike<number>; actuator(name: string): { id: number }; body(name: string): { id: number }; body_mocapid: ArrayLike<number> };
@@ -82,18 +83,18 @@ export function applyPose(model: ModelLike, data: DataLike, st: CartState): Kin 
   return k;
 }
 
-/** Where the cart is, as a name for the display: the pipe each hand is on (or over). */
-export const pipeOf = (hand: 1 | 2, t: number) => (hand === 1 ? 'C' : t >= 0.5 ? 'D' : 'B');
-
-export type StepName = 'release' | 'swing' | 'clamp';
-export const STEP_LABEL: Record<StepName, string> = { release: 'Releasing the free hand', swing: 'Swinging the plate on hand C\'s hinge', clamp: 'Clamping the free hand' };
+export type StepName = 'release' | 'rotate' | 'move' | 'rotateBack' | 'clamp';
+export const STEP_LABEL: Record<StepName, string> = {
+  release: 'Releasing hand B', rotate: 'Rotating the plate on hand C\'s hinge to clear the curve', move: 'Moving past the curve on hand C',
+  rotateBack: 'Rotating the plate back', clamp: 'Clamping hand B',
+};
 const EPS = 1e-9;
 interface Goal { s: number; t: number; open1: number; open2: number }
 
 /**
  * Cart controller. Every continuous quantity (position along the pipes, swing, clamp openings) moves towards its goal at its own rate, behind interlocks:
- * the plate swings only with hand 2 open and hand 1 closed; nothing else moves mid-swing. A full transfer is a queue of three goals (release, swing, clamp), run one after the
- * other: only the hinge moves the plate. `msg` carries the reason when an interlock refuses something.
+ * the plate swings only with hand 2 open and hand 1 closed; nothing else moves mid-swing. A full transfer is a queue of five goals (release, rotate, move, rotate back, clamp), run one after the
+ * other: only the hinge rotates the plate, by CLEAR_DEG at most. `msg` carries the reason when an interlock refuses something.
  */
 export class TransferRun {
   readonly st = initialState();
@@ -120,34 +121,34 @@ export class TransferRun {
   /** Step buttons: move the cart along the pipes by d cm. */
   nudge(d: number): boolean {
     if (this.busy) return this.refuse('Wait for the running transfer to finish.');
-    if (this.swinging) return this.refuse('The plate is mid-swing: finish the rotation first.');
+    if (this.swinging) return this.refuse('The plate is mid-rotation: finish the rotation first.');
     this.goal.s = Math.min(S_MAX_CM, Math.max(S_MIN_CM, this.goal.s + d)); this.msg = ''; return true;
   }
   /** hand 1 or 2: open (release) or close (clamp). */
   clampHand(hand: 1 | 2, open: boolean): boolean {
     if (this.busy) return this.refuse('Wait for the running transfer to finish.');
-    if (this.swinging) return this.refuse('The plate is mid-swing: a hand cannot open or close in the air.');
-    if (open && hand === 1 && (this.st.open2 > EPS || this.goal.open2 > EPS)) return this.refuse('Hand 2 is not clamped: releasing hand C as well would let go of the track.');
-    if (open && hand === 2 && (this.st.open1 > EPS || this.goal.open1 > EPS)) return this.refuse('Hand C is not clamped: releasing hand ' + pipeOf(2, this.st.t) + ' as well would let go of the track.');
+    if (this.swinging) return this.refuse('The plate is mid-rotation: a hand cannot open or close in the air.');
+    if (this.st.t > EPS) return this.refuse('Rotate the plate back first: a hand can only open or close on its pipe.');
+    if (open && hand === 1 && (this.st.open2 > EPS || this.goal.open2 > EPS)) return this.refuse('Hand B is not clamped: releasing hand C as well would let go of the track.');
+    if (open && hand === 2 && (this.st.open1 > EPS || this.goal.open1 > EPS)) return this.refuse('Hand C is not clamped: releasing hand B as well would let go of the track.');
     this.goal[hand === 1 ? 'open1' : 'open2'] = open ? 1 : 0; this.msg = ''; return true;
   }
-  /** Rotate: swing the plate to the other end (toward = 1: hand 2 over onto D, 0: back to B). */
+  /** Rotate: turn the plate on hand C's hinge (toward = 1: to clear the curve, 0: back). */
   rotate(toward: 0 | 1): boolean {
     if (this.busy) return this.refuse('Wait for the running transfer to finish.');
-    if (this.st.open1 > EPS) return this.refuse('Hand C must stay clamped: the plate swings on its hinge.');
-    if (this.st.open2 < 1 - EPS) return this.refuse('Release the free hand (hand ' + pipeOf(2, this.st.t) + ') first.');
+    if (this.st.open1 > EPS) return this.refuse('Hand C must stay clamped: the plate rotates on its hinge.');
+    if (this.st.open2 < 1 - EPS) return this.refuse('Release hand B first.');
     this.goal.t = toward; this.msg = ''; return true;
   }
   stop() { this.queue = []; this.current = null; this.goal = { s: this.st.s, t: this.st.t, open1: this.st.open1, open2: this.st.open2 }; this.msg = 'Stopped.'; }
 
-  /** Run the whole transfer from where the cart is: to the other pipe, whichever end it is at. Needs the cart at rest at one end. */
+  /** Run the whole transfer from where the cart is: release, rotate to clear the curve, move past it (to the far end of the straight part), rotate back, clamp. Needs the cart at rest, both hands clamped. */
   start(): boolean {
     if (this.busy) return this.refuse('A transfer is already running.');
-    const end = this.atEnd;
-    if (end === null) return this.refuse('The plate is mid-swing: finish the rotation first.');
+    if (this.swinging || this.st.t > EPS) return this.refuse('The plate is rotated: rotate it back first.');
     if (this.st.open1 > EPS || this.st.open2 > EPS) return this.refuse('Clamp both hands first.');
-    const to: 0 | 1 = end === 0 ? 1 : 0;
-    this.queue = [{ name: 'release', goal: { open2: 1 } }, { name: 'swing', goal: { t: to } }, { name: 'clamp', goal: { open2: 0 } }];
+    const to = this.st.s < (S_MIN_CM + S_MAX_CM) / 2 ? S_MAX_CM : S_MIN_CM;
+    this.queue = [{ name: 'release', goal: { open2: 1 } }, { name: 'rotate', goal: { t: 1 } }, { name: 'move', goal: { s: to } }, { name: 'rotateBack', goal: { t: 0 } }, { name: 'clamp', goal: { open2: 0 } }];
     this.done = false; this.msg = ''; this.next(); return true;
   }
   private next() {
@@ -157,7 +158,7 @@ export class TransferRun {
   }
   private reached() { const g = this.goal, s = this.st; return Math.abs(g.s - s.s) < EPS && Math.abs(g.t - s.t) < EPS && Math.abs(g.open1 - s.open1) < EPS && Math.abs(g.open2 - s.open2) < EPS; }
 
-  private toward(cur: number, goal: number, rate: number, dt: number) { const e = goal - cur, step = rate * dt; return Math.abs(e) <= step ? goal : cur + Math.sign(e) * step; }
+  private toward(cur: number, goal: number, rate: number, dt: number) { const e = goal - cur, step = rate * dt; return Math.abs(e) <= Math.max(step, EPS) ? goal : cur + Math.sign(e) * step; }
   advance(dt: number) {
     const s = this.st, g = this.goal;
     // clamps
@@ -166,14 +167,14 @@ export class TransferRun {
     // the swing: hinge speed limited, and only with hand 2 open and hand 1 clamped
     const swingOk = s.open1 <= EPS && s.open2 >= 1 - EPS;
     if (g.t !== s.t) { if (swingOk) s.t = this.toward(s.t, g.t, this.swingRate, dt); else if (!this.busy) { g.t = s.t; } }
-    // driving along the pipes: not mid-swing; the clamped hands' drive wheels roll the cart
-    if (!this.swinging && g.s !== s.s) {
+    // driving along the pipes: not mid-rotation, and with hand 2 either clamped on B (plate flat) or fully off it (plate rotated clear); the clamped hands' drive wheels roll the cart
+    if (!this.swinging && g.s !== s.s && (s.t >= 1 - EPS ? s.open2 >= 1 - EPS : s.open2 <= EPS || s.open2 >= 1 - EPS)) {
       const ds = this.toward(s.s, g.s, this.speed, dt) - s.s;
       s.s += ds;
       if (s.open1 < 0.5) s.spin1 -= (ds * 10) / WHEEL_R_MM;
       if (s.open2 < 0.5) s.spin2 -= (ds * 10) / WHEEL_R_MM;
     }
-    if (this.current && this.reached()) this.next();
+    if (this.current && this.reached()) { s.s = g.s; this.next(); }
   }
   /** Hinge speed bookkeeping for the tests: call with the hinge angles written this frame. */
   track(h1: number, h2: number) { this.maxHingeStep = Math.max(this.maxHingeStep, Math.abs(h1 - this.prev.h1), Math.abs(h2 - this.prev.h2)); this.prev = { h1, h2 }; }

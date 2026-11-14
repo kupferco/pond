@@ -35,11 +35,6 @@ export const HINGE_DEG_S_CAD = (MOTOR_RPM / HINGE_RATIO) * 6;
 export const hingeX = (hand: 1 | 2) => (hand === 1 ? HX + HINGE_OFF_C : -HX + HINGE_OFF_B);
 /** x of the pipe the hand sits on at rest. */
 export const restPipeX = (hand: 1 | 2) => (hand === 1 ? HX : -HX);
-/** The pipes of the transfer scene. B and C are the pair the cart hangs on at rest, 120 mm apart. A hand swung half a turn about the OTHER hand's hinge lands where its
- *  own pipe offset from its hinge (30 mm for hand 2) lands on the far side of that hinge: hinge 1 + (hinge 1 - hinge 2) + 30 = 252, so pipe D is 192 mm from C. */
-const REACH = hingeX(1) - hingeX(2);   // 156: hinge axis to hinge axis
-export const PIPE_X = {
-  B: restPipeX(2), C: restPipeX(1),
-  D: hingeX(1) + REACH + (restPipeX(2) - hingeX(2)),   // hand 2 swung about hinge 1: +252
-} as const;
+/** The pipes of the transfer scene: B and C, the pair the cart hangs on at rest, 120 mm apart. */
+export const PIPE_X = { B: restPipeX(2), C: restPipeX(1) } as const;
 export type PipeName = keyof typeof PIPE_X;

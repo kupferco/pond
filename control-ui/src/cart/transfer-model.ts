@@ -1,9 +1,8 @@
-// MJCF for the v2 transfer scene: the Cart scene's track (pipe B bending left, pipe C bending right, plus a straight pipe D), and the cart as drawn in cad/cart_base.py, cart_hinge.py and hand_sleeve.py:
+// MJCF for the v2 transfer scene: the Cart scene's track (pipe B bending left, pipe C bending right), and the cart as drawn in cad/cart_base.py, cart_hinge.py and hand_sleeve.py:
 // one rigid PLATE (a mocap body) with, on it, the arm base and arm, the battery on its shelf and the two drive motors; each of the two HANDS
 // hangs on the plate through its own HINGE (axis parallel to the pipe, on the pad edge) and carries its sleeve, wheel pairs, clamp motor and the
 // worm wheel of its hinge. The hinge worm and its motor ride on the plate. Frame: x across, y out of the pipe plane (plate on -y), z up the pipes.
 import { CART_COL, handInner, pipeGeoms, rgba } from './model.ts';
-import { PIPE_D_MM, VERTICAL_MM } from './track.ts';
 import * as D from './dims.ts';
 
 const m = (mm: number) => +(mm / 1000).toFixed(5);
@@ -105,13 +104,9 @@ export function plateHandPairs(): string {
   return `<contact>${out.join('')}</contact>`;
 }
 
-/** The track, from the Cart scene's pipeGeoms: pipe B runs up and bends LEFT, pipe C runs up and bends RIGHT (both with their top bars). Pipe D, the pipe the free hand lands on, is
- *  the straight part only (same pipe, same radius, vertical section without a bend). */
+/** The track, from the Cart scene's pipeGeoms: pipe B runs up and bends LEFT, pipe C runs up and bends RIGHT (both with their top bars). Only these two pipes exist. */
 export function pipesXml(): string {
-  const x = (n: D.PipeName) => f(m(D.PIPE_X[n]));
-  const pr = m(PIPE_D_MM) / 2;
-  const stub = `<geom name="pipeD" type="cylinder" fromto="${x('D')} 0 0 ${x('D')} 0 ${f(m(VERTICAL_MM))}" size="${pr}" rgba="0.62 0.66 0.70 1" contype="1" conaffinity="2"/>`;
-  return [pipeGeoms(m(D.PIPE_X.B), -1, TRACK_HORIZ_MM, 'pipeB'), pipeGeoms(m(D.PIPE_X.C), 1, TRACK_HORIZ_MM, 'pipeC'), stub].join('\n    ');
+  return [pipeGeoms(m(D.PIPE_X.B), -1, TRACK_HORIZ_MM, 'pipeB'), pipeGeoms(m(D.PIPE_X.C), 1, TRACK_HORIZ_MM, 'pipeC')].join('\n    ');
 }
 
 /** The cart: the plate (mocap) with arm, and the two hands on their hinges. Hand 1 rides the pipe at +x (C), hand 2 the one at -x (B). Neither hand is mirrored (as in the CAD). */
@@ -119,7 +114,7 @@ export function transferCartBody(): string {
   const hand = (h: 1 | 2) => {
     const hx = D.hingeX(h) - D.restPipeX(h);
     return `<body name="hand${h}" pos="${f(m(D.restPipeX(h)))} 0 0" xyaxes="0 0 1 0 -1 0">
-      <joint name="hinge${h}" type="hinge" pos="0 ${f(m(-D.HINGE_Y))} ${f(m(hx))}" axis="1 0 0" range="-7 7" frictionloss="50" damping="2"/>
+      <joint name="hinge${h}" type="hinge" pos="0 ${f(m(-D.HINGE_Y))} ${f(m(hx))}" axis="1 0 0" range="-30 30" frictionloss="50" damping="2"/>
       ${handInner(h, false, h === 2 ? -1 : 1)}
         ${handHingeGeoms(h)}
     </body>`;
@@ -143,8 +138,8 @@ export function transferActuators(): string {
   <actuator>
     <position name="drive1" tendon="drive1" kp="2" ctrlrange="-100000 100000"/>
     <position name="drive2" tendon="drive2" kp="2" ctrlrange="-100000 100000"/>
-    <position name="hinge1" joint="hinge1" kp="200" ctrlrange="-7 7"/>
-    <position name="hinge2" joint="hinge2" kp="200" ctrlrange="-7 7"/>
+    <position name="hinge1" joint="hinge1" kp="200" ctrlrange="-0.6 0.6"/>
+    <position name="hinge2" joint="hinge2" kp="200" ctrlrange="-0.6 0.6"/>
     <position name="clamp1" joint="h1p" kp="2000" ctrlrange="-0.006 0.04"/>
     <position name="clamp2" joint="h2p" kp="2000" ctrlrange="-0.006 0.04"/>
   </actuator>`;

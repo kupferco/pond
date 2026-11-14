@@ -11,7 +11,7 @@ import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/pl
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
 import { cartMjcf, WHEEL_OPEN_M, cartActuators, cartBody, setMotors } from '../src/cart/model.ts';
-import { HINGE_DEG_S_CAD, TransferRun, applyPose, initialState, kinematics, worstContact, type CartState } from '../src/cart/transfer.ts';
+import { CLEAR_DEG, HINGE_DEG_S_CAD, MAX_HINGE_DEG, TransferRun, applyPose, initialState, kinematics, worstContact, type CartState } from '../src/cart/transfer.ts';
 import { S_MAX_CM, S_MIN_CM, transferMjcf, worldToCad } from '../src/cart/transfer-model.ts';
 import * as DIMS from '../src/cart/dims.ts';
 import { readFileSync } from 'node:fs';
@@ -201,7 +201,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     ...same(['PAD_X0', 'PAD_X1', 'PAD_Y0', 'PAD_Y1', 'WALL_OUT_R'], hs, { PAD_X0: DIMS.PAD_X0, PAD_X1: DIMS.PAD_X1, PAD_Y0: DIMS.PAD_Y0, PAD_Y1: DIMS.PAD_Y1, WALL_OUT_R: DIMS.SLEEVE_R })];
   check('hinge, plate and hand numbers in cart/dims.ts equal the CAD files', bad.length === 0, bad.join(','));
   check('derived layout: hinge axes at -90 and +66, plate -83..59, arm at -12', DIMS.hingeX(2) === -90 && DIMS.hingeX(1) === 66 && DIMS.PLATE_X0 === -83 && DIMS.PLATE_X1 === 59 && DIMS.ARM_X === -12 && DIMS.PLATE_Y0 === -52);
-  check('pipe D is where hand B lands swung about hinge C (252 mm)', DIMS.PIPE_X.D === 252);
+  check('the scene has only two pipes, B and C: no pipe D anywhere', Object.keys(DIMS.PIPE_X).join() === 'B,C' && !/pipeD/.test(transferMjcf()));
 
   const tm = mj.MjModel.from_xml_string(transferMjcf()), td = new mj.MjData(tm);
   const g = (n: string) => tm.geom(n).id, bodyOf = (n: string) => tm.body(tm.geom_bodyid[g(n)]).name;
@@ -220,21 +220,25 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('hinges are position-controlled and self-locking: position actuators on hinge1/hinge2 and friction on the joints', ['hinge1', 'hinge2'].every((n) => tm.actuator(n).id >= 0 && tm.actuator_trnid[2 * tm.actuator(n).id] === tm.jnt(n).id) && tm.dof_frictionloss[tm.jnt_dofadr[tm.jnt('hinge1').id]] > 0 && tm.dof_frictionloss[tm.jnt_dofadr[tm.jnt('hinge2').id]] > 0);
   check('exactly one wheel pair per hand moves (clamp slide joints h1p, h2p)', [...Array(tm.njnt).keys()].filter((j) => tm.jnt_type[j] === 2).map((j) => tm.jnt(j).name).sort().join() === 'h1p,h2p');
 
-  // Kinematics: hand C never moves; the plate turns half a turn about hinge C; hand B arrives on pipe D, in the orientation it started.
+  // Kinematics: hand C never moves; the plate turns only a few degrees about hinge C; hand B ends clear of pipe B.
   const handAt = (st: CartState, h: 1 | 2) => { applyPose(tm, td, st); mj.mj_forward(tm, td); const b = tm.body('hand' + h).id, p = cadOf(td.xpos, 3 * b), qw = td.xquat[4 * b], qx = td.xquat[4 * b + 1], qy = td.xquat[4 * b + 2], qz = td.xquat[4 * b + 3];
     // orientation in the CAD frame: the scene frame is the CAD frame
     return { x: p[0], y: p[1], z: p[2], qw, qz }; };
   { let worstC = 0; const rest1 = handAt(initialState(), 1);
     for (let i = 0; i <= 100; i++) { const st = initialState(); st.t = i / 100; const h = handAt(st, 1); worstC = Math.max(worstC, Math.hypot(h.x - 0.06, h.y, h.z - st.s / 100), Math.abs(h.qz - rest1.qz), Math.abs(h.qw - rest1.qw)); }
-    check('hand C stays exactly where it is (on pipe C, not turning) through the whole swing', worstC < 1e-9, String(worstC));
-    const st = initialState(); st.t = 1; const d = handAt(st, 2); const r = initialState(), b0 = handAt(r, 2);
-    check('hand B lands on pipe D, 252 mm out, in the pipe plane, orientation as at the start', Math.hypot(d.x - 0.252, d.y) < 1e-9 && Math.abs(Math.abs(d.qw) - Math.abs(b0.qw)) < 1e-9 && Math.hypot(b0.x + 0.06, b0.y) < 1e-9);
-    const mid = initialState(); mid.t = 0.5; const mq = handAt(mid, 2);
-    check('mid-swing the plate is out in front of the pipes (-y), never behind them', mq.y < -0.1);
+    check('hand C stays exactly where it is (on pipe C, not turning) through the whole rotation', worstC < 1e-9, String(worstC));
     let behind = 0; for (let i = 0; i <= 100; i++) { const s2 = initialState(); s2.t = i / 100; if (handAt(s2, 2).y > 1e-9) behind++; }
-    check('hand B stays in front of the pipe plane all through the swing', behind === 0, `${behind} samples`);
+    check('hand B stays in front of the pipe plane all through the rotation', behind === 0, `${behind} samples`);
     const k1 = kinematics(1);
-    check('at the far end the plate has turned half a turn and hinge B a further half turn', Math.abs(k1.alpha - Math.PI) < 1e-12 && Math.abs(k1.hinge2 - Math.PI) < 1e-12 && Math.abs(k1.hinge1 + Math.PI) < 1e-12); }
+    check('rotation is small: the plate turns CLEAR_DEG (a few degrees, well below 30) and no hinge exceeds MAX_HINGE_DEG', CLEAR_DEG === 24 && MAX_HINGE_DEG <= 24 && Math.abs(k1.alpha * 180 / Math.PI - CLEAR_DEG) < 1e-9 && Math.abs(k1.hinge1 * 180 / Math.PI + CLEAR_DEG) < 1e-9);
+    // "off the pipe": a test-only contact pair between hand B's hidden envelope (the sleeve) and pipe B is penetrating exactly when the pipe is still inside the sleeve
+    const xmlEnv = transferMjcf().replace('<contact>', '<contact><pair geom1="env2" geom2="pipeBv" margin="0"/>'), em = mj.MjModel.from_xml_string(xmlEnv), ed = new mj.MjData(em);
+    const inside = (t: number, s: number) => { const st = initialState(); st.t = t; st.s = s; st.open2 = 1; applyPose(em, ed, st); mj.mj_forward(em, ed); let n = 0; for (let i = 0; i < ed.ncon; i++) { const c = ed.contact.get(i)!; if (c.dist < 0 && [em.geom(c.geom1).name, em.geom(c.geom2).name].sort().join() === 'env2,pipeBv') n++; } return n > 0; };
+    check('at the end of the rotation hand B has left pipe B (sleeve clear of the pipe) at every height', [S_MIN_CM, 30, S_MAX_CM].every((s) => !inside(1, s)));
+    // minimal: with the last 4 degrees of the path left out the sleeve is still round the pipe (hinge angle used is the smallest that clears it, within the path's resolution)
+    const shortT = (() => { let lo = 0, hi = 1; for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (kinematics(mid).alpha * 180 / Math.PI < CLEAR_DEG - 4) lo = mid; else hi = mid; } return lo; })();
+    check('smallest angle: four degrees short of the end the sleeve is still round the pipe', inside(shortT, 30));
+    ed.delete(); em.delete(); }
 
   // Contact check can fail: a cart pushed into a pipe, a hand turned into the plate.
   { const st = initialState(); applyPose(tm, td, st); const mc = tm.body_mocapid[tm.body('cart').id]; td.mocap_pos[3 * mc] += 0.015; mj.mj_forward(tm, td);   // world x is across the pipes
@@ -243,10 +247,10 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     const touching: string[] = []; for (let i = 0; i < td.ncon; i++) { const c = td.contact.get(i)!; if (c.dist < 0) touching.push(tm.geom(c.geom1).name + '/' + tm.geom(c.geom2).name); }
     check('contact check sees the plate swung into a hand (hand B turned 29 deg the wrong way)', touching.some((n) => n.includes('plate') && n.includes('pad2')), touching.join(' ')); }
 
-  // Fine sweep of the whole swing (every 0.1% of it, hand B open, hand C clamped): no contact at all, so no collision can hide between the frames of a run.
+  // Fine sweep of the whole rotation (every 0.1% of it, hand B open, hand C clamped): no contact at all, so no collision can hide between the frames of a run.
   { let bad = 0, worst = 0;
-    for (let i = 0; i <= 1000; i++) { const st = initialState(); st.t = i / 1000; st.open2 = 1; applyPose(tm, td, st); mj.mj_forward(tm, td); const w = worstContact(tm, td); if (w.depth < 0) { bad++; worst = Math.min(worst, w.depth); } }
-    check('fine sweep of the swing: zero contacts at 1001 poses', bad === 0, `${bad} poses, worst ${(worst * 1000).toFixed(2)} mm`); }
+    for (let i = 0; i <= 1000; i++) { const st = initialState(); st.t = i / 1000; st.s = [S_MIN_CM, 30, S_MAX_CM][i % 3]; st.open2 = 1; applyPose(tm, td, st); mj.mj_forward(tm, td); const w = worstContact(tm, td); if (w.depth < 0) { bad++; worst = Math.min(worst, w.depth); } }
+    check('fine sweep of the rotation: zero contacts at 1001 poses', bad === 0, `${bad} poses, worst ${(worst * 1000).toFixed(2)} mm`); }
 
   // Step riding: both hands clamped, along the pipes with the arm stowed: nothing touches.
   { let bad = 0;
@@ -263,31 +267,33 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     check('rotate is refused with hand B still clamped', !r.rotate(1) && r.msg.includes('Release'));
     check('releasing hand C while hand B is released is refused (the cart would let go)', r.clampHand(2, true) && !r.clampHand(1, true) && r.msg.includes('not clamped'));
     for (let i = 0; i < 100; i++) r.advance(0.02);
-    check('rotate is accepted once the free hand is released (no fold or lift needed)', r.rotate(1));
+    check('rotate is accepted once hand B is released (no fold or lift needed)', r.rotate(1));
     const q = new TransferRun(); q.nudge(1000); for (let i = 0; i < 1000; i++) q.advance(0.02);
     check('the cart stops at the end of the pipes', q.st.s === S_MAX_CM); }
 
-  // Full transfers, stepped like the scene does, there and back, from several positions along the pipes: every frame is checked against the pipes and the plate against both hands.
-  for (const dir of ['to D', 'back to B'] as const) for (const s0 of [S_MIN_CM + 5, 45, S_MAX_CM - 5]) {
-    const r = new TransferRun(); r.st.s = s0; r.goal.s = s0; if (dir === 'back to B') { r.st.t = 1; r.goal.t = 1; }
+  // Full transfers, stepped like the scene does, from several positions along the pipes (and twice in a row, so there and back): every frame is checked against the pipes and the plate against both hands.
+  for (const s0 of [S_MIN_CM, S_MIN_CM + 5, 30, 45, S_MAX_CM - 5]) {
+    const r = new TransferRun(); r.st.s = s0; r.goal.s = s0;
     r.swingDegS = 30; r.setSpeed(10); r.start();
-    const phases: string[] = []; let frames = 0, bad = 0, deep = 0, deepNames = '', swingFrames = 0, swingOk = true, prevT = r.st.t, maxStep = 0, h1 = kinematics(r.st.t).hinge1, h2 = kinematics(r.st.t).hinge2, sMoved = false;
+    const phases: string[] = []; let frames = 0, bad = 0, deep = 0, deepNames = '', rotFrames = 0, rotOk = true, prevT = r.st.t, maxHinge = 0, maxStep = 0, h1 = 0, h2 = 0, sMovedWrong = false, prevS = s0, wheelsOk = true;
     while (!r.done && frames < 20000) {
       const during = r.current; r.advance(0.02); frames++;
       const k = applyPose(tm, td, r.st); mj.mj_forward(tm, td);
       if (r.current && phases[phases.length - 1] !== r.current) phases.push(r.current);
       const w = worstContact(tm, td); if (w.depth < 0) { bad++; if (w.depth < deep) { deep = w.depth; deepNames = w.names; } }
-      if (r.st.t !== prevT && during !== 'swing') swingOk = false;
-      if (r.st.t > 0 && r.st.t < 1) { swingFrames++; if (!(r.st.open2 === 1 && r.st.open1 === 0)) swingOk = false; }
-      if (r.st.s !== s0) sMoved = true;
-      maxStep = Math.max(maxStep, Math.abs(k.hinge1 - h1), Math.abs(k.hinge2 - h2)); h1 = k.hinge1; h2 = k.hinge2; prevT = r.st.t;
+      if (r.st.t !== prevT && during !== 'rotate' && during !== 'rotateBack') rotOk = false;
+      if (r.st.t > 0 && r.st.t < 1) { rotFrames++; if (!(r.st.open2 === 1 && r.st.open1 === 0)) rotOk = false; }
+      if (r.st.s !== prevS && during !== 'move') sMovedWrong = true;
+      if (r.st.s !== prevS && r.st.t < 1) wheelsOk = false;
+      maxHinge = Math.max(maxHinge, Math.abs(k.hinge1), Math.abs(k.hinge2));
+      maxStep = Math.max(maxStep, Math.abs(k.hinge1 - h1), Math.abs(k.hinge2 - h2)); h1 = k.hinge1; h2 = k.hinge2; prevT = r.st.t; prevS = r.st.s;
     }
-    check(`full transfer ${dir} from ${s0} cm: only release, swing, clamp, in that order`, r.done && phases.join('>') === 'release>swing>clamp', phases.join('>') + ` (${frames} frames)`);
-    check(`full transfer ${dir} from ${s0} cm: zero contacts, cart against the pipes and plate against the hands (${frames} frames)`, bad === 0, `${bad} frames, worst ${(deep * 1000).toFixed(2)} mm ${deepNames}`);
-    check(`full transfer ${dir} from ${s0} cm: the plate swings only in the swing step, with hand B released and hand C clamped; the cart does not drive`, swingFrames > 100 && swingOk && !sMoved, `${swingFrames} swing frames`);
-    check(`full transfer ${dir} from ${s0} cm: the hinge drives never exceed the speed limit (30 deg/s)`, maxStep <= (30 * Math.PI / 180) * 0.02 + 1e-9, `${(maxStep / 0.02 * 180 / Math.PI).toFixed(1)} deg/s`);
-    const fin = handAt(r.st, 2), want = dir === 'to D' ? DIMS.PIPE_X.D / 1000 : DIMS.PIPE_X.B / 1000;
-    check(`full transfer ${dir} from ${s0} cm: hand B ends clamped on its pipe, hand C still on pipe C`, Math.abs(fin.x - want) < 1e-9 && r.st.open2 === 0 && r.st.open1 === 0 && Math.abs(handAt(r.st, 1).x - 0.06) < 1e-9 && r.st.s === s0);
+    check(`full transfer from ${s0} cm: release, rotate, move, rotate back, clamp, in that order`, r.done && phases.join('>') === 'release>rotate>move>rotateBack>clamp', phases.join('>') + ` (${frames} frames)`);
+    check(`full transfer from ${s0} cm: zero contacts with the track, cart against the pipes and plate against the hands (${frames} frames)`, bad === 0, `${bad} frames, worst ${(deep * 1000).toFixed(2)} mm ${deepNames}`);
+    check(`full transfer from ${s0} cm: the plate rotates only in the rotate steps, with hand B released and hand C clamped; the cart drives only in the move step, rotated`, rotFrames > 20 && rotOk && !sMovedWrong && wheelsOk, `${rotFrames} rotation frames`);
+    check(`full transfer from ${s0} cm: the largest hinge angle is ${MAX_HINGE_DEG} deg or less, the hinge drives never exceed the speed limit (30 deg/s)`, maxHinge * 180 / Math.PI <= MAX_HINGE_DEG + 1e-9 && maxStep <= (30 * Math.PI / 180) * 0.02 + 1e-9, `${(maxHinge * 180 / Math.PI).toFixed(1)} deg, ${(maxStep / 0.02 * 180 / Math.PI).toFixed(1)} deg/s`);
+    const farEnd = s0 < (S_MIN_CM + S_MAX_CM) / 2 ? S_MAX_CM : S_MIN_CM;
+    check(`full transfer from ${s0} cm: ends flat, hand B clamped on pipe B, hand C on pipe C, the cart moved to the far end (${farEnd} cm)`, r.st.t === 0 && r.st.open2 === 0 && r.st.open1 === 0 && Math.abs(handAt(r.st, 2).x + 0.06) < 1e-9 && Math.abs(handAt(r.st, 1).x - 0.06) < 1e-9 && r.st.s === farEnd);
   }
   check('CAD hinge worm drive speed is 60 rpm / 38 (about 9.5 deg/s)', Math.abs(HINGE_DEG_S_CAD - 9.47) < 0.01);
   td.delete(); tm.delete();
