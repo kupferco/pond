@@ -9,7 +9,9 @@
 #
 # Frame: the hand_sleeve.py frame. Track pipes run along Z (vertical sides of the loop), the cart's
 # mounting pads face -Y, so the cart base plate and everything on it sits on the -Y side of the pipes.
-# Pipe B at x = -140, pipe C at x = +140.
+# Pipe B at x = -60, pipe C at x = +60 (v4, Viber #97: was +/-140).
+# v4 (Viber #97): pipes 120 mm apart; the plate hangs on a hinge at each hand with a rotation servo (cart_hinge.py,
+# drawn in detail in cart_base.py); the battery moved above the arm. The "no swivel yet" gap is closed by that hinge.
 #
 # DECIDED (from cad/hand_sleeve.py v4.1 and the decision docs): 90 mm sleeves, outer R 34, pipe OD 32,
 # two wheel rows 60 mm apart, six wheels per hand (driven wheel at 180 deg, spring idlers at +/-60 deg),
@@ -17,11 +19,12 @@
 # two hands + base + battery + SO-101 follower arm.
 #
 # ASSUMPTIONS (all marked "ASSUMED" in cart_dims.py or below):
-#  1. Pipe spacing: 280 mm, centre to centre (the real spacing between neighbouring units is not decided).
+#  1. Pipe spacing: 120 mm, centre to centre (two units' tanks touching, pipes 60 mm in from the tank edge; the
+#     budget that sets it is in cart_dims.py).
 #     One hand per pipe, both facing the same way (no 90 deg swivel yet).
-#  2. Base plate: open frame, 112 (Z) x 380 (X) x 6 mm, bolted to both pads (M4 pattern from hand_sleeve.py).
-#     10 mm rim, 36 mm wide bosses round each hand's holes, an 84 mm block under the arm; the rest is cut out.
-#  3. Battery: 70 (X) x 50 (out from plate) x 70 (Z) mm block, between the arm block and pipe C's hand.
+#  2. Base plate: solid, 112 (Z) x 142 (X) x 6 mm, hung between the two hinge axes (not bolted to the pads any
+#     more; the pads carry the hinge leaves). Tongues above it carry the battery and the two hinge servos.
+#  3. Battery: 70 (X) x 50 (out from plate) x 70 (Z) mm block, above the arm on a shelf tongue (no room beside it).
 #  4. Drive motors: one worm-gear motor per hand, on the plate beside the hand (+X of each pipe), shaft along
 #     the pipe, 28 mm diameter x 55 mm placeholder cylinder with a gearbox block. Positions are an open
 #     roadmap item; power transmission from motor to the driven wheel is not drawn.
@@ -35,6 +38,7 @@ import sys
 import cadquery as cq
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import cart_hinge as ch     # plate hinge and rotation servo of each hand (Viber #97)
 import hand_sleeve as hs   # reused, not redrawn; importing runs the model and exposes hs.result and dims
 
 # ---------------- Layout (mm): all shared numbers come from cart_dims.py ----------------
@@ -71,32 +75,38 @@ def window(x0, x1, z0, z1):
     return box(x1 - x0, PLATE_T + 2, z1 - z0, ((x0 + x1) / 2, PLATE_CY, (z0 + z1) / 2))
 
 def build_plate():
-    """Open-frame plate across both pipes: rim, a boss round each hand's M4 holes, an arm block, big windows."""
+    """Plate hung between the two hinge axes: a solid 142 x 112 x 6 mm plate (at this width there is nothing left to
+    open up), a battery shelf tongue above the arm, a servo frame tongue above each hinge, and a notch at each hinge
+    end where the servo horn sits. Holes and cable slots are added in cart_base.py."""
     plate = box(PLATE_X1 - PLATE_X0, PLATE_T, 2 * PLATE_ZH, ((PLATE_X0 + PLATE_X1) / 2, PLATE_CY, 0))
-    ZE = PLATE_ZH - RIM
-    for sgn in (1, -1):
-        bc = sgn * HX + pad_cx                              # boss centre x (pad centre of that hand)
-        inner = ARM_X + sgn * ARM_BLOCK_HX
-        outer_end = (PLATE_X1 - RIM) if sgn > 0 else (PLATE_X0 + RIM)
-        for xa, xb in ((inner, bc - sgn * BOSS_HX), (bc + sgn * BOSS_HX, outer_end)):
-            plate = plate.cut(window(min(xa, xb), max(xa, xb), -ZE, ZE))
-        for za, zb in ((BOSS_HZ, ZE), (-ZE, -BOSS_HZ)):     # windows above and below each boss
-            plate = plate.cut(window(bc - BOSS_HX, bc + BOSS_HX, za, zb))
-        for dz in (hs.PAD_HOLE_Z, -hs.PAD_HOLE_Z):          # M4 holes matching the pad
-            plate = plate.cut(cyl(hs.PAD_HOLE_D / 2, PLATE_T + 2, "y", (bc, PLATE_CY, dz)))
+    top = PLATE_ZH
+    # battery shelf tongue, above the arm (battery drawn on its front face)
+    bz1 = BATT_Z + BATT[2] / 2 + 3.0
+    plate = plate.union(box(BATT[0] + 2 * BATT_SHELF_T, PLATE_T, bz1 - top + 1.0, (BATT_X, PLATE_CY, (bz1 + top - 1.0) / 2)))
+    for sgn in (-1, 1):
+        xh, d = hinge_x(sgn), -sgn
+        # servo frame tongue: window sized to the servo body (+0.4 mm), frame FRAME_W round it
+        bx0, bx1 = (xh - SERVO_SHAFT_OFF, xh - SERVO_SHAFT_OFF + SERVO[0]) if d > 0 else (xh + SERVO_SHAFT_OFF - SERVO[0], xh + SERVO_SHAFT_OFF)
+        fz1 = SERVO_Z0 + SERVO[2] + FRAME_W
+        tongue = box(bx1 - bx0 + 2 * FRAME_W, PLATE_T, fz1 - top + 1.0, ((bx0 + bx1) / 2, PLATE_CY, (fz1 + top - 1.0) / 2))
+        tongue = tongue.cut(box(SERVO[0] + 0.4, PLATE_T + 2, SERVO[2] + 0.4, ((bx0 + bx1) / 2, PLATE_CY, SERVO_Z0 + SERVO[2] / 2)))
+        plate = plate.union(tongue)
+        # notch at the hinge end for the servo horn (below the tongue)
+        n0, n1 = sorted((xh + d * (HINGE_R + HINGE_CLEAR - 1.0), xh + d * (HORN_R + 2.0)))
+        plate = plate.cut(box(n1 - n0, PLATE_T + 2, top - (KNUCKLE_Z - 2.0), ((n0 + n1) / 2, PLATE_CY, (top + KNUCKLE_Z - 2.0) / 2)))
     return plate
 
 def build_motors():
     motors = None
     for sgn in (1, -1):
-        mx = sgn * HX + MOTOR_DX
+        mx = MOTOR_XS[sgn]
         m = cyl(MOTOR_R, MOTOR_L, "z", (mx, PLATE_Y0 - MOTOR_R, 0.0))
         m = m.union(box(26, 2 * MOTOR_R, 20, (mx, PLATE_Y0 - MOTOR_R, MOTOR_L / 2 + 10)))   # gearbox up (ASSUMED)
         motors = m if motors is None else motors.union(m)
     return motors
 
 plate = build_plate()
-battery = box(BATT[0], BATT[1], BATT[2], (BATT_X, PLATE_Y0 - BATT[1] / 2, 0.0))
+battery = box(BATT[0], BATT[1], BATT[2], (BATT_X, PLATE_Y0 - BATT[1] / 2, BATT_Z))
 motors = build_motors()
 
 def arm_envelope():
@@ -133,6 +143,8 @@ for tag, sgn in (("C", 1), ("B", -1)):
     add(xshift(cyl(hs.R_PIPE, PIPE_STUB_L, "z", (0, 0, 0)), sgn * HX), "track_pipe_%s" % tag, (0.75, 0.78, 0.8, 1))
     add(xshift(hs.result, sgn * HX), "hand_on_pipe_%s_sleeve" % tag, (0.95, 0.75, 0.2, 1))
     add(xshift(WHEELS, sgn * HX), "hand_on_pipe_%s_wheels" % tag, (0.15, 0.15, 0.15, 1))
+    for nm, shp, col in ch.hinge_parts(sgn):
+        add(shp, "hinge_pipe_%s_%s" % (tag, nm), col)
 add(battery, "battery", (0.2, 0.45, 0.85, 1))
 add(motors, "drive_motors", (0.85, 0.25, 0.25, 1))
 add(arm, "so101_arm_envelope", (0.88, 0.88, 0.9, 1))
