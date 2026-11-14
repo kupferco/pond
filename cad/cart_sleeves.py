@@ -15,7 +15,7 @@
 #
 # ASSUMED (undecided; every one is marked "ASSUMED" below):
 #  1. Pipe OD 32 mm (also assumed in hand_sleeve.py), shown as a 330 mm stub.
-#  2. Pipe spacing 280 mm centre to centre, one hand per pipe (same assumed value as cart_arm.py v2; the
+#  2. Pipe spacing 120 mm centre to centre (Viber #97; was 280, now from cart_dims.py), one hand per pipe (same assumed value as cart_arm.py v2; the
 #     real spacing between neighbouring units is not decided). Both hands at the same height along the pipes.
 #  3. Drive layout: ONE worm shaft per hand, along the pipe, beside the sleeve on -X, meshing with a worm
 #     wheel on each driven axle (both 180 deg wheels, one per row). Worm wheel R 7 mm, worm R 3 mm, worm 80 mm
@@ -41,8 +41,8 @@ import hand_sleeve as hs        # reused, not redrawn
 import cart_assembly as ca      # reused: HAND_SPACING, PIPE_STUB_L, box/cyl helpers
 
 box, cyl = ca.box, ca.cyl
-PIPE_SPACING = 280.0                              # ASSUMED: pipe-to-pipe, as cart_arm.py v2
-HAND_X = PIPE_SPACING / 2                         # hands at x = -/+ 140, one per pipe
+from cart_dims import PIPE_SPACING                # 120, ASSUMED in cart_dims.py: pipe-to-pipe
+HAND_X = PIPE_SPACING / 2                         # hands at x = -/+ 60, one per pipe
 
 # ---------------- Drive (all ASSUMED) ----------------
 AXLE_PIN_R = hs.AXLE_D / 2

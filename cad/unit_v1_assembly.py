@@ -1,13 +1,14 @@
 import cadquery as cq
 import math
 # cad/unit_v1_assembly.py — v3 (6 Nov 2026)
+# v4 (14 Nov 2026, Viber #97): track loop widened, TX 250 -> 290 (pipes 60 mm in from the tank edge).
 # v3: tank 300 tall (water 155 / store 145), top of track 1900, loop bottom run 150 above lid.
 #     Spine is a 33.7 OD tube ending level with the top-run centreline; top and bottom brackets.
 #     Track long sides in 3 x 378 pieces (joint rings shown). Growing pipe in 4 sections.
 # Other sizes ASSUMED as before.
 TW, TD, TH = 700.0, 400.0, 300.0
 SHELF = 155.0; GP = 75.0; SP = 33.7
-TX = 250.0; TR = 16.0; R = 150.0; LOOP_Y = -60.0
+TX = 290.0; TR = 16.0; R = 150.0; LOOP_Y = -60.0
 ZB = TH + 150.0; ZT = 1900.0 - TR
 SLOPE = 12.0
 

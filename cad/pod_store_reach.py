@@ -3,7 +3,7 @@
 # with the return mesh, running down into the water. Keep-out zone round it: the 4 rows that
 # would hit it are shortened and their pick holes moved forward to stop in front of the
 # socket. Other rows unchanged (pick line under the track plane, y=0).
-# ASSUMED (TBC): tank 700 x 400 x 400; pipes A/B at x=-/+250; shoulder lowest z=550;
+# ASSUMED (TBC): tank 700 x 400 x 400; pipes A/B at x=-/+290 (was 250, Viber #97: tighter spacing); shoulder lowest z=550;
 # reach 350; pod 25 dia, 28 pitch; row pitch 35; spine not drawn (position TBC).
 import cadquery as cq
 import math
@@ -12,7 +12,7 @@ TW, TD, TH = 700.0, 400.0, 400.0
 POD_D = 25.0; PITCH = 28.0; ROW_P = 35.0; N_ROWS = 14
 FRONT_Y = -200.0
 STORE_X0 = -140.0
-PIPE_X = 250.0; SHOULDER_Z = 550.0; REACH = 350.0
+PIPE_X = 290.0; SHOULDER_Z = 550.0; REACH = 350.0
 GP_OD = 75.0; SOCKET_OD = 95.0; KEEP_R = 60.0   # growing pipe, socket, keep-out radius
 
 tank = cq.Workplane("XY").box(TW, TD, TH, centered=(True, True, False)).faces(">Z").shell(-4)

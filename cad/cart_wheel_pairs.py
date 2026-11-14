@@ -38,7 +38,7 @@
 #     (cart_assembly.py puts it beside the plate; power path from there to this shaft is open).
 #  7. Corner: bend in the XZ plane, pipe curving towards +X (spine side inside), 150 mm CENTRELINE radius.
 #     The hand sits square on the driven pair at the bend midpoint, wheels as point-contact discs.
-#  0. Pipe spacing: 280 mm centre to centre, imported from cart_dims.py (itself ASSUMED; the real spacing between
+#  0. Pipe spacing: 120 mm centre to centre, imported from cart_dims.py (itself ASSUMED; the real spacing between
 #     neighbouring units is not decided). Both hands face the same way (driven pairs on the -X side), as in
 #     cart_arm.py. The base plate is not drawn here; the hands are shown on bare pipe stubs.
 #  8. Corner finding (computed in this file, not simulated): the 90 mm sleeve bore is 4 mm radial
@@ -77,7 +77,7 @@ WORM_X = AXLE_R + GEAR_R + WORM_R   # 36.5: worm shaft radial position
 GEAR_Y = RAIL_Y0 + RAIL_T_DRIVEN + 1.0 + 2.0   # gear centre plane (y = 11.5) beyond the rail
 MOTOR_R, MOTOR_L = ca.MOTOR_R, ca.MOTOR_L
 SLEEVE_HL = hs.SLEEVE_L / 2         # 45
-PIPE_SPACING = cd.PIPE_SPACING     # 280, ASSUMED in cart_dims.py: pipe B to pipe C
+PIPE_SPACING = cd.PIPE_SPACING     # 120, ASSUMED in cart_dims.py: pipe B to pipe C
 
 def cyl(r, h, axis, c):
     d = {"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}[axis]
