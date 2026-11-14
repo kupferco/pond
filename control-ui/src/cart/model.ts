@@ -192,6 +192,7 @@ function plateGeoms(hy: number): string {
     box('', (PAD.y0 + PAD.y1) / 2, zc, 45, (PAD.y1 - PAD.y0) / 2, (PAD.z1 - PAD.z0) / 2, rgba([0.95, 0.75, 0.2]));
     for (const sg of [1, -1]) box('', (LUG_Y0 + PAD.y0) / 2, zc + sg * (LUG_Z0 + PAD.z1) / 2, 45, (PAD.y0 - LUG_Y0) / 2, (PAD.z1 - LUG_Z0) / 2, rgba([0.95, 0.75, 0.2]));
   }
+  for (const zc of [hy * 500, -hy * 500]) g.push(rotRotorGeoms(zc));   // rotation motors' output rings ride on the base
   box('plate', PLATE_Y_MM, 0, PLATE_MM.alongTrack / 2, PLATE_MM.t / 2, across / 2, rgba([0.25, 0.27, 0.3]));
   box('armmount', ARM_Y_MM, 0, 30, 20, 30, rgba([0.9, 0.65, 0.2]));
   return g.join('\n      ');
@@ -199,25 +200,41 @@ function plateGeoms(hy: number): string {
 
 const VISUAL = 'contype="0" conaffinity="0"';   // motor housings are drawn only: the clamp–track check is about the clamp and wheels
 /** A hollow-shaft ring (a rotation motor's housing or rotor) round the pipe axis from x0 to x1 (mm), as boxes. */
-function ringGeoms(x0: number, x1: number, rIn: number, rOut: number, col: string, N = 16): string {
+function ringGeoms(x0: number, x1: number, rIn: number, rOut: number, col: string, zc = 0, N = 16, vis = ''): string {
   // Open C-shape: the same side slots as the sleeve are left out, so nothing encircles the pipe and it can leave sideways in a transfer.
   const g: string[] = [], seg = (2 * Math.PI) / N, rc = (rIn + rOut) / 2;
   for (let i = 0; i < N; i++) {
     const a = (i + 0.5) * seg, uy = -Math.sin(a), uz = Math.cos(a), deg = (a * 180) / Math.PI;
     if (Math.abs(deg - 90) < SLOT_DEG || Math.abs(deg - 270) < SLOT_DEG) continue;
-    g.push(`<geom type="box" pos="${f(m((x0 + x1) / 2))} ${f(m(rc) * uy)} ${f(m(rc) * uz)}" xyaxes="1 0 0 0 ${f(uy)} ${f(uz)}" size="${f(m(x1 - x0) / 2)} ${f(m(rOut - rIn) / 2)} ${f(m(rc) * Math.tan(seg / 2))}" ${col} ${CART_COL}/>`);
+    g.push(`<geom type="box" pos="${f(m((x0 + x1) / 2))} ${f(m(rc) * uy)} ${f(m(rc) * uz + zc)}" xyaxes="1 0 0 0 ${f(uy)} ${f(uz)}" size="${f(m(x1 - x0) / 2)} ${f(m(rOut - rIn) / 2)} ${f(m(rc) * Math.tan(seg / 2))}" ${col} ${vis || CART_COL}/>`);
   }
   return g.join('\n      ');
 }
-const ROT_MOTOR = { x0: -90, x1: -52, rIn: 34, rOut: 54 };   // ASSUMED: hollow-shaft servo ring at the sleeve's far end from the drive motor; its rotor ring bolts to the sleeve end wall
+// Rotation motor B of a wheel system, bolted to the hand (the part that rides the pipe) and turning the base on a hinge about the pipe axis (CAD: the
+// plate/arm base is the part that swings; the sleeve with its wheels stays on the pipe). All ASSUMED sizes (mm), x along the pipe from the sleeve's end at x = -45:
+//   mount plate (hand): a C-plate on the sleeve end wall; housing (hand): the servo's outer shell; rotor (base): the inner output ring, carried by a bridge
+//   that runs from the pad end through the C's open side. Nothing is a closed ring: the pipe can leave sideways.
+const ROT_MOUNT = { x0: -49, x1: -45, rIn: 34, rOut: 54 };
+const ROT_HOUSING = { x0: -70, x1: -49, rIn: 46, rOut: 54 };
+const ROT_ROTOR = { x0: -68, x1: -50, rIn: 38, rOut: 45 };
 const ROT_COL = rgba([0.1, 0.65, 0.6]), ROT_ROTOR_COL = rgba([0.95, 0.95, 0.95]);
 
-/** The rotation motor's servo: a block on the ring's outside (cart +y, the plate side) with a dark cap, so the motor that turns the base reads as a motor. */
-function rotServoBox(): string {
-  const b = (x: number, y: number, hx: number, hy: number, hz: number, col: string) =>
-    `<geom type="box" pos="${f(m(x))} ${f(m(y))} 0" size="${f(m(hx))} ${f(m(hy))} ${f(m(hz))}" ${col} ${VISUAL}/>`;
-  const xm = (ROT_MOTOR.x0 + ROT_MOTOR.x1) / 2;
-  return [b(xm, ROT_MOTOR.rOut + 14, 19, 14, 17, ROT_COL), b(xm, ROT_MOTOR.rOut + 30, 14, 2, 12, rgba([0.15, 0.15, 0.17]))].join('\n      ');
+/** The stator of rotation motor B on hand h: mount plate and housing (open C), plus the servo block on the housing's outer side, all rigid with the hand. */
+function rotStatorGeoms(hand: 1 | 2): string {
+  const zs = hand === 1 ? 1 : -1, xm = (ROT_HOUSING.x0 + ROT_HOUSING.x1) / 2;
+  const b = (x: number, z: number, hx: number, hy: number, hz: number, col: string) =>
+    `<geom type="box" pos="${f(m(x))} 0 ${f(zs * m(z))}" size="${f(m(hx))} ${f(m(hy))} ${f(m(hz))}" ${col} ${VISUAL}/>`;
+  return [ringGeoms(ROT_MOUNT.x0, ROT_MOUNT.x1, ROT_MOUNT.rIn, ROT_MOUNT.rOut, ROT_COL),
+    ringGeoms(ROT_HOUSING.x0, ROT_HOUSING.x1, ROT_HOUSING.rIn, ROT_HOUSING.rOut, ROT_COL),
+    b(xm, ROT_HOUSING.rOut + 12, 19, 17, 12, ROT_COL),                      // servo block, sitting on the housing wall
+    b(xm, ROT_HOUSING.rOut + 26, 14, 12, 2, rgba([0.15, 0.15, 0.17]))].join('\n      ');   // its dark cap
+}
+/** The rotor of rotation motor B (inner output ring) and its bridge to the pad end, in the base frame, relative to the plate centre; zc = the hand's z there (mm). */
+function rotRotorGeoms(zc: number): string {
+  const by0 = 34, by1 = PAD.y1, bx0 = ROT_ROTOR.x0, bx1 = -45;
+  return [ringGeoms(ROT_ROTOR.x0, ROT_ROTOR.x1, ROT_ROTOR.rIn, ROT_ROTOR.rOut, ROT_ROTOR_COL, m(zc)),
+    `<geom type="box" pos="${f(m((bx0 + bx1) / 2))} ${f(m((by0 + by1) / 2))} ${f(m(zc))}" size="${f(m((bx1 - bx0) / 2))} ${f(m((by1 - by0) / 2))} ${f(m(34))}" ${ROT_ROTOR_COL} ${CART_COL}/>`,
+  ].join('\n      ');
 }
 /** The clamp motor of a hand: a housing bolted to the sleeve frame at the end of the clamp pair's guide pins, with a lead screw down to the pair. */
 const CLAMP_MOTOR = { r0: 82, r1: 118, rad: 13 };
@@ -245,9 +262,11 @@ export function cartBody(spacingMm = PIPE_SPACING_MM): string {
   // Cart frame: x along the track, z toward the inside of the bend, -z the outer side. Origin on the engaged hand's pipe centre line.
   // The plate lies parallel to the track plane, to one side of the pipes (cart y), and is centred between the two hands, so each hand
   // sits the same distance from its end. Hand 2 is the mirror image of hand 1 (gap and wheels), so the whole cart is symmetric.
-  const hand = (h: 1 | 2) => `<body name="hand${h}" pos="0 0 ${f(handZ(h, spacingMm))}">
+  const hand = (h: 1 | 2) => `<body name="hand${h}" pos="0 0 ${f(handZ(h, spacingMm))}"><joint name="bh${h}" type="hinge" pos="0 0 0" axis="1 0 0" range="-3.2 3.2"/>
       ${sleeveGeoms(h)}
-      ${ringGeoms(ROT_MOTOR.x1, -45, ROT_MOTOR.rIn, ROT_MOTOR.rOut - 4, ROT_ROTOR_COL)}
+      <body name="motor_rot${h}">
+      ${rotStatorGeoms(h)}
+      </body>
       <body name="motor_clamp${h}">
       ${clampMotorGeoms(h)}
       </body>
@@ -260,18 +279,15 @@ export function cartBody(spacingMm = PIPE_SPACING_MM): string {
       </body>`;
       }).join('\n      ')}
     </body>`;
-  // Two rotation motors (one per wheel set): hinges about the engaged pipe's axis (cart x), in series, carrying the whole assembly (both
-  // hands, pads, plate, arm base) as one rigid body. Each motor turns the cart about its own hand's pipe axis; the riding hand's motor turns it, the other holds zero. The motors/drive motors are rigid parts of the cart.
-  // The rotation motors' stators are bodies on the cart frame itself (which does not turn); their rotors are rings on the hands, which do.
-  const stator = (h: 1 | 2) => `<body name="motor_rot${h}" pos="0 0 ${f(handZ(h, spacingMm))}">
-      ${ringGeoms(ROT_MOTOR.x0, ROT_MOTOR.x1, ROT_MOTOR.rIn, ROT_MOTOR.rOut, ROT_COL)}
-      ${rotServoBox()}
-    </body>`;
+  // Two rotation motors (one per wheel set), as in the CAD: each wheel system (hand) stays on its pipe, and the BASE (plate, pads, arm base, with the
+  // other hand) swings about the pipe axis on a hinge between base and hand. The hinge joint bh<h> is that motor's output (its stator, motor_rot<h>, is rigid
+  // on the hand). The riding hand's motor turns the base by `swing`, i.e. its hinge reads -swing against the series hinges rot1/rot2 (which carry the base
+  // about the riding pipe axis in the cart frame), so the riding hand itself does not move; the free hand's hinge holds zero and it swings with the base.
+  const jnt = (n: string, z: number) => `<joint name="${n}" type="hinge" pos="0 0 ${f(z)}" axis="1 0 0" range="-3.2 3.2"/>`;
+  const inertial = '<inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.001"/>';
   return `<body name="cart" mocap="true" pos="0 0 0">
-   ${stator(1)}
-   ${stator(2)}
-   <body name="rot1"><inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.001"/><joint name="rot1" type="hinge" pos="0 0 ${f(handZ(1, spacingMm))}" axis="1 0 0" range="-3.2 3.2"/>
-   <body name="rot2"><inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.001"/><joint name="rot2" type="hinge" pos="0 0 ${f(handZ(2, spacingMm))}" axis="1 0 0" range="-3.2 3.2"/>
+   <body name="rot1">${inertial}${jnt('rot1', handZ(1, spacingMm))}
+   <body name="rot2">${inertial}${jnt('rot2', handZ(2, spacingMm))}
     ${hand(1)}
     ${hand(2)}
     <body name="plateflip" pos="0 0 ${f(-hy / 2)}"><joint name="plateflip" type="hinge" axis="1 0 0" range="-4 4"/>
@@ -310,8 +326,8 @@ export function cartActuators(): string {
   <actuator>
     <position name="drive1" tendon="drive1" kp="2" ctrlrange="-100000 100000"/>
     <position name="drive2" tendon="drive2" kp="2" ctrlrange="-100000 100000"/>
-    <position name="rot1" joint="rot1" kp="20" ctrlrange="-3.2 3.2"/>
-    <position name="rot2" joint="rot2" kp="20" ctrlrange="-3.2 3.2"/>
+    <position name="rot1" joint="bh1" kp="20" ctrlrange="-3.2 3.2"/>
+    <position name="rot2" joint="bh2" kp="20" ctrlrange="-3.2 3.2"/>
     <position name="clamp1" joint="h1${CLAMP_PAIR[1]}" kp="2000" ctrlrange="-0.006 0.022"/>
     <position name="clamp2" joint="h2${CLAMP_PAIR[2]}" kp="2000" ctrlrange="-0.006 0.022"/>
   </actuator>`;
@@ -328,7 +344,9 @@ export function setMotors(model: { jnt(name: string): { id: number }; jnt_qposad
   WHEEL_JOINTS.forEach((j, i) => set(j, i < 2 ? spin1 : spin2));
   cmd('drive1', spin1); cmd('drive2', spin2);
   const r1 = rider === 1 ? swing : 0, r2 = rider === 2 ? swing : 0;
-  set('rot1', r1); set('rot2', r2); cmd('rot1', r1); cmd('rot2', r2);
+  set('rot1', r1); set('rot2', r2);
+  const b1 = rider === 1 ? -swing : 0, b2 = rider === 2 ? -swing : 0;   // the riding hand's rotation motor turns the base against its own, static hand
+  set('bh1', b1); set('bh2', b2); cmd('rot1', b1); cmd('rot2', b2);
 }
 
 export function cartMjcf(): string {

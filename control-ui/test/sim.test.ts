@@ -142,12 +142,12 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const xferModel = mj.MjModel.from_xml_string(`<mujoco><worldbody>${pipeGeoms(0, -1, TRANSFER_HORIZ_MM, 'b')}${pipeGeoms(PIPE_GAP_M, 1, TRANSFER_HORIZ_MM, 'c')}${cartBody(140)}</worldbody>${cartActuators()}</mujoco>`);
   check('transfer model loads with one cart mocap body', xferModel.nmocap === 1, String(xferModel.nmocap));
   const xd = new mj.MjData(xferModel); setCart(xferModel, xd.qpos, 0, 1, -1); mj.mj_forward(xferModel, xd);
-  check('wheel pair joints can be driven', xferModel.nq === 9 && xferModel.nu === 6 && Math.abs(xd.qpos[xferModel.jnt_qposadr[xferModel.jnt('h2p').id]] - WHEEL_OPEN_M) < 1e-9, String(xferModel.nq)); xd.delete();
+  check('wheel pair joints can be driven', xferModel.nq === 11 && xferModel.nu === 6 && Math.abs(xd.qpos[xferModel.jnt_qposadr[xferModel.jnt('h2p').id]] - WHEEL_OPEN_M) < 1e-9, String(xferModel.nq)); xd.delete();
   xferModel.delete();
   { const am = mj.MjModel.from_xml_string(`<mujoco><worldbody>${cartBody(140)}</worldbody>${cartActuators()}</mujoco>`), ad = new mj.MjData(am);
     check('each wheel system has 3 motors (A drive, B rotation, C clamp): 6 actuators and 6 motor bodies', ['drive1', 'drive2', 'rot1', 'rot2', 'clamp1', 'clamp2'].every((n) => am.actuator(n).id >= 0) && am.nu === 6 && ['motor_drive1', 'motor_drive2', 'motor_rot1', 'motor_rot2', 'motor_clamp1', 'motor_clamp2'].every((n) => am.body(n).id > 0));
     setMotors(am, ad, 1.5, -0.5, 0.7); mj.mj_forward(am, ad);
-    check('drive motors turn only wheel joints; motor bodies are rigid (no joint on any motor/worm geom body)', am.jnt_type.length === 9 && ad.qpos[am.jnt_qposadr[am.jnt('w1f').id]] === 1.5 && ad.ctrl[am.actuator('drive1').id] === 1.5);
+    check('drive motors turn only wheel joints; motor bodies are rigid (no joint on any motor/worm geom body)', am.jnt_type.length === 11 && ad.qpos[am.jnt_qposadr[am.jnt('w1f').id]] === 1.5 && ad.ctrl[am.actuator('drive1').id] === 1.5);
     check('both rotation motors share the swing about the pipe axis', Math.abs(ad.qpos[am.jnt_qposadr[am.jnt('rot1').id]] + ad.qpos[am.jnt_qposadr[am.jnt('rot2').id]] - 0.7) < 1e-9);
     // Nothing may encircle the pipe: every ring-shaped part of the rotation motors (stator and rotor) is an open C, so the pipe can leave sideways.
     for (const h of [1, 2]) {
@@ -162,6 +162,23 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
       for (let i = 1; i < angs.length; i++) gap = Math.max(gap, angs[i] - angs[i - 1]);
       check(`rotation motor ${h}: ring parts form an open C (no closed ring round the pipe)`, angs.length > 4 && gap >= 90, `${angs.length} parts, widest opening ${gap.toFixed(0)} deg`);
     }
+    // The rotor rings ride on the base (body plateflip, relative to the plate centre): also open C-shapes.
+    { const angs: number[] = [];
+      for (let g = 0; g < am.ngeom; g++) {
+        if (am.body(am.geom_bodyid[g]).name !== 'plateflip' || am.geom_type[g] !== 6) continue;
+        const x = am.geom_pos[3 * g], y = am.geom_pos[3 * g + 1], z = am.geom_pos[3 * g + 2] - 0.07, r = Math.hypot(y, z);
+        if (x < -0.05 && r > 0.03 && r < 0.045) angs.push(Math.atan2(y, z) * 180 / Math.PI);
+      }
+      angs.sort((a, b) => a - b); let gap = 360 - (angs[angs.length - 1] - angs[0]); for (let i = 1; i < angs.length; i++) gap = Math.max(gap, angs[i] - angs[i - 1]);
+      check('rotation motor rotor rings (on the base) form an open C', angs.length > 4 && gap >= 90, `${angs.length} parts, opening ${gap.toFixed(0)} deg`); }
+    // Hinge chain: the riding hand stays still while the base swings about its pipe axis; motor bodies belong to the hand, the rotor to the base.
+    { const hh = (n: string) => am.jnt_qposadr[am.jnt(n).id];
+      setMotors(am, ad, 0, 0, 0.5, 2); mj.mj_forward(am, ad);
+      const h2 = am.body('hand2').id, h1 = am.body('hand1').id, m2 = am.body('motor_rot2').id;
+      check('rotation motor B is a hinge between hand and base: riding hand 2 stays put, free hand 1 swings with the base', Math.abs(ad.xquat[4 * h2] - 1) < 1e-9 && Math.abs(ad.xquat[4 * h1] - Math.cos(0.25)) < 1e-9 && Math.abs(ad.qpos[hh('bh2')] + 0.5) < 1e-9 && Math.abs(ad.ctrl[am.actuator('rot2').id] + 0.5) < 1e-9);
+      check('rotation motor stator is rigid on its wheel system (motor_rot2 moves with hand 2, which does not swing)', Math.abs(ad.xpos[3 * m2] - ad.xpos[3 * h2]) < 1e-9 && Math.abs(ad.xpos[3 * m2 + 2] - ad.xpos[3 * h2 + 2]) < 1e-9);
+      const rotor = [...Array(am.ngeom).keys()].find((g) => am.body(am.geom_bodyid[g]).name === 'plateflip' && am.geom_type[g] === 6 && am.geom_pos[3 * g] < -0.05)!;
+      check('rotation motor rotor is carried by the base (swings with it, no joint of its own)', am.body(am.geom_bodyid[rotor]).name === 'plateflip'); }
     check('clamp travel is only what clamping needs (at most 25 mm)', WHEEL_OPEN_M <= 0.025, String(WHEEL_OPEN_M));
     ad.delete(); am.delete(); }
   check('B top bar runs left, C top bar runs right', pipePoint('B', 200).x < -0.1 && pipePoint('C', 200).x > PIPE_GAP_M + 0.1);

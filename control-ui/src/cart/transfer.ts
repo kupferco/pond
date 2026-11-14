@@ -118,13 +118,16 @@ export function distToPipe(p: Pipe, pt: Vec3, horizMm = TRANSFER_HORIZ_MM): numb
 
 /** Radial wheel adjustments for both hands at this pose (see handTrims): the riding hand follows pipe p, the other hangs on the other pipe. In hand 1 / hand 2 order. */
 export function cartTrims(p: Pipe, pose: { x: number; z: number; q: Quat }, swing = 0): { hand1: number[]; hand2: number[] } {
-  const c = Math.cos(swing), sn = Math.sin(swing);   // the rotation motors swing the cart about the pipe axis (cart x) before the pose is applied
+  // The base swings about the riding hand's pipe axis (cart x); the riding hand itself stays on its pipe (its motor turns the base against it), the free hand swings with the base.
   const pz = p === 'B' ? -PIPE_GAP_M : 0;             // the pivot is the riding hand's pipe axis: hand 2 on B
-  const toWorld = (v: Vec3): Vec3 => { const y = v[1], z = v[2] - pz; const r = rotate(pose.q, [v[0], y * c - z * sn, y * sn + z * c + pz]); return [pose.x + r[0], r[1], pose.z + r[2]]; };
-  const [on1, on2] = byHand<Pipe>(p, p, other(p));
+  const toWorld = (turn: number) => (v: Vec3): Vec3 => {
+    const c = Math.cos(turn), sn = Math.sin(turn), y = v[1], z = v[2] - pz;
+    const r = rotate(pose.q, [v[0], y * c - z * sn, y * sn + z * c + pz]); return [pose.x + r[0], r[1], pose.z + r[2]];
+  };
+  const [on1, on2] = byHand<Pipe>(p, p, other(p)), rider = riderHand(p);
   return {
-    hand1: handTrims(1, HAND_SPACING_MM, toWorld, (w) => distToPipe(on1, w)),
-    hand2: handTrims(2, HAND_SPACING_MM, toWorld, (w) => distToPipe(on2, w)),
+    hand1: handTrims(1, HAND_SPACING_MM, toWorld(rider === 1 ? 0 : swing), (w) => distToPipe(on1, w)),
+    hand2: handTrims(2, HAND_SPACING_MM, toWorld(rider === 2 ? 0 : swing), (w) => distToPipe(on2, w)),
   };
 }
 
