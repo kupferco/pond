@@ -8,9 +8,19 @@ export const PIPE_SPACING_MM = 280;      // ASSUMED in cart_dims.py: distance fr
 export const BEND_R_MM = 150;            // DECIDED in cart_wheel_pairs.py (loop corner centreline radius)
 export const VERTICAL_MM = 600;          // ASSUMED: vertical section length
 export const HORIZONTAL_MM = 600;        // ASSUMED: horizontal section length
-export const SLEEVE_L_MM = 90;           // hand_sleeve.py SLEEVE_L
-export const SLEEVE_R_MM = 36;           // wheel centre radius 26 + wheel radius 10 (hand_sleeve.py)
-export const PLATE_MM = { alongTrack: 112, across: 380, t: 6, x0: -202, x1: 178 }; // cart_dims.py: 112 x 380 x 6 open frame, x0/x1 relative to the cart centre line (-spacing/2 - 62 to +spacing/2 + 38)
+
+
+export const PLATE_MM = { alongTrack: 112, t: 6 }; // cart_dims.py: 112 x 6 plate. Its length across the hands is set from the hand spacing in cartBody: clamp edge to clamp edge (spacing + 2 x 34 mm).
+
+/** Distance (m) in the track plane from (x, z) to the pipe's centre line (pipe-local frame of pathAt: x to the right of the vertical section). horizMm = length of the top bar. */
+export function distToPath(x: number, z: number, horizMm = HORIZONTAL_MM): number {
+  const lv = VERTICAL_MM / 1000, r = BEND_R_MM / 1000, lh = horizMm / 1000;
+  const dv = Math.hypot(x, z - Math.min(lv, Math.max(0, z)));
+  const a = Math.min(Math.PI / 2, Math.max(0, Math.atan2(z - lv, -(x - r))));
+  const da = Math.hypot(x - (r - r * Math.cos(a)), z - (lv + r * Math.sin(a)));
+  const dh = Math.hypot(x - Math.min(r + lh, Math.max(r, x)), z - (lv + r));
+  return Math.min(dv, da, dh);
+}
 
 export type Section = 'vertical' | 'curve' | 'horizontal';
 export interface PathPoint { x: number; z: number; tx: number; tz: number; section: Section }

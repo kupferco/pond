@@ -44,6 +44,7 @@ export class Viewer {
     const T = this.sim.mujoco.mjtGeom;
     for (let i = 0; i < m.ngeom; i++) {
       const type = m.geom_type[i];
+      if (m.geom_rgba[4 * i + 3] === 0) continue; // invisible helper geoms (collision envelopes) are not drawn
       const s = [m.geom_size[3 * i], m.geom_size[3 * i + 1], m.geom_size[3 * i + 2]];
       let geo: THREE.BufferGeometry;
       if (type === T.mjGEOM_PLANE.value) {
@@ -80,6 +81,7 @@ export class Viewer {
     const pts = new Map<number, { x: number; y: number }>();
     const pinchDist = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
     let lastPinch = 0;
+    const centroid = () => { const [a, b] = [...pts.values()]; return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
     el.addEventListener('pointerdown', (e) => {
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       el.setPointerCapture(e.pointerId);
@@ -88,17 +90,25 @@ export class Viewer {
     const up = (e: PointerEvent) => { pts.delete(e.pointerId); if (pts.size === 2) lastPinch = pinchDist(); };
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
+    // Pan: right-drag, Shift+drag, or a two-finger drag (the centroid of the two touches). One pointer without those rotates; the pinch zooms.
+    const buttons = new Map<number, number>();
+    el.addEventListener('contextmenu', (e) => e.preventDefault());
+    el.addEventListener('pointerdown', (e) => buttons.set(e.pointerId, e.button));
     el.addEventListener('pointermove', (e) => {
       const p = pts.get(e.pointerId);
       if (!p) return;
+      const before = pts.size >= 2 ? centroid() : null;
       const dx = e.clientX - p.x, dy = e.clientY - p.y;
       p.x = e.clientX; p.y = e.clientY;
-      if (pts.size >= 2) {
+      if (before) {
+        const c = centroid();
+        this.pan(c.x - before.x, c.y - before.y);
         const d = pinchDist();
-        if (lastPinch > 0 && d > 0) this.orbit.dist = Math.min(2, Math.max(0.2, this.orbit.dist * (lastPinch / d)));
+        if (lastPinch > 0 && d > 0) this.orbit.dist = Math.min(this.maxDist, Math.max(0.2, this.orbit.dist * (lastPinch / d)));
         lastPinch = d;
         return;
       }
+      if (e.shiftKey || (buttons.get(e.pointerId) ?? 0) === 2 || (e.buttons & 2) !== 0) { this.pan(dx, dy); return; }
       this.orbit.az -= dx * 0.008;
       this.orbit.el = Math.min(1.5, Math.max(0.02, this.orbit.el + dy * 0.008));
     });
@@ -106,6 +116,15 @@ export class Viewer {
       e.preventDefault();
       this.orbit.dist = Math.min(this.maxDist, Math.max(0.2, this.orbit.dist * Math.exp(e.deltaY * 0.001)));
     }, { passive: false });
+  }
+
+  /** Shift the look-at point in the screen plane by a drag of (dx, dy) pixels: the scene follows the pointer. */
+  private pan(dx: number, dy: number) {
+    const { az, el, dist } = this.orbit, k = dist * 0.0012;
+    const right = new THREE.Vector3(Math.cos(az), 0, -Math.sin(az));
+    const up = new THREE.Vector3(-Math.sin(el) * Math.sin(az), Math.cos(el), -Math.sin(el) * Math.cos(az));
+    const d = right.multiplyScalar(-dx * k).add(up.multiplyScalar(dy * k));   // three's Y-up frame; the target is Z-up
+    this.target.add(new THREE.Vector3(d.x, -d.z, d.y));
   }
 
   private resize() {
