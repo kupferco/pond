@@ -333,13 +333,11 @@ export class PodTask {
       },
       { label: 'Lifting the pod up through the lid', r: dn(A[2]), z: out(A[1]), speed: SEAT_SPEED },
       { label: 'Clearing the lid', r: dn(TRANSIT_Z), z: out(A[1]), pitch: 0, speed: PIN_SPEED },
-      // the track pipe runs between the arm and the back rows of the tray: drive along the front, go down to just over the collars
-      // (low enough to pass under the pipe), slide over the socket and lower the pod
+      // the tank lid is closed over the tray: slide over the socket above the collars, then lower the pod straight down through its hole
       { label: `Driving to socket ${slotLabel(slot)}`, x: S[0], r: dn(TRANSIT_Z), z: out(A[1]) },
-      { label: 'Lowering to the collar tops', r: dn(S[2] + SLIDE_DZ), z: out(A[1]), speed: PIN_SPEED },
-      { label: `Sliding over socket ${slotLabel(slot)}`, r: dn(S[2] + SLIDE_DZ), z: out(S[1]), pitch: -10, speed: PIN_SPEED },
+      { label: `Sliding over socket ${slotLabel(slot)}`, r: dn(TRANSIT_Z), z: out(S[1]), pitch: 0, speed: PIN_SPEED },
       {
-        label: 'Lowering the pod into the silicone collar', r: dn(S[2]), z: out(S[1]), speed: SEAT_SPEED,
+        label: 'Lowering the pod through the lid into the silicone collar', r: dn(S[2]), z: out(S[1]), speed: SEAT_SPEED,
         after: () => {
           const c = w.pos(id), e = Math.hypot(c[0] - seat[0], c[1] - seat[1]);
           if (e > COLLAR_TOL) return `missed the collar of socket ${slotLabel(slot)} (${(e * 1000).toFixed(1)} mm off)`;
@@ -349,7 +347,7 @@ export class PodTask {
         label: 'Opening the claw', claw: 'open', wait: 0.5,
         after: () => { this.podId = -1; w.release(); w.pods[id].state = 'lost'; },
       },
-      { label: 'Backing the claw out', r: dn(S[2] + SLIDE_DZ), speed: PIN_SPEED },
+      { label: 'Backing the claw out', r: dn(TRANSIT_Z), speed: PIN_SPEED },
       {
         label: 'Letting the pod settle', wait: 0.5,
         after: () => {

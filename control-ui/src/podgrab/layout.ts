@@ -47,8 +47,8 @@ export const CLAW_ACT = ['claw_l', 'claw_r'];
 export const TANK_W = 0.7, TANK_D = 0.4, TANK_H = 0.3, SHELF_Z = 0.155, SHELF_T = 0.004;   // shelf slab z 155..159 (unit_v3_dimensioned.py)
 export const SHELF_TOP = SHELF_Z + SHELF_T;
 export const LID_Z = TANK_H, LID_T = 0.004;
-export const PIPE_Y = 0.015;                    // the track plane. CAD: -60 mm. MOVED 90 mm towards the back so that all 16 sockets are in front of the cart plate and the arm, mounted flat on that plate, reaches them (ASSUMED, see the PR)
-export const PIPE_Z = TANK_H + 0.22;            // bottom run of the track, 220 mm over the lid (CAD: 150): raised 70 mm so that the arm on the cart plate reaches the pods in the store and lifts them clear of the lid (ASSUMED, see the PR)
+export const PIPE_Y = 0.04;                     // the track plane. CAD: -60 mm. MOVED 115 mm towards the back so that all 16 sockets are in front of the cart plate and the arm, mounted flat on that plate, reaches them (ASSUMED, see the PR)
+export const PIPE_Z = TANK_H + 0.30;            // bottom run of the track, 300 mm over the lid (CAD: 150): raised 150 mm in all so that the arm, now centred on the cart plate, keeps the same height over the store and tray and lifts the pods clear of the lid (ASSUMED, see the PR)
 export const PIPE_R = m(PIPE_D_MM) / 2;
 export const PIPE_X0 = -0.40, PIPE_X1 = 0.42;
 export const CART_X_MIN = -0.33, CART_X_MAX = 0.28;   // arm plane; hand 1 is HAND_DX further along the pipe
@@ -74,7 +74,7 @@ export const HAND2_DZ = 0.10;                   // ASSUMED: wheel set 2 axis bel
 export const PLATE_T = 0.006, PLATE_Y = -HAND_R - PLATE_T / 2;       // cart base plate on the front of the hands
 export const PLATE_FACE_Y = -HAND_R - PLATE_T;  // cart frame y of the plate's front face, the plane the arm base is bolted to
 export const BASE_BOTTOM = 0.0085;               // the base servo's underside, in base coordinates (arm model: servo1 spans z 8.5..43.5 mm)
-export const ARM_CZ = 0.01;                      // cart frame z of the arm base origin: the base servo (45 mm along base x) sits on the upper part of the plate, the plate top is at +36 mm
+export const ARM_CZ = -0.03;                     // cart frame z of the arm base origin: the base servo (45 mm along base x, down the plate) is centred on the plate (plate spans +36 .. -136 mm, middle -50 mm)
 export const ARM_Y = PIPE_Y + PLATE_FACE_Y + BASE_BOTTOM;   // arm base origin, world y: its underside (base z = 8.5 mm) is on the plate face, the arm axis (base z) is the plate normal, pointing out of the plate (-y)
 export const ARM_BASE_Z = PIPE_Z + ARM_CZ - 0.004;   // IK reference: the pick/place paths are planned with the points 4 mm above the real ones, so the claw runs a few mm high over the store walls (arm sag)
 export const BASE_XYAXES = '0 0 -1 1 0 0';       // base x = world down (pan 0 points down the plate), base y = +x along the track, base z = base x cross base y = -y: out of the plate
@@ -119,15 +119,15 @@ export const pickHoleY = storePos(0, 0)[1] - (lidMid - storePos(0, 0)[2]) * Math
 // --- seedling tray: horizontal, 4 x 4 silicone collars
 export const TRAY_COLS = 4, TRAY_ROWS = 4;
 export const TRAY_CX = -0.24, TRAY_HX = 0.095, TRAY_HY = 0.185;
-export const TRAY_Z0 = SHELF_TOP, TRAY_T = 0.004;   // a thin flat tray lying on the shelf (the thick green block under it is gone)
+export const TRAY_Z0 = 0.2, TRAY_T = 0.004;   // thin flat tray on two side rails over the shelf: a seated pod stands as deep under the tank lid as a pod at the pick position of the store (ASSUMED; the tank top is now closed over the tray)
 export const TRAY_TOP = TRAY_Z0 + TRAY_T;
-export const TRAY_COL_PITCH = 0.045, TRAY_ROW_PITCH = 0.038, TRAY_CY = -0.083;
+export const TRAY_COL_PITCH = 0.045, TRAY_ROW_PITCH = 0.038, TRAY_CY = -0.098;
 export const CELL_R = 0.016;                    // inner radius of a silicone collar (pod radius 12.5)
 export const CELL_H = 0.016;
 // lid over the seedling tray: a plate just above the collars of the cells, a silicone collar round each hole (same as the tank-top lid)
-export const TLID_T = 0.004;
-export const TLID_Z = TRAY_TOP + CELL_H + 0.001 + TLID_T / 2;   // plate centre
-export const TLID_TOP = TLID_Z + TLID_T / 2;
+export const TLID_T = LID_T;                     // the tank lid itself closes the top over the tray
+export const TLID_Z = LID_Z - LID_T / 2;        // plate centre
+export const TLID_TOP = LID_Z;
 export const TCOLLAR_H = COLLAR_H;               // the same silicone enclosure as the tank-top lid
 export const trayX = (col: number) => TRAY_CX + (col - (TRAY_COLS - 1) / 2) * TRAY_COL_PITCH;
 export const trayY = (row: number) => TRAY_CY + (row - (TRAY_ROWS - 1) / 2) * TRAY_ROW_PITCH;
@@ -139,7 +139,7 @@ export const slotLabel = (slot: number) => `${String.fromCharCode(65 + Math.floo
 
 /** Ready pose of the arm (deg): claw straight down, pod point 200 mm down the plate from the arm base and 200 mm out of it (an IK pose, so cartesian moves start on the right branch): in front of the tank, over the lid. */
 export const READY_POSE: Record<string, number> = { A: PAN0, B: -52, C: 37.3, D: 14.7, E: 0, F: 0 };
-export const TRANSIT_Z = 0.35;                  // pin point height while driving with a pod
+export const TRANSIT_Z = 0.326;                 // pin point height while driving with a pod
 export const PIN_SPEED = 0.1, SEAT_SPEED = 0.04, CART_SPEED = 0.25; // m/s
 
 export const podName = (i: number) => `pod_${i}`;
@@ -294,15 +294,16 @@ function trayGeoms(): string[] {
     `<geom type="box" pos="${f((xa + xb) / 2)} ${f((ya + yb) / 2)} ${f(zc)}" size="${f((xb - xa) / 2)} ${f((yb - ya) / 2)} ${f(t / 2)}" ${OBST} ${c}/>`);
   // the flat tray lies on the shelf
   box(TRAY_CX - TRAY_HX, TRAY_CX + TRAY_HX, -TRAY_HY, TRAY_HY, TRAY_Z0 + TRAY_T / 2, TRAY_T, rgba(0.2, 0.62, 0.38));
+  for (const sx of [-1, 1]) box(TRAY_CX + sx * (TRAY_HX - 0.01) - 0.01, TRAY_CX + sx * (TRAY_HX - 0.01) + 0.01, -TRAY_HY, TRAY_HY, (SHELF_TOP + TRAY_Z0) / 2, TRAY_Z0 - SHELF_TOP, rgba(0.42, 0.44, 0.5));
   for (let s = 0; s < TRAY_SLOTS; s++) {
     const [x, y] = seatPos(s);
     out.push(...ring(x, y, TRAY_TOP, CELL_R, 0.002, CELL_H, SILICONE));
   }
   // the lid over the whole tray: a plate with a hole over every cell and a silicone collar round each hole (as the tank-top lid)
   const grey = rgba(0.6, 0.62, 0.66, 0.55);
-  const xa = TRAY_CX - TRAY_HX, xb = TRAY_CX + TRAY_HX;
+  const xa = -TANK_W / 2, xb = TRAY_CX + TRAY_HX + 0.005;   // the lid runs from the left wall of the tank to the store lid
   const ys = Array.from({ length: TRAY_ROWS }, (_, r) => trayY(r)), xs = Array.from({ length: TRAY_COLS }, (_, c) => trayX(c));
-  let y0 = -TRAY_HY;
+  let y0 = -TANK_D / 2;
   for (const y of ys) {
     box(xa, xb, y0, y - HOLE_HALF, TLID_Z, TLID_T, grey);
     let x0 = xa;
@@ -310,7 +311,7 @@ function trayGeoms(): string[] {
     box(x0, xb, y - HOLE_HALF, y + HOLE_HALF, TLID_Z, TLID_T, grey);
     y0 = y + HOLE_HALF;
   }
-  box(xa, xb, y0, TRAY_HY, TLID_Z, TLID_T, grey);
+  box(xa, xb, y0, TANK_D / 2, TLID_Z, TLID_T, grey);
   for (let s = 0; s < TRAY_SLOTS; s++) { const [x, y] = seatPos(s); out.push(...ring(x, y, TLID_TOP, 0.0155, 0.0015, TCOLLAR_H, SILICONE)); }
   return out;
 }
