@@ -1,4 +1,4 @@
-// MJCF for the v2 transfer scene: four vertical pipes (A B C D), and the cart as drawn in cad/cart_base.py, cart_hinge.py and hand_sleeve.py:
+// MJCF for the v2 transfer scene: three horizontal pipes (B C D), and the cart as drawn in cad/cart_base.py, cart_hinge.py and hand_sleeve.py:
 // one rigid PLATE (a mocap body) with, on it, the arm base and arm, the battery on its shelf and the two drive motors; each of the two HANDS
 // hangs on the plate through its own HINGE (axis parallel to the pipe, on the pad edge) and carries its sleeve, wheel pairs, clamp motor and the
 // worm wheel of its hinge. The hinge worm and its motor ride on the plate. Frame: x across, y out of the pipe plane (plate on -y), z up the pipes.
@@ -10,10 +10,14 @@ const f = (n: number) => +n.toFixed(5);
 const PLATE_COL = rgba([0.35, 0.35, 0.38]), BATT_COL = rgba([0.2, 0.45, 0.85]), MOTOR_COL = rgba([0.85, 0.25, 0.25]);
 const HINGE_COL = rgba([0.9, 0.55, 0.15]), PAD_COL = rgba([0.95, 0.75, 0.2]), ARM_COL = rgba([0.88, 0.88, 0.9]);
 const HIDDEN = 'rgba="0 0 0 0" contype="0" conaffinity="0"';
-/** Heights (m): the hands' mid height at rest (TOP_S), how far the cart lifts on pipe C so the released hand clears its pipe's end (LIFT), and where each pipe ends. B and D end 5 mm above the sleeve top
- *  of a hand clamped at TOP_S; C goes on up past the lifted sleeve, so the hinge worm drives (62+ mm above the hands' mid height) swing over its end. */
-export const TOP_S_M = 0.6, LIFT_M = 0.11;
-export const PIPE_TOP_M: Record<D.PipeName, number> = { B: TOP_S_M + 0.05, D: TOP_S_M + 0.05, C: 0.9 };
+/** World frame of the scene: the CAD frame turned so the pipes lie HORIZONTAL, as in the Cart scene's horizontal section. CAD x (across the pipes) is world -z (pipe B above pipe C),
+ *  CAD y (out of the pipe plane) is world y (the plate hangs on the -y side) and CAD z (along the pipes) is world x. WORLD_Z0 is the height of the cart centre line (CAD x = 0). */
+export const WORLD_Z0 = 0.45;
+export const S_MIN_CM = 15, S_MAX_CM = 75, S_START_CM = 45, PIPE_END_M = 0.9, PIPE_START_M = 0;   // where the hands' mid point may be along the pipes (cm) and where the pipes run (m)
+/** CAD-frame point (m) to world. */
+export const cadToWorld = (v: [number, number, number]): [number, number, number] => [v[2], v[1], WORLD_Z0 - v[0]];
+/** World point back to the CAD frame (m). */
+export const worldToCad = (v: ArrayLike<number>): [number, number, number] => [WORLD_Z0 - v[2], v[1], v[0]];
 
 /** Geoms in the plate frame (mm, CAD axes). */
 const pbox = (name: string, cx: number, cy: number, cz: number, hx: number, hy: number, hz: number, col: string, extra = CART_COL) =>
@@ -72,36 +76,41 @@ function handHingeGeoms(h: 1 | 2): string {
   return g.join('\n        ');
 }
 
-/** The arm on its base: shoulder pivot 88 mm out from the plate, three links in three lanes 26 mm apart, so it folds up as drawn in cart_arm.py (stowed). */
-function armBodies(): string {
-  const y = D.PLATE_Y0 - D.SHOULDER_H, lane = 26;
-  const link = (name: string, len: number, col: string) => `<geom name="${name}" type="box" pos="0 0 ${f(m(len / 2))}" size="${f(m(9))} ${f(m(7))} ${f(m(len / 2))}" ${col} ${CART_COL}/>`;
-  return `<body name="arm_upper" pos="${f(m(D.ARM_X))} ${f(m(y))} 0"><joint name="arm_lift" type="hinge" axis="1 0 0" range="-3.3 3.3"/>
-        ${link('arm_l1', D.L1, ARM_COL)}
-        <body name="arm_fore" pos="${f(m(lane))} 0 ${f(m(D.L1))}"><joint name="arm_elbow" type="hinge" axis="1 0 0" range="-3.3 3.3"/>
-          ${link('arm_l2', D.L2, rgba([0.7, 0.72, 0.78]))}
-          <body name="arm_grip" pos="${f(m(-2 * lane))} 0 ${f(m(D.L2))}"><joint name="arm_wrist" type="hinge" axis="1 0 0" range="-3.3 3.3"/>
-            ${link('arm_l3', D.L3, rgba([0.55, 0.57, 0.62]))}
-          </body>
-        </body>
-      </body>`;
+/**
+ * The arm on its base, stowed as drawn in cart_arm.py (shoulder pivot 88 mm out from the plate, three links in three lanes 26 mm apart, folded up). Rigid on the plate:
+ * the arm does not move in a transfer, so it is plain geoms (no joints), with the elbow and wrist pins joining the lanes so nothing floats.
+ */
+function armGeoms(): string {
+  const y = D.PLATE_Y0 - D.SHOULDER_H, lane = 26, x0 = D.ARM_X;
+  const link = (name: string, x: number, z0: number, z1: number, col: string) => pbox(name, x, y, (z0 + z1) / 2, 9, 7, Math.abs(z1 - z0) / 2, col);
+  const pin = (name: string, xa: number, xb: number, z: number) => pcyl(name, [xa, y, z], [xb, y, z], 6, ARM_COL);
+  return [
+    link('arm_l1', x0, 0, D.L1, ARM_COL),
+    link('arm_l2', x0 + lane, D.L1 - D.L2, D.L1, rgba([0.7, 0.72, 0.78])),
+    link('arm_l3', x0 - lane, D.L1 - D.L2, D.L1 - D.L2 + D.L3, rgba([0.55, 0.57, 0.62])),
+    pin('arm_pin1', x0 - 9, x0 + lane + 9, D.L1),            // elbow: joins links 1 and 2
+    pin('arm_pin2', x0 - lane - 9, x0 + lane + 9, D.L1 - D.L2),   // wrist: joins links 2 and 3
+  ].join('\n      ');
 }
 
 /**
  * Pairs checked for contact between plate-side parts and the hands (MuJoCo skips parent/child geoms, and the hands are children of the plate, so these
  * are named explicitly): every plate-side solid against each hand's envelope, pad and lug. The hinge and its leaves touch by design and are left out.
  */
-const PLATE_SOLIDS = ['plate', 'shelf', 'battery', 'armbase', 'armcolumn', 'arm_l1', 'arm_l2', 'arm_l3', 'motor_drive1', 'motor_drive2'];
+const PLATE_SOLIDS = ['plate', 'shelf', 'battery', 'armbase', 'armcolumn', 'arm_l1', 'arm_l2', 'arm_l3', 'arm_pin1', 'arm_pin2', 'motor_drive1', 'motor_drive2'];
 export function plateHandPairs(): string {
   const out: string[] = [];
   for (const h of [1, 2]) for (const a of PLATE_SOLIDS) for (const b of [`env${h}`, `pad${h}`]) out.push(`<pair geom1="${a}" geom2="${b}" margin="0"/>`);
   return `<contact>${out.join('')}</contact>`;
 }
 
+/** The three horizontal pipes (B, C, D), as in the Cart scene's pipe geoms: same radius, colour and collision flags. They run along world x, one above the other. */
 export function pipesXml(): string {
   const pr = m(D.PIPE_R * 2) / 2;
-  return (Object.keys(D.PIPE_X) as D.PipeName[]).map((n) =>
-    `<geom name="pipe${n}" type="cylinder" fromto="${f(m(D.PIPE_X[n]))} 0 -0.05 ${f(m(D.PIPE_X[n]))} 0 ${PIPE_TOP_M[n]}" size="${pr}" rgba="0.62 0.66 0.70 1" contype="1" conaffinity="2"/>`).join('\n    ');
+  return (Object.keys(D.PIPE_X) as D.PipeName[]).map((n) => {
+    const z = f(WORLD_Z0 - m(D.PIPE_X[n]));
+    return `<geom name="pipe${n}" type="cylinder" fromto="${PIPE_START_M} 0 ${z} ${PIPE_END_M} 0 ${z}" size="${pr}" rgba="0.62 0.66 0.70 1" contype="1" conaffinity="2"/>`;
+  }).join('\n    ');
 }
 
 /** The cart: the plate (mocap) with arm, and the two hands on their hinges. Hand 1 rides the pipe at +x (C), hand 2 the one at -x (B). Neither hand is mirrored (as in the CAD). */
@@ -110,7 +119,7 @@ export function transferCartBody(): string {
     const hx = D.hingeX(h) - D.restPipeX(h);
     return `<body name="hand${h}" pos="${f(m(D.restPipeX(h)))} 0 0" xyaxes="0 0 1 0 -1 0">
       <joint name="hinge${h}" type="hinge" pos="0 ${f(m(-D.HINGE_Y))} ${f(m(hx))}" axis="1 0 0" range="-7 7" frictionloss="50" damping="2"/>
-      ${handInner(h, false, 1)}
+      ${handInner(h, false, h === 2 ? -1 : 1)}
         ${handHingeGeoms(h)}
     </body>`;
   };
@@ -118,7 +127,7 @@ export function transferCartBody(): string {
   // world, so without a degree of freedom the plate-side parts (battery, motors, arm) would never be checked against the pipes.
   return `<body name="cart" mocap="true" pos="0 0 0.5"><body name="plate"><joint name="plate_lock" type="hinge" axis="0 0 1" range="0 0"/>
       ${plateGeoms()}
-      ${armBodies()}
+      ${armGeoms()}
       ${hand(1)}
       ${hand(2)}
     </body></body>`;
@@ -145,7 +154,7 @@ export function transferMjcf(): string {
 <mujoco model="pond_transfer_v2">
   <option timestep="0.002" gravity="0 0 -9.81"/>
   <worldbody>
-    <geom name="floor" type="plane" pos="0 0 -0.05" size="1.2 0.9 0.1" rgba="0.82 0.86 0.9 1"/>
+    <geom name="floor" type="plane" pos="0.45 0 -0.05" size="1.2 0.9 0.1" rgba="0.82 0.86 0.9 1"/>
     ${pipesXml()}
     ${transferCartBody()}
   </worldbody>
