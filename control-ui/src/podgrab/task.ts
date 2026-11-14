@@ -224,7 +224,7 @@ export interface JobResult { job: Job; success: boolean; reason: string; posErrM
 
 interface Move {
   label: string;
-  /** Goal: cart x and the pin point in the arm plane: r down from the arm base axis, z (= u) out along it (see armR, armU). Missing = keep. */
+  /** Goal: cart x and the pin point in the arm plane: r down the plate from the arm base, z (= u) out of the plate along the base axis (see armR, armU). Missing = keep. */
   x?: number; r?: number; z?: number; pitch?: number;  // pitch: hand pitch in degrees, 0 = pin straight down
   wait?: number;              // s to stay at the goal (lets a released pod settle)
   claw?: 'open' | 'close';    // claw command, given at the start of the move
@@ -379,10 +379,11 @@ export class PodTask {
 
   private send(q: number[]) { MOTORS.forEach((m, i) => { this.cmd.setJointTarget(m.id, q[i] ?? 0); }); }
 
-  /** Planar IK for the pin point at (r down, u out) with the hand pitched by `pitch` degrees (0 = pin straight down). */
+  /** Planar IK for the pin point at (r down the plate, u out of the plate) with the hand pitched by `pitch` degrees (0 = pin straight down). */
   private ik(r: number, u: number, pitch: number): Joints | null {
-    // r is down from the arm base, u out along the arm's forward direction; the pan axis is vertical, pitch 90 = pin straight down
-    return solvePlanar(PAN0, u, -r, TOOL_X, 0, pitch + 90);
+    // The arm base is flat on the cart plate: its forward axis (base x) points down, its up axis (base z) out of the plate, so the
+    // planar problem has horizontal reach r (down) and height u (out). The tool direction is (cos phi, -sin phi) in (r, u): straight down = 0.
+    return solvePlanar(PAN0, r, u, TOOL_X, 0, -pitch);
   }
 
   private control() {
@@ -396,7 +397,7 @@ export class PodTask {
       if (mv.claw) this.world.setClaw(mv.claw === 'close');
       if (!this.inited) { this.inited = true; this.cmdJ = q.slice(0, 5); this.integ = [0, 0, 0, 0, 0]; }
       const p = toolPoint({ A: 0, B: this.cmdJ[1], C: this.cmdJ[2], D: this.cmdJ[3] }, TOOL_X, 0);
-      this.from = { x: this.world.cartX, r: -p[2], z: p[0], p: this.cmdJ[1] + this.cmdJ[2] + this.cmdJ[3] - 90 };
+      this.from = { x: this.world.cartX, r: p[0], z: p[2], p: -(this.cmdJ[1] + this.cmdJ[2] + this.cmdJ[3]) };
       this.goal = { x: mv.x ?? this.from.x, r: mv.r ?? this.from.r, z: mv.z ?? this.from.z, p: mv.pitch ?? this.from.p };
       if (mv.joint) { this.goal.r = mv.r ?? this.from.r; }
       this.goalJ = this.ik(this.goal.r, this.goal.z, this.goal.p);

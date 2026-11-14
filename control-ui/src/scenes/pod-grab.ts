@@ -38,7 +38,7 @@ export const podGrabScene: Scene = {
         <dt>Cart</dt><dd id="g-cart"></dd>
         <dt>State</dt><dd id="g-state">Idle</dd>
       </dl>
-      <p class="hint">A close-up of the bottom of a Pond unit, in its real layout. The cart rides the bottom track pipe above the tank; the SO-101 arm is fixed on top of its plate and reaches down into the tank through the silicone pick holes in the lid with a two-finger claw. The thick grey pillar in the middle is the unit spine; the trays hang off it on flat brackets and stand clear of it. Right: the pod store, ${STORE_ROWS} rows under the lid, sloped so the pods slide to the pick hole at the front (the little roof keeps the second pod in place while the first is lifted out). Each row has an end gate at the back so pods cannot fall out; the store is loaded from the back of the unit, which needs about half a metre of clear floor there (amber patch). The cart never turns round. Left: the seedling tray, flat, ${TRAY_COLS} × ${TRAY_SLOTS / TRAY_COLS} silicone collars, rows A to D from the front.</p>
+      <p class="hint">A close-up of the bottom of a Pond unit, in its real layout. The cart rides the bottom track pipe above the tank; the SO-101 arm is bolted flat on the front face of its plate (its base axis is the plate normal, so it hangs and works down the plate; it is the only base) and reaches down into the tank through the silicone pick holes in the lid with a two-finger claw. The thick grey pillar in the middle is the unit spine; the trays hang off it on flat brackets and stand clear of it. Right: the pod store, ${STORE_ROWS} rows under the lid, sloped so the pods slide to the pick hole at the front (the little roof keeps the second pod in place while the first is lifted out). Each row has an end gate at the back so pods cannot fall out; the store is loaded from the back of the unit, which needs about half a metre of clear floor there (amber patch). The cart never turns round. Left: the seedling tray, flat, ${TRAY_COLS} × ${TRAY_SLOTS / TRAY_COLS} silicone collars, rows A to D from the front.</p>
     </section>
     <p id="g-msg" class="msg"></p>
 
@@ -184,7 +184,9 @@ export const podGrabScene: Scene = {
         if (task) {
           const t0 = performance.now();
           const speed = parseFloat($<HTMLSelectElement>('g-speed').value);
-          if (speed > 0) task.advance(Math.min(dt, 0.1) * speed);
+          // Never spend more than ~10 ms of a frame on physics, so the page keeps its frame rate: the run goes as fast as the
+          // device allows, up to the chosen speed (the sim clock is the sim's own, so the result does not depend on it).
+          if (speed > 0) { let left = Math.min(dt, 0.1) * speed; while (left > 1e-9 && !task.done && performance.now() - t0 < 10) { const c = Math.min(left, 0.02); task.advance(c); left -= c; } }
           else while (!task.done && performance.now() - t0 < 14) task.advance(0.05);
           if (task.done) {
             result.hidden = false; result.innerHTML = resultHtml(task);

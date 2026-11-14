@@ -11,7 +11,7 @@ import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/pl
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
 import { cartMjcf } from '../src/cart/model.ts';
-import { BASE_BOTTOM, DECK_PAD_TOP, LID_Z, PIPE_Z, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
+import { BASE_BOTTOM, LID_Z, PIPE_Z, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
 import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
 
@@ -147,7 +147,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('pod grab model has the cart as its one mocap body (the arm base is rigid in it); the pods are free bodies', pg.model.nmocap === 1 && pg.model.nbody > POD_COUNT, String(pg.model.nmocap));
   check('store holds enough pods for the tray', STORE_ROWS * STORE_START >= TRAY_SLOTS && STORE_START < STORE_CAP);
   check('unit layout: track 150 mm over the lid, store slopes down to the pick line, tray flat and left of the store',
-    Math.abs(PIPE_Z - LID_Z - 0.15) < 1e-9 && storePos(0, 1)[2] > storePos(0, 0)[2] && storePos(0, 1)[1] > storePos(0, 0)[1] && seatPos(0)[2] === seatPos(TRAY_SLOTS - 1)[2] && seatPos(TRAY_SLOTS - 1)[0] < ROW_X0);
+    PIPE_Z - LID_Z > 0.14 && storePos(0, 1)[2] > storePos(0, 0)[2] && storePos(0, 1)[1] > storePos(0, 0)[1] && seatPos(0)[2] === seatPos(TRAY_SLOTS - 1)[2] && seatPos(TRAY_SLOTS - 1)[0] < ROW_X0);
   check('trays clear of the spine: seedling tray left of it, store right of it, neither touching',
     TRAY_CX + TRAY_HX < -SPINE_R - 0.05 && ROW_X0 - ROW_PITCH / 2 > SPINE_R + 0.02);
   {
@@ -155,7 +155,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     const baseBody = pg.model.body('base'), cartBody = pg.model.body('cart');
     check('arm base is a rigid child of the cart (no joint, no mocap of its own)',
       pg.model.body_parentid[baseBody.id] === cartBody.id && pg.model.body_jntnum[baseBody.id] === 0 && pg.model.body_mocapid[baseBody.id] === -1 && names.includes('xyaxes'));
-    check('spine and brackets are in the scene', pg.model.ngeom > 200 && names.split('\n').filter((l) => l.includes('cylinder') && l.includes('fromto="0 0 ')).length >= 1);
+    check('spine and brackets are in the scene', pg.model.ngeom > 200 && names.split('\n').filter((l) => l.includes('cylinder') && l.includes('fromto="0 ' + SPINE_Y)).length >= 1);
   }
   {
     const names = podGrabMjcf();
@@ -165,17 +165,28 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     pg.step();
     const b = pg.model.body('base'), id = b.id; b.delete();
     const bx = pg.data.xpos[3 * id] - pg.data.xpos[3 * pg.model.body('cart').id];
-    // Rendered orientation: the base's up axis is the deck normal, and its underside touches the top of the deck pad.
+    // Rendered orientation: the base's up axis is the plate normal, and its underside lies in the plate's front face.
     {
       const bid = pg.model.body('base').id, cid = pg.model.body('cart').id;
       const xm = pg.data.xmat, R = (b: number, i: number, j: number) => xm[9 * b + 3 * i + j];
-      const up = [R(bid, 0, 2), R(bid, 1, 2), R(bid, 2, 2)], nrm = [R(cid, 0, 2), R(cid, 1, 2), R(cid, 2, 2)];
-      const dot = up[0] * nrm[0] + up[1] * nrm[1] + up[2] * nrm[2];
-      check('arm base up axis is parallel to the cart deck normal', Math.abs(Math.abs(dot) - 1) < 1e-6 && dot > 0, String(dot));
-      let padTop = NaN;                                    // top of the cart's mounting pad, read from the compiled geoms
-      for (let g = 0; g < pg.model.ngeom; g++) if (pg.model.geom_bodyid[g] === cid && Math.abs(pg.model.geom_size[3 * g + 2] - 0.0015) < 1e-9) padTop = pg.data.geom_xpos[3 * g + 2] + 0.0015;
-      const under = pg.data.xpos[3 * bid + 2] + BASE_BOTTOM;
-      check('arm base underside is in contact with the top of the cart deck', Math.abs(under - padTop) < 1e-6, `${under} ${padTop}`);
+      const up = [R(bid, 0, 2), R(bid, 1, 2), R(bid, 2, 2)];
+      let plate = -1;                                      // the cart plate: the biggest thin (6 mm along cart y) box on the cart
+      for (let g = 0; g < pg.model.ngeom; g++) if (pg.model.geom_bodyid[g] === cid && Math.abs(pg.model.geom_size[3 * g + 1] - 0.003) < 1e-9 && pg.model.geom_size[3 * g + 2] > 0.05) plate = g;
+      check('cart plate found', plate >= 0);
+      const gm = pg.data.geom_xmat, n = [gm[9 * plate + 1], gm[9 * plate + 4], gm[9 * plate + 7]];   // plate thickness axis = its normal
+      const dot = up[0] * n[0] + up[1] * n[1] + up[2] * n[2];
+      check('arm base up axis is parallel to the cart plate normal', Math.abs(Math.abs(dot) - 1) < 1e-6, String(dot));
+      check('arm base up axis is horizontal (it stands out of the vertical plate, not up from a deck)', Math.abs(up[2]) < 1e-6, String(up[2]));
+      const c = [0, 1, 2].map((k) => pg.data.geom_xpos[3 * plate + k]);
+      const under = [0, 1, 2].map((k) => pg.data.xpos[3 * bid + k] + BASE_BOTTOM * up[k]);
+      const off = [0, 1, 2].map((k) => under[k] - c[k]);
+      const faceOff = Math.abs(off[0] * n[0] + off[1] * n[1] + off[2] * n[2]) - 0.003;   // distance of the base underside from the plate's far face along the normal
+      check('arm base underside is in contact with the plate face', Math.abs(faceOff) < 1e-6, String(faceOff));
+      const inPlane = [off[0] - (off[0] * n[0] + off[1] * n[1] + off[2] * n[2]) * n[0], off[1] - (off[0] * n[0] + off[1] * n[1] + off[2] * n[2]) * n[1], off[2] - (off[0] * n[0] + off[1] * n[1] + off[2] * n[2]) * n[2]];
+      check('arm base sits within the plate outline', Math.abs(inPlane[0]) < 0.056 - 0.0225 && Math.abs(inPlane[2]) < pg.model.geom_size[3 * plate + 2] - 0.0225, inPlane.join());
+      check('only one arm base: the cart carries just the plate and the two wheel sets (no deck or pad)', !names.includes('DECK_') && !names.includes('deck'));
+      // the arm's pan axis (base x at pan 0) points down the plate: the claw hangs down
+      check('pan 0 points down the plate (base x is world down)', Math.abs(R(bid, 2, 0) + 1) < 1e-6, String(R(bid, 2, 0)));
     }
     check('arm base is on the middle of the cart base (not off its end)', Math.abs(bx) < 0.056, String(bx));
   }

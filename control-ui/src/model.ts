@@ -44,6 +44,8 @@ export interface ArmMjcfOpts {
   armCollides?: boolean;
   /** Sensor elements (MJCF text) appended in a <sensor> block. */
   sensors?: string;
+  /** The <option> element (default: 2 ms step, gravity). A scene with many resting bodies can let them sleep. */
+  option?: string;
   /** Extra actuator elements (MJCF text) appended after the six arm motors (a tool's own drives). */
   actuators?: string;
 }
@@ -51,7 +53,7 @@ export interface ArmMjcfOpts {
 export const armMjcf = (world: string, opts: ArmMjcfOpts = {}) => { const noJaw = opts.armCollides ? 'contype="0"' : ''; return `
 <mujoco model="so101">
   <compiler angle="radian" autolimits="true"/>
-  <option timestep="0.002" gravity="0 0 -9.81"/>
+  ${opts.option ?? '<option timestep="0.002" gravity="0 0 -9.81"/>'}
   <default>
     <joint damping="0.15" armature="0.02" frictionloss="0.02"/>
     <geom contype="${opts.armCollides ? 2 : 0}" conaffinity="0"/>
