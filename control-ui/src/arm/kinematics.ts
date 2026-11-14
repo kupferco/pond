@@ -16,28 +16,35 @@ export interface Joints { A: number; B: number; C: number; D: number; E: number 
 
 const limits = (id: string) => MOTORS.find((m) => m.id === id)!;
 
-/** Grasp point (centre between the jaws) in world coordinates for the given pan/lift/elbow/wrist angles (degrees). */
-export function graspPoint(j: { A: number; B: number; C: number; D: number }): [number, number, number] {
+/** A tool point (tx forward along the hand, tz across it) in world coordinates for the given pan/lift/elbow/wrist angles (degrees). */
+export function toolPoint(j: { A: number; B: number; C: number; D: number }, tx: number, tz: number): [number, number, number] {
   const al = j.B * RAD, th2 = -(j.B + j.C) * RAD, phi = (j.B + j.C + j.D) * RAD;
   const r = L1 * Math.sin(al) + L2 * Math.cos(th2) + WRIST_TO_HAND * Math.cos(phi)
-    + GRASP_X * Math.cos(phi) + GRASP_Z * Math.sin(phi);
+    + tx * Math.cos(phi) + tz * Math.sin(phi);
   const z = SHOULDER_Z + L1 * Math.cos(al) + L2 * Math.sin(th2) - WRIST_TO_HAND * Math.sin(phi)
-    - GRASP_X * Math.sin(phi) + GRASP_Z * Math.cos(phi);
+    - tx * Math.sin(phi) + tz * Math.cos(phi);
   const p = j.A * RAD;
   return [r * Math.cos(p), r * Math.sin(p), z];
 }
 
+/** Grasp point (centre between the jaws) in world coordinates for the given pan/lift/elbow/wrist angles (degrees). */
+export const graspPoint = (j: { A: number; B: number; C: number; D: number }) => toolPoint(j, GRASP_X, GRASP_Z);
+
 /**
- * Joint angles (degrees) that put the grasp point at (x, y, z) with the hand pointing straight down,
- * elbow up. Returns null when the point is out of reach or needs a joint beyond its limit.
+ * Joint angles (degrees) that put the tool point (tx forward along the hand, tz across it) at (x, y, z)
+ * with the hand pitched by `pitch` degrees (0 = horizontal, 90 = straight down), elbow up.
+ * Returns null when the point is out of reach or needs a joint beyond its limit.
  */
-export function solveDown(x: number, y: number, z: number): Joints | null {
-  const pan = Math.atan2(y, x) * DEG;
-  const rG = Math.hypot(x, y);
-  const phi = DOWN_PITCH * RAD;
-  // Wrist joint = grasp point minus the tool offsets rotated by the tool pitch.
-  const wr = rG - (GRASP_X * Math.cos(phi) + GRASP_Z * Math.sin(phi)) - WRIST_TO_HAND * Math.cos(phi);
-  const wz = z - (-GRASP_X * Math.sin(phi) + GRASP_Z * Math.cos(phi)) + WRIST_TO_HAND * Math.sin(phi);
+export function solveTool(x: number, y: number, z: number, tx: number, tz: number, pitch: number): Joints | null {
+  return solvePlanar(Math.atan2(y, x) * DEG, Math.hypot(x, y), z, tx, tz, pitch);
+}
+
+/** Planar part of solveTool with the pan given and a signed reach r (the tool may be behind the shoulder axis). */
+export function solvePlanar(pan: number, rG: number, z: number, tx: number, tz: number, pitch: number): Joints | null {
+  const phi = pitch * RAD;
+  // Wrist joint = tool point minus the tool offsets rotated by the tool pitch.
+  const wr = rG - (tx * Math.cos(phi) + tz * Math.sin(phi)) - WRIST_TO_HAND * Math.cos(phi);
+  const wz = z - (-tx * Math.sin(phi) + tz * Math.cos(phi)) + WRIST_TO_HAND * Math.sin(phi);
   const dr = wr, dz = wz - SHOULDER_Z;
   const d = Math.hypot(dr, dz);
   if (d > L1 + L2 - 1e-4 || d < Math.abs(L1 - L2) + 1e-4) return null;
@@ -47,7 +54,7 @@ export function solveDown(x: number, y: number, z: number): Joints | null {
   const theta2 = Math.atan2(dz - ez, dr - er);     // forearm direction
   const lift = 90 - theta1 * DEG;
   const elbow = -theta2 * DEG - lift;
-  const wrist = DOWN_PITCH - lift - elbow;
+  const wrist = pitch - lift - elbow;
   const out: Joints = { A: pan, B: lift, C: elbow, D: wrist, E: 0 };
   for (const id of ['A', 'B', 'C', 'D'] as const) {
     const m = limits(id);
@@ -55,3 +62,6 @@ export function solveDown(x: number, y: number, z: number): Joints | null {
   }
   return out;
 }
+
+/** Top-down grasp: the hand points straight down with the grasp point at (x, y, z). */
+export const solveDown = (x: number, y: number, z: number): Joints | null => solveTool(x, y, z, GRASP_X, GRASP_Z, DOWN_PITCH);
