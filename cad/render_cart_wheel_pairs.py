@@ -120,10 +120,10 @@ def main(outdir):
     ctx = compound(cw.context)
     hx = cw.PIPE_SPACING / 2
     outline(ctx, "iso", xn + "-iso.png", outdir, [
-        ((-hx, 0, -105), (hx, 0, -105), "280 pipe B to pipe C (ASSUMED)", (0, 40)),
+        ((-hx, 0, -105), (hx, 0, -105), "120 pipe B to pipe C (ASSUMED)", (0, 40)),
     ], "Both hands of the cart, one on each of two parallel pipes: 2 x 6 wheels in 3 pairs each. DRAFT")
     outline(ctx, "top", xn + "-top.png", outdir, [
-        ((-hx, 0, 0), (hx, 0, 0), "280 pipe B to pipe C (ASSUMED)", (0, 110)),
+        ((-hx, 0, 0), (hx, 0, 0), "120 pipe B to pipe C (ASSUMED)", (0, 110)),
         ((-hx - cw.R_PIPE, 0, 0), (-hx + cw.R_PIPE, 0, 0), "32 pipe", (0, -75)),
     ], "Looking down the pipes: driven pairs (-X) and idler pairs (+/-60 deg) of each hand. DRAFT")
     outline(ctx, "front", xn + "-side.png", outdir, [

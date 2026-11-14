@@ -1,5 +1,6 @@
 import cadquery as cq, math
 # cad/unit_v3_aframe.py — v5 (7 Nov 2026)
+# v6 (14 Nov 2026, Viber #97): track loop widened, TX 250 -> 290 (pipes 60 mm in from the tank edge).
 # v5: legs no longer pass through the PVC. 50 mm metal clamp collars sit OUTSIDE the growing pipe with
 #     long angled sleeves (60 mm) that take the 16 mm legs. Inside the pipe at each collar height, a spacer
 #     ring between pipe and spine carries the load to the spine. Lower collar z=1215 (side legs + back strut),
@@ -7,7 +8,7 @@ import cadquery as cq, math
 # v4: short collars but legs through drilled pipe. v3: single panel. v2: strut, feet, V roof. v1: lower A-frame.
 TW, TD, TH = 700.0, 400.0, 300.0
 GP = 75.0; SP = 33.7; LR = 8.0
-TX = 250.0; TR = 16.0; R = 150.0; LOOP_Y = -60.0
+TX = 290.0; TR = 16.0; R = 150.0; LOOP_Y = -60.0
 ZB = TH + 150.0; ZT = 1900.0 - TR
 ZC1 = 1215.0; ZC2 = 1547.5; FOOT_X = 340.0; LID = TH + 4; ZBAR = 1900.0; BAR_X = 200.0
 RP = GP / 2; RC = RP + 3
