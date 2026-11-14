@@ -64,6 +64,9 @@ export class Viewer {
         color: new THREE.Color(c[4 * i], c[4 * i + 1], c[4 * i + 2]),
         roughness: 0.6,
         metalness: 0.1,
+        transparent: c[4 * i + 3] < 1,
+        opacity: c[4 * i + 3],
+        depthWrite: c[4 * i + 3] >= 1,
       });
       const mesh = new THREE.Mesh(geo, mat);
       mesh.matrixAutoUpdate = false;

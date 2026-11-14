@@ -14,9 +14,9 @@ export class SimDriver implements RobotDriver {
   private ctrlIdx: Record<string, number> = {};
   private acc = 0;
 
-  constructor(mujoco: MainModule) {
+  constructor(mujoco: MainModule, mjcf: string = MJCF) {
     this.mujoco = mujoco;
-    this.model = mujoco.MjModel.from_xml_string(MJCF);
+    this.model = mujoco.MjModel.from_xml_string(mjcf);
     this.data = new mujoco.MjData(this.model);
     for (const m of MOTORS) {
       this.qposAdr[m.id] = this.model.jnt_qposadr[this.model.jnt(m.joint).id];
@@ -31,8 +31,16 @@ export class SimDriver implements RobotDriver {
   setJointTarget(motorId: string, degrees: number): void {
     this.data.ctrl[this.ctrlIdx[motorId]] = degrees * RAD;
   }
+  /** Scene-specific home pose in degrees by motor id (default: each motor's own home). */
+  private homePose: Record<string, number> = {};
+  setHomePose(pose: Record<string, number>): void {
+    this.homePose = pose;
+    this.home();
+    for (const m of MOTORS) this.data.qpos[this.qposAdr[m.id]] = (pose[m.id] ?? m.home) * RAD;
+    this.mujoco.mj_forward(this.model, this.data);
+  }
   home(): void {
-    for (const m of MOTORS) this.setJointTarget(m.id, m.home);
+    for (const m of MOTORS) this.setJointTarget(m.id, this.homePose[m.id] ?? m.home);
   }
   readJoints(): Record<string, number> {
     const out: Record<string, number> = {};
@@ -49,6 +57,7 @@ export class SimDriver implements RobotDriver {
   reset(): void {
     this.mujoco.mj_resetData(this.model, this.data);
     this.home();
+    for (const m of MOTORS) this.data.qpos[this.qposAdr[m.id]] = (this.homePose[m.id] ?? m.home) * RAD;
     this.mujoco.mj_forward(this.model, this.data);
     this.acc = 0;
   }
@@ -68,6 +77,20 @@ export class SimDriver implements RobotDriver {
     const i = this.model.body_mocapid[this.model.body(name).id];
     for (let k = 0; k < 3; k++) this.data.mocap_pos[3 * i + k] = pos[k];
     for (let k = 0; k < 4; k++) this.data.mocap_quat[4 * i + k] = quat[k];
+  }
+
+  /** Set a control by actuator name (a tool drive that is not one of the arm motors). */
+  setActuator(name: string, value: number): void {
+    const a = this.model.actuator(name), id = a.id; a.delete();
+    this.data.ctrl[id] = value;
+  }
+
+  /** Place a free-joint body and give it a world-frame linear velocity (zero spin). For a body the scene carries by hand. */
+  setFreeBody(name: string, pos: number[], quat: number[], vel: number[] = [0, 0, 0]): void {
+    const jid = this.model.body_jntadr[this.model.body(name).id];
+    const q = this.model.jnt_qposadr[jid], v = this.model.jnt_dofadr[jid];
+    for (let k = 0; k < 3; k++) { this.data.qpos[q + k] = pos[k]; this.data.qvel[v + k] = vel[k]; this.data.qvel[v + 3 + k] = 0; }
+    for (let k = 0; k < 4; k++) this.data.qpos[q + 3 + k] = quat[k];
   }
 
   dispose(): void {
