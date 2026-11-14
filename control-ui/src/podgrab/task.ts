@@ -56,7 +56,7 @@ export class PodWorld {
 
   reset() {
     this.sim.reset();
-    this.violation = ''; this.seen = null; this.heldSteps = [];
+    this.violation = ''; this.collarHits = 0; this.collarHit = ''; this.seen = null; this.heldSteps = [];
     this.cartX = CART_HOME_X; this.cartAt = CART_HOME_X;
     this.last = null;
     this.pods.length = 0;
@@ -123,6 +123,8 @@ export class PodWorld {
   private heldSteps: number[] = [];   // steps each pod has been held (the sim positions lag the writes by one step)
   private armGeoms: number[] | null = null;
   private hitAdr = -1;
+  /** Steps in which a gripper (arm) geom touched a silicone collar, and which one: must stay 0 over a run. */
+  collarHits = 0; collarHit = '';
 
   /** Where a pod centre is: the store channel, above the tray, or neither. */
   private region(p: V3): 'store' | 'tray' | 'air' {
@@ -182,8 +184,10 @@ export class PodWorld {
         const g1 = k.geom1, g2 = k.geom2;
         k.delete();
         if (this.armGeoms.includes(g1) !== this.armGeoms.includes(g2)) {
-          const nm = (g: number) => { const b = m.body(m.geom_bodyid[g]); const n = b.name; b.delete(); const gp = [0, 1, 2].map((k) => d.geom_xpos[3 * g + k] * 1000).map(Math.round).join(','); return n + ' geom ' + g + ' at ' + gp + ' mm'; };
-          return bad(`the arm hit the unit (${nm(g1)} / ${nm(g2)})`);
+          const nm = (g: number) => { const b = m.body(m.geom_bodyid[g]); const n = b.name; b.delete(); const gg = m.geom(g), gn = gg.name; gg.delete(); const gp = [0, 1, 2].map((k) => d.geom_xpos[3 * g + k] * 1000).map(Math.round).join(','); return n + (gn ? ' ' + gn : '') + ' geom ' + g + ' at ' + gp + ' mm'; };
+          const a = nm(g1), b = nm(g2);
+          if (a.includes('collar_') || b.includes('collar_')) { this.collarHits++; this.collarHit = `${a} / ${b}`; return bad(`the gripper touched a silicone collar (${a} / ${b})`); }
+          return bad(`the arm hit the unit (${a} / ${b})`);
         }
       }
       return bad('the arm hit the unit');

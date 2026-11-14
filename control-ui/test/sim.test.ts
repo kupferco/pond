@@ -161,6 +161,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     const names = podGrabMjcf();
     check('spine is at least double the 33.7 mm tube', SPINE_R * 2 >= 2 * 0.0337);
     check('end effector is a two-finger claw (no pin)', pg.model.nu === 8 && names.includes('claw_l') && names.includes('claw_r') && !names.includes('name="pin"'));
+    check('collars are collision geometry the arm can hit (named collar_*, arm bit set)', names.includes('name="collar_0_0"') && names.split('\n').filter((l) => l.includes('name="collar_') && l.includes('conaffinity="3"')).length >= 8 * (STORE_ROWS + TRAY_SLOTS));
     check('each store row has an end gate at the back', names.split('\n').filter((l) => l.includes('rgba="0.95 0.75 0.2 1"')).length >= STORE_ROWS);
     pg.step();
     const b = pg.model.body('base'), id = b.id; b.delete();
@@ -202,6 +203,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   let task = new PodTask(world, pgCmd, { jobs: [{ row: 2, slot: 0 }], seed: 1 });
   let zMax = 0, yMove = 0;
   while (!task.done) { task.advance(0.1); const p = world.pos(second); zMax = Math.max(zMax, p[2] - z1[2]); yMove = Math.max(yMove, Math.abs(p[1] - z1[1]) + Math.abs(p[0] - z1[0])); if (world.pods[second].state !== 'store') break; }
+  check('first pick: gripper never touched a collar', world.collarHits === 0, world.collarHit);
   check('one pod is seated in collar A1', task.failReason === '' && world.trayPod(0) >= 0, task.failReason);
   check('roof: the second pod is not lifted or dragged while the first is picked', zMax < 0.002, String(zMax));
   for (let i = 0; i < 1000; i++) pg.step();
@@ -232,6 +234,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('whole 4 x 4 tray filled', task.failReason === '' && world.trayCount === TRAY_SLOTS, `${world.trayCount}/${TRAY_SLOTS} ${task.failReason}`);
   check('pods came from several rows', rowsUsed >= 2, String(rowsUsed));
   check('full run: no pod appeared, disappeared or teleported, and the arm hit nothing', world.violation === '', world.violation);
+  check('full run: no gripper geom touched any silicone collar', world.collarHits === 0 && !/collar/.test(world.violation), world.collarHit);
   check('pod count conserved: 16 in the tray, the rest in the store', world.trayCount === TRAY_SLOTS && world.storeCount === POD_COUNT - TRAY_SLOTS, `${world.trayCount} ${world.storeCount}`);
   check('every seated pod stands in its collar', task.results.every((r) => r.success && r.posErrMm <= 4), JSON.stringify(task.results.map((r) => r.posErrMm)));
 

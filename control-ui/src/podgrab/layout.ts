@@ -34,11 +34,11 @@ export const POD_R = 0.0125;
 export const POD_LEN = 0.04;
 export const HOLE_R = 0.007;
 // claw gripper (replaces the pin): two flat fingers either side of the pod, along the hand, closing across the hand y axis (world x
-// in the working pose). ASSUMED dimensions: fingers 1.25 mm thick, 12 mm wide, open inner gap 28.6 mm (pod 25), outer 31.1 mm, which passes the 34 mm pick holes.
+// in the working pose). ASSUMED dimensions: fingers 1.25 mm thick, 8 mm wide, open inner gap 28.6 mm (pod 25), outer 31.1 mm, which passes the 34 mm pick holes.
 export const TOOL_X = 0.130;                    // pod centre along the hand from the hand origin when carried
 export const CLAW_BASE = 0.07;                  // palm: where the fingers start along the hand
 export const CLAW_TIP = TOOL_X + 0.001;         // fingertips: the claw grips the upper half of the pod, so the guide walls of the store channel stay below it
-export const CLAW_T = 0.00125, CLAW_W = 0.012;
+export const CLAW_T = 0.00125, CLAW_W = 0.008;
 export const CLAW_OPEN = 0.0143;                // open: half inner gap
 export const CLAW_GRIP = CLAW_OPEN - POD_R;     // finger travel from open to touching the pod (1.5 mm)
 export const CLAW_ACT = ['claw_l', 'claw_r'];
@@ -113,6 +113,7 @@ export const STORE_PITCH_DEG = SLOPE * 180 / Math.PI;      // hand pitch (0 = pi
 // --- lid pick holes, over position 0 of every row
 export const HOLE_HALF = 0.017;
 export const COLLAR_H = 0.004;
+export const COLLAR_IN = 0.017;                 // inner radius of a lid collar (apothem of the 8-sided ring): the open claw (fingers 31.2 mm across, 8 mm wide, corner radius 16.1 mm) passes with ~0.9 mm to spare
 export const lidMid = LID_Z - LID_T / 2;
 export const pickHoleY = storePos(0, 0)[1] - (lidMid - storePos(0, 0)[2]) * Math.tan(SLOPE);
 
@@ -157,8 +158,8 @@ const SOLID = 'contype="1" conaffinity="1"';
 const OBST = 'contype="1" conaffinity="3"';
 const SLICK = `${OBST} friction="0.05 0.005 0.0001"`;   // store channel: pods slide (MuJoCo takes the larger friction of a pair)
 const SILICONE = rgba(0.95, 0.55, 0.2);
-// silicone collars are soft: pods collide with them, the arm (claw fingers) just brushes past
-const SOFT = 'contype="1" conaffinity="1"';
+// silicone collars: pods and the arm (bit 2) both collide with them, so a gripper contact can be detected (geoms named collar_*)
+const SOFT = 'contype="1" conaffinity="3"';
 
 /** A ring of boxes round the x axis (a hand sleeve): inner radius ri, outer ro, length len, segment k = skip left out (the C-gap). */
 function handRing(cx: number, cy: number, cz: number, skip: number | null, color: string): string[] {
@@ -263,12 +264,13 @@ function storeGeoms(): string[] {
 }
 
 /** A ring of boxes (a silicone collar) round a vertical axis. */
+let collarNo = 0;
 function ring(cx: number, cy: number, z0: number, rIn: number, thick: number, h: number, color: string, n = 8): string[] {
-  const out: string[] = [];
+  const out: string[] = [], id = collarNo++;
   const half = (rIn + thick) * Math.tan(Math.PI / n) + 0.0005;
   for (let k = 0; k < n; k++) {
     const a = 2 * Math.PI * k / n, rc = rIn + thick / 2;
-    out.push(`<geom type="box" pos="${f(cx + rc * Math.cos(a))} ${f(cy + rc * Math.sin(a))} ${f(z0 + h / 2)}" size="${f(half)} ${f(thick / 2)} ${f(h / 2)}" euler="0 0 ${f(a + Math.PI / 2)}" ${SOFT} ${color}/>`);
+    out.push(`<geom name="collar_${id}_${k}" type="box" pos="${f(cx + rc * Math.cos(a))} ${f(cy + rc * Math.sin(a))} ${f(z0 + h / 2)}" size="${f(half)} ${f(thick / 2)} ${f(h / 2)}" euler="0 0 ${f(a + Math.PI / 2)}" ${SOFT} ${color}/>`);
   }
   return out;
 }
@@ -284,7 +286,7 @@ function lidGeoms(): string[] {
   plate(x0, x1, pickHoleY + HOLE_HALF, y1);
   plate(x0, rowX(0) - HOLE_HALF, pickHoleY - HOLE_HALF, pickHoleY + HOLE_HALF);
   for (let r = 0; r < STORE_ROWS; r++) plate(rowX(r) + HOLE_HALF, r + 1 < STORE_ROWS ? rowX(r + 1) - HOLE_HALF : x1, pickHoleY - HOLE_HALF, pickHoleY + HOLE_HALF);
-  for (let r = 0; r < STORE_ROWS; r++) out.push(...ring(rowX(r), pickHoleY, LID_Z, 0.0155, 0.0015, COLLAR_H, SILICONE));
+  for (let r = 0; r < STORE_ROWS; r++) out.push(...ring(rowX(r), pickHoleY, LID_Z, COLLAR_IN, 0.0005, COLLAR_H, SILICONE));
   return out;
 }
 
@@ -312,12 +314,13 @@ function trayGeoms(): string[] {
     y0 = y + HOLE_HALF;
   }
   box(xa, xb, y0, TANK_D / 2, TLID_Z, TLID_T, grey);
-  for (let s = 0; s < TRAY_SLOTS; s++) { const [x, y] = seatPos(s); out.push(...ring(x, y, TLID_TOP, 0.0155, 0.0015, TCOLLAR_H, SILICONE)); }
+  for (let s = 0; s < TRAY_SLOTS; s++) { const [x, y] = seatPos(s); out.push(...ring(x, y, TLID_TOP, COLLAR_IN, 0.0005, TCOLLAR_H, SILICONE)); }
   return out;
 }
 
 /** MJCF: the arm on its cart, the track, the tank with lid, store and tray, and all pods. */
 export function podGrabMjcf(): string {
+  collarNo = 0;
   const wall = (x: number, y: number, z: number, sx: number, sy: number, sz: number, a = 0.22) =>
     `<geom type="box" pos="${f(x)} ${f(y)} ${f(z)}" size="${f(sx)} ${f(sy)} ${f(sz)}" ${rgba(0.72, 0.8, 0.86, a)}/>`;
   const hx = TANK_W / 2, hy = TANK_D / 2, t = 0.004;
