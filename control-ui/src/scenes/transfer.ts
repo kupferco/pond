@@ -26,43 +26,50 @@ export const transferScene: Scene = {
     <h1>Pond cart transfer</h1>
     <section class="card cartstat" aria-live="off">
       <dl>
+        <dt>Cart on</dt><dd id="t-pipe"></dd>
+        <dt>Step</dt><dd id="t-step-now">Idle</dd>
+        <dt>Contacts</dt><dd id="t-hit">none</dd>
+      </dl>
+    </section>
+    <div class="row"><button class="big grow" id="t-transfer">Run full transfer</button></div>
+    <div class="row"><button class="big grow" id="t-reset">Reset</button></div>
+    <p id="t-msg" class="hint"></p>
+    <details class="card">
+      <summary>Advanced</summary>
+      <dl>
         <dt>Hands</dt><dd id="t-hands"></dd>
         <dt>Position</dt><dd><span id="t-pos">0.0</span> cm along the track: <span id="t-where"></span></dd>
         <dt>Plate rotation</dt><dd><span id="t-swing">0</span>° of ${CLEAR_DEG}°, hinge angles <span id="t-hinges"></span></dd>
         <dt>Arm</dt><dd>stowed on the plate, does not move</dd>
-        <dt>Step</dt><dd id="t-step-now">Idle</dd>
-        <dt>Contacts</dt><dd id="t-hit">none</dd>
       </dl>
-      <p class="hint">Pipes B and C are ${PIPE_X.C - PIPE_X.B} mm apart (cad/cart_dims.py), the plate hangs between the two hinge axes. Each hand is a fixed sleeve with a jaw on a knuckle hinge (jaw motor on the end). Battery under the arm, worm drive on each hinge. A transfer takes the cart from the top of pipe B and C (clamped on both) to the top right of pipe C: open hand B's jaw (release), rotate the plate ${CLEAR_DEG}° on hand C's hinge to clear pipe B, drive on pipe C round its bend, rotate back flat as soon as the bend is behind, drive on to the top right. Pressed again it comes back the same way and clamps hand B on pipe B. The arm stays as it is. Rotation only happens during a transfer; the hinge worm drives hold the plate with the motors off.</p>
-    </section>
-    <div class="row"><button class="big grow" id="t-transfer">Run full transfer</button></div>
-    <div class="row"><button class="big grow" id="t-stop">Stop</button><button class="big grow" id="t-reset">Reset</button></div>
-    <p class="hint">Run full transfer: from the top of pipes B and C (clamped on both) to the top right of pipe C; press it again to come back. Each press runs the whole sequence.</p>
-    <h2>Clamps</h2>
-    <div class="row">
-      <button class="big grow" id="t-clampb"></button>
-      <button class="big grow" id="t-clampc"></button>
-    </div>
-    <h2>Plate rotation</h2>
-    <div class="row">
-      <button class="big grow" id="t-rplus">Rotate to clear curve</button>
-      <button class="big grow" id="t-rminus">Rotate back</button>
-    </div>
-    <div class="xy stepbar">
-      <label>Hinge speed <input class="tall" id="t-hspeed" type="number" inputmode="decimal" min="1" max="60" step="1" value="${SWING_RATE_DEG_S}" aria-label="Hinge speed degrees per second"> °/s</label>
-    </div>
-    <p class="hint">The CAD worm drive turns a hinge at ${HINGE_DEG_S_CAD.toFixed(1)}°/s (60 rpm motor, 38:1); the field sets the limit used here.</p>
-    <h2>Drive</h2>
-    <div class="row">
-      <button class="big grow" id="t-down">◀ Back</button>
-      <button class="big grow" id="t-up">▶ Forward</button>
-    </div>
-    <div class="xy stepbar">
-      <label>Step <input class="tall" id="t-step" type="number" inputmode="decimal" min="0.1" step="1" value="${DEFAULT_STEP_CM}" aria-label="Step size cm"> cm</label>
-      <label>Speed <input class="tall" id="t-speed" type="number" inputmode="decimal" min="0.1" max="${MAX_SPEED_CM_S}" step="1" value="${DEFAULT_SPEED_CM_S}" aria-label="Speed cm per second"> cm/s</label>
-    </div>
-    <p class="hint">Forward and back drive the cart along the track on the drive wheels: on both pipes up to ${S_MAX_CM} cm; with hand B released, on up round pipe C's bend (${P_STRAIGHT_END.toFixed(0)} to ${P_BEND_END.toFixed(0)} cm, plate rotated) to its top right (${P_TOP_CM.toFixed(0)} cm). Reset puts the cart back at the top of the straight part, clamped on both.</p>
-    <p id="t-msg" class="hint"></p>`;
+      <p class="hint">Pipes B and C are ${PIPE_X.C - PIPE_X.B} mm apart (cad/cart_dims.py). A transfer opens hand B's jaw, rotates the plate ${CLEAR_DEG}° on hand C's hinge, drives round pipe C's bend, rotates back flat and drives to the top right; pressed again it comes back. The hinge worm drives hold the plate with the motors off.</p>
+      <div class="row"><button class="big grow" id="t-stop">Stop</button></div>
+      <h2>Clamps</h2>
+      <div class="row">
+        <button class="big grow" id="t-clampb"></button>
+        <button class="big grow" id="t-clampc"></button>
+      </div>
+      <h2>Plate rotation</h2>
+      <div class="row">
+        <button class="big grow" id="t-rplus">Rotate to clear curve</button>
+        <button class="big grow" id="t-rminus">Rotate back</button>
+      </div>
+      <div class="xy stepbar">
+        <label>Hinge speed <input class="tall" id="t-hspeed" type="number" inputmode="decimal" min="1" max="60" step="1" value="${SWING_RATE_DEG_S}" aria-label="Hinge speed degrees per second"> °/s</label>
+      </div>
+      <p class="hint">The CAD worm drive turns a hinge at ${HINGE_DEG_S_CAD.toFixed(1)}°/s (60 rpm motor, 38:1); the field sets the limit used here.</p>
+      <h2>Drive</h2>
+      <div class="row">
+        <button class="big grow" id="t-down">◀ Back</button>
+        <button class="big grow" id="t-up">▶ Forward</button>
+      </div>
+      <div class="xy stepbar">
+        <label>Step <input class="tall" id="t-step" type="number" inputmode="decimal" min="0.1" step="1" value="${DEFAULT_STEP_CM}" aria-label="Step size cm"> cm</label>
+        <label>Speed <input class="tall" id="t-speed" type="number" inputmode="decimal" min="0.1" max="${MAX_SPEED_CM_S}" step="1" value="${DEFAULT_SPEED_CM_S}" aria-label="Speed cm per second"> cm/s</label>
+      </div>
+      <p class="hint">Forward and back drive the cart on both pipes up to ${S_MAX_CM} cm; with hand B released, on round pipe C's bend (${P_STRAIGHT_END.toFixed(0)} to ${P_BEND_END.toFixed(0)} cm) to its top right (${P_TOP_CM.toFixed(0)} cm).</p>
+    </details>
+`;
 
     const $ = <T extends HTMLElement>(id: string) => panel.querySelector<T>('#' + id)!;
     const run = new TransferRun(); run.reset();
@@ -94,6 +101,7 @@ export const transferScene: Scene = {
     const show = () => {
       const st = run.st, free = 'B', onC = st.s > S_MAX_CM + 1e-6;
       $('t-hands').textContent = `hand ${free}: ${st.open2 < 0.01 ? 'clamped' : st.open2 > 0.99 ? 'released' : 'moving'} ${st.t > 0 ? '(plate rotated, off the pipe)' : onC ? '(free, off pipe B)' : 'on pipe B'}; hand C: ${st.open1 < 0.01 ? 'clamped' : st.open1 > 0.99 ? 'released' : 'moving'} on pipe C`;
+      $('t-pipe').textContent = onC ? 'pipe C (top right), hand C clamped' : 'pipes B and C (top of the straight part), both hands clamped';
       $('t-pos').textContent = st.s.toFixed(1);
       $('t-where').textContent = st.s < P_STRAIGHT_END - 1e-6 ? 'straight part' : st.s < P_BEND_END - 1e-6 ? 'pipe C\'s bend' : st.s >= P_TOP_CM - 1e-6 ? 'top right of pipe C' : 'top bar of pipe C';
       $('t-swing').textContent = ((kinematics(st.t, 1, bendTrim(st.s).da).alpha * 180) / Math.PI).toFixed(1);
