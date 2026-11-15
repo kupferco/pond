@@ -1,6 +1,10 @@
-# cad/cart_arm.py: SO-101 follower arm mounted on the Pond cart (DRAFT, 11 Nov 2026).
+# cad/cart_arm.py: SO-101 follower arm mounted on the Pond cart (DRAFT v3, 15 Nov 2026, Viber #109 / #97).
 # Drawing 5 of 5 planned cart drawings (whole cart, base, sleeve/hand systems, wheel pairs, arm on cart).
 # Not production geometry: a readable drawing of how the arm sits on the cart and what it can reach.
+#
+# v3 (Viber #109): checked against Viber #97. The cart already uses cart_hinge.py v3 (plate hinge + worm rotation drive at
+# each hand) and cart_assembly.py's plate/battery/motors, so only the header text was stale and is corrected here
+# (see ASSUMED 1). No geometry changed.
 #
 # Frame: the hand_sleeve.py frame (track pipes along Z, plate on the -Y side of the pipes).
 # v2 (follow-up): the base plate runs ACROSS two parallel pipes, one hand clamped on each pipe (pipe B and
@@ -18,10 +22,11 @@
 # ASSUMED (all marked "ASSUMED" below; nothing here is decided):
 #  0. Pipe spacing: the two pipes the cart clamps are 120 mm apart (v3, Viber #97; was 280), centre to centre (ASSUMED; the real
 #     spacing between neighbouring units is not decided). One hand per pipe, both facing the same way.
-#  1. Arm mount, hands, wheels, sleeves: as cart_assembly.py (itself assumed). Base plate redrawn across the
-#     two pipes: 112 mm (Z) x PIPE_SPACING + 100 (X) x 6 mm, same open-frame idea, bosses round each hand's
-#     holes and an arm block. Battery 70 x 50 x 70 beside the arm on the pipe-C side, motors one per hand on
-#     the +X side of each hand (gearbox up), all ASSUMED positions.
+#  1. Arm mount, hands, wheels, sleeves, plate, battery and drive motors: exactly as cart_assembly.py / cart_dims.py (itself
+#     assumed): solid plate 142 (X) x 112 (Z) x 6 mm hung between the two hinge axes (v3: the old text here said
+#     PIPE_SPACING + 100 and an open frame, which no longer matched), battery 70 x 50 x 70 UNDER the arm base (plate | battery | arm; the shelf
+#     tongue is gone, Viber #109), one drive motor per hand beside the arm on the plate, plate hung on each hand's hinge with the worm
+#     rotation drive of cart_hinge.py v3 (Viber #97). All ASSUMED positions.
 #  2. Link lengths (shoulder to elbow 120, elbow to wrist 130, wrist to gripper tip 100 = 350 mm
 #     stretched) taken from the layout in so101_servo_layout.py and the 350 mm REACH of pod_store_reach.py.
 #     Servos and links are envelope boxes, not real parts.
@@ -106,7 +111,7 @@ def fuse(items):
     return out
 
 # Arm frame -> cart frame. Arm Z = out of the plate (cart -Y); arm X = cart +Z at pan 0; arm Y = cart -X.
-ARM_ORIGIN = (ca.ARM_X, ca.PLATE_Y0, ca.ARM_Z)
+ARM_ORIGIN = (ca.ARM_X, ca.ARM_Y0, ca.ARM_Z)       # base on the battery's front face (v3 of this file, Viber #109)
 def a2c_pt(p):
     return (ARM_ORIGIN[0] - p[1], ARM_ORIGIN[1] - p[2], ARM_ORIGIN[2] + p[0])
 def to_cart(wp):
@@ -252,23 +257,25 @@ cart = [("base_plate", plate, (0.35, 0.35, 0.38, 1)),
 for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):
     cart.append(("track_%s" % tag, xshift(ca.cyl(hs.R_PIPE, PIPE_Z1 - PIPE_Z0, "z", (0, 0, (PIPE_Z0 + PIPE_Z1) / 2)), sgn * HX),
                  (0.75, 0.78, 0.8, 1)))
-    cart.append(("hand_on_%s_sleeve" % tag, xshift(hs.result, sgn * HX), (0.95, 0.75, 0.2, 1)))
-    cart.append(("hand_on_%s_wheels" % tag, xshift(ca.WHEELS, sgn * HX), (0.15, 0.15, 0.15, 1)))
+    for nm, shp, col in ca.clamp_hand_parts():     # clamp/jaw sleeve, clamped (cart_sleeves.py)
+        cart.append(("hand_on_%s_%s" % (tag, nm), xshift(shp, sgn * HX), col))
     for nm, shp, col in ch.hinge_parts(sgn):
         cart.append(("hinge_%s_%s" % (tag, nm), shp, col))
 
 # ---------------- Waveshare board and bracket ----------------
-BOARD = (42.0, 12.0, 33.0)                       # ASSUMED: X (along plate), out from plate, Z
-BOARD_X = ca.BATT_X                              # ASSUMED (v3, Viber #97): on the battery's front face on 6 mm foam pads
-STAND = 6.0                                      # (the plate no longer has room for a board beside the arm)
-board_c = (BOARD_X, ca.PLATE_Y0 - BATT_Y - STAND - BOARD[1] / 2, ca.BATT_Z)
-foam = fuse([box(8.0, STAND, 8.0, (BOARD_X + sx * 16.0, ca.PLATE_Y0 - BATT_Y - STAND / 2, ca.BATT_Z + sz * 11.0))
-             for sx in (-1, 1) for sz in (-1, 1)])
+BOARD = (42.0, 33.0, 12.0)                       # ASSUMED: X (along plate), out from plate, Z (thin side)
+BOARD_X = ca.BATT_X                              # ASSUMED (v4, Viber #109): on the battery's +Z (top) face on 6 mm foam pads; the
+STAND = 6.0                                      # battery's front face now carries the arm base, so the board moved to its top
+BATT_TOP_Z = ca.BATT_Z + BATT[2] / 2             # face (board z 41..53, below the plate's top edge at 56)
+BATT_MID_Y = ca.PLATE_Y0 - BATT_Y / 2
+board_c = (BOARD_X, BATT_MID_Y, BATT_TOP_Z + STAND + BOARD[2] / 2)
+foam = fuse([box(8.0, 8.0, STAND, (BOARD_X + sx * 16.0, BATT_MID_Y + sy * 11.0, BATT_TOP_Z + STAND / 2))
+             for sx in (-1, 1) for sy in (-1, 1)])
 board = box(BOARD[0], BOARD[1], BOARD[2], board_c)
-# 12 V lead: board -> battery's front-bottom edge (a 20 mm run)
-power_pts = [(BOARD_X + 10.0, board_c[1], ca.BATT_Z - BOARD[2] / 2),
-             (BOARD_X + 10.0, ca.PLATE_Y0 - BATT_Y, ca.BATT_Z - BATT[2] / 2 + 6.0)]
-usb_pts = [(BOARD_X, board_c[1], ca.BATT_Z + BOARD[2] / 2), (BOARD_X, board_c[1], ca.BATT_Z + BATT[2] / 2 + 10.0)]
+# 12 V lead: board -> battery's top edge (a short run down onto the battery's -X side)
+power_pts = [(BOARD_X - BOARD[0] / 2, BATT_MID_Y, board_c[2]),
+             (BOARD_X - BATT[0] / 2 + 6.0, BATT_MID_Y, BATT_TOP_Z - 2.0)]
+usb_pts = [(BOARD_X, BATT_MID_Y, board_c[2] + BOARD[2] / 2), (BOARD_X, BATT_MID_Y, board_c[2] + BOARD[2] / 2 + 10.0)]
 
 def polyline(pts, r=2.0):
     out = []

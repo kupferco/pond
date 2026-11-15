@@ -40,8 +40,9 @@ HINGE_CLEAR = 2.0                       # plate edge to barrel gap beyond the ba
 #   Plate width between the hinge axes = PIPE_SPACING + (HINGE_OFF_C - HINGE_OFF_B) - 2 (R + CLEAR)
 #                                      = PIPE_SPACING + 36 - 14 = PIPE_SPACING + 22.
 #   So PIPE_SPACING >= 142 - 22 = 120. At 115 the plate is 137 wide and the arm or a motor would overlap.
-# The battery (70 x 50 x 70) does NOT fit between the hands at any spacing near this: it goes above the arm
-#   (BATT_Z) on a shelf tongue of the plate. The two hinge worm drives also go above the sleeves (z > 60).
+# The battery (70 x 50 x 70) is the same 70 x 70 footprint as the arm base, so it sits flat on the plate centre between
+#   the two motors and the arm base is bolted on top of it (Viber #109: stack plate | battery | arm; no shelf tongue).
+#   The two hinge worm drives go above the sleeves (z > 60).
 ARM_BASE_W = 70.0                       # SO-101 base footprint (given, 70 x 70 mm)
 MOTOR_R, MOTOR_L = 14.0, 55.0           # ASSUMED worm-gear motor placeholder, 28 x 55 mm
 PART_GAP, END_GAP = 4.0, 4.0            # ASSUMED gaps: between plate parts, motor to plate end
@@ -62,8 +63,9 @@ MOTOR_XS[1] = ARM_X + ARM_BASE_W / 2 + PART_GAP + MOTOR_R                       
 ARM_Z = 0.0
 ARM_BLOCK_HX = ARM_BASE_W / 2 + 2.0     # arm block on the plate, 2 mm beyond the arm base each side
 BATT = (70.0, 50.0, 70.0)               # ASSUMED: X, Y (out from plate), Z
-BATT_X = ARM_X                          # battery sits above the arm, same x
-BATT_Z = PLATE_ZH + 6.0 + BATT[2] / 2   # ASSUMED: on a shelf tongue above the plate's top rim (centre z)
+BATT_X = ARM_X                          # battery sits UNDER the arm base, same x (v3, Viber #109: no shelf tongue)
+BATT_Z = ARM_Z                          # ASSUMED: centred on the arm axis, flat on the plate: stack plate | battery | arm base
+ARM_Y0 = PLATE_Y0 - BATT[1]             # arm base underside: on the battery's front face (50 mm out from the plate)
 PIPE_STUB_L = 330.0                     # ASSUMED: pipe stub length in the assembly
 
 # ---------------- Hinge worm drive (v3, ASSUMED sizes, drawn in cart_hinge.py) ----------------
@@ -83,7 +85,6 @@ WHEEL_Z0 = 62.0                         # ASSUMED wheel underside (above the pla
 WORM_ZC = WHEEL_Z0 + WHEEL_T / 2        # 66: worm axis height
 HORN_R, HORN_T = 10.0, 3.0              # ASSUMED: hub flange bolted to the top of the sleeve knuckle
 KNUCKLE_Z = 45.0                        # sleeve knuckles run to the sleeve end
-BATT_SHELF_T = 3.0                      # battery corner stops
 TONGUE_DX0, TONGUE_W = 21.0, 30.0       # worm-bracket tongue on the plate: starts 21 mm from the hinge axis (beyond the wheel), 30 wide
 TONGUE_Z1 = 86.0                        # tongue top
 
@@ -92,7 +93,8 @@ TONGUE_Z1 = 86.0                        # tongue top
 # motor drives. Worst case: hinge axis horizontal, so every mass counts at its full distance r from the axis
 # (r = in-plane lever and out-of-plane offset combined, the max over the swing angle), all summed as if aligned.
 # ARM FOLDED POSE (ASSUMED): upper arm vertical and forearm folded back on it, wrist and gripper tucked, so the arm's centre
-# of mass is 55 mm out from the plate (dy) and 20 mm off the arm base centre along the plate (dx). Unfolded
+# of mass is 55 mm above its base, i.e. 105 mm out from the plate now that the base sits on the battery (dy, Viber #109;
+# was 55 when the arm was on the plate), and 20 mm off the arm base centre along the plate (dx). Unfolded
 # (centre of mass about 300 mm out) the same arm would need about 3x the torque.
 G = 9.81
 WORM_EFF = 0.35                         # ASSUMED worm efficiency (steel on brass, lead angle 5.7 deg, mu 0.15)
@@ -114,8 +116,8 @@ def torque_budget():
     for drv, x_ax, other_x in (("B", xb, xc), ("C", xc, xb)):
         tot, rows = 0.0, []
         items = [("plate 142x112x6 + hinge leaves", 0.30, arm_x, 6.0, 1.0),
-                 ("battery 70x50x70", 0.35, arm_x, 34.0, 1.0),
-                 ("arm SO-101, folded pose", 0.80, arm_x + 20.0 * (1 if drv == "B" else -1), 64.0, 1.0),
+                 ("battery 70x50x70 under the arm", 0.35, arm_x, 25.0, 1.0),
+                 ("arm SO-101, folded pose", 0.80, arm_x + 20.0 * (1 if drv == "B" else -1), 114.0, 1.0),
                  ("drive motor B", 0.15, -65.0, 23.0, 1.0),
                  ("drive motor C", 0.15, 41.0, 23.0, 1.0),
                  ("other hand's worm motor + bracket", 0.30, other_x, 30.0, 1.0)]

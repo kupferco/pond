@@ -1,4 +1,5 @@
-# cad/export_cart_v2_views.py: export the cart base v2 drawings as GLB files and PNG views (Viber #97 follow-up).
+# cad/export_cart_v2_views.py: export the cart drawings as GLB files and PNG views (Viber #97 follow-up; v2, Viber #109:
+# also the sleeve/hand drawing with hinge, worm drive and the static hand of a transfer).
 # Needed because the Pond Render sandbox runs only single self-contained scripts and cannot import cart_assembly.py.
 # Run:  python cad/export_cart_v2_views.py   (from anywhere; writes renders/cart_v2/ at the repo root)
 # Extra packages used only here (not project dependencies): cadquery, numpy, pillow.
@@ -15,6 +16,7 @@ sys.path.insert(0, HERE)
 import cart_assembly as ca
 import cart_base as cb
 import cart_hinge as ch
+import cart_sleeves as csl
 from cart_dims import HX
 
 OUT = os.path.join(HERE, "..", "renders", "cart_v2")
@@ -104,6 +106,25 @@ def main():
     det.add(ca.xshift(ca.cyl(ca.hs.R_PIPE, 120, "z", (0, 0, 0)), sgn * HX), name="pipe", color=cq.Color(0.75, 0.78, 0.8, 1))
     dparts = parts_of(det)
     render(dparts, (1, -1.1, 0.8), up, os.path.join(OUT, "hinge_closeup.png"))
+    export_sleeves()
+
+def export_sleeves():
+    """cart_sleeves.py v4: both hands with hinge + worm drive + plate, the transfer scene (static hand in blue, plate swung
+    on its hinge, other hand released with its jaw open), the clamp states (clamped, released, released and moved off the
+    pipe: jaw closed/open, with its hinge pin and actuator) and one exploded hand."""
+    up = (0, 0, 1)
+    for tag, assy_ in (("sleeves_pair", csl.pair), ("sleeves_transfer", csl.transfer),
+                       ("sleeves_clamped", csl.clamped), ("sleeves_released", csl.released),
+                       ("sleeves_released_off", csl.released_off)):
+        parts = parts_of(assy_)
+        assy_.save(os.path.join(OUT, tag + ".glb"), "GLTF")      # per-part colours kept, for a 3D viewer
+        print("wrote renders/cart_v2/%s.glb" % tag)
+        render(parts, (1, -1.1, 0.8), up, os.path.join(OUT, tag + "_iso.png"))
+        render(parts, (0, -1, 0), up, os.path.join(OUT, tag + "_front.png"))
+        render(parts, (0, 0, 1), (0, 1, 0), os.path.join(OUT, tag + "_top.png"))
+    csl.exploded.save(os.path.join(OUT, "sleeves_exploded.glb"), "GLTF")
+    print("wrote renders/cart_v2/sleeves_exploded.glb")
+    render(parts_of(csl.exploded), (1, -1.1, 0.8), up, os.path.join(OUT, "sleeves_exploded_iso.png"))
 
 if __name__ == "__main__":
     main()

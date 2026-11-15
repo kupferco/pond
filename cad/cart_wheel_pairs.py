@@ -1,4 +1,4 @@
-# cad/cart_wheel_pairs.py: the rigid WHEEL PAIRS of a Pond cart hand (DRAFT, 11 Nov 2026).
+# cad/cart_wheel_pairs.py: the rigid WHEEL PAIRS of a Pond cart hand (DRAFT v2, 15 Nov 2026, Viber #109 / #97).
 # Drawing 4 of 5 planned cart drawings (whole cart, base, sleeve/hand systems, wheel pairs, arm on cart).
 # Not production geometry: a readable detail drawing to show how one pair is built and how it rides.
 #
@@ -7,6 +7,11 @@
 # one rigid carrier. A hand has three pairs: the DRIVEN pair at 180 deg (-X, outside of the loop) and two
 # SPRING IDLER pairs at +/-60 deg (towards the spine): 3 pairs x 2 wheels = the 6 wheels per hand of
 # hand_sleeve.py and the decision doc.
+#
+# v2 (Viber #109, up to date with Viber #97): the `context` model (both hands) now also shows each hand's plate hinge and
+# base rotation worm drive (cart_hinge.py v3, imported, not redrawn) and the plate (cart_assembly.py). The single-hand
+# `result` and the `corner` model are wheel-pair details and deliberately show the hand alone (the hinge sits on the
+# sleeve's pad edge on the -Y side, away from the wheel pairs); they are unchanged. Geometry decisions are unchanged.
 #
 # Three models are built here:
 #   result  : one hand's three pairs on the track pipe, with the driven pair's worm drive and motor.
@@ -40,7 +45,7 @@
 #     The hand sits square on the driven pair at the bend midpoint, wheels as point-contact discs.
 #  0. Pipe spacing: 120 mm centre to centre, imported from cart_dims.py (itself ASSUMED; the real spacing between
 #     neighbouring units is not decided). Both hands face the same way (driven pairs on the -X side), as in
-#     cart_arm.py. The base plate is not drawn here; the hands are shown on bare pipe stubs.
+#     cart_arm.py. The base plate and the hinges are drawn in the context model only (v2); the single-hand and corner models show the bare hand.
 #  8. Corner finding (computed in this file, not simulated): the 90 mm sleeve bore is 4 mm radial
 #     clearance on the pipe; at 150 mm radius that is used up at the sleeve ends (see CLEARANCE below).
 import math
@@ -50,6 +55,7 @@ import cadquery as cq
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cart_dims as cd   # PIPE_SPACING shared with cart_arm, cart_assembly, cart_base (two-pipe layout)
+import cart_hinge as ch   # plate hinge + worm rotation drive (Viber #97), shown in the context model
 import cart_assembly as ca   # reuses motor size; importing runs it and also imports hand_sleeve as ca.hs
 hs = ca.hs
 
@@ -221,6 +227,9 @@ def two_hand_model():
             sp, cap = idler_extras()
             cadd(mv(rot(sp, ang)), "%s_idler_%s_springs" % (tag, t), (0.9, 0.2, 0.2, 1))
             cadd(mv(rot(cap, ang)), "%s_idler_%s_spring_cap" % (tag, t), (0.6, 0.6, 0.62, 1))
+        for nm, shp, col in ch.hinge_parts(-1 if tag == "B" else 1):     # already in cart coordinates
+            cadd(shp, "%s_hinge_%s" % (tag, nm), col)
+    cadd(ca.plate, "base_plate", (0.35, 0.35, 0.38, 1))
     return c
 
 context = two_hand_model()
