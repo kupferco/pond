@@ -4,7 +4,7 @@ Read this file first in every new session. It holds the big picture only. For an
 
 ## What Pond is
 
-An open-source, autonomous communal urban farming unit, aimed first at São Paulo (MVP "Pond 2027"). A hydroponic growing tower with a pipe-climbing robot cart and a small arm (SO-101 follower, STS3215 servos). The robot's main job is constant monitoring (catching pump failures, sick plants) plus planting pods and clearing failed plants, not heavy labour. Solar powered, flat-packs into its own tank. Target market: schools, councils, green-economy grants, and households; designs open-source for self-builders.
+An open-source, autonomous communal farming unit (outdoor), aimed first at São Paulo (MVP "Pond 2027"). A hydroponic growing tower with a pipe-climbing robot cart and a small arm (SO-101 follower, STS3215 servos). The robot's main job is constant monitoring (catching pump failures, sick plants) plus planting pods and clearing failed plants, not heavy labour. Solar powered, flat-packs into its own tank. Target market: schools, councils, green-economy grants, and households; designs open-source for self-builders.
 
 ## Current phase
 
@@ -16,7 +16,8 @@ Phase 1 moving into the first hardware: the arm is being built in the UK (two mo
 - **What's been done, by date:** `docs/history/history.json`
 - **Decisions (why things are the way they are):** `docs/decisions/` (index in `docs.json`)
 - **Working notes:** `docs/notes/`
-- **Drawings:** `docs/gallery/` (built from `renders.json`)
+- **Drawings:** `docs/drawings/` (built from `renders.json`)
+- **Gallery (images and videos):** `docs/gallery/` (data in Cloud Storage; see `docs/notes/2026-11-14-photos.md`)
 - **Part list and costs:** `docs/part-list/part-list.json`
 - **Live site:** https://kupferco.github.io/pond/ (moving to Firebase project `pond-grow`, pond-grow.web.app, once set up)
 - Google Drive ("Pond 2027") is an archive only.
