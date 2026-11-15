@@ -109,10 +109,13 @@ def main():
     export_sleeves()
 
 def export_sleeves():
-    """cart_sleeves.py v3: both hands with hinge + worm drive + plate, the transfer scene (static hand in blue, plate swung
-    on its hinge, other hand released), and one exploded hand."""
+    """cart_sleeves.py v4: both hands with hinge + worm drive + plate, the transfer scene (static hand in blue, plate swung
+    on its hinge, other hand released with its jaw open), the clamp states (clamped, released, released and moved off the
+    pipe: jaw closed/open, with its hinge pin and actuator) and one exploded hand."""
     up = (0, 0, 1)
-    for tag, assy_ in (("sleeves_pair", csl.pair), ("sleeves_transfer", csl.transfer)):
+    for tag, assy_ in (("sleeves_pair", csl.pair), ("sleeves_transfer", csl.transfer),
+                       ("sleeves_clamped", csl.clamped), ("sleeves_released", csl.released),
+                       ("sleeves_released_off", csl.released_off)):
         parts = parts_of(assy_)
         render(parts, (1, -1.1, 0.8), up, os.path.join(OUT, tag + "_iso.png"))
         render(parts, (0, -1, 0), up, os.path.join(OUT, tag + "_front.png"))
