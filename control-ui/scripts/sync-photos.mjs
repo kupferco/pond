@@ -1,11 +1,13 @@
-// Copies new or changed images from the Drive folder "Pond photos" into Cloud Storage
+// Copies new or changed images from one Drive folder into Cloud Storage
 // (photos/web/<id>.jpg, photos/thumb/<id>.jpg, photos/index.json). Idempotent: a file is skipped when its
 // Drive id is already in the index with the same modifiedTime. Files removed from the folder are removed
-// from the bucket. Run:  node scripts/sync-photos.mjs   (see docs/notes/2026-11-14-photos.md)
+// from the bucket. Only images directly in the folder are synced (videos, other files and subfolders are skipped).
+// Run:  node scripts/sync-photos.mjs   (see docs/notes/2026-11-14-photos.md)
 //
 // Env: GOOGLE_APPLICATION_CREDENTIALS (service account key file), PHOTOS_BUCKET (default pond-grow.firebasestorage.app),
-//      PHOTOS_FOLDER_ID (optional; otherwise the folder named "Pond photos" shared with the service account),
-//      PHOTOS_DRIVE_ID (optional; id of the shared drive, to search only that one),
+//      POND_PHOTOS_FOLDER_ID (preferred: Drive id of the folder to sync, from its URL),
+//      POND_PHOTOS_FOLDER_PATH (fallback when no id is set; "/"-separated names, the first one being a shared drive
+//      or a top-level folder; default "Pond 2.0/Images and Videos/Online Gallery/Pond 1.0"),
 //      DRY_RUN=1 to only print what would happen.
 import { google } from 'googleapis';
 import { Storage } from '@google-cloud/storage';
@@ -14,29 +16,39 @@ import sharp from 'sharp';
 const BUCKET = process.env.PHOTOS_BUCKET || 'pond-grow.firebasestorage.app';
 const DRY = !!process.env.DRY_RUN;
 const WEB_PX = 1600, THUMB_PX = 400;
-const FOLDER_NAME = 'Pond photos';
+const FOLDER_PATH = (process.env.POND_PHOTOS_FOLDER_PATH || 'Pond 2.0/Images and Videos/Online Gallery/Pond 1.0').split('/').map(x => x.trim()).filter(Boolean);
 
-// Works for shared drives and My Drive: every list/get passes supportsAllDrives; lists also search all drives
-// the service account can see (or only PHOTOS_DRIVE_ID, if set).
-const ALL_DRIVES = {
-  supportsAllDrives: true, includeItemsFromAllDrives: true,
-  ...(process.env.PHOTOS_DRIVE_ID ? { corpora: 'drive', driveId: process.env.PHOTOS_DRIVE_ID } : { corpora: 'allDrives' }),
-};
+// Works for shared drives and My Drive: every list/get passes supportsAllDrives; lists also include shared drive items.
+const ALL_DRIVES = { supportsAllDrives: true, includeItemsFromAllDrives: true };
+const q = v => v.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+const FOLDER = "mimeType='application/vnd.google-apps.folder' and trashed=false";
 
 const auth = new google.auth.GoogleAuth({ scopes: ['https://www.googleapis.com/auth/drive.readonly'] });
 const drive = google.drive({ version: 'v3', auth });
 const bucket = new Storage().bucket(BUCKET);
 
 async function findFolder() {
-  if (process.env.PHOTOS_FOLDER_ID) return process.env.PHOTOS_FOLDER_ID;
-  const r = await drive.files.list({
-    q: `mimeType='application/vnd.google-apps.folder' and name='${FOLDER_NAME}' and trashed=false`,
-    fields: 'files(id,name)', ...ALL_DRIVES,
-  });
-  const f = r.data.files || [];
-  if (!f.length) throw new Error(`No folder "${FOLDER_NAME}" visible to the service account. Add the service account's email (Viewer) to the shared drive or the folder.`);
-  if (f.length > 1) console.warn(`${f.length} folders named "${FOLDER_NAME}" are shared; using the first. Set PHOTOS_FOLDER_ID to pick one.`);
-  return f[0].id;
+  const id = (process.env.POND_PHOTOS_FOLDER_ID || '').trim();
+  if (id) return id;
+  const label = FOLDER_PATH.join(' / ');
+  // First segment: a shared drive by that name, otherwise a top-level folder visible to the service account.
+  const [first, ...rest] = FOLDER_PATH;
+  const drives = (await drive.drives.list({ q: `name='${q(first)}'`, fields: 'drives(id)', pageSize: 10 })).data.drives || [];
+  let parent, corpus;
+  if (drives.length) {
+    parent = drives[0].id; corpus = { corpora: 'drive', driveId: parent };
+  } else {
+    const r = await drive.files.list({ q: `${FOLDER} and name='${q(first)}'`, fields: 'files(id)', corpora: 'allDrives', ...ALL_DRIVES });
+    if (!r.data.files?.length) throw new Error(`"${first}" (start of ${label}) is not visible to the service account. Share it (Viewer) or set POND_PHOTOS_FOLDER_ID.`);
+    parent = r.data.files[0].id; corpus = { corpora: 'allDrives' };
+  }
+  for (const name of rest) {
+    const r = await drive.files.list({ q: `'${parent}' in parents and ${FOLDER} and name='${q(name)}'`, fields: 'files(id)', ...corpus, ...ALL_DRIVES });
+    if (!r.data.files?.length) throw new Error(`Folder "${name}" not found on the path ${label}. Check the names or set POND_PHOTOS_FOLDER_ID.`);
+    if (r.data.files.length > 1) console.warn(`${r.data.files.length} folders named "${name}" on the path; using the first. Set POND_PHOTOS_FOLDER_ID to be exact.`);
+    parent = r.data.files[0].id;
+  }
+  return parent;
 }
 
 async function listImages(folderId) {

@@ -38,7 +38,7 @@
 </div>
 <footer class="site" id="foot"></footer>
 <script>
-// Photos are copied from the Drive folder "Pond photos" into Cloud Storage by control-ui/scripts/sync-photos.mjs.
+// Photos are copied from a Drive folder (Online Gallery) into Cloud Storage by control-ui/scripts/sync-photos.mjs.
 const BUCKET='pond-grow.firebasestorage.app';
 const url=p=>'https://firebasestorage.googleapis.com/v0/b/'+BUCKET+'/o/'+encodeURIComponent(p)+'?alt=media';
 let list=[],cur=-1;
@@ -71,14 +71,14 @@ $('lb').addEventListener('touchend',e=>{
 },{passive:true});
 fetch(url('photos/index.json'),{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json();}).then(d=>{
   list=d.photos||[];const g=$('grid');g.textContent='';
-  if(!list.length){g.textContent='No photos yet. Add some to the "Pond photos" folder in Drive and run the photo sync.';return;}
+  if(!list.length){g.textContent='No photos yet. Add some to the gallery folder in Drive and run the photo sync.';return;}
   list.forEach((p,i)=>{
     const b=document.createElement('button');b.type='button';b.setAttribute('aria-label',p.name);
     const im=document.createElement('img');im.loading='lazy';im.src=url('photos/thumb/'+p.id+'.jpg');im.alt=p.caption||p.name;
     b.appendChild(im);b.onclick=()=>open(i);g.appendChild(b);
   });
   $('updated').textContent=list.length+' photos, newest first.';
-  $('foot').textContent='Synced '+fmt(d.updated)+' from the Drive folder "Pond photos"';
+  $('foot').textContent='Synced '+fmt(d.updated)+' from Drive';
 }).catch(()=>{$('grid').textContent='Could not load the photos.';});
 </script>
 </body>
