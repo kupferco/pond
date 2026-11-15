@@ -117,9 +117,13 @@ def export_sleeves():
                        ("sleeves_clamped", csl.clamped), ("sleeves_released", csl.released),
                        ("sleeves_released_off", csl.released_off)):
         parts = parts_of(assy_)
+        assy_.save(os.path.join(OUT, tag + ".glb"), "GLTF")      # per-part colours kept, for a 3D viewer
+        print("wrote renders/cart_v2/%s.glb" % tag)
         render(parts, (1, -1.1, 0.8), up, os.path.join(OUT, tag + "_iso.png"))
         render(parts, (0, -1, 0), up, os.path.join(OUT, tag + "_front.png"))
         render(parts, (0, 0, 1), (0, 1, 0), os.path.join(OUT, tag + "_top.png"))
+    csl.exploded.save(os.path.join(OUT, "sleeves_exploded.glb"), "GLTF")
+    print("wrote renders/cart_v2/sleeves_exploded.glb")
     render(parts_of(csl.exploded), (1, -1.1, 0.8), up, os.path.join(OUT, "sleeves_exploded_iso.png"))
 
 if __name__ == "__main__":
