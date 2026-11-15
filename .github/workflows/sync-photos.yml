@@ -1,0 +1,32 @@
+name: Sync photos
+
+# Run from the Actions tab ("Run workflow"): copies new or changed photos and videos from the Drive Online Gallery folder
+# (POND_GALLERY_FOLDER_ID) into Cloud Storage. Only people with write access to the repo can start it.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: control-ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: control-ui/package-lock.json
+      - run: npm ci
+      - run: ffmpeg -version | head -1  # preinstalled on ubuntu-latest; used to transcode videos
+      - name: Sync
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POND_CONTROL }}
+          POND_GALLERY_FOLDER_ID: ${{ secrets.POND_GALLERY_FOLDER_ID || vars.POND_GALLERY_FOLDER_ID }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" node scripts/sync-photos.mjs

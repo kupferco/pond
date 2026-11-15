@@ -1,6 +1,6 @@
 # Gallery renderer for a CadQuery script: black-and-white outline views (the same hidden-line SVG
 # projection the render server uses, render-server/pond_render/sandbox/runner.py project_svg) plus the
-# coloured GLB for the 3D viewer, in the form the gallery (docs/gallery/renders.json) expects.
+# coloured GLB for the 3D viewer, in the form the gallery (docs/drawings/renders.json) expects.
 # Usage: python cad/render_outline.py cad/cart_sleeves.py ATTR OUT_DIR NAME [--dims]
 #   ATTR  name of the cq.Assembly in the script (e.g. pair, exploded)
 #   Writes OUT_DIR/NAME.glb and OUT_DIR/NAME-{iso,front,side,top}.png (1100 px wide).
