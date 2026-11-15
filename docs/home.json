@@ -1,6 +1,6 @@
 {
   "_help": "Everything on the home page that you'll want to edit. Change text here, no HTML needed.",
-  "intro": "Pond is an open-source project, an outdoor growing robot I'm building. This site is where I keep all my notes and progress. Nothing here is for sale yet.",
+  "intro": "Pond is an open-source outdoor growing robot I'm building. One day there may be kits you can download for free or buy ready-assembled. For now, this is where I keep my notes and progress.",
   "about": "Pond is a vertical vegetable garden that grows outdoors, with a small robot that looks after it. The robot climbs the pipes, checks the plants and swaps the pods, so neighbours can grow food together without the daily chores. I'm designing it in the open: the drawings, the part list and the reasons behind each choice are all on this site.",
   "hero": {
     "src": "https://pond-render-500653746288.us-east1.run.app/s/1fkBj3mH9GAhGD/iso.png",
@@ -26,7 +26,7 @@
     "name": "Daniel Machado Kupfer",
     "blurb": "Pond is a personal project by Dani. Questions, ideas or feedback are welcome.",
     "contactText": "Get in touch",
-    "contactHref": "mailto:CHANGE-ME@example.com"
+    "contactHref": "https://www.linkedin.com/in/danikupfer"
   },
   "github": "https://github.com/kupferco/pond"
 }
