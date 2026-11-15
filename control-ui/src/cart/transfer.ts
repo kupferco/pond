@@ -19,9 +19,9 @@ export function rotate(q: Quat, v: Vec3): Vec3 {
   return [v[0] + w * t[0] + (y * t[2] - z * t[1]), v[1] + w * t[1] + (z * t[0] - x * t[2]), v[2] + w * t[2] + (x * t[1] - y * t[0])];
 }
 
-export const SWING_RATE_DEG_S = 30;           // default hinge speed for the preview; the CAD worm drive gives HINGE_DEG_S_CAD (about 9.5)
-export const DEFAULT_SPEED_CM_S = 10, MAX_SPEED_CM_S = 50, DEFAULT_STEP_CM = 5;
-export const HAND_MOVE_S = 1;                 // seconds each clamp takes to close or open
+export const SWING_RATE_DEG_S = 15;           // default hinge speed for the preview; the CAD worm drive gives HINGE_DEG_S_CAD (about 9.5)
+export const DEFAULT_SPEED_CM_S = 8, MAX_SPEED_CM_S = 50, DEFAULT_STEP_CM = 5;
+export const HAND_MOVE_S = 2;                 // seconds each clamp takes to close or open
 export { S_MAX_CM, S_MIN_CM, S_START_CM };
 const WHEEL_R_MM = 10;                        // CAD wheel radius, to turn travel into wheel spin
 export { HINGE_DEG_S_CAD };

@@ -319,6 +319,13 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
       check('rotating back is contact free from 75 cm on (the plate turns flat as soon as the bend is behind)', bad === 0, `${bad} poses`);
       const f = new TransferRun(); f.reset(); f.start(); let rotatedBeyond = false; for (let i = 0; i < 20000 && !f.done; i++) { f.advance(0.02); if (f.st.t > 0 && f.st.s > S_FLAT_CM + 1e-9) rotatedBeyond = true; }
       check('forward trip: the plate is flat again beyond ' + S_FLAT_CM + ' cm', !rotatedBeyond); }
+    { // two transfers in a row with the scene's own (slow) defaults: ends on pipe C after the first, back on pipe B after the second; log where the hands are at start, middle and end
+      const d = new TransferRun(); d.reset(); d.setSpeed(8); const log: string[] = [], hands = (tag: string) => { const a = handAt(d.st, 1), b = handAt(d.st, 2); log.push(`${tag}: C-hand x ${a.x.toFixed(3)} z ${a.z.toFixed(3)} ${d.st.open1 < 0.5 ? 'clamped' : 'open'}, B-hand x ${b.x.toFixed(3)} z ${b.z.toFixed(3)} ${d.st.open2 < 0.5 ? 'clamped' : 'open'}, plate ${(d.st.t * 22).toFixed(0)} deg`); };
+      const ends: number[] = []; let secs = 0;
+      for (let n = 0; n < 2; n++) { hands(`transfer ${n + 1} start`); d.start(); let mid = false; for (let i = 0; i < 40000 && !d.done; i++) { d.advance(0.02); secs += 0.02; if (!mid && d.current === 'rotateBack' || !mid && d.current === 'moveBack' && d.st.s > 70) { mid = true; hands(`transfer ${n + 1} middle`); } } hands(`transfer ${n + 1} end`); ends.push(d.st.s); }
+      console.log(log.join('\n'));
+      check('two transfers in a row: the cart ends on pipe C (top right) after the first and back on pipe B (top of the straight part, both hands clamped) after the second', ends[0] === P_TOP_CM && ends[1] === S_MAX_CM && d.st.open1 === 0 && d.st.open2 === 0 && d.st.t === 0, ends.join(','));
+      check('two transfers take long enough to follow on a phone (more than 25 s in all, about 14 s each)', secs > 25, secs.toFixed(0) + ' s'); }
     r.reset(); check('reset again: ready for another transfer', r.start());
     const q = new TransferRun(); q.reset(); q.clampHand(2, true); for (let i = 0; i < 100; i++) q.advance(0.02); q.rotate(1); for (let i = 0; i < 1000; i++) q.advance(0.02);
     q.nudge(1000); for (let i = 0; i < 4000; i++) q.advance(0.02);
