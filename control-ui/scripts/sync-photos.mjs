@@ -5,6 +5,7 @@
 //
 // Env: GOOGLE_APPLICATION_CREDENTIALS (service account key file), PHOTOS_BUCKET (default pond-grow.firebasestorage.app),
 //      PHOTOS_FOLDER_ID (optional; otherwise the folder named "Pond photos" shared with the service account),
+//      PHOTOS_DRIVE_ID (optional; id of the shared drive, to search only that one),
 //      DRY_RUN=1 to only print what would happen.
 import { google } from 'googleapis';
 import { Storage } from '@google-cloud/storage';
@@ -15,6 +16,13 @@ const DRY = !!process.env.DRY_RUN;
 const WEB_PX = 1600, THUMB_PX = 400;
 const FOLDER_NAME = 'Pond photos';
 
+// Works for shared drives and My Drive: every list/get passes supportsAllDrives; lists also search all drives
+// the service account can see (or only PHOTOS_DRIVE_ID, if set).
+const ALL_DRIVES = {
+  supportsAllDrives: true, includeItemsFromAllDrives: true,
+  ...(process.env.PHOTOS_DRIVE_ID ? { corpora: 'drive', driveId: process.env.PHOTOS_DRIVE_ID } : { corpora: 'allDrives' }),
+};
+
 const auth = new google.auth.GoogleAuth({ scopes: ['https://www.googleapis.com/auth/drive.readonly'] });
 const drive = google.drive({ version: 'v3', auth });
 const bucket = new Storage().bucket(BUCKET);
@@ -23,10 +31,10 @@ async function findFolder() {
   if (process.env.PHOTOS_FOLDER_ID) return process.env.PHOTOS_FOLDER_ID;
   const r = await drive.files.list({
     q: `mimeType='application/vnd.google-apps.folder' and name='${FOLDER_NAME}' and trashed=false`,
-    fields: 'files(id,name)', supportsAllDrives: true, includeItemsFromAllDrives: true,
+    fields: 'files(id,name)', ...ALL_DRIVES,
   });
   const f = r.data.files || [];
-  if (!f.length) throw new Error(`No folder "${FOLDER_NAME}" visible to the service account. Share it with the service account's email (Viewer).`);
+  if (!f.length) throw new Error(`No folder "${FOLDER_NAME}" visible to the service account. Add the service account's email (Viewer) to the shared drive or the folder.`);
   if (f.length > 1) console.warn(`${f.length} folders named "${FOLDER_NAME}" are shared; using the first. Set PHOTOS_FOLDER_ID to pick one.`);
   return f[0].id;
 }
@@ -38,7 +46,7 @@ async function listImages(folderId) {
     const r = await drive.files.list({
       q: `'${folderId}' in parents and mimeType contains 'image/' and trashed=false`,
       fields: 'nextPageToken,files(id,name,description,mimeType,modifiedTime,createdTime,imageMediaMetadata(time))',
-      pageSize: 200, pageToken, supportsAllDrives: true, includeItemsFromAllDrives: true,
+      pageSize: 200, pageToken, ...ALL_DRIVES,
     });
     out.push(...(r.data.files || []));
     pageToken = r.data.nextPageToken;
