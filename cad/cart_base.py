@@ -1,4 +1,10 @@
-# cad/cart_base.py: Pond cart BASE plate hung on a hinge at each hand (DRAFT v3, 14 Nov 2026, Viber #97).
+# cad/cart_base.py: Pond cart BASE plate hung on a hinge at each hand (DRAFT v4, 15 Nov 2026, Viber #97 / #109).
+#
+# v4 (Viber #109 follow-up, decided by Dani): the battery is now UNDER the arm: stack plate | battery | SO-101 arm base. The
+# battery shelf tongue above the arm is gone (the plate is a plain rectangle plus the two worm-bracket tongues). The four
+# M4 holes on the 50 mm square now mount the battery (housing); the arm base bolts to the battery's front face. The strap
+# slots and the 20 mm servo-bus hole are gone (the bus leaves over the battery's top edge to the board, which moved onto the
+# battery's top face, cart_arm.py). The four corner stops stay and hold the battery sideways. Torque margin 1.66 (was 1.85).
 # Drawing 2 of 5 planned cart drawings (whole cart, base, sleeve/hand systems, wheel pairs, arm on cart).
 # Not production geometry: a readable drawing of the plate, its hinges, worm-gear rotation drives and where the parts sit.
 #
@@ -10,7 +16,7 @@
 #     hinge, one rigid plate (decided by Dani). This closes the kinematic open point of v2 (see below).
 #   - The arm folds in close to the plate before rotating (folded pose ASSUMED in cart_dims.py).
 #   - TORQUE BUDGET in cart_dims.py (torque_budget(), printed below by `python cart_base.py`): about 2.2 N m needed
-#     at the hinge, 4.0 N m available, margin 1.85. Every mass is ASSUMED. No spring needed.
+#     at the hinge, 4.0 N m available, margin 1.85 (v4: 2.4 N m, margin 1.66, arm 50 mm further out). Every mass is ASSUMED. No spring needed.
 #
 # Changes of v2 from v1 (11 Nov):
 #   - Pipes 120 mm apart (was 280): neighbouring units' pipes B and C, tanks touching, pipes 60 mm in from the tank
@@ -23,7 +29,7 @@
 #     axis, horn bolted to the top sleeve knuckle: it turns the plate against the sleeve. Nothing round the pipe.
 #   - The plate is now 142 x 112 x 6 mm, solid: there is no room left to open frames up. The arm base (70) and the
 #     two drive motors (28 each) are in a row on it; the battery moved ABOVE the arm on a shelf tongue; the
-#     Waveshare board moved onto the battery's front face (cart_arm.py).
+#     Waveshare board moved onto the battery's front face (cart_arm.py). (Both superseded by v4 above.)
 #
 # SOLVED IN v3 (was: KNOWN OPEN POINT, kinematics): with ONE rigid plate and two hinges whose axes are 120 + 36 - ... mm apart (not
 # the same line), the plate cannot swing while BOTH hands are clamped on their parallel pipes: the two hinge axes
@@ -36,19 +42,19 @@
 # ASSUMED (nothing below is decided; all marked "ASSUMED" in the code):
 #  1. Pipe spacing 120 mm, pipe B to pipe C (cart_dims.py; limited by arm 70 + two 28 mm motors on the plate).
 #  2. Plate 142 (X) x 112 (Z) x 6 mm solid (aluminium or steel not chosen), shown as a single solid, with a
-#     notch at each hinge end for the wheel flange, a battery shelf tongue and two worm-bracket tongues above the top edge.
+#     notch at each hinge end for the wheel flange, and two worm-bracket tongues above the top edge (no battery shelf since v4).
 #  3. Hinge and worm drive sizes: listed in cart_hinge.py (barrel 10 mm, pin 4 mm, leaves 3 mm, M1 38T wheel, 10 mm worm).
-#  4. Arm mount: four M4 holes on a 50 mm square plus a 20 mm cable hole, at x = -12 (SO-101 base footprint 70 x 70;
-#     the real SO-101 base hole pattern is to confirm).
-#  5. Battery 70 x 50 x 70 mm on the shelf tongue above the arm: four corner stops, two strap slots, 20 mm strap.
+#  4. Battery mount: four M4 holes on a 50 mm square at x = -12 (SO-101 base footprint 70 x 70, same as the battery;
+#     the real SO-101 base hole pattern is to confirm); the arm base bolts on the battery, 50 mm out from the plate.
+#  5. Battery 70 x 50 x 70 mm flat on the plate under the arm base: four corner stops.
 #     Real battery size and fixing not decided.
 #  6. Drive motors: one per hand, 28 x 55 mm, gearbox up, on the plate at x = -65 and +41 (between the hinge
 #     barrels and the arm), each in two saddles with M3 clamp holes. Real motor and clamp not decided. The
 #     transmission from motor to the driven wheels is not drawn (see cart_sleeves.py: worm shaft).
 #  7. Cable routing: the 12 V lead, motor leads and USB lead use 3 x 8 mm tie slots in the plate's top and bottom
-#     10 mm band; the servo bus goes up through the 20 mm arm hole. Cable lengths and strain relief not designed.
+#     10 mm band; the servo bus leaves over the battery's top edge. Cable lengths and strain relief not designed.
 #  8. Cart height: plate centre at the arm shoulder level used by cart_arm.py (pipes end 70 below it).
-# Not drawn: drive transmission, wheel pairs, board bracket (board now velcro-ed to the battery), motor wiring,
+# Not drawn: drive transmission, wheel pairs, board bracket (board now on foam pads on the battery's top face), motor wiring,
 # worm bearings and coupling, limit switches for the swing end positions.
 import os
 import sys
@@ -71,9 +77,7 @@ box, cyl, fuse, xshift = arm.box, arm.cyl, arm.fuse, arm.xshift
 # ---------------- Numbers added here (ASSUMED) ----------------
 ARM_HOLE_SQ = 50.0        # ASSUMED: arm base M4 square
 ARM_HOLE_D = 4.3
-ARM_CABLE_D = 20.0        # ASSUMED: servo bus pass-through
 BATT_STOP_H, BATT_STOP_T = 18.0, 3.0  # corner stops: 18 out from the plate, 3 thick
-STRAP_SLOT = (3.0, 20.0)  # ASSUMED strap slot: 3 along Z, 20 across X
 MOTOR_BAR_Z, MOTOR_BAR_W = 20.0, 8.0  # ASSUMED motor saddle bars at z = +/-20
 SADDLE_W = 28.0           # saddle width in X (= motor diameter)
 M3_D = 3.4
@@ -87,13 +91,12 @@ def slot(w, l, x, z):                       # rectangular slot through the plate
     return box(w, PLATE_T + 2, l, (x, PLATE_CY, z))
 
 def build_plate():
-    p = ca.plate                            # solid plate + battery shelf + worm-bracket tongues + flange notches (cart_assembly.py)
-    # ---- arm mount (centre) ----
+    p = ca.plate                            # solid plate + worm-bracket tongues + flange notches (cart_assembly.py)
+    # ---- battery mount (centre; v4: the battery sits on the plate, the arm base on the battery) ----
     h = ARM_HOLE_SQ / 2
     for sx in (-1, 1):
         for sz in (-1, 1):
             p = p.cut(hole(ARM_HOLE_D, ARM_X + sx * h, ARM_Z + sz * h))
-    p = p.cut(hole(ARM_CABLE_D, ARM_X, ARM_Z))
     # ---- hinge: two M4 holes per hand for the plate-leaf screws (countersunk on the plate's front face) ----
     for sgn in (-1, 1):
         xh, d = ca.hinge_x(sgn), -sgn
@@ -102,10 +105,6 @@ def build_plate():
     # ---- worm-bracket tongue: two M4 holes per hand ----
     for ex, z in ch.tongue_holes():
         p = p.cut(hole(ARM_HOLE_D, ex, z))
-    # ---- battery shelf: strap slots either side of the battery ----
-    for dz in (-BATT[2] / 4, BATT[2] / 4):
-        for dx in (-22.0, 22.0):
-            p = p.cut(slot(STRAP_SLOT[1] / 2, STRAP_SLOT[0], BATT_C + dx, BATT_Z + dz))
     # ---- drive motors: saddle M3 clamp holes beside each motor are cut in saddles() ----
     # ---- cable routing: tie slots in the top band (motor leads, USB) and bottom band (12 V lead) ----
     zr = PLATE_ZH - RIM / 2
@@ -173,8 +172,8 @@ def build(show_context=True):
         for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):
             add(xshift(cyl(hs.R_PIPE, PIPE_Z1 - PIPE_Z0, "z", (0, 0, (PIPE_Z0 + PIPE_Z1) / 2)), sgn * HX),
                 "track_%s" % tag, (0.75, 0.78, 0.8, 1))
-            add(xshift(hs.result, sgn * HX), "hand_on_%s_sleeve" % tag, (0.95, 0.75, 0.2, 1))
-            add(xshift(ca.WHEELS, sgn * HX), "hand_on_%s_wheels" % tag, (0.15, 0.15, 0.15, 1))
+            for nm, shp, col in ca.clamp_hand_parts():     # clamp/jaw sleeve, clamped (cart_sleeves.py)
+                add(xshift(shp, sgn * HX), "hand_on_%s_%s" % (tag, nm), col)
     for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):      # the hinge and its worm drive are the point of v2/v3: always shown
         for nm, shp, col in ch.hinge_parts(sgn):
             add(shp, "hinge_%s_%s" % (tag, nm), col)
