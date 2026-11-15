@@ -18,7 +18,7 @@ runner = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(runner)
 
 W, H = 800, 600
-NAME = "cart-base-v1"
+NAME = "cart-base-v3"
 INK = "rgb(20,20,20)"
 
 def basis(view):
@@ -68,8 +68,8 @@ OVERLAYS = {
         ("tag", (cb.ARM_X + 25, YF, 25), 60, -78, "arm M4 square 50 (ASSUMED)"),
         ("tag", (cb.BATT_C, YF, cb.BATT_Z), 30, 96, "battery shelf + strap slots (ASSUMED)"),
         ("tag", (cb.MOTOR_XS[-1], YF, -20), 30, 70, "motor saddles (ASSUMED)"),
-        ("tag", (cb.ch.servo_x_range(-1)[0] + 6, YF, cb.ch.SERVO_Z0 + 18), -50, -20, "rotation servo B on hinge axis (ASSUMED)"),
-        ("tag", (cb.ch.servo_x_range(1)[1] - 6, YF, cb.ch.SERVO_Z0 + 18), 50, -20, "rotation servo C (ASSUMED)"),
+        ("tag", (cb.ca.hinge_x(-1), cb.ch.worm_axis_y(), cb.ch.WORM_ZC), -50, -20, "worm B + wheel on hinge axis (38:1, ASSUMED)"),
+        ("tag", (cb.ca.hinge_x(1), cb.ch.worm_axis_y(), cb.ch.WORM_ZC), 50, -20, "worm C + wheel (ASSUMED)"),
     ],
     "top": [
         ("dim", (X0, YF, 0), (X1, YF, 0), 0, "142"),

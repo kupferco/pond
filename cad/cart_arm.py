@@ -1,6 +1,10 @@
-# cad/cart_arm.py: SO-101 follower arm mounted on the Pond cart (DRAFT, 11 Nov 2026).
+# cad/cart_arm.py: SO-101 follower arm mounted on the Pond cart (DRAFT v3, 15 Nov 2026, Viber #109 / #97).
 # Drawing 5 of 5 planned cart drawings (whole cart, base, sleeve/hand systems, wheel pairs, arm on cart).
 # Not production geometry: a readable drawing of how the arm sits on the cart and what it can reach.
+#
+# v3 (Viber #109): checked against Viber #97. The cart already uses cart_hinge.py v3 (plate hinge + worm rotation drive at
+# each hand) and cart_assembly.py's plate/battery/motors, so only the header text was stale and is corrected here
+# (see ASSUMED 1). No geometry changed.
 #
 # Frame: the hand_sleeve.py frame (track pipes along Z, plate on the -Y side of the pipes).
 # v2 (follow-up): the base plate runs ACROSS two parallel pipes, one hand clamped on each pipe (pipe B and
@@ -18,10 +22,11 @@
 # ASSUMED (all marked "ASSUMED" below; nothing here is decided):
 #  0. Pipe spacing: the two pipes the cart clamps are 120 mm apart (v3, Viber #97; was 280), centre to centre (ASSUMED; the real
 #     spacing between neighbouring units is not decided). One hand per pipe, both facing the same way.
-#  1. Arm mount, hands, wheels, sleeves: as cart_assembly.py (itself assumed). Base plate redrawn across the
-#     two pipes: 112 mm (Z) x PIPE_SPACING + 100 (X) x 6 mm, same open-frame idea, bosses round each hand's
-#     holes and an arm block. Battery 70 x 50 x 70 beside the arm on the pipe-C side, motors one per hand on
-#     the +X side of each hand (gearbox up), all ASSUMED positions.
+#  1. Arm mount, hands, wheels, sleeves, plate, battery and drive motors: exactly as cart_assembly.py / cart_dims.py (itself
+#     assumed): solid plate 142 (X) x 112 (Z) x 6 mm hung between the two hinge axes (v3: the old text here said
+#     PIPE_SPACING + 100 and an open frame, which no longer matched), battery 70 x 50 x 70 above the arm on a shelf
+#     tongue, one drive motor per hand beside the arm on the plate, plate hung on each hand's hinge with the worm
+#     rotation drive of cart_hinge.py v3 (Viber #97). All ASSUMED positions.
 #  2. Link lengths (shoulder to elbow 120, elbow to wrist 130, wrist to gripper tip 100 = 350 mm
 #     stretched) taken from the layout in so101_servo_layout.py and the 350 mm REACH of pod_store_reach.py.
 #     Servos and links are envelope boxes, not real parts.

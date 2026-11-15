@@ -1,7 +1,18 @@
-# cad/cart_sleeves.py: the two SLEEVE (hand) systems of the Pond cart (DRAFT v2, 11 Nov 2026).
+# cad/cart_sleeves.py: the two SLEEVE (hand) systems of the Pond cart (DRAFT v3, 15 Nov 2026, Viber #109 / #97).
 # Drawing 3 of 5 planned cart drawings (whole cart, base, sleeve/hand systems, wheel pairs, arm on cart).
 # Reuses cad/hand_sleeve.py v4.1 (the sleeve body) and cad/cart_assembly.py (hand spacing, wheel helper);
 # neither is redrawn or changed. Not production geometry: a readable drawing of how the parts relate.
+#
+# v3 (Viber #109, bringing the drawing up to date with Viber #97): each hand now carries its plate HINGE and the base
+# rotation worm drive, imported from cart_hinge.py v3 (sleeve leaf + knuckles, plate leaf, pin, brass worm wheel on the
+# hinge axis, worm, bracket, worm motor); the base plate comes from cart_assembly.py. Nothing is redrawn and no number
+# is duplicated: layout numbers are in cart_dims.py, hinge numbers in cart_hinge.py (cart_hinge.py wins on any conflict).
+# The old note "no 90 deg swivel yet" is gone: the swivel is the hinge drive. NEW scene `transfer`: one hand is the
+# STATIC hand (the one that is not moving during a transfer): its six wheels sit in their sleeve wheel pockets (sockets),
+# clamped on its pipe by the spring idlers, exactly as in the other views, drawn in blue so it can be told apart. Its
+# worm drive turns the plate round its hinge; the OTHER hand is released from its pipe and rides on the plate.
+# Which hand is static comes from cart_dims.torque_budget() (its "driving_hand": the worst-case hand for the hinge torque). Swing angle
+# is an illustration only (TRANSFER_ANGLE).
 #
 # v2 (follow-up): each hand (each set of wheels) clamps its OWN pipe. The two pipes run parallel, side by side
 # (as in cart_arm.py v2), not both hands on one pipe as in cart_assembly.py v1.
@@ -17,6 +28,8 @@
 #  1. Pipe OD 32 mm (also assumed in hand_sleeve.py), shown as a 330 mm stub.
 #  2. Pipe spacing 120 mm centre to centre (Viber #97; was 280, now from cart_dims.py), one hand per pipe (same assumed value as cart_arm.py v2; the
 #     real spacing between neighbouring units is not decided). Both hands at the same height along the pipes.
+#     Hinge and plate (v3): cart_hinge.py / cart_assembly.py as they are (hinge on the pad edge at -Y, plate 142 x 112 x 6).
+#     The plate's own motors, arm and battery are not drawn here (see cart_base.py, cart_arm.py).
 #  3. Drive layout: ONE worm shaft per hand, along the pipe, beside the sleeve on -X, meshing with a worm
 #     wheel on each driven axle (both 180 deg wheels, one per row). Worm wheel R 7 mm, worm R 3 mm, worm 80 mm
 #     long. The real ratio, tooth form and motor torque are not sized.
@@ -38,10 +51,11 @@ import cadquery as cq
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hand_sleeve as hs        # reused, not redrawn
+import cart_hinge as ch         # plate hinge + worm rotation drive of each hand (Viber #97), reused
 import cart_assembly as ca      # reused: HAND_SPACING, PIPE_STUB_L, box/cyl helpers
 
 box, cyl = ca.box, ca.cyl
-from cart_dims import PIPE_SPACING                # 120, ASSUMED in cart_dims.py: pipe-to-pipe
+from cart_dims import PIPE_SPACING, torque_budget   # 120, ASSUMED in cart_dims.py: pipe-to-pipe
 HAND_X = PIPE_SPACING / 2                         # hands at x = -/+ 60, one per pipe
 
 # ---------------- Drive (all ASSUMED) ----------------
@@ -113,13 +127,43 @@ def hand_parts():
     return parts
 
 # ---------------- Pair: one hand on each of two parallel pipes ----------------
-def build_pair():
+WHEEL_COL, STATIC_WHEEL_COL = (0.15, 0.15, 0.15, 1), (0.1, 0.35, 0.8, 1)
+TAGS = (("B", -1), ("C", 1))                      # (tag, sgn): pipe B at -x, pipe C at +x, as cart_assembly.py
+
+def build_pair(static=None, angle=0.0, with_plate=True):
+    """Both hands, each on its own pipe, each with its hinge and worm drive (cart_hinge.py) and the plate.
+    static: None (plain pair) or "B"/"C": that hand is the STATIC hand (wheels blue, clamped on its pipe) and the plate
+    swings by `angle` degrees on its hinge, carrying the other (released) hand; the pipes stay where they are."""
     a = cq.Assembly()
-    for tag, hx in (("B", -HAND_X), ("C", HAND_X)):
+    swing = static is not None and angle != 0.0
+    sgn_s = dict(TAGS).get(static, 0)
+    # rotation about the static hinge axis, towards -Y (out from the pads), as the plate swings "like a door"
+    ax_pt = (ch.hinge_x(sgn_s), 0, 0) if sgn_s else (0, 0, 0)
+    def moved(shape):
+        return shape.rotate(ax_pt, (ax_pt[0], 0, 1), -sgn_s * angle) if swing else shape
+    for tag, sgn in TAGS:
+        hx = sgn * HAND_X
         a.add(cyl(hs.R_PIPE, ca.PIPE_STUB_L, "z", (hx, 0, 0)), name="track_pipe_%s" % tag, color=cq.Color(0.75, 0.78, 0.8, 1))
+        is_static = static == tag
+        riding = swing and not is_static          # the released hand rides with the plate
+        role = "static" if is_static else ("released" if static else "hand")
         for name, (shp, col) in hand_parts().items():
-            a.add(shp.translate((hx, 0, 0)), name="hand_%s_%s" % (tag, name), color=cq.Color(*col))
+            if is_static and name in ("wheels", "axle_pins"):
+                col = STATIC_WHEEL_COL if name == "wheels" else col
+                name = "static_" + name
+            shp = shp.translate((hx, 0, 0))
+            a.add(moved(shp) if riding else shp, name="%s_%s_%s" % (role, tag, name), color=cq.Color(*col))
+        for nm, shp, col in ch.hinge_parts(sgn):
+            # on the plate side (turns with the plate when it swings) or on the sleeve side (stays with its sleeve)
+            on_plate = nm in ("plate_leaf_knuckle", "plate_leaf_screws", "worm", "worm_bracket", "bracket_screws", "worm_motor")
+            turns = riding or (swing and is_static and on_plate)
+            a.add(moved(shp) if turns else shp, name="hinge_%s_%s" % (tag, nm), color=cq.Color(*col))
+    if with_plate:
+        a.add(moved(ca.plate) if swing else ca.plate, name="base_plate", color=cq.Color(0.35, 0.35, 0.38, 1))
     return a
+
+TRANSFER_ANGLE = 45.0                             # ASSUMED illustration angle (deg) of the plate swing
+STATIC_HAND = torque_budget()["driving_hand"]     # the hand whose hinge drives the transfer (cart_dims.py)
 
 # ---------------- Exploded view of one hand ----------------
 EXPLODE = {                                  # ASSUMED offsets (mm), readability only
@@ -156,6 +200,7 @@ def build_exploded():
     return a
 
 pair = build_pair()
+transfer = build_pair(STATIC_HAND, TRANSFER_ANGLE)
 exploded = build_exploded()
 result = pair
 
@@ -171,6 +216,6 @@ DIMS = {
 }
 
 if __name__ == "__main__":
-    for tag, obj in (("pair", pair), ("exploded hand", exploded)):
+    for tag, obj in (("pair", pair), ("transfer (static hand %s)" % STATIC_HAND, transfer), ("exploded hand", exploded)):
         bb = obj.toCompound().BoundingBox()
         print("cart_sleeves %s OK, bbox %.0f x %.0f x %.0f mm" % (tag, bb.xlen, bb.ylen, bb.zlen))
