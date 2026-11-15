@@ -3,6 +3,7 @@
 # Reuses cad/hand_sleeve.py v4.1 (the sleeve body) and cad/cart_assembly.py (hand spacing, wheel helper);
 # neither is redrawn or changed. Not production geometry: a readable drawing of how the parts relate.
 #
+# Import note: box/cyl and the plate now come from cart_geom.py (moved out of cart_assembly.py, which now imports this file).
 # v4 (Viber #109 follow-up): the hand now has its CLAMP / RELEASE JAW with actuator, in two states (clamped, released).
 # The sim (sim/unit_change.py, transfer scene of task 81) has a hand shell with a hinged jaw (joint "jaw1"/"jaw2", OPEN =
 # 1.6 rad = 92 deg, driven by a jaw motor box on the +Z end of the hand); it releases and clamps hand B and hand C with it.
@@ -76,10 +77,10 @@ import cadquery as cq
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hand_sleeve as hs        # reused, not redrawn
 import cart_hinge as ch         # plate hinge + worm rotation drive of each hand (Viber #97), reused
-import cart_assembly as ca      # reused: HAND_SPACING, PIPE_STUB_L, box/cyl helpers
+import cart_geom as cg          # reused: box/cyl helpers and the base plate (moved out of cart_assembly.py, which imports this file)
 
-box, cyl = ca.box, ca.cyl
-from cart_dims import PIPE_SPACING, torque_budget   # 120, ASSUMED in cart_dims.py: pipe-to-pipe
+box, cyl = cg.box, cg.cyl
+from cart_dims import PIPE_SPACING, torque_budget, PIPE_STUB_L, MOTOR_R, MOTOR_L   # 120, ASSUMED in cart_dims.py: pipe-to-pipe
 HAND_X = PIPE_SPACING / 2                         # hands at x = -/+ 60, one per pipe
 
 # ---------------- Drive (all ASSUMED) ----------------
@@ -90,7 +91,6 @@ WORM_WHEEL_R, WORM_WHEEL_T = 7.0, 4.0     # ASSUMED
 WORM_WHEEL_Y = 32.0                       # ASSUMED: centre plane of the worm wheels (clear of the sleeve body)
 WORM_R, WORM_L = 3.0, 80.0                # ASSUMED
 WORM_X = -hs.AXLE_R_POS - WORM_WHEEL_R - WORM_R + 1.0    # ASSUMED: -35 mm, meshing with the worm wheel rim
-MOTOR_R, MOTOR_L = ca.MOTOR_R, ca.MOTOR_L           # ASSUMED 28 x 55 mm, as in cart_assembly.py
 GEARBOX = (26.0, 2 * MOTOR_R, 20.0)       # ASSUMED
 BLOCK_T = 4.0                             # ASSUMED bearing blocks
 ARROW_L = 14.0                            # preload arrow length (drawing aid only)
@@ -230,7 +230,7 @@ def build_pair(static=None, angle=0.0, with_plate=True, jaws=None, off=None):
         return shape.rotate(ax_pt, (ax_pt[0], 0, 1), -sgn_s * angle) if swing else shape
     for tag, sgn in TAGS:
         hx = sgn * HAND_X
-        a.add(cyl(hs.R_PIPE, ca.PIPE_STUB_L, "z", (hx, 0, 0)), name="track_pipe_%s" % tag, color=cq.Color(0.75, 0.78, 0.8, 1))
+        a.add(cyl(hs.R_PIPE, PIPE_STUB_L, "z", (hx, 0, 0)), name="track_pipe_%s" % tag, color=cq.Color(0.75, 0.78, 0.8, 1))
         is_static = static == tag
         riding = swing and not is_static          # the released hand rides with the plate
         role = "static" if is_static else ("released" if static else "hand")
@@ -247,7 +247,7 @@ def build_pair(static=None, angle=0.0, with_plate=True, jaws=None, off=None):
             turns = riding or (swing and is_static and on_plate)
             a.add(moved(shp) if turns else shp, name="hinge_%s_%s" % (tag, nm), color=cq.Color(*col))
     if with_plate:
-        a.add(moved(ca.plate) if swing else ca.plate, name="base_plate", color=cq.Color(0.35, 0.35, 0.38, 1))
+        a.add(moved(cg.plate) if swing else cg.plate, name="base_plate", color=cq.Color(0.35, 0.35, 0.38, 1))
     return a
 
 OPEN_ALL = {"B": JAW_OPEN, "C": JAW_OPEN}

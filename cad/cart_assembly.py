@@ -1,4 +1,4 @@
-# cad/cart_assembly.py: whole Pond robot cart, assembled (DRAFT v6, 15 Nov 2026).
+# cad/cart_assembly.py: whole Pond robot cart, assembled (DRAFT v7, 15 Nov 2026).
 # Drawing 1 of 5 planned cart drawings (whole cart, base, sleeve/hand systems, wheel pairs, arm on cart).
 # Not production geometry: a readable assembly drawing to show how the parts relate.
 #
@@ -10,6 +10,10 @@
 # Frame: the hand_sleeve.py frame. Track pipes run along Z (vertical sides of the loop), the cart's
 # mounting pads face -Y, so the cart base plate and everything on it sits on the -Y side of the pipes.
 # Pipe B at x = -60, pipe C at x = +60 (v4, Viber #97: was +/-140).
+# v7 (Viber #109 follow-up, 15 Nov 2026): each hand is now the clamp/jaw sleeve of cart_sleeves.py, shown CLAMPED (jaw closed):
+# fixed body + jaw on its knuckle hinge, hinge pin, jaw actuator (gearbox + micro motor), jaw-side wheels. Imported
+# (clamp_hand_parts), not redrawn; closed it equals hs.result. Helpers box/cyl and the plate moved to cart_geom.py (no change)
+# to avoid a circular import. Checked: no part of the jaw or its actuator overlaps the pipes, hinge, plate or motors.
 # v6 (Viber #109 follow-up, 15 Nov 2026): battery moved UNDER the arm base (plate | battery | arm), shelf tongue removed;
 # arm base now 50 mm further out (cart_dims.ARM_Y0).
 # v5 (Viber #97, 14 Nov 2026): the hinge is now driven by a worm gear and a worm-gear motor per hand (cart_hinge.py v3,
@@ -45,19 +49,12 @@ import cadquery as cq
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cart_hinge as ch     # plate hinge and worm drive of each hand (Viber #97)
+import cart_sleeves as csl   # clamp/jaw sleeve of each hand (Viber #109), reused, not redrawn
 import hand_sleeve as hs   # reused, not redrawn; importing runs the model and exposes hs.result and dims
 
 # ---------------- Layout (mm): all shared numbers come from cart_dims.py ----------------
 from cart_dims import *   # noqa: F401,F403  (PIPE_SPACING, HX, PLATE_*, BATT*, MOTOR_*, ARM_*, PIPE_STUB_L, ...)
-PLATE_CY = (PLATE_Y0 + PLATE_Y1) / 2
-
-def box(sx, sy, sz, c):
-    return cq.Workplane("XY").box(sx, sy, sz).translate(c)
-
-def cyl(r, h, axis, c):
-    d = {"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}[axis]
-    start = cq.Vector(*[c[i] - d[i] * h / 2 for i in range(3)])
-    return cq.Workplane("XY").add(cq.Solid.makeCylinder(r, h, start, cq.Vector(*d)))
+from cart_geom import box, cyl, window, build_plate, plate, PLATE_CY   # moved to cart_geom.py, unchanged
 
 pad_cx = (hs.PAD_X0 + hs.PAD_X1) / 2
 
@@ -74,27 +71,16 @@ def hand_wheels():
 
 WHEELS = hand_wheels()
 
+# Each hand = the clamp/jaw sleeve of cart_sleeves.py, shown CLAMPED (jaw closed): fixed body + jaw on its knuckle hinge,
+# jaw hinge pin, jaw actuator (gearbox + micro motor), wheels (the +60 deg pair rides on the jaw). Closed, fixed body + jaw
+# are exactly hs.result (checked in cart_sleeves.py), so the geometry is unchanged. Hand-frame parts, centred at x = 0.
+HAND_KEYS = ("sleeve", "jaw", "wheels", "jaw_wheels", "jaw_hinge_pin", "jaw_gearbox", "jaw_motor")
+def clamp_hand_parts(jaw_open=0.0):
+    hp = csl.hand_parts(jaw_open)
+    return [(k, hp[k][0], hp[k][1]) for k in HAND_KEYS]
+
 def xshift(shape, x):
     return shape.translate((x, 0, 0))
-
-def window(x0, x1, z0, z1):
-    return box(x1 - x0, PLATE_T + 2, z1 - z0, ((x0 + x1) / 2, PLATE_CY, (z0 + z1) / 2))
-
-def build_plate():
-    """Plate hung between the two hinge axes: a solid 142 x 112 x 6 mm plate (at this width there is nothing left to
-    open up), a worm-bracket tongue above each hinge, and a notch at each hinge
-    end where the worm wheel flange sits. Holes and cable slots are added in cart_base.py."""
-    plate = box(PLATE_X1 - PLATE_X0, PLATE_T, 2 * PLATE_ZH, ((PLATE_X0 + PLATE_X1) / 2, PLATE_CY, 0))
-    top = PLATE_ZH
-    for sgn in (-1, 1):
-        xh, d = hinge_x(sgn), -sgn
-        # worm-bracket tongue: starts 21 mm from the hinge axis (clear of the worm wheel), from the top rim up to TONGUE_Z1
-        tx0, tx1 = ch.tongue_x_range(sgn)
-        plate = plate.union(box(tx1 - tx0, PLATE_T, TONGUE_Z1 - top + 1.0, ((tx0 + tx1) / 2, PLATE_CY, (TONGUE_Z1 + top - 1.0) / 2)))
-        # notch at the hinge end for the worm wheel flange (below the tongue)
-        n0, n1 = sorted((xh + d * (HINGE_R + HINGE_CLEAR - 1.0), xh + d * (HORN_R + 2.0)))
-        plate = plate.cut(box(n1 - n0, PLATE_T + 2, top - (KNUCKLE_Z - 2.0), ((n0 + n1) / 2, PLATE_CY, (top + KNUCKLE_Z - 2.0) / 2)))
-    return plate
 
 def build_motors():
     motors = None
@@ -105,7 +91,6 @@ def build_motors():
         motors = m if motors is None else motors.union(m)
     return motors
 
-plate = build_plate()
 battery = box(BATT[0], BATT[1], BATT[2], (BATT_X, PLATE_Y0 - BATT[1] / 2, BATT_Z))
 motors = build_motors()
 
@@ -141,8 +126,8 @@ def add(obj, name, color):
 add(plate, "base_plate", (0.35, 0.35, 0.38, 1))
 for tag, sgn in (("C", 1), ("B", -1)):
     add(xshift(cyl(hs.R_PIPE, PIPE_STUB_L, "z", (0, 0, 0)), sgn * HX), "track_pipe_%s" % tag, (0.75, 0.78, 0.8, 1))
-    add(xshift(hs.result, sgn * HX), "hand_on_pipe_%s_sleeve" % tag, (0.95, 0.75, 0.2, 1))
-    add(xshift(WHEELS, sgn * HX), "hand_on_pipe_%s_wheels" % tag, (0.15, 0.15, 0.15, 1))
+    for nm, shp, col in clamp_hand_parts():
+        add(xshift(shp, sgn * HX), "hand_on_pipe_%s_%s" % (tag, nm), col)
     for nm, shp, col in ch.hinge_parts(sgn):
         add(shp, "hinge_pipe_%s_%s" % (tag, nm), col)
 add(battery, "battery", (0.2, 0.45, 0.85, 1))

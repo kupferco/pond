@@ -172,8 +172,8 @@ def build(show_context=True):
         for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):
             add(xshift(cyl(hs.R_PIPE, PIPE_Z1 - PIPE_Z0, "z", (0, 0, (PIPE_Z0 + PIPE_Z1) / 2)), sgn * HX),
                 "track_%s" % tag, (0.75, 0.78, 0.8, 1))
-            add(xshift(hs.result, sgn * HX), "hand_on_%s_sleeve" % tag, (0.95, 0.75, 0.2, 1))
-            add(xshift(ca.WHEELS, sgn * HX), "hand_on_%s_wheels" % tag, (0.15, 0.15, 0.15, 1))
+            for nm, shp, col in ca.clamp_hand_parts():     # clamp/jaw sleeve, clamped (cart_sleeves.py)
+                add(xshift(shp, sgn * HX), "hand_on_%s_%s" % (tag, nm), col)
     for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):      # the hinge and its worm drive are the point of v2/v3: always shown
         for nm, shp, col in ch.hinge_parts(sgn):
             add(shp, "hinge_%s_%s" % (tag, nm), col)

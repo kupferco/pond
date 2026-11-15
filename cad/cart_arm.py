@@ -257,8 +257,8 @@ cart = [("base_plate", plate, (0.35, 0.35, 0.38, 1)),
 for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):
     cart.append(("track_%s" % tag, xshift(ca.cyl(hs.R_PIPE, PIPE_Z1 - PIPE_Z0, "z", (0, 0, (PIPE_Z0 + PIPE_Z1) / 2)), sgn * HX),
                  (0.75, 0.78, 0.8, 1)))
-    cart.append(("hand_on_%s_sleeve" % tag, xshift(hs.result, sgn * HX), (0.95, 0.75, 0.2, 1)))
-    cart.append(("hand_on_%s_wheels" % tag, xshift(ca.WHEELS, sgn * HX), (0.15, 0.15, 0.15, 1)))
+    for nm, shp, col in ca.clamp_hand_parts():     # clamp/jaw sleeve, clamped (cart_sleeves.py)
+        cart.append(("hand_on_%s_%s" % (tag, nm), xshift(shp, sgn * HX), col))
     for nm, shp, col in ch.hinge_parts(sgn):
         cart.append(("hinge_%s_%s" % (tag, nm), shp, col))
 
