@@ -1,4 +1,4 @@
-# cad/cart_assembly.py: whole Pond robot cart, assembled (DRAFT v3, 11 Nov 2026).
+# cad/cart_assembly.py: whole Pond robot cart, assembled (DRAFT v6, 15 Nov 2026).
 # Drawing 1 of 5 planned cart drawings (whole cart, base, sleeve/hand systems, wheel pairs, arm on cart).
 # Not production geometry: a readable assembly drawing to show how the parts relate.
 #
@@ -10,10 +10,12 @@
 # Frame: the hand_sleeve.py frame. Track pipes run along Z (vertical sides of the loop), the cart's
 # mounting pads face -Y, so the cart base plate and everything on it sits on the -Y side of the pipes.
 # Pipe B at x = -60, pipe C at x = +60 (v4, Viber #97: was +/-140).
+# v6 (Viber #109 follow-up, 15 Nov 2026): battery moved UNDER the arm base (plate | battery | arm), shelf tongue removed;
+# arm base now 50 mm further out (cart_dims.ARM_Y0).
 # v5 (Viber #97, 14 Nov 2026): the hinge is now driven by a worm gear and a worm-gear motor per hand (cart_hinge.py v3,
 # torque budget in cart_dims.py), not a direct-drive servo. Plate tongues carry the worm brackets.
 # v4 (Viber #97): pipes 120 mm apart; the plate hangs on a hinge at each hand with a worm-gear rotation drive (cart_hinge.py,
-# drawn in detail in cart_base.py); the battery moved above the arm. The "no swivel yet" gap is closed by that hinge.
+# drawn in detail in cart_base.py); the battery moved above the arm (v6: now under it). The "no swivel yet" gap is closed by that hinge.
 #
 # DECIDED (from cad/hand_sleeve.py v4.1 and the decision docs): 90 mm sleeves, outer R 34, pipe OD 32,
 # two wheel rows 60 mm apart, six wheels per hand (driven wheel at 180 deg, spring idlers at +/-60 deg),
@@ -25,12 +27,14 @@
 #     budget that sets it is in cart_dims.py).
 #     One hand per pipe, both facing the same way (no 90 deg swivel yet).
 #  2. Base plate: solid, 112 (Z) x 142 (X) x 6 mm, hung between the two hinge axes (not bolted to the pads any
-#     more; the pads carry the hinge leaves). Tongues above it carry the battery and the two worm brackets.
-#  3. Battery: 70 (X) x 50 (out from plate) x 70 (Z) mm block, above the arm on a shelf tongue (no room beside it).
+#     more; the pads carry the hinge leaves). Tongues above it carry the two worm brackets (no battery shelf any more).
+#  3. Battery: 70 (X) x 50 (out from plate) x 70 (Z) mm block, flat on the plate centre UNDER the arm: stack plate | battery |
+#     SO-101 arm base (v6, Viber #109; the shelf tongue above the arm is gone, the plate is a plain rectangle plus the two
+#     worm-bracket tongues). A battery housing/straps and the arm bolting to it are not designed.
 #  4. Drive motors: one worm-gear motor per hand, on the plate beside the hand (+X of each pipe), shaft along
 #     the pipe, 28 mm diameter x 55 mm placeholder cylinder with a gearbox block. Positions are an open
 #     roadmap item; power transmission from motor to the driven wheel is not drawn.
-#  5. Arm mount: SO-101 base on the plate centre (x = -12, midway between the pads), arm shown folded over
+#  5. Arm mount: SO-101 base on top of the battery at the plate centre (x = -12, midway between the pads), arm shown folded over
 #     the cart (counterweight idea from the 31 Oct decisions).
 #  6. SO-101 arm is an envelope only (boxes sized from cad/so101_servo_layout.py), not real parts.
 #  7. Track pipe OD 32 mm (assumed in hand_sleeve.py too). Each pipe is shown as a 330 mm stub.
@@ -78,13 +82,10 @@ def window(x0, x1, z0, z1):
 
 def build_plate():
     """Plate hung between the two hinge axes: a solid 142 x 112 x 6 mm plate (at this width there is nothing left to
-    open up), a battery shelf tongue above the arm, a worm-bracket tongue above each hinge, and a notch at each hinge
+    open up), a worm-bracket tongue above each hinge, and a notch at each hinge
     end where the worm wheel flange sits. Holes and cable slots are added in cart_base.py."""
     plate = box(PLATE_X1 - PLATE_X0, PLATE_T, 2 * PLATE_ZH, ((PLATE_X0 + PLATE_X1) / 2, PLATE_CY, 0))
     top = PLATE_ZH
-    # battery shelf tongue, above the arm (battery drawn on its front face)
-    bz1 = BATT_Z + BATT[2] / 2 + 3.0
-    plate = plate.union(box(BATT[0] + 2 * BATT_SHELF_T, PLATE_T, bz1 - top + 1.0, (BATT_X, PLATE_CY, (bz1 + top - 1.0) / 2)))
     for sgn in (-1, 1):
         xh, d = hinge_x(sgn), -sgn
         # worm-bracket tongue: starts 21 mm from the hinge axis (clear of the worm wheel), from the top rim up to TONGUE_Z1
@@ -128,7 +129,7 @@ def arm_envelope():
     # arm frame -> cart frame: up (arm Z) -> -Y (out from plate), forward (arm X) -> +Z (along pipe)
     out = out.rotate((0, 0, 0), (0, 0, 1), 90)           # X -> Y
     out = out.rotate((0, 0, 0), (1, 0, 0), 90)           # Y -> Z, Z -> -Y
-    return out.translate((ARM_X, PLATE_Y0, ARM_Z))
+    return out.translate((ARM_X, ARM_Y0, ARM_Z))   # base on the battery's front face (Viber #109)
 
 arm = arm_envelope()
 
