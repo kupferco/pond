@@ -12,7 +12,7 @@ const HINGE_COL = rgba([0.9, 0.55, 0.15]), PAD_COL = rgba([0.95, 0.75, 0.2]), AR
 const HIDDEN = 'rgba="0 0 0 0" contype="0" conaffinity="0"';
 /** World frame of the scene: the CAD frame as it is. The pipes stand upright as in the Cart scene (CAD x across the pipes is world x, B on the left, CAD y out of the pipe plane is
  *  world y, the plate hangs on the -y side, CAD z along the pipes is world z). The track is the Cart scene's own: pipe B bends LEFT at the top, pipe C bends RIGHT (pipeGeoms). */
-export const S_MIN_CM = 15, S_MAX_CM = 45, S_START_CM = 30;   // where the hands' mid point may be along the pipes (cm): the straight parts, below the bends
+export const S_MIN_CM = 15, S_MAX_CM = 50, S_START_CM = 30;   // where the hands' mid point may be along the pipes (cm): the straight parts; S_MAX_CM is the top of the straight part, just below the start of the bends (where the cart waits, hands at the top of pipes B and C)
 export const TRACK_HORIZ_MM = 450;                            // length of the top bars (shortened, as in the earlier Transfer scene)
 /** CAD-frame point (m) to world. */
 export const cadToWorld = (v: [number, number, number]): [number, number, number] => [v[0], v[1], v[2]];
