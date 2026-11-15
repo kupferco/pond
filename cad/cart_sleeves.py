@@ -54,10 +54,12 @@
 #     (Replaces the v3 note "v4.1 has no jaw, no open/closed state".)
 #  8. Both hands identical and the same way round (C-gap facing +X), drive on the +Z end of each hand.
 #  9. Exploded view offsets are for readability only.
-# 10. Jaw (ASSUMED): the wall from -30 deg to +110 deg (C-gap side, +X, with the +60 deg idler pair and the funnel gap) is
-#     the jaw, 140 deg of the ring. Hinge pin: steel, 4 mm, along Z, at R 36 on the 110 deg edge (outside the wall, so
-#     the jaw swings clear of the fixed body; the lugs that hold it are not drawn). Opening 92 deg = sim OPEN (1.6 rad),
-#     counter-clockwise seen from +Z. Open, the C is open from -30 deg round to 110 deg, the pipe leaves towards +40 deg
+# 10. Jaw (ASSUMED): the wall from 0 deg (middle of the C-gap, +X) to +110 deg, with the +60 deg idler pair, is the jaw, 110 deg of
+#     the ring, ONE connected piece (a v4 cut at -30 deg left a loose 20 deg sliver beyond the gap: fixed). Hinge: steel
+#     pin, 4 mm, along Z, on the sleeve's outer surface at the 110 deg edge, with three knuckle barrels R 4.5 (jaw: the two
+#     ends, fixed body: the middle, each fused into its own half, relief notches in the other half), so each half stays
+#     attached to the pin in every state. Opening 92 deg = sim OPEN (1.6 rad),
+#     counter-clockwise seen from +Z. Open, the C is open from 0 deg round to 110 deg, the pipe leaves towards +40 deg
 #     (hand moves away towards -X,-Y, the front, as the sim's swing-off); clearance on that path is checked in __main__.
 # 11. Jaw actuator (ASSUMED): 16 mm dia x 30 mm worm-gear micro motor + 12 mm gearbox, on the +Z end, coaxial with the
 #     jaw hinge pin and keyed to it (direct drive of the pin). A worm gearbox self-locks, so the jaw stays shut with
@@ -94,10 +96,10 @@ BLOCK_T = 4.0                             # ASSUMED bearing blocks
 ARROW_L = 14.0                            # preload arrow length (drawing aid only)
 
 # ---------------- Jaw (ASSUMED, items 10-11): sleeve split by a wedge, hinge pin, actuator ----------------
-JAW_A0, JAW_A1 = -30.0, 110.0             # ASSUMED: jaw wall from -30 to +110 deg
+JAW_A0, JAW_A1 = 0.0, 110.0               # ASSUMED: jaw wall from the middle of the C-gap (0 deg) to +110 deg, one connected piece
 JAW_OPEN = 92.0                           # deg, = sim OPEN 1.6 rad (sim/unit_change.py)
 JAW_WHEEL_ANG = 60.0                      # the idler pair carried by the jaw (rows at +-RING_Z)
-JAW_PIVOT_R = 36.0                        # ASSUMED hinge pin radius, on the 110 deg edge, just outside the wall
+JAW_PIVOT_R = hs.WALL_OUT_R               # ASSUMED hinge pin radius: on the sleeve's outer surface at the 110 deg edge
 JAW_PIVOT = (JAW_PIVOT_R * math.cos(math.radians(JAW_A1)), JAW_PIVOT_R * math.sin(math.radians(JAW_A1)))
 JAW_PIN_R = 2.0
 JAW_GB_R, JAW_GB_L = 8.0, 12.0            # ASSUMED worm gearbox
@@ -111,8 +113,25 @@ def _wedge():
     return cq.Workplane("XY").polyline(pts).close().extrude(2 * hs.SLEEVE_L).translate((0, 0, -hs.SLEEVE_L))
 
 _W = _wedge()
-FIXED_BODY = hs.result.cut(_W)            # sleeve minus the jaw wedge
-JAW_BODY = hs.result.intersect(_W)        # sleeve inside the wedge (idler pockets, axle holes and funnel gap stay)
+_FIXED0 = hs.result.cut(_W)               # sleeve minus the jaw wedge
+_JAW0 = hs.result.intersect(_W)           # sleeve inside the wedge (idler pockets, axle holes and funnel gap stay)
+
+# Hinge knuckles (ASSUMED): barrels of radius LUG_R round the pin, centred on the sleeve's outer surface at the 110 deg
+# edge, so each barrel is fused into its own half and neither half can float. Like a door hinge, the jaw owns the two
+# end knuckles and the fixed body the middle one, 1 mm clear between them; each half is relieved (notched) where the
+# other half's knuckle sits, so the jaw swings about the pin without touching anything.
+LUG_R = 4.5                                           # knuckle radius
+LUG_RELIEF_R = LUG_R + 1.0                            # notch radius in the other half
+LUG_FIXED_Z = 14.0                                    # fixed knuckle spans z = -14..+14
+def _barrel(r, z0, z1):
+    return cyl(r, z1 - z0, "z", (JAW_PIVOT[0], JAW_PIVOT[1], (z0 + z1) / 2))
+_ZE = hs.SLEEVE_L / 2
+_ZJ = LUG_FIXED_Z + 1.0                               # jaw knuckles span |z| = 15..45
+FIXED_LUG = _barrel(LUG_R, -LUG_FIXED_Z, LUG_FIXED_Z)
+JAW_LUGS = _barrel(LUG_R, _ZJ, _ZE).union(_barrel(LUG_R, -_ZE, -_ZJ))
+FIXED_BODY = (_FIXED0.cut(_barrel(LUG_RELIEF_R, _ZJ - 0.5, _ZE + 1)).cut(_barrel(LUG_RELIEF_R, -_ZE - 1, -_ZJ + 0.5))
+              .union(FIXED_LUG))
+JAW_BODY = _JAW0.cut(_barrel(LUG_RELIEF_R, -LUG_FIXED_Z - 0.5, LUG_FIXED_Z + 0.5)).union(JAW_LUGS)
 
 def jaw_turn(shape, open_deg):
     """Swing a jaw-side shape about the hinge pin by open_deg (counter-clockwise from +Z = opening)."""
@@ -297,7 +316,7 @@ DIMS = {
 
 def check_jaw():
     """Returns (closed == hs.result?, min clearance state): volume checks, run from __main__."""
-    same = abs(FIXED_BODY.union(JAW_BODY).val().Volume() - hs.result.val().Volume()) < 1.0
+    same = abs(_FIXED0.union(_JAW0).val().Volume() - hs.result.val().Volume()) < 1.0
     pipe = cyl(hs.R_PIPE, 200.0, "z", (0, 0, 0))
     jaw_open = jaw_turn(JAW_BODY, JAW_OPEN)
     hit = []
@@ -306,6 +325,10 @@ def check_jaw():
         for nm, b in (("fixed", FIXED_BODY), ("jaw", jaw_open)):
             if b.intersect(p).val().Volume() > 1e-3 if b.intersect(p).vals() else False:
                 hit.append((s_mm, nm))
+    # the jaw (with its lugs) must swing from closed to open about the pin without cutting into the fixed body
+    for d in range(1, int(JAW_OPEN) + 1, 4):
+        if FIXED_BODY.intersect(jaw_turn(JAW_BODY, d)).vals() and FIXED_BODY.intersect(jaw_turn(JAW_BODY, d)).val().Volume() > 1.0:
+            hit.append((d, "swing"))
     return same, hit
 
 if __name__ == "__main__":
