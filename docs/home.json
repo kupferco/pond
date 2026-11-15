@@ -1,0 +1,32 @@
+{
+  "_help": "Everything on the home page that you'll want to edit. Change text here, no HTML needed.",
+  "intro": "Pond is an open-source project, an outdoor growing robot I'm building. This site is where I keep all my notes and progress. Nothing here is for sale yet.",
+  "about": "Pond is a vertical vegetable garden that grows outdoors, with a small robot that looks after it. The robot climbs the pipes, checks the plants and swaps the pods, so neighbours can grow food together without the daily chores. I'm designing it in the open: the drawings, the part list and the reasons behind each choice are all on this site.",
+  "hero": {
+    "src": "https://pond-render-500653746288.us-east1.run.app/s/1fkBj3mH9GAhGD/iso.png",
+    "alt": "Drawing of a Pond growing unit: a tall pipe of plants on a water tank, with a track loop the robot cart rides on",
+    "caption": "Placeholder: a CAD drawing of the unit. To use a real photo, put its path in hero.src (e.g. photos/xyz.jpg).",
+    "href": "gallery/"
+  },
+  "status": [
+    {"name": "Pond 1.0", "state": "Built", "note": "The first growing unit is built."},
+    {"name": "Pond 2.0", "state": "In progress", "note": "Adding the climbing robot cart and arm. See the roadmap for what's being worked on right now."}
+  ],
+  "statusLink": {"text": "Full roadmap", "href": "roadmap/"},
+  "explore": [
+    {"title": "Photos", "href": "photos/", "note": "Pictures of the build as it happens.", "optional": true},
+    {"title": "Drawings", "href": "gallery/", "note": "Every CAD drawing of the unit and robot, with versions."},
+    {"title": "Sim", "href": "sim/", "note": "A physics simulation of the robot you can play with in the browser."},
+    {"title": "Part list", "href": "part-list/", "note": "Everything needed to build it, and what's still to get."},
+    {"title": "Roadmap", "href": "roadmap/", "note": "What I'm working on now and what comes next."},
+    {"title": "Decisions", "href": "decisions/", "note": "Why things are the way they are."},
+    {"title": "History", "href": "history/", "note": "What was done, and when."}
+  ],
+  "author": {
+    "name": "Daniel Machado Kupfer",
+    "blurb": "Pond is a personal project by Dani. Questions, ideas or feedback are welcome.",
+    "contactText": "Get in touch",
+    "contactHref": "mailto:CHANGE-ME@example.com"
+  },
+  "github": "https://github.com/kupferco/pond"
+}

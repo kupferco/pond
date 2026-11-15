@@ -11,74 +11,70 @@
 
 <header class="hero">
   <div class="inner">
-    <span class="eyebrow">Open-source urban farming</span>
-    <h1>Grow food together, with a little robot.</h1>
-    <p class="lead">Pond is a vertical vegetable garden with a small robot that looks after it, so neighbours can grow their own food.</p>
-    <div class="btns">
-      <a class="btn primary" href="https://pond-render-500653746288.us-east1.run.app/v/1fkBj3mHJRGcTR" target="_blank" rel="noopener">Open in 3D</a>
-      <a class="btn ghost" href="gallery/">All drawings</a>
-    </div>
-    <a class="shot" href="https://pond-render-500653746288.us-east1.run.app/v/1fkBj3mHJRGcTR" target="_blank" rel="noopener">
-      <img src="https://pond-render-500653746288.us-east1.run.app/s/1fkBj3mH9GAhGD/iso.png" alt="Drawing of a Pond growing unit: a tall pipe of plants on a water tank, with a track loop the robot cart rides on">
-      <div class="cap"><b>Pond unit v3 · 1.9 m</b><span>Rotate in 3D</span></div>
-    </a>
+    <span class="eyebrow">Open-source project · personal build log</span>
+    <h1 id="intro" class="intro">Pond is an open-source project, an outdoor growing robot I'm building. This site is where I keep all my notes and progress. Nothing here is for sale yet.</h1>
   </div>
 </header>
 
 <section class="block">
   <div class="inner">
-    <p class="label">Now</p>
-    <h2>What we're working on</h2>
-    <div class="list" id="now"></div>
+    <p class="label">What it is</p>
+    <p class="lead" id="about"></p>
+    <a class="shot" id="hero" href="gallery/"><img alt="" src=""><div class="cap"><span id="herocap"></span></div></a>
   </div>
 </section>
 
 <section class="block">
   <div class="inner">
-    <p class="label">Next</p>
-    <h2>Coming up</h2>
-    <div class="rows" id="next"></div>
-    <a class="more" href="roadmap/">Full roadmap →</a>
+    <p class="label">Where it's at</p>
+    <div class="list two" id="status"></div>
+    <a class="more" id="statuslink" href="roadmap/"></a>
   </div>
 </section>
 
 <section class="block">
   <div class="inner">
     <p class="label">Explore</p>
-    <h2>The project</h2>
-    <div class="rows">
-      <a class="row" href="gallery/"><div>Drawings<small>Every CAD render, with versions</small></div></a>
-      <a class="row" href="decisions/"><div>Decisions<small>Why things are the way they are</small></div></a>
-      <a class="row" href="part-list/"><div>Part list<small id="shopsum">What to buy or print, in the UK and Brazil</small></div></a>
-      <a class="row" href="history/"><div>History<small>What was done, and when</small></div></a>
-    </div>
+    <h2>Look around</h2>
+    <div class="rows" id="explore"></div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="inner">
+    <p class="label">Who's behind it</p>
+    <h2 id="who"></h2>
+    <p id="blurb"></p>
+    <div class="btns"><a class="btn ghost" id="contact" href="#"></a><a class="btn ghost" id="gh" href="#" hidden target="_blank" rel="noopener">Source on GitHub</a></div>
   </div>
 </section>
 
 <footer class="site">Designed in London, being built in São Paulo.</footer>
 
 <script>
-function slug(t){return t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
-fetch('roadmap/roadmap.json').then(r=>r.json()).then(d=>{
-  const now=document.getElementById('now');
-  (d.now||[]).forEach(i=>{
-    const c=document.createElement('a');c.className='card';c.href='roadmap/item.html?id='+slug(i.title);
-    c.innerHTML='<h3></h3><p></p><span class="go">Details →</span>';
-    c.querySelector('h3').textContent=i.title;
-    c.querySelector('p').textContent=i.note||'';
-    now.appendChild(c);
+// All copy lives in home.json.
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x)e.textContent=x;return e;}
+function $(id){return document.getElementById(id);}
+fetch('home.json').then(function(r){return r.json();}).then(function(d){
+  $('intro').textContent=d.intro;
+  document.title='Pond: an open-source outdoor growing robot';
+  $('about').textContent=d.about;
+  var h=$('hero');h.href=d.hero.href||'#';h.querySelector('img').src=d.hero.src;h.querySelector('img').alt=d.hero.alt||'';
+  $('herocap').textContent=d.hero.caption||'';
+  d.status.forEach(function(s){
+    var c=el('div','card');c.appendChild(el('span','chip '+(s.state==='Built'?'now':'next'),s.state));
+    c.appendChild(el('h3','',s.name));c.appendChild(el('p','',s.note));$('status').appendChild(c);
   });
-  const next=document.getElementById('next');
-  (d.next||[]).slice(0,3).forEach(i=>{
-    const a=document.createElement('a');a.className='row';a.href='roadmap/item.html?id='+slug(i.title);
-    const div=document.createElement('div');div.textContent=i.title;
-    if(i.area){const s=document.createElement('small');s.textContent=i.area;div.appendChild(s);}
-    a.appendChild(div);next.appendChild(a);
+  $('statuslink').textContent=d.statusLink.text+' →';$('statuslink').href=d.statusLink.href;
+  d.explore.forEach(function(i){
+    var a=el('a','row');a.href=i.href;var div=el('div','',i.title);div.appendChild(el('small','',i.note));a.appendChild(div);
+    $('explore').appendChild(a);
+    if(i.optional){a.hidden=true;fetch(i.href,{method:'HEAD'}).then(function(r){
+      if(r.ok&&/html/.test(r.headers.get('content-type')||''))a.hidden=false;}).catch(function(){});}
   });
-});
-fetch('part-list/part-list.json').then(r=>r.json()).then(d=>{
-  const left=d.items.filter(i=>i.status==='to get').length;
-  document.getElementById('shopsum').textContent=left+' of '+d.items.length+' parts still to get';
+  $('who').textContent=d.author.name;$('blurb').textContent=d.author.blurb;
+  $('contact').textContent=d.author.contactText;$('contact').href=d.author.contactHref;
+  if(d.github){$('gh').href=d.github;$('gh').hidden=false;}
 });
 </script>
 </body>
