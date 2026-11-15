@@ -7,8 +7,7 @@
 // a few degrees about hinge 1 (just enough for hand 2 to leave the pipe and clear its curved part, CLEAR_DEG); the cart moves along pipe C past the curve; the plate rotates back;
 // hand 2 clamps again. The arm stays stowed on the plate throughout. A hand swung the other way (hand 1 about hinge 2) is not supported.
 import { HINGE_Y, hingeX, HINGE_DEG_S_CAD } from './dims.ts';
-import { CLEAR_M } from './model.ts';
-import { S_MAX_CM, S_MIN_CM, S_START_CM } from './transfer-model.ts';
+import { JAW_OPEN_RAD, S_MAX_CM, S_MIN_CM, S_START_CM } from './transfer-model.ts';
 
 export type Vec3 = [number, number, number];
 type Quat = [number, number, number, number];
@@ -19,8 +18,6 @@ export function rotate(q: Quat, v: Vec3): Vec3 {
   return [v[0] + w * t[0] + (y * t[2] - z * t[1]), v[1] + w * t[1] + (z * t[0] - x * t[2]), v[2] + w * t[2] + (x * t[1] - y * t[0])];
 }
 
-/** How far the clamp pair backs off (m) when a hand is open: the hand then drops over a pipe end with the fixed pairs 4 mm clear all round. */
-export const WHEEL_OPEN_V2_M = 0.04;
 export const SWING_RATE_DEG_S = 30;           // default hinge speed for the preview; the CAD worm drive gives HINGE_DEG_S_CAD (about 9.5)
 export const DEFAULT_SPEED_CM_S = 10, MAX_SPEED_CM_S = 50, DEFAULT_STEP_CM = 5;
 export const HAND_MOVE_S = 1;                 // seconds each clamp takes to close or open
@@ -32,11 +29,11 @@ export { HINGE_DEG_S_CAD };
 export interface Kin { alpha: number; ox: number; oy: number; hinge1: number; hinge2: number }
 
 /**
- * Rotation path as (plate angle alpha, hand 2's own hinge angle) in degrees. Found by searching the (alpha, hinge 2) plane of the model with contact detection: the sleeve is only
- * 8 mm bigger than the pipe, so hand 2 has to turn the other way a few degrees on its own hinge while the plate rotates; the corridor is narrow, so the path follows its middle.
- * The last point is the smallest plate angle at which hand 2 is completely off pipe B (found 22 deg; 2 deg margin added): CLEAR_DEG.
+ * Rotation path as (plate angle alpha, hand 2's own hinge angle) in degrees. Found by searching the (alpha, hinge 2) plane of the model with contact detection (jaw open, 92 deg):
+ * the sleeve is only 8 mm bigger than the pipe, so hand 2 has to turn a few degrees on its own hinge while the plate rotates; the corridor is narrow, so the path follows its middle.
+ * The last point is the smallest plate angle at which hand 2's sleeve is completely off pipe B (22 deg, checked at 1 deg steps): CLEAR_DEG.
  */
-export const SWING_PATH: readonly (readonly [number, number])[] = [[0, 0], [4, -4], [8, -5], [12, -5], [16, -4], [20, -4], [24, -4]];
+export const SWING_PATH: readonly (readonly [number, number])[] = [[0, 0], [2, 2], [4, 4], [6, 6], [8, 8], [12, 8], [16, 8], [22, 8]];
 export const CLEAR_DEG = SWING_PATH[SWING_PATH.length - 1][0];
 /** The largest hinge angle (deg) either hinge uses. */
 export const MAX_HINGE_DEG = Math.max(...SWING_PATH.map(([a, h]) => Math.max(Math.abs(a), Math.abs(h))));
@@ -72,13 +69,13 @@ export function applyPose(model: ModelLike, data: DataLike, st: CartState): Kin 
   const h = k.alpha / 2;
   data.mocap_quat[4 * mc] = Math.cos(h); data.mocap_quat[4 * mc + 1] = 0; data.mocap_quat[4 * mc + 2] = 0; data.mocap_quat[4 * mc + 3] = Math.sin(h);
   const q = (n: string) => model.jnt_qposadr[model.jnt(n).id], a = (n: string) => model.actuator(n).id;
-  const clamp = (open: number) => { const o = Math.min(1, Math.max(0, open)); return (1 - o) * CLEAR_M + o * WHEEL_OPEN_V2_M; };
+  const clamp = (open: number) => Math.min(1, Math.max(0, open)) * JAW_OPEN_RAD;   // jaw angle: 0 clamped .. JAW_OPEN (92 deg) released
   const c1 = clamp(st.open1), c2 = clamp(st.open2);
   data.qpos[q('hinge1')] = k.hinge1; data.qpos[q('hinge2')] = k.hinge2;
-  data.qpos[q('h1p')] = c1; data.qpos[q('h2p')] = c2;
+  data.qpos[q('jaw1')] = c1; data.qpos[q('jaw2')] = c2;
   for (const w of ['w1f', 'w1b']) data.qpos[q(w)] = st.spin1;
   for (const w of ['w2f', 'w2b']) data.qpos[q(w)] = st.spin2;
-  data.ctrl[a('hinge1')] = k.hinge1; data.ctrl[a('hinge2')] = k.hinge2; data.ctrl[a('clamp1')] = c1; data.ctrl[a('clamp2')] = c2;
+  data.ctrl[a('hinge1')] = k.hinge1; data.ctrl[a('hinge2')] = k.hinge2; data.ctrl[a('jaw1')] = c1; data.ctrl[a('jaw2')] = c2;
   data.ctrl[a('drive1')] = st.spin1; data.ctrl[a('drive2')] = st.spin2;
   return k;
 }

@@ -21,9 +21,14 @@ export const MOTOR_B_X = PLATE_X0 + END_GAP + MOTOR_R;                 // -65
 export const ARM_X = MOTOR_B_X + MOTOR_R + PART_GAP + ARM_BASE_W / 2;   // -12
 export const MOTOR_C_X = ARM_X + ARM_BASE_W / 2 + PART_GAP + MOTOR_R;   // +41
 export const BATT = [70, 50, 70] as const;
-export const BATT_Z = PLATE_ZH + 6 + BATT[2] / 2;                       // 97
+export const BATT_X = ARM_X, BATT_Z = 0;                                // v3: the battery sits UNDER the arm base, flat on the plate (no shelf tongue)
+export const ARM_Y0 = PLATE_Y0 - BATT[1];                               // arm base underside: on the battery's front face, 50 mm out from the plate
+// Hand clamp jaw (cart_sleeves.py): the sleeve is split by a wedge into a fixed body and a jaw on a knuckle hinge (pin along the pipe at the wedge's far edge).
+export const JAW_A0 = 0, JAW_A1 = 110, JAW_OPEN = 92, JAW_WHEEL_ANG = 60, LUG_R = 4.5, LUG_FIXED_Z = 14;
+export const AXLE_R_POS = 26, WHEEL_R = 10, WHEEL_W = 8, RING_Z = 30, R_BORE = 20, JAW_PIN_R = 2, JAW_GB_R = 8, JAW_GB_L = 12, JAW_MOTOR_R = 8, JAW_MOTOR_L = 30;
 export const WHEEL_Z = 38, WORM_M = 1, WHEEL_OD = WORM_M * WHEEL_Z + 2 * WORM_M;   // 40
 export const WHEEL_Z0 = 62, WHEEL_T = 8, CENTRE_DIST = 24, WORM_ZC = WHEEL_Z0 + WHEEL_T / 2;
+export const WORM_OD = 12;
 export const KNUCKLE_Z = 45, TONGUE_DX0 = 21, TONGUE_W = 30, TONGUE_Z1 = 86;
 export const SHOULDER_H = 88, L1 = 120, L2 = 130, L3 = 100;               // cart_arm.py: shoulder height above the arm base plate, link lengths
 export const HINGE_RATIO = WHEEL_Z;                                       // 38:1 worm gear

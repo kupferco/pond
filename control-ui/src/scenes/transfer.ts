@@ -32,7 +32,7 @@ export const transferScene: Scene = {
         <dt>Step</dt><dd id="t-step-now">Idle</dd>
         <dt>Contacts</dt><dd id="t-hit">none</dd>
       </dl>
-      <p class="hint">Pipes B and C are ${PIPE_X.C - PIPE_X.B} mm apart (cad/cart_dims.py), the plate hangs between the two hinge axes. A transfer: release hand B, rotate the plate ${CLEAR_DEG}° on hand C's hinge to clear the curve, move past it, rotate back, clamp hand B. The arm stays as it is. Rotation only happens during a transfer; the hinge worm drives hold the plate with the motors off.</p>
+      <p class="hint">Pipes B and C are ${PIPE_X.C - PIPE_X.B} mm apart (cad/cart_dims.py), the plate hangs between the two hinge axes. Each hand is a fixed sleeve with a jaw on a knuckle hinge (jaw motor on the end). Battery under the arm, worm drive on each hinge. A transfer: open hand B's jaw (release), rotate the plate ${CLEAR_DEG}° on hand C's hinge to clear the curve, move past it, rotate back, clamp hand B. The arm stays as it is. Rotation only happens during a transfer; the hinge worm drives hold the plate with the motors off.</p>
     </section>
     <div class="xy stepbar">
       <label>Step <input class="tall" id="t-step" type="number" inputmode="decimal" min="0.1" step="1" value="${DEFAULT_STEP_CM}" aria-label="Step size cm"> cm</label>

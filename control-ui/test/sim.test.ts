@@ -205,7 +205,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
 
   const tm = mj.MjModel.from_xml_string(transferMjcf()), td = new mj.MjData(tm);
   const g = (n: string) => tm.geom(n).id, bodyOf = (n: string) => tm.body(tm.geom_bodyid[g(n)]).name;
-  check('transfer model: one mocap plate, 6 actuators (2 drive, 2 hinge, 2 clamp), no free or ball joints', tm.nmocap === 1 && tm.nu === 6 && [...Array(tm.njnt).keys()].every((j) => tm.jnt_type[j] === 3 || tm.jnt_type[j] === 2), `nu ${tm.nu}`);
+  check('transfer model: one mocap plate, 6 actuators (2 drive, 2 hinge, 2 jaw), no free or ball joints', tm.nmocap === 1 && tm.nu === 6 && [...Array(tm.njnt).keys()].every((j) => tm.jnt_type[j] === 3 || tm.jnt_type[j] === 2), `nu ${tm.nu}`);
   applyPose(tm, td, initialState()); mj.mj_forward(tm, td);
   // CAD-frame coordinates (x across, y out of the pipe plane, z along the pipes) of a world point; the scene itself has the pipes horizontal
   const cadOf = (a: ArrayLike<number>, o: number) => worldToCad([a[o], a[o + 1], a[o + 2]]);
@@ -215,10 +215,12 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('each hinge axis is parallel to the pipes (horizontal), on the pad edge: x -0.09 and +0.066, 43 mm in front', hingeAt('hinge2').every((v, i) => Math.abs(v - [-0.09, -0.043, 1][i]) < 1e-9) && hingeAt('hinge1').every((v, i) => Math.abs(v - [0.066, -0.043, 1][i]) < 1e-9));
   check('the plate hangs between the hinge axes', gx('plate', 0) - 0.071 > -0.09 && gx('plate', 0) + 0.071 < 0.066);
   check('drive motors, arm base and battery are on the plate (rigid: no joint between)', ['motor_drive1', 'motor_drive2', 'armbase', 'armcolumn', 'battery'].every((n) => bodyOf(n) === 'plate'));
-  check('battery sits above the arm on a shelf: same x as the arm base, higher than the plate top', Math.abs(gx('battery', 0) - gx('armbase', 0)) < 1e-9 && gx('battery', 2) - 0.035 > gx('plate', 2) + 0.056);
-  check('the two drive motors are on the plate in front of it; the arm base is a block on the plate face', gx('motor_drive1', 1) < gx('plate', 1) && gx('motor_drive2', 1) < gx('plate', 1) && Math.abs(gx('armbase', 1) - (gx('plate', 1) - 0.003 - 0.004)) < 1e-9);
+  check('battery sits UNDER the arm (plate, battery, arm base): same x and z as the arm base, between the plate and the arm base, no shelf or tongue under it', Math.abs(gx('battery', 0) - gx('armbase', 0)) < 1e-9 && Math.abs(gx('battery', 2) - gx('armbase', 2)) < 1e-9 && gx('battery', 1) < gx('plate', 1) && gx('armbase', 1) < gx('battery', 1) - 0.025 && !/name="shelf"/.test(transferMjcf()));
+  check('the two drive motors and the arm base sit in a row on the plate (x -65, -12, +41), the arm base on the battery face', gx('motor_drive1', 1) < gx('plate', 1) && gx('motor_drive2', 1) < gx('plate', 1) && Math.abs(gx('motor_drive2', 0) + 0.065) < 1e-9 && Math.abs(gx('motor_drive1', 0) - 0.041) < 1e-9 && Math.abs(gx('armbase', 1) - (gx('plate', 1) - 0.003 - 0.05 - 0.004)) < 1e-9);
+  check('each hinge has its worm drive on the plate (worm, bracket, motor)', [1, 2].every((h) => bodyOf('worm' + h) === 'plate' && bodyOf('worm_motor' + h) === 'plate' && bodyOf('bracket_in' + h) === 'plate'));
   check('hinges are position-controlled and self-locking: position actuators on hinge1/hinge2 and friction on the joints', ['hinge1', 'hinge2'].every((n) => tm.actuator(n).id >= 0 && tm.actuator_trnid[2 * tm.actuator(n).id] === tm.jnt(n).id) && tm.dof_frictionloss[tm.jnt_dofadr[tm.jnt('hinge1').id]] > 0 && tm.dof_frictionloss[tm.jnt_dofadr[tm.jnt('hinge2').id]] > 0);
-  check('exactly one wheel pair per hand moves (clamp slide joints h1p, h2p)', [...Array(tm.njnt).keys()].filter((j) => tm.jnt_type[j] === 2).map((j) => tm.jnt(j).name).sort().join() === 'h1p,h2p');
+  check('each hand is a fixed sleeve body plus a jaw on a knuckle hinge (joints jaw1, jaw2, axis along the pipe, 0 to 92 deg) with its own actuator; no slide joints', [...Array(tm.njnt).keys()].filter((j) => tm.jnt_type[j] === 2).length === 0 && ['jaw1', 'jaw2'].every((n) => tm.actuator(n).id >= 0 && tm.actuator_trnid[2 * tm.actuator(n).id] === tm.jnt(n).id && Math.abs(tm.jnt_range[2 * tm.jnt(n).id + 1] - 92 * Math.PI / 180) < 1e-9 && tm.body(n).id >= 0));
+  check('the jaw wheel pair and jaw wall ride on the jaw body, the sleeve wall and the driven wheels on the hand', [...Array(tm.ngeom).keys()].filter((i) => tm.body(tm.geom_bodyid[i]).name === 'jaw2').length > 10 && [...Array(tm.ngeom).keys()].filter((i) => tm.body(tm.geom_bodyid[i]).name === 'hand2').length > 30);
 
   // Kinematics: hand C never moves; the plate turns only a few degrees about hinge C; hand B ends clear of pipe B.
   const handAt = (st: CartState, h: 1 | 2) => { applyPose(tm, td, st); mj.mj_forward(tm, td); const b = tm.body('hand' + h).id, p = cadOf(td.xpos, 3 * b), qw = td.xquat[4 * b], qx = td.xquat[4 * b + 1], qy = td.xquat[4 * b + 2], qz = td.xquat[4 * b + 3];
@@ -230,14 +232,14 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     let behind = 0; for (let i = 0; i <= 100; i++) { const s2 = initialState(); s2.t = i / 100; if (handAt(s2, 2).y > 1e-9) behind++; }
     check('hand B stays in front of the pipe plane all through the rotation', behind === 0, `${behind} samples`);
     const k1 = kinematics(1);
-    check('rotation is small: the plate turns CLEAR_DEG (a few degrees, well below 30) and no hinge exceeds MAX_HINGE_DEG', CLEAR_DEG === 24 && MAX_HINGE_DEG <= 24 && Math.abs(k1.alpha * 180 / Math.PI - CLEAR_DEG) < 1e-9 && Math.abs(k1.hinge1 * 180 / Math.PI + CLEAR_DEG) < 1e-9);
+    check('rotation is small: the plate turns CLEAR_DEG (a few degrees, well below 30) and no hinge exceeds MAX_HINGE_DEG', CLEAR_DEG === 22 && MAX_HINGE_DEG <= 22 && Math.abs(k1.alpha * 180 / Math.PI - CLEAR_DEG) < 1e-9 && Math.abs(k1.hinge1 * 180 / Math.PI + CLEAR_DEG) < 1e-9);
     // "off the pipe": a test-only contact pair between hand B's hidden envelope (the sleeve) and pipe B is penetrating exactly when the pipe is still inside the sleeve
     const xmlEnv = transferMjcf().replace('<contact>', '<contact><pair geom1="env2" geom2="pipeBv" margin="0"/>'), em = mj.MjModel.from_xml_string(xmlEnv), ed = new mj.MjData(em);
     const inside = (t: number, s: number) => { const st = initialState(); st.t = t; st.s = s; st.open2 = 1; applyPose(em, ed, st); mj.mj_forward(em, ed); let n = 0; for (let i = 0; i < ed.ncon; i++) { const c = ed.contact.get(i)!; if (c.dist < 0 && [em.geom(c.geom1).name, em.geom(c.geom2).name].sort().join() === 'env2,pipeBv') n++; } return n > 0; };
     check('at the end of the rotation hand B has left pipe B (sleeve clear of the pipe) at every height', [S_MIN_CM, 30, S_MAX_CM].every((s) => !inside(1, s)));
-    // minimal: with the last 4 degrees of the path left out the sleeve is still round the pipe (hinge angle used is the smallest that clears it, within the path's resolution)
-    const shortT = (() => { let lo = 0, hi = 1; for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (kinematics(mid).alpha * 180 / Math.PI < CLEAR_DEG - 4) lo = mid; else hi = mid; } return lo; })();
-    check('smallest angle: four degrees short of the end the sleeve is still round the pipe', inside(shortT, 30));
+    // minimal: with the last 2 degrees of the path left out the sleeve is still round the pipe (hinge angle used is the smallest that clears it, within the path's resolution)
+    const shortT = (() => { let lo = 0, hi = 1; for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (kinematics(mid).alpha * 180 / Math.PI < CLEAR_DEG - 2) lo = mid; else hi = mid; } return lo; })();
+    check('smallest angle: two degrees short of the end the sleeve is still round the pipe', inside(shortT, 30));
     ed.delete(); em.delete(); }
 
   // Contact check can fail: a cart pushed into a pipe, a hand turned into the plate.
