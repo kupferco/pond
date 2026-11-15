@@ -268,6 +268,7 @@ export function worstContact(model: { geom(id: number): { name: string }; body(i
   for (let i = 0; i < data.ncon; i++) {
     const c = data.contact.get(i);
     if (c && c.dist < depth) { depth = c.dist; names = [c.geom1, c.geom2].map((g: number) => model.geom(g).name || model.body(model.geom_bodyid[g]).name).join(' / '); }
+    (c as { delete?: () => void } | undefined)?.delete?.();   // embind wrapper: free it (thousands of contact frames would fill the wasm heap)
   }
   return { depth, names };
 }
