@@ -11,7 +11,7 @@ import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/pl
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
 import { cartMjcf, WHEEL_OPEN_M, cartActuators, cartBody, setMotors } from '../src/cart/model.ts';
-import { CLEAR_DEG, HINGE_DEG_S_CAD, MAX_HINGE_DEG, TransferRun, applyPose, initialState, kinematics, worstContact, type CartState } from '../src/cart/transfer.ts';
+import { CLEAR_DEG, HINGE_DEG_S_CAD, MAX_HINGE_DEG, MAX_BEND_HINGE_DEG, P_TOP_CM, TransferRun, applyPose, initialState, kinematics, worstContact, type CartState } from '../src/cart/transfer.ts';
 import { S_MAX_CM, S_MIN_CM, transferMjcf, worldToCad } from '../src/cart/transfer-model.ts';
 import * as DIMS from '../src/cart/dims.ts';
 import { readFileSync } from 'node:fs';
@@ -273,11 +273,12 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     const q = new TransferRun(); q.nudge(1000); for (let i = 0; i < 1000; i++) q.advance(0.02);
     check('the cart stops at the end of the pipes', q.st.s === S_MAX_CM); }
 
-  // Full transfers, stepped like the scene does, from several positions along the pipes (and twice in a row, so there and back): every frame is checked against the pipes and the plate against both hands.
-  for (const s0 of [S_MIN_CM, S_MIN_CM + 5, 30, 45, S_MAX_CM - 5]) {
+  // Full transfer (Dani's brief: the button must take the cart from the top of pipes B and C to the top right of pipe C): stepped like the scene does, from several positions on the straight part.
+  // Every frame is checked against the pipes (zero contacts) and the plate against both hands.
+  for (const s0 of [S_MIN_CM, 30, S_MAX_CM]) {
     const r = new TransferRun(); r.st.s = s0; r.goal.s = s0;
-    r.swingDegS = 30; r.setSpeed(10); r.start();
-    const phases: string[] = []; let frames = 0, bad = 0, deep = 0, deepNames = '', rotFrames = 0, rotOk = true, prevT = r.st.t, maxHinge = 0, maxStep = 0, h1 = 0, h2 = 0, sMovedWrong = false, prevS = s0, wheelsOk = true;
+    r.swingDegS = 30; r.setSpeed(10); const started = r.start();
+    const phases: string[] = []; let frames = 0, bad = 0, deep = 0, deepNames = '', rotFrames = 0, rotOk = true, prevT = r.st.t, maxHinge = 0, maxStep = 0, h1 = 0, h2 = 0, sMovedWrong = false, prevS = s0, maxS = s0, wheelsOk = true, maxDh = 0;
     while (!r.done && frames < 20000) {
       const during = r.current; r.advance(0.02); frames++;
       const k = applyPose(tm, td, r.st); mj.mj_forward(tm, td);
@@ -288,15 +289,33 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
       if (r.st.s !== prevS && during !== 'move') sMovedWrong = true;
       if (r.st.s !== prevS && r.st.t < 1) wheelsOk = false;
       maxHinge = Math.max(maxHinge, Math.abs(k.hinge1), Math.abs(k.hinge2));
-      maxStep = Math.max(maxStep, Math.abs(k.hinge1 - h1), Math.abs(k.hinge2 - h2)); h1 = k.hinge1; h2 = k.hinge2; prevT = r.st.t; prevS = r.st.s;
+      maxStep = Math.max(maxStep, Math.abs(k.hinge1 - h1), Math.abs(k.hinge2 - h2)); h1 = k.hinge1; h2 = k.hinge2; prevT = r.st.t; prevS = r.st.s; maxS = Math.max(maxS, r.st.s); maxDh = Math.max(maxDh, Math.abs(k.hinge2));
     }
-    check(`full transfer from ${s0} cm: release, rotate, move, rotate back, clamp, in that order`, r.done && phases.join('>') === 'release>rotate>move>rotateBack>clamp', phases.join('>') + ` (${frames} frames)`);
+    check(`full transfer from ${s0} cm: starts, runs release, rotate, move, rotate back, in that order, and finishes`, started && r.done && phases.join('>') === 'release>rotate>move>rotateBack', phases.join('>') + ` (${frames} frames)`);
     check(`full transfer from ${s0} cm: zero contacts with the track, cart against the pipes and plate against the hands (${frames} frames)`, bad === 0, `${bad} frames, worst ${(deep * 1000).toFixed(2)} mm ${deepNames}`);
     check(`full transfer from ${s0} cm: the plate rotates only in the rotate steps, with hand B released and hand C clamped; the cart drives only in the move step, rotated`, rotFrames > 20 && rotOk && !sMovedWrong && wheelsOk, `${rotFrames} rotation frames`);
-    check(`full transfer from ${s0} cm: the largest hinge angle is ${MAX_HINGE_DEG} deg or less, the hinge drives never exceed the speed limit (30 deg/s)`, maxHinge * 180 / Math.PI <= MAX_HINGE_DEG + 1e-9 && maxStep <= (30 * Math.PI / 180) * 0.02 + 1e-9, `${(maxHinge * 180 / Math.PI).toFixed(1)} deg, ${(maxStep / 0.02 * 180 / Math.PI).toFixed(1)} deg/s`);
-    const farEnd = s0 < (S_MIN_CM + S_MAX_CM) / 2 ? S_MAX_CM : S_MIN_CM;
-    check(`full transfer from ${s0} cm: ends flat, hand B clamped on pipe B, hand C on pipe C, the cart moved to the far end (${farEnd} cm)`, r.st.t === 0 && r.st.open2 === 0 && r.st.open1 === 0 && Math.abs(handAt(r.st, 2).x + 0.06) < 1e-9 && Math.abs(handAt(r.st, 1).x - 0.06) < 1e-9 && r.st.s === farEnd);
+    check(`full transfer from ${s0} cm: no hinge goes past ${MAX_BEND_HINGE_DEG} deg and the hinge drives never exceed the speed limit (30 deg/s)`, maxHinge * 180 / Math.PI <= MAX_BEND_HINGE_DEG + 1e-6 && maxStep <= (30 * Math.PI / 180) * 0.02 + 1e-6, `${(maxHinge * 180 / Math.PI).toFixed(1)} deg, ${(maxStep / 0.02 * 180 / Math.PI).toFixed(1)} deg/s`);
+    // END POSITION: the cart is on pipe C's top bar, near its free (right) end: hand C is on the bar's axis (x from the bend end, z = bar height), clamped; hand B released, plate flat.
+    const hc = handAt(r.st, 1), barZ = (0.6 + 0.15), barX0 = 0.06 + 0.15, barX1 = barX0 + 0.45;
+    check(`full transfer from ${s0} cm: ends at pipe C's top right, flat, hand C clamped on the top bar (z ${barZ} m, x ${barX0}..${barX1} m, ${(barX1 - hc.x) * 100 | 0} cm from the end), hand B released`,
+      r.st.t === 0 && r.st.open1 === 0 && r.st.open2 === 1 && Math.abs(hc.z - barZ) < 1e-6 && Math.abs(hc.y) < 1e-6 && hc.x > barX0 + 0.25 && hc.x < barX1 - 0.05 && r.st.s === P_TOP_CM, `hand C at x ${hc.x.toFixed(3)} z ${hc.z.toFixed(3)}, s ${r.st.s}`);
+    check(`full transfer from ${s0} cm: the cart really travels (round the bend, more than 60 cm), not just up and down`, maxS - s0 > 60, `${(maxS - s0).toFixed(1)} cm`);
   }
+  { // The scene's own start: the cart waits at the top of pipes B and C; Reset puts it back; the button refuses at the end.
+    const r = new TransferRun(); r.reset();
+    check('reset: cart at the top of the straight part, clamped on both pipes', r.st.s === S_MAX_CM && r.st.open1 === 0 && r.st.open2 === 0 && r.st.t === 0 && r.spanning);
+    r.start(); for (let i = 0; i < 20000 && !r.done; i++) r.advance(0.02);
+    check('after the transfer the button refuses a second run until Reset', r.done && !r.start() && r.msg.includes('Reset'));
+    r.reset(); check('reset again: ready for another transfer', r.start());
+    const q = new TransferRun(); q.reset(); q.clampHand(2, true); for (let i = 0; i < 100; i++) q.advance(0.02); q.rotate(1); for (let i = 0; i < 1000; i++) q.advance(0.02);
+    q.nudge(1000); for (let i = 0; i < 4000; i++) q.advance(0.02);
+    check('manual: released and rotated, Forward drives all the way to the top right of pipe C, no further', q.st.s === P_TOP_CM && q.st.t === 1);
+    check('manual: Forward is refused with the plate flat and hand B released beyond the straight part', (() => { const z = new TransferRun(); z.reset(); z.clampHand(2, true); for (let i = 0; i < 100; i++) z.advance(0.02); z.nudge(1000); for (let i = 0; i < 1000; i++) z.advance(0.02); return z.st.s <= S_MAX_CM; })()); }
+  // Dense sweep of the whole ride (rotated, hand B released) every 0.1 cm from the straight part to the top right: zero contacts, the plate never touches a pipe, the hinges stay inside +-30 deg.
+  { let bad = 0, worst = 0, worstS = 0, maxA = 0;
+    for (let s = S_MIN_CM; s <= P_TOP_CM + 1e-9; s += 0.1) { const st = initialState(); st.s = s; st.t = 1; st.open2 = 1; const k = applyPose(tm, td, st); mj.mj_forward(tm, td); maxA = Math.max(maxA, Math.abs(k.hinge1), Math.abs(k.hinge2)); const w = worstContact(tm, td); if (w.depth < 0) { bad++; if (w.depth < worst) { worst = w.depth; worstS = s; } } }
+    check('dense sweep of the ride, every 1 mm from the straight part to the top right of pipe C: zero contacts', bad === 0, `${bad} poses, worst ${(worst * 1000).toFixed(2)} mm at ${worstS.toFixed(1)} cm`);
+    check('the hinges stay inside their joint range (30 deg)', maxA * 180 / Math.PI <= 30, `${(maxA * 180 / Math.PI).toFixed(1)} deg`); }
   check('CAD hinge worm drive speed is 60 rpm / 38 (about 9.5 deg/s)', Math.abs(HINGE_DEG_S_CAD - 9.47) < 0.01);
   td.delete(); tm.delete();
 }
