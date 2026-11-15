@@ -4,7 +4,7 @@ Read this file first in every new session. It holds the big picture only. For an
 
 ## What Pond is
 
-An open-source, autonomous communal urban farming unit, aimed first at São Paulo (MVP "Pond 2027"). A hydroponic growing tower with a pipe-climbing robot cart and a small arm (SO-101 follower, STS3215 servos). The robot's main job is constant monitoring (catching pump failures, sick plants) plus planting pods and clearing failed plants, not heavy labour. Solar powered, flat-packs into its own tank. Target market: schools, councils, green-economy grants, and households; designs open-source for self-builders.
+An open-source, autonomous communal farming unit (outdoor), aimed first at São Paulo (MVP "Pond 2027"). A hydroponic growing tower with a pipe-climbing robot cart and a small arm (SO-101 follower, STS3215 servos). The robot's main job is constant monitoring (catching pump failures, sick plants) plus planting pods and clearing failed plants, not heavy labour. Solar powered, flat-packs into its own tank. Target market: schools, councils, green-economy grants, and households; designs open-source for self-builders.
 
 ## Current phase
 
