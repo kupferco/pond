@@ -33,37 +33,35 @@ export const transferScene: Scene = {
         <dt>Step</dt><dd id="t-step-now">Idle</dd>
         <dt>Contacts</dt><dd id="t-hit">none</dd>
       </dl>
-      <p class="hint">Pipes B and C are ${PIPE_X.C - PIPE_X.B} mm apart (cad/cart_dims.py), the plate hangs between the two hinge axes. Each hand is a fixed sleeve with a jaw on a knuckle hinge (jaw motor on the end). Battery under the arm, worm drive on each hinge. A transfer takes the cart from the top of pipe B and C (clamped on both) to the top right of pipe C: open hand B's jaw (release), rotate the plate ${CLEAR_DEG}° on hand C's hinge to clear pipe B, drive on pipe C round its bend to the top right, rotate back. The arm stays as it is. Rotation only happens during a transfer; the hinge worm drives hold the plate with the motors off.</p>
+      <p class="hint">Pipes B and C are ${PIPE_X.C - PIPE_X.B} mm apart (cad/cart_dims.py), the plate hangs between the two hinge axes. Each hand is a fixed sleeve with a jaw on a knuckle hinge (jaw motor on the end). Battery under the arm, worm drive on each hinge. A transfer takes the cart from the top of pipe B and C (clamped on both) to the top right of pipe C: open hand B's jaw (release), rotate the plate ${CLEAR_DEG}° on hand C's hinge to clear pipe B, drive on pipe C round its bend, rotate back flat as soon as the bend is behind, drive on to the top right. Pressed again it comes back the same way and clamps hand B on pipe B. The arm stays as it is. Rotation only happens during a transfer; the hinge worm drives hold the plate with the motors off.</p>
     </section>
-    <div class="xy stepbar">
-      <label>Step <input class="tall" id="t-step" type="number" inputmode="decimal" min="0.1" step="1" value="${DEFAULT_STEP_CM}" aria-label="Step size cm"> cm</label>
-      <label>Speed <input class="tall" id="t-speed" type="number" inputmode="decimal" min="0.1" max="${MAX_SPEED_CM_S}" step="1" value="${DEFAULT_SPEED_CM_S}" aria-label="Speed cm per second"> cm/s</label>
+    <div class="row"><button class="big grow" id="t-transfer">Run full transfer</button></div>
+    <div class="row"><button class="big grow" id="t-stop">Stop</button><button class="big grow" id="t-reset">Reset</button></div>
+    <p class="hint">Run full transfer: from the top of pipes B and C (clamped on both) to the top right of pipe C; press it again to come back. Each press runs the whole sequence.</p>
+    <h2>Clamps</h2>
+    <div class="row">
+      <button class="big grow" id="t-clampb"></button>
+      <button class="big grow" id="t-clampc"></button>
     </div>
-    <div class="row wrap">
-      <button class="big grow" id="t-up">▶ Forward</button>
-      <button class="big grow" id="t-down">◀ Back</button>
-    </div>
-    <p class="hint">Forward and back drive the cart along the track on the drive wheels: on both pipes up to ${S_MAX_CM} cm; with hand B released and the plate rotated, on up round pipe C's bend (${P_STRAIGHT_END.toFixed(0)} to ${P_BEND_END.toFixed(0)} cm) to its top right (${P_TOP_CM.toFixed(0)} cm).</p>
-    <h2>Transfer, step by step</h2>
-    <p class="hint">Step 3 is Forward / Back above, with hand B released and the plate rotated. Hand B has no pipe to clamp up on the top bar of pipe C: Reset puts the cart back at the top of the straight part, clamped on both.</p>
-    <div class="row wrap">
-      <button class="big grow" id="t-relfree">1. Release hand B</button>
-      <button class="big grow" id="t-relc">Release hand C</button>
+    <h2>Plate rotation</h2>
+    <div class="row">
+      <button class="big grow" id="t-rplus">Rotate to clear curve</button>
+      <button class="big grow" id="t-rminus">Rotate back</button>
     </div>
     <div class="xy stepbar">
       <label>Hinge speed <input class="tall" id="t-hspeed" type="number" inputmode="decimal" min="1" max="60" step="1" value="${SWING_RATE_DEG_S}" aria-label="Hinge speed degrees per second"> °/s</label>
     </div>
-    <div class="row wrap">
-      <button class="big grow" id="t-rplus">2. Rotate to clear curve</button>
-      <button class="big grow" id="t-rminus">4. Rotate back</button>
-    </div>
     <p class="hint">The CAD worm drive turns a hinge at ${HINGE_DEG_S_CAD.toFixed(1)}°/s (60 rpm motor, 38:1); the field sets the limit used here.</p>
-    <div class="row wrap">
-      <button class="big grow" id="t-clampfree">Clamp hand B</button>
-      <button class="big grow" id="t-clampc">Clamp hand C</button>
+    <h2>Drive</h2>
+    <div class="row">
+      <button class="big grow" id="t-down">◀ Back</button>
+      <button class="big grow" id="t-up">▶ Forward</button>
     </div>
-    <div class="row"><button class="big" id="t-stop">Stop</button><button class="big" id="t-reset">Reset</button></div>
-    <div class="row"><button class="big grow" id="t-transfer">Run full transfer</button></div>
+    <div class="xy stepbar">
+      <label>Step <input class="tall" id="t-step" type="number" inputmode="decimal" min="0.1" step="1" value="${DEFAULT_STEP_CM}" aria-label="Step size cm"> cm</label>
+      <label>Speed <input class="tall" id="t-speed" type="number" inputmode="decimal" min="0.1" max="${MAX_SPEED_CM_S}" step="1" value="${DEFAULT_SPEED_CM_S}" aria-label="Speed cm per second"> cm/s</label>
+    </div>
+    <p class="hint">Forward and back drive the cart along the track on the drive wheels: on both pipes up to ${S_MAX_CM} cm; with hand B released, on up round pipe C's bend (${P_STRAIGHT_END.toFixed(0)} to ${P_BEND_END.toFixed(0)} cm, plate rotated) to its top right (${P_TOP_CM.toFixed(0)} cm). Reset puts the cart back at the top of the straight part, clamped on both.</p>
     <p id="t-msg" class="hint"></p>`;
 
     const $ = <T extends HTMLElement>(id: string) => panel.querySelector<T>('#' + id)!;
@@ -73,10 +71,10 @@ export const transferScene: Scene = {
     const act = (id: string, fn: () => unknown) => $(id).addEventListener('click', () => { sync(); fn(); });
     act('t-up', () => run.nudge(num('t-step', DEFAULT_STEP_CM)));
     act('t-down', () => run.nudge(-num('t-step', DEFAULT_STEP_CM)));
-    act('t-relfree', () => run.clampHand(2, true));
-    act('t-relc', () => run.clampHand(1, true));
-    act('t-clampfree', () => run.clampHand(2, false));
-    act('t-clampc', () => run.clampHand(1, false));
+    // one toggle per hand: releases when clamped, clamps when released
+    const toggle = (hand: 1 | 2) => () => { const open = hand === 1 ? run.goal.open1 : run.goal.open2; run.clampHand(hand, open < 0.5); };
+    act('t-clampb', toggle(2));
+    act('t-clampc', toggle(1));
     act('t-rplus', () => run.rotate(1));
     act('t-rminus', () => run.rotate(0));
     act('t-stop', () => run.stop());
@@ -101,8 +99,9 @@ export const transferScene: Scene = {
       $('t-swing').textContent = ((kinematics(st.t, 1, bendTrim(st.s).da).alpha * 180) / Math.PI).toFixed(1);
       const k = kinematics(st.t), deg = (r: number) => ((r * 180) / Math.PI).toFixed(1);
       $('t-hinges').textContent = `C ${deg(k.hinge1)}°, ${free} ${deg(k.hinge2)}°`;
+      $('t-clampb').textContent = run.goal.open2 < 0.5 ? 'Release hand B' : 'Clamp hand B'; $('t-clampc').textContent = run.goal.open1 < 0.5 ? 'Release hand C' : 'Clamp hand C';
       $('t-step-now').textContent = run.current ? STEP_LABEL[run.current] : 'Idle';
-      const m = $('t-msg'); m.textContent = run.done && !run.busy ? `Transfer done: the cart is at the top right of pipe C, hand C clamped, hand B free (hinge angle never above ${MAX_HINGE_DEG}°).` : run.msg;
+      const m = $('t-msg'); m.textContent = run.done && !run.busy ? (st.s > S_MAX_CM + 1e-6 ? `Transfer done: the cart is at the top right of pipe C, hand C clamped, hand B free. Press Run full transfer to bring it back.` : 'Back at the top of pipes B and C, clamped on both.') : run.msg;
     };
     update(); show();
 

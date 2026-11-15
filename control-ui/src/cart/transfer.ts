@@ -76,6 +76,8 @@ export const staticHand = (st: { open1: number; open2: number }): StaticHand => 
 /** Path length (cm) from the pipe's foot to the end of the straight part, to the end of the bend, and the hand's farthest position on the top bar (clear of the bar's free end). */
 export const P_STRAIGHT_END = L_VERT, P_BEND_END = L_VERT + L_ARC;
 export const P_TOP_CM = P_BEND_END + 34;
+/** Where the plate can turn back flat while hand B is off: beyond the bend's trim rows (all hinge extras are 0 from here) and clear of pipe B's bend; checked in test/sim.test.ts. */
+export const S_FLAT_CM = 75;
 /** The sleeve is a rigid 90 mm tube on a 150 mm radius bend: its axis is laid along the chord, shifted this far (mm) towards the inside of the bend (half the sagitta of the sleeve length; the wheels' 4 mm clearance covers the rest). */
 export const BEND_CHORD_MM = 3.4;
 /** Lateral shift (mm, towards the inside of the bend) and extra yaw (rad) that lay the rigid sleeve on the bend without touching it, by path position (cm). Searched with the contact check. */
@@ -117,8 +119,8 @@ export function platePose(st: CartState, trim?: BendTrim): { pos: Vec3; quat: Qu
 }
 
 /** Write a cart state into the model: the plate's mocap pose, both hinges, both clamps and the drive wheels, and the matching actuator targets. */
-export function applyPose(model: ModelLike, data: DataLike, st: CartState): Kin {
-  const { pos, quat, kin: k, hand, eps } = platePose(st), mc = model.body_mocapid[model.body('cart').id];
+export function applyPose(model: ModelLike, data: DataLike, st: CartState, trim?: BendTrim): Kin {
+  const { pos, quat, kin: k, hand, eps } = platePose(st, trim), mc = model.body_mocapid[model.body('cart').id];
   for (let i = 0; i < 3; i++) data.mocap_pos[3 * mc + i] = pos[i];
   for (let i = 0; i < 4; i++) data.mocap_quat[4 * mc + i] = quat[i];
   const q = (n: string) => model.jnt_qposadr[model.jnt(n).id], a = (n: string) => model.actuator(n).id;
@@ -133,10 +135,11 @@ export function applyPose(model: ModelLike, data: DataLike, st: CartState): Kin 
   return k;
 }
 
-export type StepName = 'release' | 'rotate' | 'move' | 'rotateBack';
+export type StepName = 'release' | 'rotate' | 'move' | 'rotateBack' | 'moveTop' | 'moveBack' | 'moveFlat' | 'clamp';
 export const STEP_LABEL: Record<StepName, string> = {
-  release: 'Releasing hand B', rotate: 'Rotating the plate on hand C\'s hinge, clear of pipe B', move: 'Driving on pipe C round the bend to its top right',
-  rotateBack: 'Rotating the plate back',
+  release: 'Releasing hand B', rotate: 'Rotating the plate on hand C\'s hinge, clear of pipe B', move: 'Driving on pipe C round the bend, plate rotated', rotateBack: 'Rotating the plate back, flat again',
+  moveTop: 'Driving flat along pipe C\'s top bar to its top right', moveBack: 'Driving back round the bend, plate rotated, to the top of pipes B and C', moveFlat: 'Driving back along pipe C\'s top bar',
+  clamp: 'Clamping hand B on pipe B',
 };
 const EPS = 1e-9;
 interface Goal { s: number; t: number; open1: number; open2: number }
@@ -182,8 +185,9 @@ export class TransferRun {
     if (this.swinging) return this.refuse('The plate is mid-rotation: finish the rotation first.');
     const s = this.st, rotatedClear = s.open2 >= 1 - EPS && s.t >= 1 - EPS;
     if (!this.spanning && !rotatedClear && s.open2 > EPS && s.open2 < 1 - EPS) return this.refuse('Hand B is moving: wait for it.');
-    if (s.s > S_MAX_CM + EPS && !rotatedClear) return this.refuse('Rotate the plate first (hand B released): the cart only drives round the bend with the plate rotated.');
-    const lo = S_MIN_CM, hi = rotatedClear ? P_TOP_CM : S_MAX_CM;
+    const flatFree = s.open2 >= 1 - EPS && s.t <= EPS && s.s >= S_FLAT_CM - EPS;   // on the top bar, plate flat, hand B off
+    if (s.s > S_MAX_CM + EPS && !rotatedClear && !flatFree) return this.refuse('Rotate the plate first (hand B released): the cart only drives round the bend with the plate rotated.');
+    const lo = flatFree ? S_FLAT_CM : S_MIN_CM, hi = rotatedClear || flatFree ? P_TOP_CM : S_MAX_CM;
     this.goal.s = Math.min(hi, Math.max(lo, this.goal.s + d)); this.msg = ''; return true;
   }
   /** hand 1 or 2: open (release) or close (clamp). A hand only opens or closes on its pipe, on the straight part. */
@@ -201,16 +205,27 @@ export class TransferRun {
     if (this.busy) return this.refuse('Wait for the running transfer to finish.');
     if (this.st.open1 > EPS) return this.refuse('Hand C must stay clamped: the plate rotates on its hinge.');
     if (this.st.open2 < 1 - EPS) return this.refuse('Release hand B first.');
+    if (!toward && this.st.s > S_MAX_CM + EPS && this.st.s < S_FLAT_CM - EPS) return this.refuse(`Drive on to ${S_FLAT_CM} cm first: the plate can only turn back flat beyond pipe B's bend.`);
     this.goal.t = toward; this.msg = ''; return true;
   }
   stop() { this.queue = []; this.current = null; this.goal = { s: this.st.s, t: this.st.t, open1: this.st.open1, open2: this.st.open2 }; this.msg = 'Stopped.'; }
 
-  /** Run the whole transfer from where the cart is: release hand B, rotate the plate on hand C's hinge, drive round pipe C's bend to its top right, rotate back. Needs both hands clamped on the straight part. */
+  /**
+   * Run the whole transfer from where the cart is. Both hands clamped on the straight part: B to C: release hand B, rotate the plate on hand C's hinge, drive on pipe C round the bend to
+   * S_FLAT_CM, rotate back flat as soon as pipe B's bend is behind, drive on to the top right. The cart on pipe C's top bar with hand B off: the same back: drive to S_FLAT_CM, rotate, drive
+   * back round the bend, rotate flat, clamp hand B on pipe B again.
+   */
   start(): boolean {
     if (this.busy) return this.refuse('A transfer is already running.');
     if (this.swinging || this.st.t > EPS) return this.refuse('The plate is rotated: rotate it back first.');
-    if (this.st.open1 > EPS || this.st.open2 > EPS) return this.refuse(this.st.s > S_MAX_CM ? 'The cart is already on pipe C (hand B released). Press Reset to start again.' : 'Clamp both hands first.');
-    this.queue = [{ name: 'release', goal: { open2: 1 } }, { name: 'rotate', goal: { t: 1 } }, { name: 'move', goal: { s: P_TOP_CM } }, { name: 'rotateBack', goal: { t: 0 } }];
+    const s = this.st;
+    if (s.open1 <= EPS && s.open2 >= 1 - EPS && s.s > S_MAX_CM + EPS && this.goal.open2 >= 1 - EPS) {
+      this.queue = [{ name: 'moveFlat', goal: { s: S_FLAT_CM } }, { name: 'rotate', goal: { t: 1 } }, { name: 'moveBack', goal: { s: S_MAX_CM } }, { name: 'rotateBack', goal: { t: 0 } }, { name: 'clamp', goal: { open2: 0 } }];
+    } else {
+      if (s.open1 > EPS || s.open2 > EPS || this.goal.open1 > EPS || this.goal.open2 > EPS) return this.refuse('Clamp both hands first (on the straight part), or press Reset.');
+      if (s.s > S_MAX_CM + EPS) return this.refuse('Press Reset: hand B has no pipe to clamp here.');
+      this.queue = [{ name: 'release', goal: { open2: 1 } }, { name: 'rotate', goal: { t: 1 } }, { name: 'move', goal: { s: S_FLAT_CM } }, { name: 'rotateBack', goal: { t: 0 } }, { name: 'moveTop', goal: { s: P_TOP_CM } }];
+    }
     this.done = false; this.msg = ''; this.next(); return true;
   }
   private next() {

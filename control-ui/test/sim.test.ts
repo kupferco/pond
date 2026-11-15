@@ -11,7 +11,7 @@ import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/pl
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
 import { cartMjcf, WHEEL_OPEN_M, cartActuators, cartBody, setMotors } from '../src/cart/model.ts';
-import { CLEAR_DEG, HINGE_DEG_S_CAD, MAX_HINGE_DEG, MAX_BEND_HINGE_DEG, P_TOP_CM, TransferRun, applyPose, initialState, kinematics, worstContact, type CartState } from '../src/cart/transfer.ts';
+import { S_FLAT_CM, CLEAR_DEG, HINGE_DEG_S_CAD, MAX_HINGE_DEG, MAX_BEND_HINGE_DEG, P_TOP_CM, TransferRun, applyPose, initialState, kinematics, worstContact, type CartState } from '../src/cart/transfer.ts';
 import { S_MAX_CM, S_MIN_CM, transferMjcf, worldToCad } from '../src/cart/transfer-model.ts';
 import * as DIMS from '../src/cart/dims.ts';
 import { readFileSync } from 'node:fs';
@@ -286,12 +286,12 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
       const w = worstContact(tm, td); if (w.depth < 0) { bad++; if (w.depth < deep) { deep = w.depth; deepNames = w.names; } }
       if (r.st.t !== prevT && during !== 'rotate' && during !== 'rotateBack') rotOk = false;
       if (r.st.t > 0 && r.st.t < 1) { rotFrames++; if (!(r.st.open2 === 1 && r.st.open1 === 0)) rotOk = false; }
-      if (r.st.s !== prevS && during !== 'move') sMovedWrong = true;
-      if (r.st.s !== prevS && r.st.t < 1) wheelsOk = false;
+      if (r.st.s !== prevS && during !== 'move' && during !== 'moveTop') sMovedWrong = true;
+      if (r.st.s !== prevS && r.st.t < 1 && during === 'move') wheelsOk = false;
       maxHinge = Math.max(maxHinge, Math.abs(k.hinge1), Math.abs(k.hinge2));
       maxStep = Math.max(maxStep, Math.abs(k.hinge1 - h1), Math.abs(k.hinge2 - h2)); h1 = k.hinge1; h2 = k.hinge2; prevT = r.st.t; prevS = r.st.s; maxS = Math.max(maxS, r.st.s); maxDh = Math.max(maxDh, Math.abs(k.hinge2));
     }
-    check(`full transfer from ${s0} cm: starts, runs release, rotate, move, rotate back, in that order, and finishes`, started && r.done && phases.join('>') === 'release>rotate>move>rotateBack', phases.join('>') + ` (${frames} frames)`);
+    check(`full transfer from ${s0} cm: starts, runs release, rotate, move, rotate back (flat as soon as pipe B's bend is behind), drive to the top right, in that order, and finishes`, started && r.done && phases.join('>') === 'release>rotate>move>rotateBack>moveTop', phases.join('>') + ` (${frames} frames)`);
     check(`full transfer from ${s0} cm: zero contacts with the track, cart against the pipes and plate against the hands (${frames} frames)`, bad === 0, `${bad} frames, worst ${(deep * 1000).toFixed(2)} mm ${deepNames}`);
     check(`full transfer from ${s0} cm: the plate rotates only in the rotate steps, with hand B released and hand C clamped; the cart drives only in the move step, rotated`, rotFrames > 20 && rotOk && !sMovedWrong && wheelsOk, `${rotFrames} rotation frames`);
     check(`full transfer from ${s0} cm: no hinge goes past ${MAX_BEND_HINGE_DEG} deg and the hinge drives never exceed the speed limit (30 deg/s)`, maxHinge * 180 / Math.PI <= MAX_BEND_HINGE_DEG + 1e-6 && maxStep <= (30 * Math.PI / 180) * 0.02 + 1e-6, `${(maxHinge * 180 / Math.PI).toFixed(1)} deg, ${(maxStep / 0.02 * 180 / Math.PI).toFixed(1)} deg/s`);
@@ -305,7 +305,20 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     const r = new TransferRun(); r.reset();
     check('reset: cart at the top of the straight part, clamped on both pipes', r.st.s === S_MAX_CM && r.st.open1 === 0 && r.st.open2 === 0 && r.st.t === 0 && r.spanning);
     r.start(); for (let i = 0; i < 20000 && !r.done; i++) r.advance(0.02);
-    check('after the transfer the button refuses a second run until Reset', r.done && !r.start() && r.msg.includes('Reset'));
+    check('after the transfer the cart is at pipe C\'s top right, plate flat, hand B off', r.done && r.st.s === P_TOP_CM && r.st.t === 0 && r.st.open2 === 1 && r.st.open1 === 0);
+    // the way back: the same button takes it back round the bend (rotated), flat again, and clamps hand B on pipe B: contact check on every frame
+    { let bad = 0, deep = 0, names = '', frames = 0; const phases: string[] = [], pos = new TransferRun(); Object.assign(pos.st, r.st); pos.goal = { ...r.goal };
+      const ok = pos.start();
+      while (!pos.done && frames < 20000) { pos.advance(0.02); frames++; applyPose(tm, td, pos.st); mj.mj_forward(tm, td); if (pos.current && phases[phases.length - 1] !== pos.current) phases.push(pos.current);
+        const w = worstContact(tm, td); if (w.depth < 0) { bad++; if (w.depth < deep) { deep = w.depth; names = w.names; } } }
+      check('return trip: the button takes the cart back from pipe C\'s top right: drive, rotate, drive back round the bend, rotate flat, clamp hand B', ok && pos.done && phases.join('>') === 'moveFlat>rotate>moveBack>rotateBack>clamp' && pos.st.s === S_MAX_CM && pos.st.t === 0 && pos.st.open1 === 0 && pos.st.open2 === 0, phases.join('>') + ` s ${pos.st.s}`);
+      check('return trip: zero contacts on every frame', bad === 0, `${bad} frames, worst ${(deep * 1000).toFixed(2)} mm ${names}`);
+      check('there and back again: the button works a third time (B to C again after the return)', pos.start() && pos.current === 'release'); }
+    // the plate turns back flat as soon as the bend is behind (S_FLAT_CM), not at the top: no contact turning back at any pipe position from there on, and nothing is rotated beyond it
+    { let bad = 0; for (const s0 of [S_FLAT_CM, 80, 90, P_TOP_CM]) for (let i = 0; i <= 200; i++) { const st = initialState(); st.s = s0; st.t = i / 200; st.open2 = 1; applyPose(tm, td, st); mj.mj_forward(tm, td); if (worstContact(tm, td).depth < 0) bad++; }
+      check('rotating back is contact free from 75 cm on (the plate turns flat as soon as the bend is behind)', bad === 0, `${bad} poses`);
+      const f = new TransferRun(); f.reset(); f.start(); let rotatedBeyond = false; for (let i = 0; i < 20000 && !f.done; i++) { f.advance(0.02); if (f.st.t > 0 && f.st.s > S_FLAT_CM + 1e-9) rotatedBeyond = true; }
+      check('forward trip: the plate is flat again beyond ' + S_FLAT_CM + ' cm', !rotatedBeyond); }
     r.reset(); check('reset again: ready for another transfer', r.start());
     const q = new TransferRun(); q.reset(); q.clampHand(2, true); for (let i = 0; i < 100; i++) q.advance(0.02); q.rotate(1); for (let i = 0; i < 1000; i++) q.advance(0.02);
     q.nudge(1000); for (let i = 0; i < 4000; i++) q.advance(0.02);
