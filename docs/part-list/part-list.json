@@ -142,6 +142,19 @@
       "group": "brazil"
     },
     {
+      "item": "Neodymium disc magnets 10 x 3 mm, N52 (collar closure)",
+      "qty": 4,
+      "where": "UK",
+      "unit_price": 0.4,
+      "currency": "GBP",
+      "approx": true,
+      "link": null,
+      "for": "Pipe collar (per collar)",
+      "note": "4 per collar, 2 glued into each closure tab with opposite poles facing (see cad/pipe_collar.py). Buy a pack of 20 or more from a UK magnet shop (First4Magnets, Amazon UK, eBay UK): about £0.30-0.50 each, about £7-9 for 20. The price is an estimate and no listing has been checked yet. Use epoxy or cyanoacrylate; keep them away from the servos and the Pi SD card. Quantity scales with the number of collars (one per pod hole).",
+      "status": "to get",
+      "group": "uk-carry"
+    },
+    {
       "item": "PLA/PETG filament",
       "qty": null,
       "where": "Brazil",
