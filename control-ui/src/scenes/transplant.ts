@@ -9,8 +9,8 @@ import type { Scene } from './scene.ts';
 
 const info = SCENE_INFOS.find((s) => s.id === 'transplant')!;
 const VIEWS: Record<string, { target: [number, number, number]; dist: number; az: number; el: number }> = {
-  overview: { target: [0.3, 0, 0.55], dist: 2.5, az: 0.5, el: 0.2 },
-  tray: { target: [0.35, 0, 0.2], dist: 0.9, az: 0.5, el: 0.25 },
+  overview: { target: [0.25, 0, 0.62], dist: 2.2, az: 0.5, el: 0.2 },
+  tray: { target: [0.25, 0, 0.42], dist: 0.8, az: 0.5, el: 0.25 },
   hole: { target: [0.2, 0, ZH], dist: 0.8, az: 0.6, el: 0.2 },
 };
 
@@ -53,8 +53,8 @@ export const transplantScene: Scene = {
     </div>
     <details class="card">
       <summary>About this scene</summary>
-      <p class="hint">The central pipe, its collar (pod seat at 45° up, plug holder 44 mm below) and the cart's seedling pod holder are the CAD of cad/pipe_collar.py and cad/cart_pod_holder.py. The arm is the SO-101 stand-in used in the other scenes, on the cart plate. One press per step; Play all runs what is left. The arm is posed by inverse kinematics and every frame is checked for contacts (arm, cart, pod and plug against the pipe, collar, holder and tray); the line above turns red if anything touches.</p>
-      <p class="hint">Assumed (not in the CAD): the track stands ${XT.toFixed(2)} m from the pipe, the hole is ${ZH.toFixed(2)} m up, the seedling tray is on the floor (cart at ${CART_Z0.toFixed(2)} m), the hole is reached with the cart at ${CART_Z1.toFixed(2)} m. The pod holder cup is ${(CUP_DROP * 1000).toFixed(0)} mm lower on the plate than in the CAD: at the CAD position its pod is 55 mm under the arm base, out of the arm's reach.</p>
+      <p class="hint">One pipe: the growing pipe with its collar (pod seat at 45° up, hole 45 mm, plug holder 44 mm below, from cad/pipe_collar.py), standing on the tank (700 × 400 × 300 mm, from cad/unit_v3_aframe.py) with the seedling tray on the tank lid. The cart rides on that same pipe, on a ring sleeve with an outrigger that carries the plate, the battery, the SO-101 stand-in arm and the seedling pod holder (cad/cart_dims.py, cad/cart_pod_holder.py). One press per step; Play all runs what is left. The arm is posed by inverse kinematics and every frame is checked for contacts (arm, cart, pod and plug against the pipe, tank, collar, holder and tray); the line above turns red if anything touches.</p>
+      <p class="hint">Assumed (not in the CAD): the hole is ${ZH.toFixed(2)} m up; the ring sleeve is wide enough to slide over the collar and the outrigger puts the arm's plate ${XT.toFixed(2)} m from the pipe axis (the CAD's own hands sit 0.29 m away on the track pipes; at that distance the SO-101 cannot reach the hole, the plug holder and the cart holder). The cart is at ${CART_Z0.toFixed(2)} m for picking and ${CART_Z1.toFixed(2)} m at the hole. The pod holder cup is ${(CUP_DROP * 1000).toFixed(0)} mm lower on the plate than in the CAD: at the CAD position its pod is under the arm base, out of the arm's reach.</p>
     </details>
     <p id="x-msg" class="hint"></p>
 `;

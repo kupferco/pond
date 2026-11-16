@@ -1,6 +1,6 @@
 // Transplant scene logic: a scripted, kinematic choreography (like the Transfer scene), no physics. The arm is posed by analytic IK, the cart and the pods are placed,
 // and every frame a contact check (mj_forward) must find nothing touching.
-// One trip, four steps (decided with Dani): 1 pick a seedling pod from the tray and put it in the cart's pod holder, 2 the cart drives up to the target hole,
+// One trip, four steps (decided with Dani): 1 pick a seedling pod from the tray and put it in the cart's pod holder, 2 the cart drives up the pipe to the target hole,
 // 3 the arm pulls the plug out of the collar and parks it in the plug holder, 4 the arm takes the pod from the holder and seats it in the hole.
 // The hole is open from the moment the plug leaves its seat until the pod is seated; step 3 ends with the hand already waiting at the holder so step 4 starts straight on the pod.
 import { solvePlanar, toolPoint } from '../arm/kinematics.ts';
@@ -20,10 +20,12 @@ export const handDir = (phi: number): V3 => [Math.sin(phi / DEG), 0, -Math.cos(p
 const add = (a: V3, b: V3, k = 1): V3 => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
 const neg = (a: V3): V3 => [-a[0], -a[1], -a[2]];
 
+/** Which of the two elbow solutions the arm uses (the usual one: elbow towards the pipe; the other one does not fit the joint limits here). */
+export const ELBOW_BACK = false;
 export interface Joints { A: number; B: number; C: number; D: number; E: number }
 /** Joint angles (deg) that put the cap-top point at the tool pose with the cart at height cartZ; null when out of reach or past a joint limit. */
 export function ikTool(t: Tool, cartZ: number): Joints | null {
-  return solvePlanar(0, cartZ - t.z, XB - t.x, GRIP_TX, GRIP_TZ, t.phi);
+  return solvePlanar(0, cartZ - t.z, XB - t.x, GRIP_TX, GRIP_TZ, t.phi, ELBOW_BACK);
 }
 
 // --- the places a pod or plug can be
@@ -58,8 +60,8 @@ type Action =
 
 export interface StepInfo { id: string; title: string; text: string }
 export const STEPS: readonly StepInfo[] = [
-  { id: 'pick', title: '1. Pick a seedling', text: 'At the seedling tray the arm picks a seedling pod by its cap, lifts it out and puts it in the pod holder on the cart.' },
-  { id: 'drive', title: '2. Drive to the hole', text: 'The cart drives up the track to the target hole on the central pipe, the arm folded.' },
+  { id: 'pick', title: '1. Pick a seedling', text: 'At the seedling tray on top of the tank the arm picks a seedling pod by its cap, lifts it out and puts it in the pod holder on the cart.' },
+  { id: 'drive', title: '2. Drive to the hole', text: 'The cart drives up the pipe to the target hole, the arm folded.' },
   { id: 'plug', title: '3. Park the plug', text: 'The arm pulls the plug out of the hole, tilts it from 45° to horizontal and parks it in the collar\'s plug holder, then waits at the pod holder.' },
   { id: 'insert', title: '4. Seat the seedling', text: 'The arm takes the seedling pod from the cart holder and pushes it into the hole.' },
 ];

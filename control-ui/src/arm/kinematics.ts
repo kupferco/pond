@@ -39,8 +39,8 @@ export function solveTool(x: number, y: number, z: number, tx: number, tz: numbe
   return solvePlanar(Math.atan2(y, x) * DEG, Math.hypot(x, y), z, tx, tz, pitch);
 }
 
-/** Planar part of solveTool with the pan given and a signed reach r (the tool may be behind the shoulder axis). */
-export function solvePlanar(pan: number, rG: number, z: number, tx: number, tz: number, pitch: number): Joints | null {
+/** Planar part of solveTool with the pan given and a signed reach r (the tool may be behind the shoulder axis). elbowDown picks the other of the two elbow solutions. */
+export function solvePlanar(pan: number, rG: number, z: number, tx: number, tz: number, pitch: number, elbowDown = false): Joints | null {
   const phi = pitch * RAD;
   // Wrist joint = tool point minus the tool offsets rotated by the tool pitch.
   const wr = rG - (tx * Math.cos(phi) + tz * Math.sin(phi)) - WRIST_TO_HAND * Math.cos(phi);
@@ -49,7 +49,7 @@ export function solvePlanar(pan: number, rG: number, z: number, tx: number, tz: 
   const d = Math.hypot(dr, dz);
   if (d > L1 + L2 - 1e-4 || d < Math.abs(L1 - L2) + 1e-4) return null;
   const delta = Math.acos((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d));
-  const theta1 = Math.atan2(dz, dr) + delta;       // upper arm direction, elbow up
+  const theta1 = Math.atan2(dz, dr) + (elbowDown ? -delta : delta);       // upper arm direction, elbow up (or, elbowDown, the other solution)
   const er = L1 * Math.cos(theta1), ez = L1 * Math.sin(theta1);
   const theta2 = Math.atan2(dz - ez, dr - er);     // forearm direction
   const lift = 90 - theta1 * DEG;

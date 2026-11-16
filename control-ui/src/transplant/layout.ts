@@ -1,15 +1,16 @@
-// Transplant scene layout: the central growing pipe with one pod collar, the cart on its track with the arm and the seedling pod holder, and a seedling tray.
-// Metres. World frame: z up, x from the central pipe axis towards the track, y along the row of the two track pipes; the arm works in the plane y = 0.
+// Transplant scene layout: ONE pipe (the growing pipe, with its collar), the tank it stands on with the seedling tray on the tank lid, and the cart that rides on that same pipe with the arm.
+// Metres. World frame: z up, pipe axis at x = y = 0, x from the pipe towards the cart's arm, y along the plate; the arm works in the plane y = 0.
 //
-// From the CAD (cad/pipe_collar.py, cad/cart_pod_holder.py, cad/cart_dims.py; mm in the CAD, converted here):
-//  - central pipe 75 mm OD, 3 mm wall; hole 45 mm drilled square to the pipe (axis +x) at ZH
+// From the CAD (cad/pipe_collar.py, cad/cart_pod_holder.py, cad/cart_dims.py, cad/unit_v3_aframe.py; mm in the CAD, converted here):
+//  - tank 700 x 400 x 300 with a 4 mm lid (top at 304 mm); growing pipe 75 mm OD, 3 mm wall, standing in a socket (OD 95) on the lid; hole 45 mm drilled square to the pipe (axis +x) at ZH
 //  - collar: pod seat 26 mm bore on an axis 45 degrees UP from +x, through P0 = (RP - 1.5, 0, ZH); seat face at 23.7 mm along the axis, cap underside 21.7, the cap (34 x 8) stands 6 mm proud
 //  - plug holder: a straight (horizontal, +x) blind socket of the same shape, 44 mm BELOW the hole, floor at x = 40, seat face at x = 54
 //  - pod and plug: body 25 (plug 25.5) x 32 (plug 17), cap 34 x 8
-//  - cart: plate 6 mm, battery 70 x 50 x 70 under the arm base, arm base on the plate centre (x = -12 in the CART frame), two track pipes 120 mm apart (R 16),
-//    pod holder: a cup of 42 mm / bore 26 mm, 40 mm long, axis 45 degrees out of the plate AND up the pipe
-// ASSUMED here (not in the repo): the track pipes stand 0.57 m from the central pipe axis (XT); hole height ZH 0.90 m; the seedling tray (3 cells) on the floor, 0.19 m in front of the arm base;
-// the pod holder cup is 130 mm LOWER on the plate than the CAD (see CUP_DROP): at the CAD position its pod sits 55 mm under the arm base, which the arm cannot reach (and it would have to approach upwards, out of reach).
+//  - cart: plate 6 mm, battery 70 x 50 x 70 under the arm base, arm base on the plate centre (x = -12 in the CART frame); the arm base stands 102 mm out from the plate; pod holder: a cup of 42 mm / bore 26 mm, 40 mm long, axis 45 degrees out of the plate AND up
+//  - the hand's pipe axis to the plate: the CAD hands sit on track pipes 290 mm from the growing pipe (TX in unit_v3_aframe.py). Here the cart has ONE hand, a ring sleeve round the growing pipe itself, and an outrigger from the ring
+//    carries the plate so that the plate and arm stand exactly where they stand in the CAD, 290 mm from the pipe axis (XT).
+// ASSUMED here (not in the repo): hole height ZH 0.80 m; the ring sleeve (inner R 75, outer R 83, 90 mm long: wide enough to slide over the collar) and its outrigger; the seedling tray (3 cells) on the tank lid;
+// the cart is brought up past the collar (the ring slides over it) and works from 100 mm above the hole centre.
 import { armMjcf } from '../model.ts';
 
 const f = (n: number) => +n.toFixed(5);
@@ -26,8 +27,11 @@ export const PROUD = CAP_T - RECESS_T;                // 6 mm of cap stand proud
 
 // --- central pipe and collar
 export const PIPE_RP = mm(37.5), PIPE_WALL = mm(3), PIPE_TOP = 1.55;
+export const TANK_L = 0.7, TANK_W = 0.4, LID = 0.304;     // tank 700 x 400, lid top at 304 mm (unit_v3_aframe.py: TH 300 + 4)
+export const SOCKET_R = PIPE_RP + mm(10);
+export const RING_RI = mm(75), RING_RO = mm(83), RING_H = 0.045, RING_UP = 0.12;       // the cart's ring sleeve round the pipe (ASSUMED), half length, centred RING_UP above the cart origin so the hand has the room below it: wide enough to slide over the collar and the parts standing in it (max 70 mm from the axis)
 export const DRILL_R = mm(22.5);
-export const ZH = 0.90;                               // hole centre height (ASSUMED)
+export const ZH = 0.80;                               // hole centre height (ASSUMED)
 export const ZP = ZH - mm(44);                        // plug holder height
 export const P0: V3 = [PIPE_RP - mm(1.5), 0, ZH];
 export const D_SEAT: V3 = [S, 0, S];                  // pod seat axis, out of the pipe and up
@@ -41,10 +45,8 @@ export const PARK_CAP_TOP: V3 = [X_TOP - RECESS_T + PARK_DX + CAP_T, 0, ZP];
 export const D_PARK: V3 = [1, 0, 0];
 
 // --- the cart (CART frame of cad/cart_dims.py: x across the pipes, y out of the pipe plane, plate on -y, z up the pipes)
-export const XT = 0.57;                               // world x of the track pipes (ASSUMED)
+export const XT = 0.55;                               // world x of the cart's plate/hand axis: the outrigger from the ring sleeve on the pipe is this long (ASSUMED; see the header: the arm cannot do its job any nearer)
 export const ARM_CX = mm(-12);                        // arm base centre across the plate
-export const TRACK_Y: [number, number] = [mm(48), mm(-72)];   // world y of pipe B (cart x -60) and pipe C (cart x +60) when the arm plane is y = 0
-export const TRACK_R = mm(16);
 export const PLATE_CY0 = mm(-52), PLATE_CY1 = mm(-46), PLATE_CX0 = mm(-83), PLATE_CX1 = mm(59), PLATE_ZH = mm(56);
 export const BATT = [mm(70), mm(50), mm(70)] as const;
 export const ARM_CY = mm(-102);                       // arm base underside (on the battery front)
@@ -54,7 +56,7 @@ export const XB = XT + ARM_CY - BASE_BOTTOM;          // world x of the arm base
 export const cartToWorld = (cx: number, cy: number, cz: number): V3 => [cy, -(cx - ARM_CX), cz];
 // pod holder cup (cart_pod_holder.py): axis out of the plate (cart -y) and up (+z), 45 degrees
 export const CUP_ROOT: V3 = [ARM_CX, mm(-70), mm(-88)];
-export const CUP_DROP = 0.13;                        // the cup is lowered by this much, so the arm can reach its pod (CAD: 0)
+export const CUP_DROP = 0.13;                        // the cup is this much LOWER on the plate than in the CAD: at the CAD position its pod is under the arm base, out of reach
 export const CUP_L = mm(40), CUP_R = mm(21);
 /** Direction out of the cup, in world coordinates (out of the plate = world -x, and up). */
 export const D_CUP: V3 = [-S, 0, S];
@@ -63,14 +65,14 @@ const cupRoot = (): V3 => cartToWorld(CUP_ROOT[0], CUP_ROOT[1], CUP_ROOT[2] - CU
 export const CUP_CAP_TOP_REL: V3 = (() => { const r = cupRoot(); return at(r, D_CUP, CUP_L - RECESS_T + CAP_T); })();
 
 // --- seedling tray
-export const TRAY_X = XB - 0.19, TRAY_Y: number[] = [-0.06, 0, 0.06], TRAY_T = 0.010;
+export const TRAY_X = XB - 0.19, TRAY_Y: number[] = [-0.06, 0, 0.06], TRAY_T = 0.010;   // on the tank lid, beside the pipe's socket, in the arm plane (ASSUMED)
 export const CELL_RIN = mm(13), CELL_H = mm(30);
 /** Cap-top of the seedling pod that is picked (middle cell). Standing on the tray, pod axis down. */
-export const TRAY_CAP_TOP: V3 = [TRAY_X, 0, TRAY_T + POD_BODY_L + CAP_T];
+export const TRAY_CAP_TOP: V3 = [TRAY_X, 0, LID + TRAY_T + POD_BODY_L + CAP_T + 0.0003];
 
 // --- cart heights (cart origin = arm base axis height), driving range
-export const CART_Z0 = 0.27;                          // at the seedling tray
-export const CART_Z1 = 0.90;                          // at the target hole
+export const CART_Z0 = 0.60;                          // at the seedling tray
+export const CART_Z1 = ZH + 0.10;                     // at the target hole: the ring sleeve rides above the collar (it cannot pass the pod seat)
 export const CART_Z_MAX = 1.3;
 
 // --- gripper (the stand-in hand of model.ts): the cap-top point on the pod axis, in the hand frame
@@ -133,8 +135,11 @@ function pipeAndCollar(): string[] {
   const rIn = PIPE_RP - PIPE_WALL;
   // the 45 mm hole: slat pieces whose centre lies inside the drilled circle (in the y, z plane, on the +x side) are left out
   const inHole = (x: number, y: number, z: number) => x > 0 && Math.hypot(y, z - ZH) < DRILL_R + 0.0015;
-  out.push(...tube([0, 0, 0], [0, 0, 1], 0, PIPE_TOP, rIn, PIPE_RP, 48, `${OBST} ${rgba(0.93, 0.95, 0.97, 0.28)}`, { chunk: 0.003, skip: inHole, name: 'pipe' }).reduce<string[]>((acc, g) => { acc.push(g); return acc; }, []));
-  out.push(`<geom type="cylinder" pos="0 0 0.01" size="0.16 0.01" ${OBST} ${rgba(0.45, 0.47, 0.5)}/>`);
+  out.push(...tube([0, 0, LID], [0, 0, 1], 0, PIPE_TOP - LID, rIn, PIPE_RP, 48, `${OBST} ${rgba(0.93, 0.95, 0.97, 0.28)}`, { chunk: 0.003, skip: inHole, name: 'pipe' }).reduce<string[]>((acc, g) => { acc.push(g); return acc; }, []));
+  // the tank (700 x 400 x 300, lid on top) and the pipe's socket on the lid
+  out.push(`<geom type="box" pos="0 0 ${f((LID - 0.004) / 2)}" size="${TANK_L / 2} ${TANK_W / 2} ${f((LID - 0.004) / 2)}" ${OBST} ${rgba(0.75, 0.77, 0.82, 0.55)}/>`);
+  out.push(`<geom type="box" pos="0 0 ${f(LID - 0.002)}" size="${TANK_L / 2} ${TANK_W / 2} 0.002" ${OBST} ${rgba(0.6, 0.62, 0.68)}/>`);
+  out.push(...tube([0, 0, LID], [0, 0, 1], 0, 0.025, PIPE_RP + 0.001, SOCKET_R, 32, `${OBST} ${rgba(0.95, 0.6, 0.2)}`));
   // collar front half and back half as a shell round the pipe (shown only: the seat tubes below are what the arm and the pod must clear)
   const H = mm(108), RI = PIPE_RP + 0.0001, RO = RI + mm(5), z0 = ZH - mm(68);
   out.push(...tube([0, 0, z0], [0, 0, 1], 0, H, RI, RO, 36, `${VIS} ${rgba(0.55, 0.6, 0.68, 0.38)}`));
@@ -152,11 +157,11 @@ function pipeAndCollar(): string[] {
   return out;
 }
 
-/** Seedling tray with three cells on the floor. */
+/** Seedling tray with three cells on the tank lid. */
 function tray(): string[] {
   const out: string[] = [];
-  out.push(`<geom type="box" pos="${TRAY_X} 0 ${TRAY_T / 2}" size="0.05 0.12 ${TRAY_T / 2}" ${OBST} ${rgba(0.2, 0.62, 0.38)}/>`);
-  for (const y of TRAY_Y) out.push(...tube([TRAY_X, y, TRAY_T], [0, 0, 1], 0, CELL_H, CELL_RIN, CELL_RIN + mm(3), 12, `${OBST} ${rgba(0.95, 0.55, 0.2)}`));
+  out.push(`<geom type="box" pos="${TRAY_X} 0 ${f(LID + TRAY_T / 2)}" size="0.05 0.12 ${TRAY_T / 2}" ${OBST} ${rgba(0.2, 0.62, 0.38)}/>`);
+  for (const y of TRAY_Y) out.push(...tube([TRAY_X, y, LID + TRAY_T], [0, 0, 1], 0, CELL_H, CELL_RIN, CELL_RIN + mm(3), 12, `${OBST} ${rgba(0.95, 0.55, 0.2)}`));
   return out;
 }
 
@@ -182,10 +187,11 @@ function cartGeoms(): string[] {
     const [x, y, z] = cartToWorld(cx, PLATE_CY0 - mm(14), mm(10));
     out.push(`<geom type="cylinder" pos="${f(x)} ${f(y)} ${f(z)}" size="0.014 ${mm(27.5)}" ${OBST} ${rgba(0.85, 0.25, 0.25)}/>`);
   }
-  // the two hands on the track pipes (shown only), and a link from each to the plate
-  for (const [cx, ty] of [[mm(-60), TRACK_Y[0]], [mm(60), TRACK_Y[1]]] as const) {
-    out.push(...tube([0, ty, 0], [0, 0, 1], -mm(45), mm(45), mm(20), mm(34), 16, `${VIS} ${rgba(0.18, 0.45, 0.35)}`));
-    box(cx - mm(14), cx + mm(14), PLATE_CY1, -mm(34), -mm(45), mm(45), rgba(0.18, 0.45, 0.35), VIS);
+  // the one hand: a ring sleeve round the growing pipe (the cart origin stands XT out from the pipe), and an outrigger on each side of the arm that carries the plate (shown only)
+  out.push(...tube([-XT, 0, RING_UP], [0, 0, 1], -RING_H, RING_H, RING_RI, RING_RO, 32, `${OBST} ${rgba(0.18, 0.45, 0.35)}`, { name: 'ring' }));
+  for (const y of [mm(-40), mm(55)]) {
+    out.push(`<geom type="box" pos="${f((-XT + RING_RO + PLATE_CY0) / 2)} ${y} ${mm(50)}" size="${f((XT - RING_RO + PLATE_CY0) / 2)} ${mm(6)} ${mm(6)}" ${VIS} ${rgba(0.18, 0.45, 0.35)}/>`);
+    out.push(`<geom type="box" pos="${f(-XT + RING_RO - mm(6))} ${y} ${f((mm(50) + RING_UP) / 2)}" size="${mm(6)} ${mm(6)} ${f((RING_UP - mm(50)) / 2 + mm(6))}" ${VIS} ${rgba(0.18, 0.45, 0.35)}/>`);   // post up to the ring
   }
   // pod holder: the cup on a web from the plate's bottom edge, axis 45 degrees out and up
   const root = cupRoot();
@@ -205,7 +211,6 @@ export function transplantMjcf(): string {
   const world = [
     `<geom name="floor" type="plane" size="1.6 1.2 0.01" pos="0 0 0" ${OBST} ${rgba(0.84, 0.88, 0.92)}/>`,
     ...pipeAndCollar(), ...tray(),
-    ...TRACK_Y.map((y) => `<geom type="cylinder" fromto="${XT} ${y} 0 ${XT} ${y} ${CART_Z_MAX + 0.25}" size="${TRACK_R}" ${OBST} ${SILVER}/>`),
     mocap(BODIES.pod, [0, 0, 2], podGeoms(POD_BODY_R, POD_BODY_L, podColor, false)),
     mocap(BODIES.plug, [0, 0, 2.2], podGeoms(PLUG_BODY_R, PLUG_BODY_L, plugColor, true)),
     mocap(BODIES.other[0], [0, 0, 2.4], podGeoms(POD_BODY_R, POD_BODY_L, podColor, false)),

@@ -19,7 +19,7 @@ VIEWS = {  # name: (azimuth, elevation) of the camera, degrees; z is up
     "side": (0.0, 0.0),        # from +x (from the track towards the pipe): y to the right
     "top": (-90.0, 90.0),      # from above: x to the right, y up
 }
-FLOOR = (-0.45, 0.95, -0.45, 0.45)
+FLOOR = (-0.5, 0.8, -0.5, 0.5)
 
 
 def basis(az, el):
@@ -62,10 +62,10 @@ def draw(tris, view, box, path, px=1100, floor=True):
 
 
 # framing: (centre x, y, z, half width, half height) per view
-FULL = {"iso": (0.30, 0.0, 0.72, 0.95, 0.95), "front": (0.30, 0.0, 0.78, 0.55, 0.88), "side": (0.0, 0.0, 0.78, 0.40, 0.88), "top": (0.30, 0.0, 0.0, 0.62, 0.50)}
-HOLE = (0.25, 0.0, 0.88, 0.42, 0.33)   # front view round the collar, the cart's hand and the cup, step 3 and 4
-COLLAR = (0.04, 0.0, 0.88, 0.11, 0.09)   # front view right on the collar: seat, hole, plug holder
-TRAY = (0.30, 0.0, 0.20, 0.42, 0.33)   # front view round the seedling tray and the cup, step 1
+FULL = {"iso": (0.25, 0.0, 0.78, 0.95, 0.95), "front": (0.25, 0.0, 0.78, 0.58, 0.88), "side": (0.0, 0.0, 0.78, 0.40, 0.88), "top": (0.25, 0.0, 0.0, 0.62, 0.50)}
+HOLE = (0.25, 0.0, 0.84, 0.42, 0.33)   # front view round the collar, the cart's ring, the cup and the arm, step 3 and 4
+COLLAR = (0.04, 0.0, 0.82, 0.11, 0.09)   # front view right on the collar: seat, hole, plug holder
+TRAY = (0.28, 0.0, 0.5, 0.42, 0.33)   # front view round the seedling tray on the tank, the arm and the cup, step 1
 
 
 def main():
@@ -75,7 +75,7 @@ def main():
     names = {"step0": "start", "step1": "step1-pick", "step2": "step2-drive", "step3": "step3-plug", "step4": "step4-seat"}
     for st in stages:
         tris = json.load(open(os.path.join(src, st["id"] + ".json")))
-        base = "transplant-seedling-" + names[st["id"]] + "-v1"
+        base = "transplant-seedling-" + names[st["id"]] + "-v2"
         for v, box in FULL.items():
             draw(tris, v, box, os.path.join(out, f"{base}-{v}.png"))
         close = TRAY if st["id"] in ("step0", "step1") else HOLE
@@ -83,14 +83,14 @@ def main():
         if st["id"] in ("step2", "step3", "step4"):
             draw(tris, "front", COLLAR, os.path.join(out, f"{base}-collar.png"), px=900)
     # clips: one GIF per step from the frames of the run (front view, framed on where the action is)
-    for i, box in ((1, TRAY), (2, (0.3, 0.0, 0.62, 0.55, 0.62)), (3, HOLE), (4, HOLE)):
+    for i, box in ((1, TRAY), (2, (0.25, 0.0, 0.75, 0.5, 0.6)), (3, HOLE), (4, HOLE)):
         frames = json.load(open(os.path.join(src, f"step{i}-frames.json")))
         imgs = []
         for k, tris in enumerate(frames):
             p = os.path.join(out, f"_f{i}_{k}.png")
             draw(tris, "front", box, p, px=640)
             imgs.append(Image.open(p).convert("P", palette=Image.ADAPTIVE, colors=64))
-        imgs[0].save(os.path.join(out, f"transplant-seedling-{names['step' + str(i)]}-v1-clip.gif"), save_all=True, append_images=imgs[1:], duration=250, loop=0, optimize=True)
+        imgs[0].save(os.path.join(out, f"transplant-seedling-{names['step' + str(i)]}-v2-clip.gif"), save_all=True, append_images=imgs[1:], duration=250, loop=0, optimize=True)
         for k in range(len(frames)):
             os.remove(os.path.join(out, f"_f{i}_{k}.png"))
 
