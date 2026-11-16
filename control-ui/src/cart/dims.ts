@@ -8,18 +8,18 @@ export const SLEEVE_R = 34, SLEEVE_L = 90;       // hand_sleeve.py WALL_OUT_R, S
 export const PAD_X0 = -24, PAD_X1 = 0, PAD_Y0 = -40, PAD_Y1 = -21;
 export const HINGE_R = 5, HINGE_LEAF_T = 3, PLATE_T = 6, HINGE_CLEAR = 2;
 export const HINGE_OFF_B = PAD_X0 - 6;           // -30: hand B's hinge axis, relative to its pipe
-export const HINGE_OFF_C = PAD_X1 + 6;           // +6: hand C's
+export const HINGE_OFF_C = -HINGE_OFF_B;         // +30: hand C's (hand C is the true mirror of hand B across x = 0, Pond #227)
 export const LEAF_Y1 = PAD_Y0 - HINGE_LEAF_T;    // -43
 export const HINGE_Y = LEAF_Y1;                  // hinge axis y
 export const PLATE_Y1 = LEAF_Y1 - HINGE_LEAF_T, PLATE_Y0 = PLATE_Y1 - PLATE_T;   // plate -46 .. -52
 export const PLATE_X0 = -HX + HINGE_OFF_B + HINGE_R + HINGE_CLEAR;   // -83
-export const PLATE_X1 = HX + HINGE_OFF_C - HINGE_R - HINGE_CLEAR;    // +59
+export const PLATE_X1 = HX + HINGE_OFF_C - HINGE_R - HINGE_CLEAR;    // +83
 export const PLATE_ZH = (SLEEVE_L + 22) / 2;     // 56
 export const MOTOR_R = 14, MOTOR_L = 55, PART_GAP = 4, END_GAP = 4, ARM_BASE_W = 70;
 // Parts on the plate, left to right (x): the hand-B motor, the arm, the hand-C motor.
-export const MOTOR_B_X = PLATE_X0 + END_GAP + MOTOR_R;                 // -65
-export const ARM_X = MOTOR_B_X + MOTOR_R + PART_GAP + ARM_BASE_W / 2;   // -12
-export const MOTOR_C_X = ARM_X + ARM_BASE_W / 2 + PART_GAP + MOTOR_R;   // +41
+export const ARM_X = 0;                                                 // plate centre (symmetric plate)
+export const MOTOR_B_X = ARM_X - ARM_BASE_W / 2 - PART_GAP - MOTOR_R;   // -53
+export const MOTOR_C_X = ARM_X + ARM_BASE_W / 2 + PART_GAP + MOTOR_R;   // +53
 export const BATT = [70, 50, 70] as const;
 export const BATT_X = ARM_X, BATT_Z = 0;                                // v3: the battery sits UNDER the arm base, flat on the plate (no shelf tongue)
 export const ARM_Y0 = PLATE_Y0 - BATT[1];                               // arm base underside: on the battery's front face, 50 mm out from the plate

@@ -26,12 +26,15 @@ const pbox = (name: string, cx: number, cy: number, cz: number, hx: number, hy: 
 const pcyl = (name: string, a: number[], b: number[], r: number, col: string, extra = CART_COL) =>
   `<geom ${name ? `name="${name}" ` : ''}type="cylinder" fromto="${a.map((v) => f(m(v))).join(' ')} ${b.map((v) => f(m(v))).join(' ')}" size="${f(m(r))}" ${col} ${extra}/>`;
 
+/** Hand C is the TRUE MIRROR of hand B across x = 0 (cad/cart_sleeves.py place_hand, Pond #227). Every hand is built as hand B (pad on -x, C gap towards +x, i.e. towards the plate); for hand C
+ *  the generators below flip the hand frame's z (= CAD x) through MZ, which is set by the caller for the hand being built (1 = hand B, -1 = hand C). */
+let MZ = 1;
 /** Hand-frame helpers: hand axes x_l = world z (along the pipe), y_l = -world y (towards the plate), z_l = world x. Points are given in CAD axes relative to the hand's pipe axis. */
 const hbox = (name: string, cx: number, cy: number, cz: number, hx: number, hy: number, hz: number, col: string, extra = CART_COL) =>
-  pbox(name, cz, -cy, cx, hz, hy, hx, col, extra);
+  pbox(name, cz * MZ, -cy, cx, hz, hy, hx, col, extra);
 /** A cylinder along the pipe in the hand frame, from pipe-axis distance a to b (mm), with its axis at CAD (x, y) relative to the pipe. */
 const hcyl = (a: number, b: number, x: number, y: number, r: number, col: string, extra = CART_COL) =>
-  `<geom type="cylinder" fromto="${f(m(a))} ${f(m(-y))} ${f(m(x))} ${f(m(b))} ${f(m(-y))} ${f(m(x))}" size="${f(m(r))}" ${col} ${extra}/>`;
+  `<geom type="cylinder" fromto="${f(m(a))} ${f(m(-y))} ${f(m(x * MZ))} ${f(m(b))} ${f(m(-y))} ${f(m(x * MZ))}" size="${f(m(r))}" ${col} ${extra}/>`;
 
 function plateGeoms(): string {
   const g: string[] = [];
@@ -40,7 +43,7 @@ function plateGeoms(): string {
   g.push(pbox('plate', plateCx, plateCy, 0, plateHx, D.PLATE_T / 2, D.PLATE_ZH, PLATE_COL));
   // Stack out from the plate (cart_dims.py, v3): plate | battery | SO-101 arm base. The battery sits UNDER the arm, same x and z as the arm base.
   g.push(pbox('battery', D.BATT_X, D.PLATE_Y0 - D.BATT[1] / 2, D.BATT_Z, D.BATT[0] / 2, D.BATT[1] / 2, D.BATT[2] / 2, BATT_COL));
-  // Drive motors: 28 x 55 mm, axis along the pipe, in a row with the arm as drawn (motor B at x -65, motor C at x +41), in saddles on the plate.
+  // Drive motors: 28 x 55 mm, axis along the pipe, in a row with the arm as drawn (motor B at x -53, motor C at x +53), in saddles on the plate.
   for (const [h, x] of [[2, D.MOTOR_B_X], [1, D.MOTOR_C_X]] as const) {
     g.push(pcyl(`motor_drive${h}`, [x, D.PLATE_Y0 - D.MOTOR_R, -D.MOTOR_L / 2], [x, D.PLATE_Y0 - D.MOTOR_R, D.MOTOR_L / 2], D.MOTOR_R, MOTOR_COL));
     g.push(pbox('', x, D.PLATE_Y0 - D.MOTOR_R / 2, 0, 14, D.MOTOR_R / 2, 20, PLATE_COL));
@@ -70,8 +73,8 @@ function plateGeoms(): string {
 
 /** The hand's own parts in the hand frame: mounting pad, lugs to the sleeve wedge, sleeve leaf, its knuckles and the worm wheel of its hinge. */
 function handHingeGeoms(h: 1 | 2): string {
-  const g: string[] = [], hx = D.hingeX(h) - D.restPipeX(h);   // hinge axis x relative to the pipe
-  const padCx = (D.PAD_X0 + D.PAD_X1) / 2, inward = h === 1 ? -1 : 1;
+  const g: string[] = [], hx = D.HINGE_OFF_B;   // hinge axis x relative to the pipe, in hand B's frame (hand C is built mirrored through MZ)
+  const padCx = (D.PAD_X0 + D.PAD_X1) / 2, inward = 1;
   g.push(hbox(`pad${h}`, padCx, (D.PAD_Y0 + D.PAD_Y1) / 2, 0, (D.PAD_X1 - D.PAD_X0) / 2, (D.PAD_Y1 - D.PAD_Y0) / 2, D.SLEEVE_L / 2, PAD_COL));
   g.push(hbox(`lug${h}`, D.PAD_X0 - 5, -16, 0, 5, 8, D.SLEEVE_L / 2, PAD_COL));   // bolted lug from the pad's inner edge down onto the sleeve wedge
   g.push(hbox(`leaf${h}`, hx + inward * 15, (D.LEAF_Y1 + D.PAD_Y0) / 2, 0, 15, D.HINGE_LEAF_T / 2, D.KNUCKLE_Z, HINGE_COL));
@@ -88,7 +91,7 @@ function handHingeGeoms(h: 1 | 2): string {
 // (fixed), idler pair at +60 deg (on the jaw). Angles are CAD angles from +X (the C gap), points are given in the hand frame (x along the pipe, y = -CAD y, z = CAD x).
 const WALL = rgba([0.95, 0.75, 0.2, 0.45]), JAW_COL = rgba([0.95, 0.5, 0.15, 0.55]), TYRE = rgba([0.12, 0.12, 0.12]), STEELC = rgba([0.8, 0.8, 0.82]), JMOTOR = rgba([0.1, 0.55, 0.3]);
 const SEG_DEG = 10, GAP_A = 340;                                   // sleeve wall boxes are 10 deg wide; the C gap is 340..20 deg (the funnel mouth, ~18 mm at the narrow middle)
-const radial = (deg: number): [number, number] => [-Math.sin((deg * Math.PI) / 180), Math.cos((deg * Math.PI) / 180)];   // (y, z) of the radial direction in the hand frame
+const radial = (deg: number): [number, number] => [-Math.sin((deg * Math.PI) / 180), MZ * Math.cos((deg * Math.PI) / 180)];   // (y, z) of the radial direction in the hand frame
 const JAW_PIVOT: [number, number] = [D.SLEEVE_R * Math.cos((D.JAW_A1 * Math.PI) / 180), D.SLEEVE_R * Math.sin((D.JAW_A1 * Math.PI) / 180)];   // CAD (x, y) of the jaw pin
 /** The sleeve wall of the angle range [a0, a1) (deg) as boxes, open at the wheel pockets (near `pockets` angles) and in the end walls closed. */
 function wallGeoms(a0: number, a1: number, pockets: number[], col: string): string[] {
@@ -119,7 +122,7 @@ function wheelPairGeoms(h: number, deg: number, spin: boolean): string[] {
 }
 /** Hand h's sleeve, wheels and jaw, in the hand frame (child geoms of body hand<h>, with the jaw as a child body on its hinge). */
 function sleeveJawGeoms(h: 1 | 2): string {
-  const half = D.SLEEVE_L / 2, p = JAW_PIVOT, py = -p[1], pz = p[0];   // hand-frame (y, z) of the jaw pin
+  const half = D.SLEEVE_L / 2, p = JAW_PIVOT, py = -p[1], pz = p[0] * MZ;   // hand-frame (y, z) of the jaw pin
   const knuckle = (x0: number, x1: number, r: number, col: string) => `<geom type="cylinder" fromto="${f(m(x0))} ${f(m(py))} ${f(m(pz))} ${f(m(x1))} ${f(m(py))} ${f(m(pz))}" size="${f(m(r))}" ${col} ${CART_COL}/>`;
   const fixed = [...wallGeoms(D.JAW_A1, GAP_A, [180, -60], WALL),
     ...wheelPairGeoms(h, 180, true), ...wheelPairGeoms(h, -60, false),
@@ -130,7 +133,7 @@ function sleeveJawGeoms(h: 1 | 2): string {
     knuckle(D.LUG_FIXED_Z + 1, half, D.LUG_R, HINGE_COL), knuckle(-half, -D.LUG_FIXED_Z - 1, D.LUG_R, HINGE_COL),
     knuckle(-half - 2, half + 2, D.JAW_PIN_R, STEELC)];
   return `${fixed.join('\n        ')}
-        <body name="jaw${h}"><joint name="jaw${h}" type="hinge" pos="0 ${f(m(py))} ${f(m(pz))}" axis="1 0 0" range="0 ${D.JAW_OPEN}" frictionloss="5" damping="0.2"/>
+        <body name="jaw${h}"><joint name="jaw${h}" type="hinge" pos="0 ${f(m(py))} ${f(m(pz))}" axis="${MZ} 0 0" range="0 ${D.JAW_OPEN}" frictionloss="5" damping="0.2"/>
         ${jaw.join('\n        ')}
         </body>`;
 }
@@ -169,15 +172,18 @@ export function pipesXml(): string {
   return [pipeGeoms(m(D.PIPE_X.B), -1, TRACK_HORIZ_MM, 'pipeB'), pipeGeoms(m(D.PIPE_X.C), 1, TRACK_HORIZ_MM, 'pipeC')].join('\n    ');
 }
 
-/** The cart: the plate (mocap) with arm, and the two hands on their hinges. Hand 1 rides the pipe at +x (C), hand 2 the one at -x (B). Neither hand is mirrored (as in the CAD). */
+/** The cart: the plate (mocap) with arm, and the two hands on their hinges. Hand 1 rides the pipe at +x (C), hand 2 the one at -x (B). Hand C is the true mirror of hand B (as in the CAD since Pond #227). */
 export function transferCartBody(): string {
   const hand = (h: 1 | 2) => {
     const hx = D.hingeX(h) - D.restPipeX(h);
-    return `<body name="hand${h}" pos="${f(m(D.restPipeX(h)))} 0 0" xyaxes="0 0 1 0 -1 0">
+    MZ = h === 1 ? -1 : 1;   // hand C (1) is built as the mirror of hand B (2)
+    const body = `<body name="hand${h}" pos="${f(m(D.restPipeX(h)))} 0 0" xyaxes="0 0 1 0 -1 0">
       <joint name="hinge${h}" type="hinge" pos="0 ${f(m(-D.HINGE_Y))} ${f(m(hx))}" axis="1 0 0" range="-30 30" frictionloss="50" damping="2"/>
       ${sleeveJawGeoms(h)}
         ${handHingeGeoms(h)}
     </body>`;
+    MZ = 1;
+    return body;
   };
   // The mocap body "cart" carries the plate's pose. The plate sits on one locked dummy hinge: MuJoCo skips contacts between geoms that are all welded to the
   // world, so without a degree of freedom the plate-side parts (battery, motors, arm) would never be checked against the pipes.

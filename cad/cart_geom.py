@@ -22,7 +22,7 @@ def window(x0, x1, z0, z1):
     return box(x1 - x0, PLATE_T + 2, z1 - z0, ((x0 + x1) / 2, PLATE_CY, (z0 + z1) / 2))
 
 def build_plate():
-    """Plate hung between the two hinge axes: a solid 142 x 112 x 6 mm plate (at this width there is nothing left to
+    """Plate hung between the two hinge axes: a solid 166 x 112 x 6 mm plate (at this width there is nothing left to
     open up), a worm-bracket tongue above each hinge, and a notch at each hinge
     end where the worm wheel flange sits. Holes and cable slots are added in cart_base.py."""
     plate = box(PLATE_X1 - PLATE_X0, PLATE_T, 2 * PLATE_ZH, ((PLATE_X0 + PLATE_X1) / 2, PLATE_CY, 0))

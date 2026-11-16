@@ -10,7 +10,7 @@
 #
 # Idea: the sleeve stays clamped on its pipe. A hinge on the sleeve's pad edge, axis parallel to the pipe, lets the
 # plate swing out (to -Y) like a door. Nothing goes round the pipe. Hand B's hinge is on the pad's -X edge, hand C's on
-# its +X edge (cart_dims.py).
+# its +X edge: hand C is the true mirror of hand B, hinges at x = -90 and +90 (cart_dims.py, Pond #227).
 #
 # Stack, out from the pad (-Y): pad | sleeve leaf 3 | plate leaf 3 | plate 6. Hinge axis on the leaf-to-leaf face.
 # ASSUMED (everything below; real parts not chosen):
@@ -89,14 +89,14 @@ def sleeve_half(sgn):
     for z0, z1 in ((SLEEVE_KN_Z0, KNUCKLE_Z), (-KNUCKLE_Z, -SLEEVE_KN_Z0)):
         leaf = leaf.cut(cyl(PIN_R + 0.1, z1 - z0 + 2, "z", (xh, HINGE_Y, (z0 + z1) / 2)))
     # screw holes for the two M4 pad screws (through the leaf, countersunk on the front face)
-    px = sgn * HX + (hs.PAD_X0 + hs.PAD_X1) / 2
+    px = sgn * (HX - (hs.PAD_X0 + hs.PAD_X1) / 2)      # pad centre: on the OUTER side of the pipe for both hands (hand C is hand B mirrored)
     for dz in (hs.PAD_HOLE_Z, -hs.PAD_HOLE_Z):
         leaf = leaf.cut(cyl(hs.PAD_HOLE_D / 2, 10.0, "y", (px, LEAF_Y1 + 1.5, dz))).cut(csk_cut(px, LEAF_Y1, dz))
     return leaf
 
 
 def sleeve_screws(sgn):
-    px = sgn * HX + (hs.PAD_X0 + hs.PAD_X1) / 2
+    px = sgn * (HX - (hs.PAD_X0 + hs.PAD_X1) / 2)      # pad centre: on the OUTER side of the pipe for both hands (hand C is hand B mirrored)
     out = None
     for dz in (hs.PAD_HOLE_Z, -hs.PAD_HOLE_Z):
         s = _csk(px, LEAF_Y1, dz, 12.0)     # M4 x 12: leaf 3 + into the pad 9
@@ -149,7 +149,7 @@ def worm_wheel(sgn):
     # tooth gaps: 38 small slots cut round the rim (depth 2 mm, width 1.5 mm)
     for k in range(WHEEL_Z):
         a = 2 * math.pi * k / WHEEL_Z
-        gap = box(2.2, 1.5, WHEEL_T + 2, (xh + (WHEEL_OD / 2 - 1.0) * math.cos(a), HINGE_Y + (WHEEL_OD / 2 - 1.0) * math.sin(a), WORM_ZC))
+        gap = box(2.2, 1.5, WHEEL_T + 2, (xh + (WHEEL_OD / 2 - 1.0), HINGE_Y, WORM_ZC))      # at angle 0, then turned about the axis (v4: was placed at angle a AND turned by a, so the teeth sat at 2a and were not mirror-symmetric)
         wheel = wheel.cut(gap.rotate((xh, HINGE_Y, 0), (xh, HINGE_Y, 1), math.degrees(a)))
     return flange.union(hub).union(wheel)
 
