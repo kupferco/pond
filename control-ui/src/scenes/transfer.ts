@@ -1,11 +1,11 @@
 // Transfer scene (v2 cart, cad/cart_base.py): the cart hangs between two neighbouring pipes (B and C, 120 mm apart) on one rigid plate with a hinge at each hand.
 // The track is the Cart scene's: pipe B runs up and bends left, pipe C runs up and bends right. The cart waits at the top of the straight part, clamped on B and C. A transfer: hand B releases its pipe,
-// the plate rotates a few degrees on hand C's hinge to clear pipe B, the cart drives on pipe C round the bend to the top right of C, the plate rotates back. The arm stays stowed on the plate.
+// the plate rotates a few degrees on hand C's hinge to clear pipe B, the cart drives on pipe C round the bend to the top right of C, the plate rotates back. The hands are true mirrors, so it works the other way round too: hand C releases, the plate rotates on hand B's hinge and the cart drives up pipe B to the top left. The arm stays stowed on the plate.
 // Each step has a control, and one button runs the lot.
 import { S_MAX_CM, transferMjcf } from '../cart/transfer-model.ts';
 import { PIPE_X } from '../cart/dims.ts';
 import {
-  DEFAULT_SPEED_CM_S, DEFAULT_STEP_CM, HINGE_DEG_S_CAD, MAX_SPEED_CM_S, P_BEND_END, P_STRAIGHT_END, P_TOP_CM, STEP_LABEL, SWING_RATE_DEG_S, TransferRun, applyPose, kinematics, worstContact, CLEAR_DEG, MAX_HINGE_DEG, bendTrim,
+  DEFAULT_SPEED_CM_S, DEFAULT_STEP_CM, HINGE_DEG_S_CAD, MAX_SPEED_CM_S, P_BEND_END, P_STRAIGHT_END, P_TOP_CM, stepLabel, handName, SWING_RATE_DEG_S, TransferRun, applyPose, kinematics, worstContact, CLEAR_DEG, MAX_HINGE_DEG, bendTrim,
 } from '../cart/transfer.ts';
 import { Viewer } from '../viewer.ts';
 import { SCENE_INFOS } from './list.ts';
@@ -31,7 +31,8 @@ export const transferScene: Scene = {
         <dt>Contacts</dt><dd id="t-hit">none</dd>
       </dl>
     </section>
-    <div class="row"><button class="big grow" id="t-transfer">Run full transfer</button></div>
+    <div class="row"><button class="big grow" id="t-transfer">Run transfer to pipe C (release hand B)</button></div>
+    <div class="row"><button class="big grow" id="t-transfer-b">Run transfer to pipe B (release hand C)</button></div>
     <div class="row"><button class="big grow" id="t-reset">Reset</button></div>
     <p id="t-msg" class="hint"></p>
     <details class="card">
@@ -86,7 +87,8 @@ export const transferScene: Scene = {
     act('t-rminus', () => run.rotate(0));
     act('t-stop', () => run.stop());
     act('t-reset', () => { run.reset(); failed = 0; lastNames = ''; });
-    act('t-transfer', () => run.start());
+    act('t-transfer', () => run.start(2));
+    act('t-transfer-b', () => run.start(1));
 
     let failed = 0, lastNames = ''; // frames with any contact of the cart with the pipes (or its own plate with a hand): a failure of the run
     const update = () => {
@@ -99,17 +101,18 @@ export const transferScene: Scene = {
       el.style.color = failed ? '#c0392b' : '';
     };
     const show = () => {
-      const st = run.st, free = 'B', onC = st.s > S_MAX_CM + 1e-6;
-      $('t-hands').textContent = `hand ${free}: ${st.open2 < 0.01 ? 'clamped' : st.open2 > 0.99 ? 'released' : 'moving'} ${st.t > 0 ? '(plate rotated, off the pipe)' : onC ? '(free, off pipe B)' : 'on pipe B'}; hand C: ${st.open1 < 0.01 ? 'clamped' : st.open1 > 0.99 ? 'released' : 'moving'} on pipe C`;
-      $('t-pipe').textContent = onC ? 'pipe C (top right), hand C clamped' : 'pipes B and C (top of the straight part), both hands clamped';
+      const st = run.st, onTop = st.s > S_MAX_CM + 1e-6, F = run.free, S = F === 1 ? 2 : 1, fN = handName(F), sN = handName(S), fo = F === 1 ? st.open1 : st.open2, so = S === 1 ? st.open1 : st.open2;
+      const word = (o: number) => (o < 0.01 ? 'clamped' : o > 0.99 ? 'released' : 'moving');
+      $('t-hands').textContent = `hand ${fN}: ${word(fo)} ${st.t > 0 ? '(plate rotated, off the pipe)' : onTop ? `(free, off pipe ${fN})` : `on pipe ${fN}`}; hand ${sN}: ${word(so)} on pipe ${sN}`;
+      $('t-pipe').textContent = onTop ? `pipe ${sN} (top ${sN === 'C' ? 'right' : 'left'}), hand ${sN} clamped` : 'pipes B and C (top of the straight part), both hands clamped';
       $('t-pos').textContent = st.s.toFixed(1);
-      $('t-where').textContent = st.s < P_STRAIGHT_END - 1e-6 ? 'straight part' : st.s < P_BEND_END - 1e-6 ? 'pipe C\'s bend' : st.s >= P_TOP_CM - 1e-6 ? 'top right of pipe C' : 'top bar of pipe C';
-      $('t-swing').textContent = ((kinematics(st.t, 1, bendTrim(st.s).da).alpha * 180) / Math.PI).toFixed(1);
-      const k = kinematics(st.t), deg = (r: number) => ((r * 180) / Math.PI).toFixed(1);
-      $('t-hinges').textContent = `C ${deg(k.hinge1)}°, ${free} ${deg(k.hinge2)}°`;
+      $('t-where').textContent = st.s < P_STRAIGHT_END - 1e-6 ? 'straight part' : st.s < P_BEND_END - 1e-6 ? `pipe ${sN}'s bend` : st.s >= P_TOP_CM - 1e-6 ? `top ${sN === 'C' ? 'right' : 'left'} of pipe ${sN}` : `top bar of pipe ${sN}`;
+      $('t-swing').textContent = Math.abs((kinematics(st.t, S, bendTrim(st.s).da).alpha * 180) / Math.PI).toFixed(1);
+      const k = kinematics(st.t, S), deg = (r: number) => ((r * 180) / Math.PI).toFixed(1);
+      $('t-hinges').textContent = `C ${deg(k.hinge1)}°, B ${deg(k.hinge2)}°`;
       $('t-clampb').textContent = run.goal.open2 < 0.5 ? 'Release hand B' : 'Clamp hand B'; $('t-clampc').textContent = run.goal.open1 < 0.5 ? 'Release hand C' : 'Clamp hand C';
-      $('t-step-now').textContent = run.current ? STEP_LABEL[run.current] : 'Idle';
-      const m = $('t-msg'); m.textContent = run.done && !run.busy ? (st.s > S_MAX_CM + 1e-6 ? `Transfer done: the cart is at the top right of pipe C, hand C clamped, hand B free. Press Run full transfer to bring it back.` : 'Back at the top of pipes B and C, clamped on both.') : run.msg;
+      $('t-step-now').textContent = run.current ? stepLabel(run.current, run.free) : 'Idle';
+      const m = $('t-msg'); m.textContent = run.done && !run.busy ? (onTop ? `Transfer done: the cart is at the top ${sN === 'C' ? 'right of pipe C' : 'left of pipe B'}, hand ${sN} clamped, hand ${fN} free. Press its Run transfer button again to bring it back.` : 'Back at the top of pipes B and C, clamped on both.') : run.msg;
     };
     update(); show();
 

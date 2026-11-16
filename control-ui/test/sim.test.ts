@@ -200,7 +200,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const bad = [...same(['HINGE_R', 'HINGE_LEAF_T', 'PLATE_T', 'HINGE_CLEAR', 'WHEEL_Z', 'WORM_M', 'WHEEL_Z0', 'WHEEL_T', 'KNUCKLE_Z', 'ARM_BASE_W', 'PART_GAP', 'END_GAP'], cd, DIMS as any),
     ...same(['PAD_X0', 'PAD_X1', 'PAD_Y0', 'PAD_Y1', 'WALL_OUT_R'], hs, { PAD_X0: DIMS.PAD_X0, PAD_X1: DIMS.PAD_X1, PAD_Y0: DIMS.PAD_Y0, PAD_Y1: DIMS.PAD_Y1, WALL_OUT_R: DIMS.SLEEVE_R })];
   check('hinge, plate and hand numbers in cart/dims.ts equal the CAD files', bad.length === 0, bad.join(','));
-  check('derived layout: hinge axes at -90 and +66, plate -83..59, arm at -12', DIMS.hingeX(2) === -90 && DIMS.hingeX(1) === 66 && DIMS.PLATE_X0 === -83 && DIMS.PLATE_X1 === 59 && DIMS.ARM_X === -12 && DIMS.PLATE_Y0 === -52);
+  check('derived layout (mirrored hands): hinge axes at -90 and +90, plate -83..+83 (166 wide), arm at 0, motors at +-53', DIMS.hingeX(2) === -90 && DIMS.hingeX(1) === 90 && DIMS.PLATE_X0 === -83 && DIMS.PLATE_X1 === 83 && DIMS.ARM_X === 0 && DIMS.MOTOR_B_X === -53 && DIMS.MOTOR_C_X === 53 && DIMS.PLATE_Y0 === -52);
   check('the scene has only two pipes, B and C: no pipe D anywhere', Object.keys(DIMS.PIPE_X).join() === 'B,C' && !/pipeD/.test(transferMjcf()));
 
   const tm = mj.MjModel.from_xml_string(transferMjcf()), td = new mj.MjData(tm);
@@ -212,11 +212,11 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const gx = (n: string, i: number) => cadOf(td.geom_xpos, 3 * g(n))[i];
   check('pipes B and C are 120 mm apart, both upright, in the same plane', Math.abs(gx('pipeCv', 0) - gx('pipeBv', 0) - 0.12) < 1e-9 && Math.abs(td.geom_xpos[3 * g('pipeBv') + 1]) < 1e-9 && Math.abs(td.geom_xpos[3 * g('pipeCv') + 1]) < 1e-9);
   const hingeAt = (j: string) => { const id = tm.jnt(j).id, a = cadOf(td.xanchor, 3 * id); return [a[0], a[1], Math.abs(td.xaxis[3 * id + 2])]; };   // axis: |world z| = 1 means along the upright pipes
-  check('each hinge axis is parallel to the pipes (horizontal), on the pad edge: x -0.09 and +0.066, 43 mm in front', hingeAt('hinge2').every((v, i) => Math.abs(v - [-0.09, -0.043, 1][i]) < 1e-9) && hingeAt('hinge1').every((v, i) => Math.abs(v - [0.066, -0.043, 1][i]) < 1e-9));
-  check('the plate hangs between the hinge axes', gx('plate', 0) - 0.071 > -0.09 && gx('plate', 0) + 0.071 < 0.066);
+  check('each hinge axis is parallel to the pipes (horizontal), on the pad edge: x -0.09 and +0.09, 43 mm in front', hingeAt('hinge2').every((v, i) => Math.abs(v - [-0.09, -0.043, 1][i]) < 1e-9) && hingeAt('hinge1').every((v, i) => Math.abs(v - [0.09, -0.043, 1][i]) < 1e-9));
+  check('the plate hangs between the hinge axes, centred on x = 0 (166 wide, symmetric)', Math.abs(gx('plate', 0)) < 1e-9 && 0.083 < 0.09 && Math.abs(tm.geom_size[3 * g('plate')] - 0.083) < 1e-9);
   check('drive motors, arm base and battery are on the plate (rigid: no joint between)', ['motor_drive1', 'motor_drive2', 'armbase', 'armcolumn', 'battery'].every((n) => bodyOf(n) === 'plate'));
   check('battery sits UNDER the arm (plate, battery, arm base): same x and z as the arm base, between the plate and the arm base, no shelf or tongue under it', Math.abs(gx('battery', 0) - gx('armbase', 0)) < 1e-9 && Math.abs(gx('battery', 2) - gx('armbase', 2)) < 1e-9 && gx('battery', 1) < gx('plate', 1) && gx('armbase', 1) < gx('battery', 1) - 0.025 && !/name="shelf"/.test(transferMjcf()));
-  check('the two drive motors and the arm base sit in a row on the plate (x -65, -12, +41), the arm base on the battery face', gx('motor_drive1', 1) < gx('plate', 1) && gx('motor_drive2', 1) < gx('plate', 1) && Math.abs(gx('motor_drive2', 0) + 0.065) < 1e-9 && Math.abs(gx('motor_drive1', 0) - 0.041) < 1e-9 && Math.abs(gx('armbase', 1) - (gx('plate', 1) - 0.003 - 0.05 - 0.004)) < 1e-9);
+  check('the two drive motors and the arm base sit in a row on the plate (x -53, 0, +53), the arm base on the battery face', gx('motor_drive1', 1) < gx('plate', 1) && gx('motor_drive2', 1) < gx('plate', 1) && Math.abs(gx('motor_drive2', 0) + 0.053) < 1e-9 && Math.abs(gx('motor_drive1', 0) - 0.053) < 1e-9 && Math.abs(gx('armbase', 0)) < 1e-9 && Math.abs(gx('armbase', 1) - (gx('plate', 1) - 0.003 - 0.05 - 0.004)) < 1e-9);
   check('each hinge has its worm drive on the plate (worm, bracket, motor)', [1, 2].every((h) => bodyOf('worm' + h) === 'plate' && bodyOf('worm_motor' + h) === 'plate' && bodyOf('bracket_in' + h) === 'plate'));
   check('hinges are position-controlled and self-locking: position actuators on hinge1/hinge2 and friction on the joints', ['hinge1', 'hinge2'].every((n) => tm.actuator(n).id >= 0 && tm.actuator_trnid[2 * tm.actuator(n).id] === tm.jnt(n).id) && tm.dof_frictionloss[tm.jnt_dofadr[tm.jnt('hinge1').id]] > 0 && tm.dof_frictionloss[tm.jnt_dofadr[tm.jnt('hinge2').id]] > 0);
   check('each hand is a fixed sleeve body plus a jaw on a knuckle hinge (joints jaw1, jaw2, axis along the pipe, 0 to 92 deg) with its own actuator; no slide joints', [...Array(tm.njnt).keys()].filter((j) => tm.jnt_type[j] === 2).length === 0 && ['jaw1', 'jaw2'].every((n) => tm.actuator(n).id >= 0 && tm.actuator_trnid[2 * tm.actuator(n).id] === tm.jnt(n).id && Math.abs(tm.jnt_range[2 * tm.jnt(n).id + 1] - 92 * Math.PI / 180) < 1e-9 && tm.body(n).id >= 0));
@@ -232,7 +232,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     let behind = 0; for (let i = 0; i <= 100; i++) { const s2 = initialState(); s2.t = i / 100; if (handAt(s2, 2).y > 1e-9) behind++; }
     check('hand B stays in front of the pipe plane all through the rotation', behind === 0, `${behind} samples`);
     const k1 = kinematics(1);
-    check('rotation is small: the plate turns CLEAR_DEG (a few degrees, well below 30) and no hinge exceeds MAX_HINGE_DEG', CLEAR_DEG === 22 && MAX_HINGE_DEG <= 22 && Math.abs(k1.alpha * 180 / Math.PI - CLEAR_DEG) < 1e-9 && Math.abs(k1.hinge1 * 180 / Math.PI + CLEAR_DEG) < 1e-9);
+    check('rotation is small: the plate turns CLEAR_DEG (a few degrees, well below 30) and no hinge exceeds MAX_HINGE_DEG', CLEAR_DEG === 20 && MAX_HINGE_DEG <= 20 && Math.abs(k1.alpha * 180 / Math.PI - CLEAR_DEG) < 1e-9 && Math.abs(k1.hinge1 * 180 / Math.PI + CLEAR_DEG) < 1e-9);
     // "off the pipe": a test-only contact pair between hand B's hidden envelope (the sleeve) and pipe B is penetrating exactly when the pipe is still inside the sleeve
     const xmlEnv = transferMjcf().replace('<contact>', '<contact><pair geom1="env2" geom2="pipeBv" margin="0"/>'), em = mj.MjModel.from_xml_string(xmlEnv), ed = new mj.MjData(em);
     const inside = (t: number, s: number) => { const st = initialState(); st.t = t; st.s = s; st.open2 = 1; applyPose(em, ed, st); mj.mj_forward(em, ed); let n = 0; for (let i = 0; i < ed.ncon; i++) { const c = ed.contact.get(i)!; if (c.dist < 0 && [em.geom(c.geom1).name, em.geom(c.geom2).name].sort().join() === 'env2,pipeBv') n++; } return n > 0; };
@@ -258,21 +258,27 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   { let bad = 0;
     for (let s = S_MIN_CM; s <= S_MAX_CM; s += 0.5) { const st = initialState(); st.s = s; applyPose(tm, td, st); mj.mj_forward(tm, td); if (worstContact(tm, td).depth < 0) bad++; }
     check('riding along both pipes: no contact', bad === 0, `${bad} poses`); }
-  // The trip up each pipe (Pond #244). Pipe C: hand B released, plate swings on hinge C: contact-free over the whole swing at three heights (also the full transfer tests below).
-  // Pipe B: hand C released, plate swings on hinge B. Both hands are copies (gap towards +x), so this cannot work: search the (plate angle, own hinge angle) plane for a path.
-  { const tripFree = (staticHand: 1 | 2, a: number, h: number, s = 30) => { const st = initialState(); st.s = s; st.open1 = staticHand === 2 ? 1 : 0; st.open2 = staticHand === 1 ? 1 : 0;
-      applyPose(tm, td, st, undefined, kinFromAngles(staticHand, a * Math.PI / 180, h * Math.PI / 180)); mj.mj_forward(tm, td); return worstContact(tm, td).depth > -1e-4; };
-    // pipe C trip: the sim's own swing path, hand B released
-    let badC = 0; for (const s of [S_MIN_CM, 30, S_MAX_CM]) for (let i = 0; i <= 200; i++) { const st = initialState(); st.s = s; st.t = i / 200; st.open2 = 1; applyPose(tm, td, st); mj.mj_forward(tm, td); if (worstContact(tm, td).depth < -1e-4) badC++; }
-    check('trip up pipe C (hand B released, plate turning on hinge C): no collision at 603 poses', badC === 0, `${badC} poses`);
-    // pipe B trip: flood fill (0.5 deg plate, 0.5 deg own hinge) from rest through contact-free cells
-    const A = 0.5, nA = 81, nH = 121, seen = new Set<string>(['0,60']), stack: [number, number][] = [[0, 60]]; let maxAlpha = 0;
-    while (stack.length) { const [i, j] = stack.pop()!; maxAlpha = Math.max(maxAlpha, i * A);
-      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ni = i + di, nj = j + dj; if (ni < 0 || ni >= nA || nj < 0 || nj >= nH || seen.has(ni + ',' + nj)) continue; seen.add(ni + ',' + nj); if (tripFree(2, ni * A, nj * A - 30)) stack.push([ni, nj]); } }
-    check('pipe B trip with hand C released cannot work as designed: the plate turns at most 4 deg before hand C hits pipe C (14 deg would be needed), whatever hand C\'s own hinge does', maxAlpha > 0 && maxAlpha <= 4.5, `${maxAlpha} deg`);
-    check('the old pipe B swing path (22 deg plate, 8 deg hinge) collides, so the controller must refuse it', !tripFree(2, 22, 8));
-    const refuse = new TransferRun(); refuse.reset(); refuse.clampHand(1, true); for (let i = 0; i < 200; i++) refuse.advance(0.02);
-    check('the controller refuses to turn the plate with hand C released (hand B static)', refuse.rotate(1) === false && /hand C/i.test(refuse.msg) && refuse.st.t === 0, refuse.msg); }
+  // The trip up each pipe (Pond #244, #227). Hand C is the true mirror of hand B, so the trip up pipe B (hand C released, plate on hinge B) has the same corridor as the trip up pipe C.
+  // Pipe C: hand B released, plate swings on hinge C. Pipe B: hand C released, plate swings on hinge B. Each is swept along the real swing path at three heights, and the whole (plate angle,
+  // own hinge angle) plane is flood-filled from rest to show that the path really runs through a contact-free corridor to a pose where the free sleeve is off its pipe (scripts/search-swing.ts).
+  { const pose = (staticHand: 1 | 2, a: number, h: number, s = 30) => { const st = initialState(); st.s = s; st.open1 = staticHand === 2 ? 1 : 0; st.open2 = staticHand === 1 ? 1 : 0;
+      applyPose(tm, td, st, undefined, kinFromAngles(staticHand, a * Math.PI / 180, h * Math.PI / 180)); mj.mj_forward(tm, td); return worstContact(tm, td).depth; };
+    const tripFree = (staticHand: 1 | 2, a: number, h: number, s = 30) => pose(staticHand, a, h, s) > -1e-4;
+    for (const [staticHand, label] of [[1, 'pipe C (hand B released, plate turning on hinge C)'], [2, 'pipe B (hand C released, plate turning on hinge B)']] as const) {
+      let bad = 0, n = 0; for (const s of [S_MIN_CM, 30, S_MAX_CM]) for (let i = 0; i <= 200; i++) { const st = initialState(); st.s = s; st.t = i / 200; st.open1 = staticHand === 2 ? 1 : 0; st.open2 = staticHand === 1 ? 1 : 0; applyPose(tm, td, st); mj.mj_forward(tm, td); n++; if (worstContact(tm, td).depth < -1e-4) bad++; }
+      check(`trip up ${label}: the swing path is collision-free at ${n} poses`, bad === 0, `${bad} poses`);
+      // margin: the same path with the plate 0.5 deg either way and the own hinge 0.5 deg either way is still free (the corridor is not one pose wide)
+      let badM = 0; for (let i = 4; i <= 40; i++) { const k = kinematics(i / 40, staticHand), a = Math.abs(k.alpha) * 180 / Math.PI, h = Math.abs(staticHand === 1 ? k.hinge2 : k.hinge1) * 180 / Math.PI;
+        for (const [da, dh] of [[0.5, 0], [-0.5, 0], [0, 0.5], [0, -0.5]]) if (a + da >= 0 && !tripFree(staticHand, a + da, h + dh)) badM++; }
+      check(`trip up ${label}: the path keeps 0.5 deg clearance either way (plate and own hinge)`, badM === 0, `${badM} poses`);
+      // flood fill (0.5 deg plate, 0.5 deg own hinge) from rest through contact-free cells: reaches the pose where the free sleeve is clear of its pipe
+      const A = 0.5, nA = 61, nH = 121, seen = new Set<string>(['0,60']), stack: [number, number][] = [[0, 60]]; let maxAlpha = 0;
+      while (stack.length) { const [i, j] = stack.pop()!; maxAlpha = Math.max(maxAlpha, i * A);
+        for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ni = i + di, nj = j + dj; if (ni < 0 || ni >= nA || nj < 0 || nj >= nH || seen.has(ni + ',' + nj)) continue; seen.add(ni + ',' + nj); if (tripFree(staticHand, ni * A, nj * A - 30)) stack.push([ni, nj]); } }
+      check(`trip up ${label}: the free corridor from rest reaches at least ${CLEAR_DEG} deg of plate angle (it opens up beyond 15 deg)`, maxAlpha >= CLEAR_DEG, `${maxAlpha} deg`); }
+    check('hand C copied, not mirrored, would have jammed (task 244): with the plate 4 deg turned about hinge B and hand C a few degrees open, nothing touches now', tripFree(2, 4, 4));
+    const both = new TransferRun(); both.reset(); both.clampHand(1, true); for (let i = 0; i < 200; i++) both.advance(0.02);
+    check('the controller turns the plate on hinge B with hand C released (trip up pipe B) and refuses to when hand B is released too', both.rotate(1) === true && !both.clampHand(2, true) && both.free === 1, both.msg); }
   check('the arm is rigid on the plate: no arm joints, links and pins on the plate body, folded close to the hinge', ![...Array(tm.njnt).keys()].some((j) => tm.jnt(j).name.startsWith('arm')) && ['arm_l1', 'arm_l2', 'arm_l3', 'arm_pin1', 'arm_pin2'].every((n) => bodyOf(n) === 'plate'));
   // The track is the Cart scene's: B runs straight and bends LEFT, C runs straight and bends RIGHT. Geom centres of the arcs tell which way.
   { const xh = (n: string) => td.geom_xpos[3 * g(n)], zh = (n: string) => td.geom_xpos[3 * g(n) + 2];
@@ -316,6 +322,40 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
       r.st.t === 0 && r.st.open1 === 0 && r.st.open2 === 1 && Math.abs(hc.z - barZ) < 1e-6 && Math.abs(hc.y) < 1e-6 && hc.x > barX0 + 0.25 && hc.x < barX1 - 0.05 && r.st.s === P_TOP_CM, `hand C at x ${hc.x.toFixed(3)} z ${hc.z.toFixed(3)}, s ${r.st.s}`);
     check(`full transfer from ${s0} cm: the cart really travels (round the bend, more than 60 cm), not just up and down`, maxS - s0 > 60, `${(maxS - s0).toFixed(1)} cm`);
   }
+  // The other direction (Pond #227): hand C released, the plate turning on hinge B, the cart up pipe B's bend to its top left. Hand C is the true mirror of hand B, so this must be the mirror image of the trip up pipe C.
+  for (const s0 of [S_MIN_CM, 30, S_MAX_CM]) {
+    const r = new TransferRun(); r.st.s = s0; r.goal.s = s0; r.swingDegS = 30; r.setSpeed(10); const started = r.start(1);
+    const phases: string[] = []; let frames = 0, bad = 0, deep = 0, deepNames = '', rotOk = true, maxHinge = 0, maxStep = 0, h1 = 0, h2 = 0, rotFrames = 0;
+    while (!r.done && frames < 20000) {
+      r.advance(0.02); frames++; const k = applyPose(tm, td, r.st); mj.mj_forward(tm, td);
+      if (r.current && phases[phases.length - 1] !== r.current) phases.push(r.current);
+      const w = worstContact(tm, td); if (w.depth < 0) { bad++; if (w.depth < deep) { deep = w.depth; deepNames = w.names; } }
+      if (r.st.t > 0 && r.st.t < 1) { rotFrames++; if (!(r.st.open1 === 1 && r.st.open2 === 0)) rotOk = false; }
+      maxHinge = Math.max(maxHinge, Math.abs(k.hinge1), Math.abs(k.hinge2)); maxStep = Math.max(maxStep, Math.abs(k.hinge1 - h1), Math.abs(k.hinge2 - h2)); h1 = k.hinge1; h2 = k.hinge2;
+    }
+    check(`trip up pipe B from ${s0} cm: release hand C, rotate on hinge B, move, rotate back, drive to the top left, in that order, and finishes`, started && r.done && phases.join('>') === 'release>rotate>move>rotateBack>moveTop' && r.free === 1, phases.join('>') + ` (${frames} frames)`);
+    check(`trip up pipe B from ${s0} cm: zero contacts on every frame (${frames} frames)`, bad === 0, `${bad} frames, worst ${(deep * 1000).toFixed(2)} mm ${deepNames}`);
+    check(`trip up pipe B from ${s0} cm: the plate turns only with hand C released and hand B clamped; no hinge past ${MAX_BEND_HINGE_DEG} deg, none faster than 30 deg/s`, rotFrames > 20 && rotOk && maxHinge * 180 / Math.PI <= MAX_BEND_HINGE_DEG + 1e-6 && maxStep <= (30 * Math.PI / 180) * 0.02 + 1e-6, `${rotFrames} frames, ${(maxHinge * 180 / Math.PI).toFixed(1)} deg`);
+    const hb = handAt(r.st, 2);
+    check(`trip up pipe B from ${s0} cm: ends at pipe B's top left, flat, hand B clamped on the top bar (the mirror of the end of the trip up pipe C), hand C released`,
+      r.st.t === 0 && r.st.open2 === 0 && r.st.open1 === 1 && r.st.s === P_TOP_CM && Math.abs(hb.z - 0.75) < 1e-6 && Math.abs(hb.y) < 1e-6 && Math.abs(hb.x + 0.55) < 0.01, `hand B at x ${hb.x.toFixed(3)} z ${hb.z.toFixed(3)}`);
+  }
+  { // the way back from pipe B's top left: the same button drives back round the bend, rotates flat and clamps hand C again, no contact on any frame; then the first direction works again
+    const r = new TransferRun(); r.reset(); r.setSpeed(10); r.swingDegS = 30; r.start(1); for (let i = 0; i < 20000 && !r.done; i++) r.advance(0.02);
+    const phases: string[] = []; let bad = 0, deep = 0, names = '', frames = 0; const ok = r.start();
+    while (!r.done && frames < 20000) { r.advance(0.02); frames++; applyPose(tm, td, r.st); mj.mj_forward(tm, td); if (r.current && phases[phases.length - 1] !== r.current) phases.push(r.current);
+      const w = worstContact(tm, td); if (w.depth < 0) { bad++; if (w.depth < deep) { deep = w.depth; names = w.names; } } }
+    check('return trip from pipe B\'s top left: drive, rotate, drive back round the bend, rotate flat, clamp hand C', ok && r.done && phases.join('>') === 'moveFlat>rotate>moveBack>rotateBack>clamp' && r.st.s === S_MAX_CM && r.st.open1 === 0 && r.st.open2 === 0 && r.st.t === 0, phases.join('>'));
+    check('return trip from pipe B\'s top left: zero contacts on every frame', bad === 0, `${bad} frames, worst ${(deep * 1000).toFixed(2)} mm ${names}`);
+    check('both directions in turn: after coming back from pipe B the cart goes up pipe C, and back', r.start(2) && r.free === 2); }
+  { // the mirror symmetry itself: the same trip both ways gives mirror-image poses (x -> -x, the hands swapped) all the way: hand B's pose on the trip up pipe B is hand C's on the trip up pipe C
+    const a = new TransferRun(), b = new TransferRun(); for (const r of [a, b]) { r.st.s = 30; r.goal.s = 30; r.swingDegS = 30; r.setSpeed(10); } a.start(2); b.start(1);
+    let worst = 0; for (let i = 0; i < 20000 && !(a.done && b.done); i++) { a.advance(0.02); b.advance(0.02);
+      applyPose(tm, td, a.st); mj.mj_forward(tm, td); const pa = [...Array(tm.nbody).keys()].map((j) => [td.xpos[3 * j], td.xpos[3 * j + 1], td.xpos[3 * j + 2]]);
+      applyPose(tm, td, b.st); mj.mj_forward(tm, td); const pb = [...Array(tm.nbody).keys()].map((j) => [td.xpos[3 * j], td.xpos[3 * j + 1], td.xpos[3 * j + 2]]);
+      const swap = (name: string) => name === 'hand1' ? 'hand2' : name === 'hand2' ? 'hand1' : name;
+      for (const j of [...Array(tm.nbody).keys()]) { const n = tm.body(j).name, j2 = tm.body(swap(n)).id; if (!n.startsWith('hand') && n !== 'plate' && n !== 'cart') continue; worst = Math.max(worst, Math.abs(pa[j][0] + pb[j2][0]), Math.abs(pa[j][1] - pb[j2][1]), Math.abs(pa[j][2] - pb[j2][2])); } }
+    check('the trip up pipe B is the exact mirror image of the trip up pipe C (hands, plate and cart positions, every frame)', worst < 1e-6, `${(worst * 1000).toFixed(3)} mm`); }
   { // The scene's own start: the cart waits at the top of pipes B and C; Reset puts it back; the button refuses at the end.
     const r = new TransferRun(); r.reset();
     check('reset: cart at the top of the straight part, clamped on both pipes', r.st.s === S_MAX_CM && r.st.open1 === 0 && r.st.open2 === 0 && r.st.t === 0 && r.spanning);
