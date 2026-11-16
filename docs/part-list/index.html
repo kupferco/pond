@@ -12,20 +12,27 @@
   .total small{font-weight:400;color:var(--muted)}
   .note{font-size:14px;color:var(--body);margin:0 0 10px}
   .tbl{border:1px solid var(--line);border-radius:var(--radius);background:#fff;overflow:hidden;box-shadow:var(--shadow-sm)}
-  :root{--cols:20px minmax(0,1fr) auto}
-  .cols,.line{display:grid;grid-template-columns:var(--cols);gap:0 10px;align-items:center;padding:0 12px;min-height:44px}
-  .cols{display:none;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:var(--bg-soft);border-bottom:1px solid var(--line);min-height:34px}
-  details.row{border-bottom:1px solid var(--line)}
-  details.row>summary{list-style:none;cursor:pointer;display:block}
-  details.row>summary::-webkit-details-marker{display:none}
+  table.pl{width:100%;border-collapse:collapse;table-layout:fixed}
+  table.pl th,table.pl td{padding:0 6px;vertical-align:middle}
+  table.pl th:first-child,table.pl td:first-child{padding-left:12px}
+  table.pl th:last-child,table.pl td:last-child{padding-right:12px}
+  table.pl thead th{height:34px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:var(--bg-soft);border-bottom:1px solid var(--line);text-align:left}
+  table.pl .r{text-align:right}
+  table.pl .x{display:none}
+  tr.item{cursor:pointer;height:44px;border-bottom:1px solid var(--line)}
+  tr.item td{height:44px}
+  tr.item.open{border-bottom:0}
+  tr.detrow{border-bottom:1px solid var(--line)}
+  tr.detrow[hidden]{display:none}
   .chev{width:20px;color:var(--muted);transition:transform .15s;text-align:center}
-  details[open]>summary .chev{transform:rotate(90deg)}
+  tr.open .chev{transform:rotate(90deg)}
   .nm{font-weight:700;color:var(--ink);font-size:14px;line-height:1.25;padding:4px 0;overflow-wrap:anywhere}
   .tot{font-weight:700;color:var(--ink);white-space:nowrap;text-align:right;font-size:14px}
   .tot.tbc,.cell.tbc{font-weight:400;color:var(--muted)}
-  .cell{display:none;text-align:right;white-space:nowrap;font-size:14px}
+  .cell{text-align:right;white-space:nowrap;font-size:14px}
   .cell.l{text-align:left}
-  details.row.done .nm{text-decoration:line-through;opacity:.6}
+  .chev{display:block}
+  tr.item.done .nm{text-decoration:line-through;opacity:.6}
   .det{padding:4px 14px 14px 42px;font-size:14px;color:var(--body)}
   .det p{margin:0 0 8px;overflow-wrap:anywhere}
   .det .k{font-weight:700;color:var(--ink)}
@@ -42,9 +49,8 @@
   details.fold>.body{padding:0 16px 10px 40px}
   details.fold li{margin-bottom:8px}
   @media(min-width:760px){
-    :root{--cols:20px minmax(0,1fr) 44px 84px 92px 84px 84px}
-    .cols{display:grid}
-    .cell{display:block}
+    table.pl .x{display:table-cell}
+    table.pl col.x{display:table-column}
     .det .mob{display:none}
   }
 </style>
@@ -76,23 +82,28 @@ function fold(list,title,right,tag,build){
   const b=el('div','body');build(b);d.append(sm,b);inner.appendChild(d);sec.appendChild(inner);list.appendChild(sec);
 }
 function olist(arr){const ol=el('ol');arr.forEach(x=>ol.appendChild(el('li',null,x)));return ol;}
-function row(i,g){
-  const d=el('details','row'+(i.status==='have'?' done':''));
-  const sm=el('summary');const ln=el('div','line');
+function row(i,g,tb){
+  const tr=el('tr','item'+(i.status==='have'?' done':''));
   const missing=i.printed||i.unit_price==null;
   const unit=missing?'—':(i.approx?'~':'')+money(i.unit_price,i.currency);
   const line=missing?'—':(i.approx?'~':'')+money(i.unit_price*(i.qty||1),i.currency);
   const cls=i.status==='have'?'now':i.status==='ordered'?'next':'later';
-  const nm=el('div','nm',i.item);
-  const tot=el('div','tot'+(missing?' tbc':''),line);
-  const q=el('div','cell q',i.qty!=null?String(i.qty):'–');
-  const u=el('div','cell u'+(missing?' tbc':''),unit);
-  const w=el('div','cell l w',WHERE[g.id]||i.where);
-  const s2=el('div','cell l s');s2.appendChild(el('span','chip '+cls,LABEL[i.status]));
-  ln.append(el('span','chev','›'),nm,q,u,tot,w,s2);
-  sm.appendChild(ln);
-  d.appendChild(sm);
-  const det=el('div','det');
+  const td=(c,t)=>{const e=el('td',c);if(t!=null)e.textContent=t;return e;};
+  const c0=td();c0.appendChild(el('span','chev','›'));
+  const c1=td();c1.appendChild(el('div','nm',i.item));
+  const c3=td('r x cell'+(missing?' tbc':''),unit);
+  const c4=td('r tot'+(missing?' tbc':''),line);
+  const c5=td('x cell l',WHERE[g.id]||i.where);
+  const c6=td('x cell l');c6.appendChild(el('span','chip '+cls,LABEL[i.status]));
+  tr.append(c0,c1,td('r x cell',i.qty!=null?String(i.qty):'–'),c3,c4,c5,c6);
+  const dr=el('tr','detrow');dr.hidden=true;
+  const dc=el('td');dc.colSpan=7;dr.appendChild(dc);
+  tr.tabIndex=0;tr.setAttribute('aria-expanded','false');
+  const flip=()=>{const o=dr.hidden;dr.hidden=!o;tr.classList.toggle('open',o);tr.setAttribute('aria-expanded',String(o));};
+  tr.addEventListener('click',flip);
+  tr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();flip();}});
+  tb.append(tr,dr);
+  const det=dc.appendChild(el('div','det'));
   const mob=el('p','mob');mob.append(el('span',null,(i.qty?i.qty+' ×':'–')+(missing?'':' '+unit)),el('span','chip '+cls,LABEL[i.status]),el('span','chip where',WHERE[g.id]||i.where));det.appendChild(mob);
   let note=i.note||'',cad='';
   const k=note.search(/DIMENSIONS:|CAD mismatch/);
@@ -104,7 +115,7 @@ function row(i,g){
   const lp=el('p');
   if(i.link){const a=el('a',null,i.link_label||'Buy here →');a.href=i.link;a.target='_blank';a.rel='noopener';lp.appendChild(a);}
   else lp.appendChild(el('span','note','No link yet'));
-  det.appendChild(lp);d.appendChild(det);return d;
+  det.appendChild(lp);
 }
 fetch('part-list.json').then(r=>r.json()).then(d=>{
   document.getElementById('updated').textContent='Last updated '+d.updated;
@@ -128,10 +139,14 @@ fetch('part-list.json').then(r=>r.json()).then(d=>{
       const b=el('div','body');b.appendChild(el('p','note',g.carry_note));dd.append(sm,b);inner.appendChild(dd);
     }
     const tbl=el('div','tbl');
-    const cols=el('div','cols');['','Item','Qty','Unit','Total','Buy','Status'].forEach(x=>cols.appendChild(el('span',null,x)));
-    cols.children[2].style.textAlign=cols.children[3].style.textAlign=cols.children[4].style.textAlign='right';
-    tbl.appendChild(cols);
-    items.forEach(i=>tbl.appendChild(row(i,g)));
+    const tb2=el('table','pl');
+    const cg=el('colgroup');[['',20],['',0],['x',44],['x',84],['',92],['x',84],['x',84]].forEach(([c,w])=>{const e=el('col',c);if(w)e.style.width=w+'px';cg.appendChild(e);});
+    tb2.appendChild(cg);
+    const hr=el('tr');[['',''],['','Item'],['x r','Qty'],['x r','Unit'],['r','Total'],['x','Buy'],['x','Status']].forEach(([c,t])=>hr.appendChild(el('th',c,t)));
+    const th=el('thead');th.appendChild(hr);tb2.appendChild(th);
+    const tb=el('tbody');
+    items.forEach(i=>row(i,g,tb));
+    tb2.appendChild(tb);tbl.appendChild(tb2);
     const sub=el('div','sub');sub.append(el('span',null,'Subtotal'),el('span',null,fmt(totals)));
     tbl.appendChild(sub);inner.appendChild(tbl);sec.appendChild(inner);list.appendChild(sec);
   });
