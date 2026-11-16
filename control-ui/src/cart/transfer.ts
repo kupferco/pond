@@ -3,9 +3,9 @@
 //
 // Mechanism (lengths in mm, CAD axes: x across, y out of the pipe plane, z along the pipes; the hinge axes and the pipes are all parallel, so the rotation is planar; the scene
 // is used as it is: pipes upright, B on the left bending left, C bending right). At rest the hands clamp pipe B (hand 2) and pipe C (hand 1), 120 mm apart. Hinge 1 is on the far side of C,
-// hinge 2 on the far side of B, 156 mm apart and 43 mm in front of the pipe plane. Transfer (decided by Dani): ONLY THE HINGE MOVES, and only a little. Hand 2 releases B; the plate rotates
+// hinge 2 on the far side of B, 180 mm apart (x = +-90) and 43 mm in front of the pipe plane. Transfer (decided by Dani): ONLY THE HINGE MOVES, and only a little. Hand 2 releases B; the plate rotates
 // a few degrees about hinge 1 (just enough for hand 2 to leave the pipe and clear its curved part, CLEAR_DEG); the cart moves along pipe C past the curve; the plate rotates back;
-// hand 2 clamps again. The arm stays stowed on the plate throughout. A hand swung the other way (hand 1 about hinge 2) is not supported.
+// hand 2 clamps again. The arm stays stowed on the plate throughout. Both ways round work (Pond #227: the hands are true mirrors, so the same path serves both): the trip up pipe C releases hand B and swings the plate on hinge C; the trip up pipe B releases hand C and swings it on hinge B.
 import { HINGE_Y, hingeX, HINGE_DEG_S_CAD } from './dims.ts';
 import { JAW_OPEN_RAD, S_MAX_CM, S_MIN_CM, S_START_CM } from './transfer-model.ts';
 import { L_ARC, L_VERT, pathAt } from './track.ts';
@@ -26,25 +26,21 @@ export { S_MAX_CM, S_MIN_CM, S_START_CM };
 const WHEEL_R_MM = 10;                        // CAD wheel radius, to turn travel into wheel spin
 export { HINGE_DEG_S_CAD };
 
-/** Rotation coordinate t: 0 = at rest (hands on B and C), 1 = plate rotated CLEAR_DEG about hinge 1, hand 2 clear of pipe B. */
+/** Rotation coordinate t: 0 = at rest (hands on B and C), 1 = plate rotated CLEAR_DEG about the static hand's hinge, the free hand clear of its pipe. */
 export interface Kin { alpha: number; ox: number; oy: number; hinge1: number; hinge2: number }
 
 /**
- * Rotation path as (plate angle alpha, hand 2's own hinge angle) in degrees. Found by searching the (alpha, hinge 2) plane of the model with contact detection (jaw open, 92 deg):
- * the sleeve is only 8 mm bigger than the pipe, so hand 2 has to turn a few degrees on its own hinge while the plate rotates; the corridor is narrow, so the path follows its middle.
- * The last point is the smallest plate angle at which hand 2's sleeve is completely off pipe B (22 deg, checked at 1 deg steps): CLEAR_DEG.
+ * Rotation path as (plate angle alpha, free hand's own hinge angle) in degrees, both turning the free hand away from its pipe. Found by searching the (alpha, own hinge) plane of the model with contact
+ * detection (scripts/search-swing.ts, jaw open 92 deg): the sleeve is only 8 mm bigger than the pipe, so the free hand has to turn a few degrees on its own hinge while the plate rotates; the
+ * corridor is narrow at first (about 3 deg wide at 4 deg plate angle), so the path follows its middle. The last point is 1 deg beyond the smallest plate angle at which the free sleeve is completely
+ * off its pipe with the own hinge at 9 deg (19 deg, checked at 0.5 deg steps): CLEAR_DEG. With the plate 166 wide and the hinges at +-90 the hands are true mirrors, so the SAME path serves both trips: hand B released with the plate
+ * on hinge C (trip up pipe C), and hand C released with the plate on hinge B (trip up pipe B); `kinematics` mirrors the signs. Both are checked for contact in test/sim.test.ts.
  */
-export const SWING_PATH: readonly (readonly [number, number])[] = [[0, 0], [2, 2], [4, 4], [6, 6], [8, 8], [12, 8], [16, 8], [22, 8]];
-/**
- * NOT a usable path: the mirror case (hand 2 static on pipe B, hand 1 released, plate turning on hinge B). Both hands are copies, not mirrors (cad/check_transfer_hands.py), so hand C's
- * C gap faces +x, away from the plate, and a swing about hinge B (x -90) pushes pipe C into hand C's -x wall. Searched with contact detection (test/sim.test.ts): the plate can turn
- * at most 4 deg before hand C's sleeve hits pipe C, whatever hand C's own hinge does (+-30 deg), and 14 deg is the least that would free it. TransferRun refuses this case.
- */
-export const SWING_PATH_B: (readonly [number, number])[] = [[0, 0], [22, 8]];
+export const SWING_PATH: readonly (readonly [number, number])[] = [[0, 0], [3, 3.5], [5, 5.5], [8, 8], [12, 9], [20, 9]];
 export const CLEAR_DEG = SWING_PATH[SWING_PATH.length - 1][0];
 /** The largest hinge angle (deg) either hinge uses. */
 export const MAX_HINGE_DEG = Math.max(...SWING_PATH.map(([a, h]) => Math.max(Math.abs(a), Math.abs(h))));
-const pathOf = (hand: StaticHand) => (hand === 1 ? SWING_PATH : SWING_PATH_B);
+const pathOf = (_hand: StaticHand) => SWING_PATH;
 /** Path length in degrees (the larger of the two hinges' travel on each leg: the time at the hinge speed limit in seconds per deg/s). */
 const legs = (path: readonly (readonly [number, number])[]) => path.slice(1).map(([a, h], i) => Math.max(Math.abs(a - path[i][0]), Math.abs(h - path[i][1])));
 export const swingDeg = (hand: StaticHand = 1) => legs(pathOf(hand)).reduce((x, y) => x + y, 0);
@@ -68,7 +64,7 @@ export function kinFromAngles(hand: StaticHand, alpha: number, turn: number): Ki
   // the plate is rotated by phi about the static hand's hinge point: origin O = h - R h. About hinge 1 it turns by +alpha, about hinge 2 by -alpha (the mirror image, so the free hand always swings out to the plate side).
   const phi = hand === 1 ? alpha : -alpha, c = Math.cos(phi), s = Math.sin(phi);
   const ox = hx - (c * hx - s * hy), oy = hy - (s * hx + c * hy);
-  return hand === 1 ? { alpha: phi, ox, oy, hinge1: -phi, hinge2: turn } : { alpha: phi, ox, oy, hinge1: turn, hinge2: -phi };
+  return hand === 1 ? { alpha: phi, ox, oy, hinge1: -phi, hinge2: turn } : { alpha: phi, ox, oy, hinge1: -turn, hinge2: -phi };
 }
 
 type ModelLike = { jnt(name: string): { id: number }; jnt_qposadr: ArrayLike<number>; actuator(name: string): { id: number }; body(name: string): { id: number }; body_mocapid: ArrayLike<number> };
@@ -91,10 +87,12 @@ export const BEND_CHORD_MM = 3.4;
 /** Lateral shift (mm, towards the inside of the bend) and extra yaw (rad) that lay the rigid sleeve on the bend without touching it, by path position (cm). Searched with the contact check. */
 export interface BendTrim { dx: number; dy: number; yaw: number; eps: number; da: number; dh: number }
 const DEG = Math.PI / 180;
-/** Rows [s cm, dx mm, dy mm, yaw deg, eps deg, da deg, dh deg]; contact-free with the plate rotated and hand B released, checked every 0.25 cm (test/sim.test.ts). The released hand B needs the extra turn at the start of the bend, where pipe B starts to curve away behind its open jaw. */
+/** Rows [s cm, dx mm, dy mm, yaw deg, eps deg, da deg, dh deg]; contact-free with the plate rotated and the free hand released, checked every 0.25 cm (test/sim.test.ts); searched again for the mirrored hands with scripts/search-bend.ts (Pond #227). The released hand needs the extra turn at the start of the bend, where its pipe starts to curve away behind its open jaw. The same rows serve both trips: for the trip up pipe B the lateral shift and yaw are mirrored (platePose). */
 const BEND_ROWS: readonly (readonly number[])[] = [
-  [0, 0, 0, 0, 0, 0, 0], [50, 0, 0, 0, 0, 0, 0], [57, 0, 0, 0, 0, 3, 8], [58, 0, 0, 0, 1, 5, 12], [59, 0.5, -0.5, 1, 2, 7, 16], [60, 1, -1, 2, 4, 7, 16], [60.5, 1.5, -1, 2, 4, 7, 16], [62, 2, -1, 1, 4, 7, 16], [64, 2.5, -2, 0, 6, 7, 16], [67, 2.5, -2, 0, 6, 7, 16],
-  [75, 2.5, -2, 0, 6, 0, 0], [80, 2.5, -2, 0, 6, 0, 0], [82, 1.5, -1, -2, 4, 0, 0], [83, 1.5, -0.5, -2, 2, 0, 0], [83.3, 1.5, -0.5, -2, 2, 0, 0], [83.5, 1.5, -0.5, -3, 2, 0, 0], [84, 1, 0, -2, 0, 0, 0], [85, 0, 0, -1, 0, 0, 0], [86, 0, 0, 0, 0, 0, 0], [1000, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0], [50, 0, 0, 0, 0, 0, 0], [58.3, 0.4, 0, 0.22, 0.04, -0.18, 0.2], [60, 1.88, -0.08, 2.68, 0.44, 0.42, -0.14], [62.2, 3.66, -0.62, 0.46, 2.23, 3.13, 15],
+  [62.4, 3.64, -0.67, 0.45, 2.21, 3.93, 15], [62.9, 3.59, -0.71, 0.45, 2.04, 5.26, 15], [63.1, 3.62, -0.71, 0.4, 2.14, 5.5, 15], [64.9, 4.06, -0.61, 0.17, 2.22, 5.69, 15],
+  [66.1, 4.12, -0.58, 0.14, 2.27, 5.7, 15], [68.2, 4.12, -0.58, 0.14, 2.27, 5.54, 14.57], [75, 4.12, -0.58, 0.14, 2.27, 0, 0], [81.3, 4.12, -0.58, 0.14, 2.27, 0, 0],
+  [83.5, 2.28, -0.35, -2.11, 1.41, 0, 0], [83.6, 2.16, -0.34, -2.1, 1.28, 0, 0], [86.3, 0, 0, 0, 0, 0, 0], [92, 0, 0, 0, 0, 0, 0], [1000, 0, 0, 0, 0, 0, 0],
 ];
 /** The largest hinge angle (deg) of either hinge anywhere in a full transfer, including the extra turn round the start of the bend. */
 export const MAX_BEND_HINGE_DEG = Math.max(...BEND_ROWS.map((r) => Math.max(CLEAR_DEG + r[5], SWING_PATH[SWING_PATH.length - 1][1] + r[6])));
@@ -144,19 +142,25 @@ export function applyPose(model: ModelLike, data: DataLike, st: CartState, trim?
 }
 
 export type StepName = 'release' | 'rotate' | 'move' | 'rotateBack' | 'moveTop' | 'moveBack' | 'moveFlat' | 'clamp';
-export const STEP_LABEL: Record<StepName, string> = {
-  release: 'Releasing hand B', rotate: 'Rotating the plate on hand C\'s hinge, clear of pipe B', move: 'Driving on pipe C round the bend, plate rotated', rotateBack: 'Rotating the plate back, flat again',
-  moveTop: 'Driving flat along pipe C\'s top bar to its top right', moveBack: 'Driving back round the bend, plate rotated, to the top of pipes B and C', moveFlat: 'Driving back along pipe C\'s top bar',
-  clamp: 'Clamping hand B on pipe B',
-};
+/** Hand and pipe letters: hand 1 rides pipe C, hand 2 pipe B. */
+export const handName = (h: StaticHand) => (h === 1 ? 'C' : 'B');
+/** Label of a step for a transfer that releases hand `free` (2 = hand B: the trip up pipe C; 1 = hand C: the trip up pipe B). */
+export function stepLabel(name: StepName, free: StaticHand = 2): string {
+  const F = handName(free), S = handName(free === 1 ? 2 : 1);
+  return ({
+    release: `Releasing hand ${F}`, rotate: `Rotating the plate on hand ${S}'s hinge, clear of pipe ${F}`, move: `Driving on pipe ${S} round the bend, plate rotated`, rotateBack: 'Rotating the plate back, flat again',
+    moveTop: `Driving flat along pipe ${S}'s top bar to its top ${S === 'C' ? 'right' : 'left'}`, moveBack: 'Driving back round the bend, plate rotated, to the top of pipes B and C', moveFlat: `Driving back along pipe ${S}'s top bar`,
+    clamp: `Clamping hand ${F} on pipe ${F}`,
+  } as Record<StepName, string>)[name];
+}
 const EPS = 1e-9;
 interface Goal { s: number; t: number; open1: number; open2: number }
 
 /**
  * Cart controller. Every continuous quantity (position along the track, swing, clamp openings) moves towards its goal at its own rate, behind interlocks:
- * the plate swings only with hand 2 open and hand 1 closed; nothing else moves mid-swing. A full transfer starts with both hands clamped on pipes B and C (anywhere on the straight part)
- * and is a queue of four goals run one after the other: release hand B, rotate the plate on hand C's hinge (CLEAR_DEG), drive on pipe C round its bend to the top right (P_TOP_CM),
- * rotate back. The cart ends on pipe C, hand C clamped, hand B released and free. `msg` carries the reason when an interlock refuses something.
+ * the plate swings only with the free hand open and the static hand closed; nothing else moves mid-swing. A full transfer starts with both hands clamped on pipes B and C (anywhere on the straight part)
+ * and is a queue of goals run one after the other: release the free hand, rotate the plate on the static hand's hinge (CLEAR_DEG), drive on the static hand's pipe round its bend to the top (P_TOP_CM),
+ * rotate back. Either hand can be the free one: `start(2)` releases hand B and the cart ends on pipe C (top right); `start(1)` releases hand C and the cart ends on pipe B (top left). `msg` carries the reason when an interlock refuses something.
  */
 export class TransferRun {
   readonly st = initialState();
@@ -167,6 +171,12 @@ export class TransferRun {
   current: StepName | null = null;
   msg = '';
   done = false;
+  /** Which hand a transfer releases when neither is open yet (2 = hand B: trip up pipe C; 1 = hand C: trip up pipe B). Follows the hand last released. */
+  private hint: StaticHand = 2;
+  /** The free (released or being released) hand: the one that is more open; with both clamped, the hand the next transfer will release. */
+  get free(): StaticHand { return this.st.open1 > this.st.open2 ? 1 : this.st.open2 > this.st.open1 ? 2 : this.hint; }
+  private open(h: StaticHand) { return h === 1 ? this.st.open1 : this.st.open2; }
+  private key(h: StaticHand): 'open1' | 'open2' { return h === 1 ? 'open1' : 'open2'; }
   /** Hinge angles (rad) of both hinges last frame, to check the worm drives never exceed their speed. */
   private prev = { h1: 0, h2: 0 };
   maxHingeStep = 0;
@@ -191,48 +201,50 @@ export class TransferRun {
   nudge(d: number): boolean {
     if (this.busy) return this.refuse('Wait for the running transfer to finish.');
     if (this.swinging) return this.refuse('The plate is mid-rotation: finish the rotation first.');
-    const s = this.st, rotatedClear = s.open2 >= 1 - EPS && s.t >= 1 - EPS;
-    if (!this.spanning && !rotatedClear && s.open2 > EPS && s.open2 < 1 - EPS) return this.refuse('Hand B is moving: wait for it.');
-    const flatFree = s.open2 >= 1 - EPS && s.t <= EPS && s.s >= S_FLAT_CM - EPS;   // on the top bar, plate flat, hand B off
-    if (s.s > S_MAX_CM + EPS && !rotatedClear && !flatFree) return this.refuse('Rotate the plate first (hand B released): the cart only drives round the bend with the plate rotated.');
+    const s = this.st, F = this.free, f = this.open(F), rotatedClear = f >= 1 - EPS && s.t >= 1 - EPS;
+    if (!this.spanning && !rotatedClear && f > EPS && f < 1 - EPS) return this.refuse(`Hand ${handName(F)} is moving: wait for it.`);
+    const flatFree = f >= 1 - EPS && s.t <= EPS && s.s >= S_FLAT_CM - EPS;   // on the top bar, plate flat, free hand off
+    if (s.s > S_MAX_CM + EPS && !rotatedClear && !flatFree) return this.refuse(`Rotate the plate first (hand ${handName(F)} released): the cart only drives round the bend with the plate rotated.`);
     const lo = flatFree ? S_FLAT_CM : S_MIN_CM, hi = rotatedClear || flatFree ? P_TOP_CM : S_MAX_CM;
     this.goal.s = Math.min(hi, Math.max(lo, this.goal.s + d)); this.msg = ''; return true;
   }
   /** hand 1 or 2: open (release) or close (clamp). A hand only opens or closes on its pipe, on the straight part. */
   clampHand(hand: 1 | 2, open: boolean): boolean {
+    const other: StaticHand = hand === 1 ? 2 : 1;
     if (this.busy) return this.refuse('Wait for the running transfer to finish.');
     if (this.swinging) return this.refuse('The plate is mid-rotation: a hand cannot open or close in the air.');
     if (this.st.t > EPS) return this.refuse('Rotate the plate back first: a hand can only open or close on its pipe.');
-    if (this.st.s > S_MAX_CM + EPS) return this.refuse('Hand B has no pipe to clamp here: pipe B is behind, on the straight part (press Reset).');
-    if (open && hand === 1 && (this.st.open2 > EPS || this.goal.open2 > EPS)) return this.refuse('Hand B is not clamped: releasing hand C as well would let go of the track.');
-    if (open && hand === 2 && (this.st.open1 > EPS || this.goal.open1 > EPS)) return this.refuse('Hand C is not clamped: releasing hand B as well would let go of the track.');
-    this.goal[hand === 1 ? 'open1' : 'open2'] = open ? 1 : 0; this.msg = ''; return true;
+    if (this.st.s > S_MAX_CM + EPS) return this.refuse(`Hand ${handName(hand)} has no pipe to clamp here: pipe ${handName(hand)} is behind, on the straight part (press Reset).`);
+    if (open && (this.open(other) > EPS || this.goal[this.key(other)] > EPS)) return this.refuse(`Hand ${handName(other)} is not clamped: releasing hand ${handName(hand)} as well would let go of the track.`);
+    this.goal[this.key(hand)] = open ? 1 : 0; if (open) this.hint = hand; this.msg = ''; return true;
   }
-  /** Rotate: turn the plate on hand C's hinge (toward = 1: clear of pipe B, 0: back). */
+  /** Rotate: turn the plate on the static hand's hinge (toward = 1: the free hand clear of its pipe, 0: back). */
   rotate(toward: 0 | 1): boolean {
     if (this.busy) return this.refuse('Wait for the running transfer to finish.');
-    if (this.st.open1 > EPS) return this.refuse('Hand C must stay clamped: the plate rotates on its hinge. (The other way round does not work: hand C\'s gap faces away from the plate, so its sleeve hits pipe C after 4 degrees.)');
-    if (this.st.open2 < 1 - EPS) return this.refuse('Release hand B first.');
-    if (!toward && this.st.s > S_MAX_CM + EPS && this.st.s < S_FLAT_CM - EPS) return this.refuse(`Drive on to ${S_FLAT_CM} cm first: the plate can only turn back flat beyond pipe B's bend.`);
+    const F = this.free, S: StaticHand = F === 1 ? 2 : 1;
+    if (this.open(S) > EPS) return this.refuse(`Hand ${handName(S)} must stay clamped: the plate rotates on its hinge.`);
+    if (this.open(F) < 1 - EPS) return this.refuse(`Release hand ${handName(F)} first.`);
+    if (!toward && this.st.s > S_MAX_CM + EPS && this.st.s < S_FLAT_CM - EPS) return this.refuse(`Drive on to ${S_FLAT_CM} cm first: the plate can only turn back flat beyond pipe ${handName(F)}'s bend.`);
     this.goal.t = toward; this.msg = ''; return true;
   }
   stop() { this.queue = []; this.current = null; this.goal = { s: this.st.s, t: this.st.t, open1: this.st.open1, open2: this.st.open2 }; this.msg = 'Stopped.'; }
 
   /**
-   * Run the whole transfer from where the cart is. Both hands clamped on the straight part: B to C: release hand B, rotate the plate on hand C's hinge, drive on pipe C round the bend to
-   * S_FLAT_CM, rotate back flat as soon as pipe B's bend is behind, drive on to the top right. The cart on pipe C's top bar with hand B off: the same back: drive to S_FLAT_CM, rotate, drive
-   * back round the bend, rotate flat, clamp hand B on pipe B again.
+   * Run the whole transfer from where the cart is. Both hands clamped on the straight part: release hand `release` (default hand B: the trip up pipe C; hand C: the trip up pipe B), rotate the plate on
+   * the other hand's hinge, drive on that pipe round the bend to S_FLAT_CM, rotate back flat as soon as the released hand's pipe bend is behind, drive on to the top. The cart on a top bar with one hand
+   * off: the same back: drive to S_FLAT_CM, rotate, drive back round the bend, rotate flat, clamp the free hand again.
    */
-  start(): boolean {
+  start(release?: StaticHand): boolean {
     if (this.busy) return this.refuse('A transfer is already running.');
     if (this.swinging || this.st.t > EPS) return this.refuse('The plate is rotated: rotate it back first.');
-    const s = this.st;
-    if (s.open1 <= EPS && s.open2 >= 1 - EPS && s.s > S_MAX_CM + EPS && this.goal.open2 >= 1 - EPS) {
-      this.queue = [{ name: 'moveFlat', goal: { s: S_FLAT_CM } }, { name: 'rotate', goal: { t: 1 } }, { name: 'moveBack', goal: { s: S_MAX_CM } }, { name: 'rotateBack', goal: { t: 0 } }, { name: 'clamp', goal: { open2: 0 } }];
+    const s = this.st, F = this.free, k = this.key(F);
+    if (s.s > S_MAX_CM + EPS && this.open(F) >= 1 - EPS && this.goal[k] >= 1 - EPS && this.open(F === 1 ? 2 : 1) <= EPS) {
+      this.queue = [{ name: 'moveFlat', goal: { s: S_FLAT_CM } }, { name: 'rotate', goal: { t: 1 } }, { name: 'moveBack', goal: { s: S_MAX_CM } }, { name: 'rotateBack', goal: { t: 0 } }, { name: 'clamp', goal: { [k]: 0 } }];
     } else {
       if (s.open1 > EPS || s.open2 > EPS || this.goal.open1 > EPS || this.goal.open2 > EPS) return this.refuse('Clamp both hands first (on the straight part), or press Reset.');
-      if (s.s > S_MAX_CM + EPS) return this.refuse('Press Reset: hand B has no pipe to clamp here.');
-      this.queue = [{ name: 'release', goal: { open2: 1 } }, { name: 'rotate', goal: { t: 1 } }, { name: 'move', goal: { s: S_FLAT_CM } }, { name: 'rotateBack', goal: { t: 0 } }, { name: 'moveTop', goal: { s: P_TOP_CM } }];
+      if (s.s > S_MAX_CM + EPS) return this.refuse('Press Reset: the released hand has no pipe to clamp here.');
+      const R = release ?? 2; this.hint = R; const rk = this.key(R);
+      this.queue = [{ name: 'release', goal: { [rk]: 1 } }, { name: 'rotate', goal: { t: 1 } }, { name: 'move', goal: { s: S_FLAT_CM } }, { name: 'rotateBack', goal: { t: 0 } }, { name: 'moveTop', goal: { s: P_TOP_CM } }];
     }
     this.done = false; this.msg = ''; this.next(); return true;
   }
@@ -249,16 +261,18 @@ export class TransferRun {
     // clamps
     s.open1 = this.toward(s.open1, g.open1, 1 / HAND_MOVE_S, dt);
     s.open2 = this.toward(s.open2, g.open2, 1 / HAND_MOVE_S, dt);
-    // the swing: hinge speed limited, and only with hand 2 open and hand 1 clamped
-    const swingOk = s.open1 <= EPS && s.open2 >= 1 - EPS;
+    // the swing: hinge speed limited, and only with the free hand open and the static hand clamped
+    const F = this.free, swingOk = this.open(F === 1 ? 2 : 1) <= EPS && this.open(F) >= 1 - EPS;
     if (g.t !== s.t) { if (swingOk) s.t = this.toward(s.t, g.t, this.swingRate, dt); else if (!this.busy) { g.t = s.t; } }
-    // driving along the pipes: not mid-rotation, and with hand 2 either clamped on B (plate flat) or fully off it (plate rotated clear); the clamped hands' drive wheels roll the cart
-    if (!this.swinging && g.s !== s.s && (s.t >= 1 - EPS ? s.open2 >= 1 - EPS : s.open2 <= EPS || s.open2 >= 1 - EPS)) {
+    // driving along the pipes: not mid-rotation, and with the free hand either clamped on its pipe (plate flat) or fully off it (plate rotated clear); the clamped hands' drive wheels roll the cart
+    const fo = this.open(F);
+    if (!this.swinging && g.s !== s.s && (s.t >= 1 - EPS ? fo >= 1 - EPS : fo <= EPS || fo >= 1 - EPS)) {
       let ds = this.toward(s.s, g.s, this.speed, dt) - s.s;
       // the extra hinge turn round the start of the bend (bendTrim) is part of the worm drives' work: slow the drive so neither hinge exceeds its speed limit
       if (s.t >= 1 - EPS) {
-        const a = bendTrim(s.s), b = bendTrim(s.s + ds), dHinge = Math.max(Math.abs(b.da - a.da), Math.abs(b.dh - a.dh)) / DEG, lim = this.swingDegS * dt;
-        if (dHinge > lim) ds *= lim / dHinge;
+        const a = bendTrim(s.s), lim = this.swingDegS * dt;
+        const dH = (x: number) => { const b = bendTrim(s.s + x); return Math.max(Math.abs(b.da - a.da), Math.abs(b.dh - a.dh)) / DEG; };
+        if (dH(ds) > lim) { let lo = 0, hi = ds; for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2; if (dH(mid) > lim) hi = mid; else lo = mid; } ds = lo; }   // the trim is piecewise linear: bisect for the longest step within the hinge speed limit
       }
       s.s += ds;
       if (s.open1 < 0.5) s.spin1 -= (ds * 10) / WHEEL_R_MM;
@@ -272,11 +286,15 @@ export class TransferRun {
 
 /** Deepest penetration (m, negative) among the current contacts and the first pair's geom names, or 0 when nothing touches. */
 export function worstContact(model: { geom(id: number): { name: string }; body(id: number): { name: string }; geom_bodyid: ArrayLike<number> }, data: { ncon: number; contact: { get(i: number): { dist: number; geom1: number; geom2: number } | undefined } }): { depth: number; names: string } {
-  let depth = 0, names = '';
+  let depth = 0, pair: [number, number] | null = null;
+  const con = data.contact;   // one accessor wrapper per call (every `data.contact` access allocates a new one)
   for (let i = 0; i < data.ncon; i++) {
-    const c = data.contact.get(i);
-    if (c && c.dist < depth) { depth = c.dist; names = [c.geom1, c.geom2].map((g: number) => model.geom(g).name || model.body(model.geom_bodyid[g]).name).join(' / '); }
+    const c = con.get(i);
+    if (c && c.dist < depth) { depth = c.dist; pair = [c.geom1, c.geom2]; }
     (c as { delete?: () => void } | undefined)?.delete?.();   // embind wrapper: free it (thousands of contact frames would fill the wasm heap)
   }
-  return { depth, names };
+  (con as { delete?: () => void }).delete?.();
+  // names only for the one deepest pair, and free the geom/body handles too: a search that probes thousands of colliding poses must not leak one handle per probe
+  const name = (g: number) => { const gm = model.geom(g), n = gm.name; (gm as { delete?: () => void }).delete?.(); if (n) return n; const b = model.body(model.geom_bodyid[g]), bn = b.name; (b as { delete?: () => void }).delete?.(); return bn; };
+  return { depth, names: pair ? pair.map(name).join(' / ') : '' };
 }

@@ -20,10 +20,13 @@ PIPE_R = hs.R_PIPE                      # 16
 # ---------------- Hinge (ASSUMED sizes; drawn in cart_base.py) ----------------
 # One hinge per hand on the pad edge, axis parallel to the pipe. Hand B's hinge is on the pad's -X edge, hand
 # C's on its +X edge, so the plate sits BETWEEN the two hinge axes (a door hung between two posts).
+# v4 (Pond #227, 16 Nov 2026): hand C is the true mirror of hand B across the cart centre plane x = 0 (pad, hinge, C-gap,
+# jaw, drive all mirrored), so both hinges are on the OUTER side of their pipes (x = -90 and +90) and each hand's C-gap
+# faces the plate. The plate is widened symmetrically from 142 to 166 mm. Pipe spacing stays 120.
 HINGE_R = 5.0                           # ASSUMED: knuckle barrel radius (10 mm OD)
 HINGE_LEAF_T = 3.0                      # ASSUMED: leaf thickness
 HINGE_OFF_B = hs.PAD_X0 - 6.0           # hinge axis, relative to pipe B: -30 (pad -X edge - 6)
-HINGE_OFF_C = hs.PAD_X1 + 6.0           # hinge axis, relative to pipe C: +6 (pad +X edge + 6)
+HINGE_OFF_C = -HINGE_OFF_B              # hinge axis, relative to pipe C: +30 (hand C is the TRUE MIRROR of hand B across x = 0, Pond #227)
 LEAF_Y1 = hs.PAD_Y0 - HINGE_LEAF_T      # sleeve leaf front face: -43
 PLATE_T = 6.0                           # ASSUMED
 PLATE_Y1 = LEAF_Y1 - HINGE_LEAF_T       # closed stack, out from the pad: pad | sleeve leaf | plate leaf | plate
@@ -38,8 +41,8 @@ HINGE_CLEAR = 2.0                       # plate edge to barrel gap beyond the ba
 # Limit 2, the plate between the hinge axes (THIS decides it): everything that sits on the plate in X is
 #   motor 28 + arm base 70 + motor 28 = 126 mm, plus 4 mm between parts and 4 mm to each plate end = 142 mm.
 #   Plate width between the hinge axes = PIPE_SPACING + (HINGE_OFF_C - HINGE_OFF_B) - 2 (R + CLEAR)
-#                                      = PIPE_SPACING + 36 - 14 = PIPE_SPACING + 22.
-#   So PIPE_SPACING >= 142 - 22 = 120. At 115 the plate is 137 wide and the arm or a motor would overlap.
+#                                      = PIPE_SPACING + 60 - 14 = PIPE_SPACING + 46 = 166 (mirrored hands, v4; was 142).
+#   The 142 mm needed is now met with 24 mm to spare, so the 120 mm spacing could shrink; it stays 120 (decided).
 # The battery (70 x 50 x 70) is the same 70 x 70 footprint as the arm base, so it sits flat on the plate centre between
 #   the two motors and the arm base is bolted on top of it (Viber #109: stack plate | battery | arm; no shelf tongue).
 #   The two hinge worm drives go above the sleeves (z > 60).
@@ -50,16 +53,18 @@ NEEDED_PLATE_W = 2 * (2 * MOTOR_R) + ARM_BASE_W + 2 * PART_GAP + 2 * END_GAP    
 PIPE_SPACING = 120.0                    # pipe B to pipe C, centre to centre (two tanks touching, pipes 60 from edge)
 HX = PIPE_SPACING / 2                   # each pipe's x offset from the cart centre line
 PLATE_X0 = -HX + HINGE_OFF_B + HINGE_R + HINGE_CLEAR      # -83: just clear of hand B's hinge barrel
-PLATE_X1 = HX + HINGE_OFF_C - HINGE_R - HINGE_CLEAR       # +59: just clear of hand C's hinge barrel
+PLATE_X1 = HX + HINGE_OFF_C - HINGE_R - HINGE_CLEAR       # +83: just clear of hand C's hinge barrel (mirror of PLATE_X0)
+assert abs(PLATE_X0 + PLATE_X1) < 1e-9, "plate must be symmetric about x = 0"
+assert abs(HINGE_OFF_B + HINGE_OFF_C) < 1e-9, "hinges must mirror across x = 0"
 assert PLATE_X1 - PLATE_X0 >= NEEDED_PLATE_W, "plate too narrow for motor + arm + motor at this PIPE_SPACING"
 assert PIPE_SPACING - SLEEVE_R - WHEEL_REACH >= 10.0, "hands too close"
 assert PIPE_SPACING - SLEEVE_R - PIPE_R >= 10.0, "sleeve too close to the neighbour pipe"
 PLATE_ZH = (hs.SLEEVE_L + 22.0) / 2     # ASSUMED half height, 11 mm margin beyond each sleeve end (112 mm)
 RIM, BOSS_HX, BOSS_HZ = 10.0, 18.0, 28.0   # ASSUMED open-frame details
 # Parts on the plate, left to right (x): motor B, arm, motor C
-MOTOR_XS = {-1: PLATE_X0 + END_GAP + MOTOR_R}                                    # motor B centre, -65
-ARM_X = MOTOR_XS[-1] + MOTOR_R + PART_GAP + ARM_BASE_W / 2                       # -12: arm base centre
-MOTOR_XS[1] = ARM_X + ARM_BASE_W / 2 + PART_GAP + MOTOR_R                        # +41: motor C centre
+ARM_X = 0.0                                                                      # arm base centre: the plate centre (symmetric, v4)
+MOTOR_XS = {-1: ARM_X - ARM_BASE_W / 2 - PART_GAP - MOTOR_R,                     # motor B centre, -53
+            1: ARM_X + ARM_BASE_W / 2 + PART_GAP + MOTOR_R}                      # +53: motor C centre (mirror)
 ARM_Z = 0.0
 ARM_BLOCK_HX = ARM_BASE_W / 2 + 2.0     # arm block on the plate, 2 mm beyond the arm base each side
 BATT = (70.0, 50.0, 70.0)               # ASSUMED: X, Y (out from plate), Z
@@ -104,22 +109,22 @@ MOTOR_RPM = 60.0                        # ASSUMED output speed at rated load
 
 def hinge_x(sgn):
     """x of the hinge axis of the hand on pipe B (sgn -1) or pipe C (sgn +1)."""
-    return sgn * HX + (HINGE_OFF_B if sgn < 0 else HINGE_OFF_C)
+    return sgn * (HX + HINGE_OFF_C)
 
 
 def torque_budget():
     """Return dict: required torque (N m) at the driving hinge, available torque, margin, swing time for 90 deg."""
     import math
-    arm_x = -12.0
+    arm_x = ARM_X
     xb, xc = hinge_x(-1), hinge_x(1)
     best = None
     for drv, x_ax, other_x in (("B", xb, xc), ("C", xc, xb)):
         tot, rows = 0.0, []
-        items = [("plate 142x112x6 + hinge leaves", 0.30, arm_x, 6.0, 1.0),
+        items = [("plate 166x112x6 + hinge leaves", 0.30, arm_x, 6.0, 1.0),
                  ("battery 70x50x70 under the arm", 0.35, arm_x, 25.0, 1.0),
                  ("arm SO-101, folded pose", 0.80, arm_x + 20.0 * (1 if drv == "B" else -1), 114.0, 1.0),
-                 ("drive motor B", 0.15, -65.0, 23.0, 1.0),
-                 ("drive motor C", 0.15, 41.0, 23.0, 1.0),
+                 ("drive motor B", 0.15, MOTOR_XS[-1], 23.0, 1.0),
+                 ("drive motor C", 0.15, MOTOR_XS[1], 23.0, 1.0),
                  ("other hand's worm motor + bracket", 0.30, other_x, 30.0, 1.0)]
         for n, m, x, dy, _ in items:
             r = math.hypot(abs(x - x_ax), dy) / 1000.0
