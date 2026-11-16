@@ -16,7 +16,7 @@ from export_cart_v2_views import parts_of, render
 
 OUT = os.path.join(HERE, "..", "renders", "transfer_hands")
 SWING_DEG, OWN_DEG = 20.0, 9.0        # end of the sim's swing path (SWING_PATH in control-ui/src/cart/transfer.ts)
-VIEWS = (("front", (0, -1, 0), (0, 0, 1)), ("top", (0, 0, 1), (0, 1, 0)), ("iso", (1, -1.1, 0.8), (0, 0, 1)))
+VIEWS = (("front", (0, -1, 0), (0, 0, 1)), ("top", (0, 0, 1), (0, 1, 0)), ("side", (1, 0, 0), (0, 0, 1)), ("iso", (1, -1.1, 0.8), (0, 0, 1)))
 
 
 def scene(static=None):
@@ -36,6 +36,7 @@ def main():
         parts = parts_of(scene(static))
         for view, cam, up in VIEWS:
             render(parts, cam, up, os.path.join(OUT, "mirror-hands-%s-%s.png" % (tag, view)))
+        scene(static).save(os.path.join(OUT, "assembly-%s.glb" % tag), "GLTF")
 
 
 if __name__ == "__main__":

@@ -173,6 +173,8 @@ export class TransferRun {
   done = false;
   /** Which hand a transfer releases when neither is open yet (2 = hand B: trip up pipe C; 1 = hand C: trip up pipe B). Follows the hand last released. */
   private hint: StaticHand = 2;
+  /** The hand released by the last trip (0 = none yet), for `press`. */
+  lastTrip: 0 | StaticHand = 0;
   /** The free (released or being released) hand: the one that is more open; with both clamped, the hand the next transfer will release. */
   get free(): StaticHand { return this.st.open1 > this.st.open2 ? 1 : this.st.open2 > this.st.open1 ? 2 : this.hint; }
   private open(h: StaticHand) { return h === 1 ? this.st.open1 : this.st.open2; }
@@ -184,7 +186,7 @@ export class TransferRun {
   /** Back to the start: both hands clamped on pipes B and C at the top of the straight part (the cart waits there for a transfer). */
   reset(s = S_MAX_CM) {
     Object.assign(this.st, initialState(), { s });
-    this.goal = { s, t: 0, open1: 0, open2: 0 }; this.queue = []; this.current = null; this.done = false; this.msg = '';
+    this.goal = { s, t: 0, open1: 0, open2: 0 }; this.queue = []; this.current = null; this.done = false; this.msg = ''; this.lastTrip = 0;
   }
   /** Swing progress per second: paced so the faster of the two hinges runs at `swingDegS` on every leg of SWING_PATH. */
   get swingRate() { return this.swingDegS / swingDeg(staticHand(this.st)); }
@@ -234,19 +236,27 @@ export class TransferRun {
    * the other hand's hinge, drive on that pipe round the bend to S_FLAT_CM, rotate back flat as soon as the released hand's pipe bend is behind, drive on to the top. The cart on a top bar with one hand
    * off: the same back: drive to S_FLAT_CM, rotate, drive back round the bend, rotate flat, clamp the free hand again.
    */
-  start(release?: StaticHand): boolean {
+  start(release?: StaticHand, chain = false): boolean {
     if (this.busy) return this.refuse('A transfer is already running.');
     if (this.swinging || this.st.t > EPS) return this.refuse('The plate is rotated: rotate it back first.');
     const s = this.st, F = this.free, k = this.key(F);
+    const trip = (R: StaticHand): { name: StepName; goal: Partial<Goal> }[] => [{ name: 'release', goal: { [this.key(R)]: 1 } }, { name: 'rotate', goal: { t: 1 } }, { name: 'move', goal: { s: S_FLAT_CM } }, { name: 'rotateBack', goal: { t: 0 } }, { name: 'moveTop', goal: { s: P_TOP_CM } }];
     if (s.s > S_MAX_CM + EPS && this.open(F) >= 1 - EPS && this.goal[k] >= 1 - EPS && this.open(F === 1 ? 2 : 1) <= EPS) {
       this.queue = [{ name: 'moveFlat', goal: { s: S_FLAT_CM } }, { name: 'rotate', goal: { t: 1 } }, { name: 'moveBack', goal: { s: S_MAX_CM } }, { name: 'rotateBack', goal: { t: 0 } }, { name: 'clamp', goal: { [k]: 0 } }];
+      // chain: straight on from rest with the trip up the other pipe (hand S, the one that rode this pipe, releases and the plate turns on the freed hand's hinge)
+      if (chain) { const R: StaticHand = F === 1 ? 2 : 1; this.queue.push(...trip(R)); this.lastTrip = R; this.hint = R; }
     } else {
       if (s.open1 > EPS || s.open2 > EPS || this.goal.open1 > EPS || this.goal.open2 > EPS) return this.refuse('Clamp both hands first (on the straight part), or press Reset.');
       if (s.s > S_MAX_CM + EPS) return this.refuse('Press Reset: the released hand has no pipe to clamp here.');
-      const R = release ?? 2; this.hint = R; const rk = this.key(R);
-      this.queue = [{ name: 'release', goal: { [rk]: 1 } }, { name: 'rotate', goal: { t: 1 } }, { name: 'move', goal: { s: S_FLAT_CM } }, { name: 'rotateBack', goal: { t: 0 } }, { name: 'moveTop', goal: { s: P_TOP_CM } }];
+      const R = release ?? 2; this.hint = R; this.lastTrip = R;
+      this.queue = trip(R);
     }
     this.done = false; this.msg = ''; this.next(); return true;
+  }
+  /** One button: from rest, the trip up pipe C (first press) or the other pipe than last time; from the top of a pipe, back to rest and straight on up the other pipe (press 2: up B, press 3: up C, and so on). */
+  press(): boolean {
+    const top = this.st.s > S_MAX_CM + EPS;
+    return this.start(this.lastTrip === 2 ? 1 : 2, top);
   }
   private next() {
     const n = this.queue.shift();
