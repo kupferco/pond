@@ -6,19 +6,53 @@
 <title>Pond — Part list</title>
 <link rel="stylesheet" href="../assets/style.css">
 <style>
-  .sechead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px;margin-bottom:14px}
+  .sechead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px;margin-bottom:10px}
   .sechead h2{margin:0}
   .total{font-weight:700;color:var(--ink);font-size:15px}
   .total small{font-weight:400;color:var(--muted)}
-  .item{display:flex;gap:12px;align-items:flex-start}
-  .tick{font-size:20px;line-height:1.2;flex:none}
-  .main{flex:1;min-width:0}
-  .top{display:flex;justify-content:space-between;gap:10px}
-  .price{font-weight:700;color:var(--ink);white-space:nowrap}
-  .price.tbc{font-weight:400;color:var(--muted)}
-  .note{font-size:14px;color:var(--body);margin-top:4px}
-  .buy{display:inline-block;margin-top:8px;font-weight:700;color:var(--green);text-decoration:none}
-  .nolink{display:inline-block;margin-top:8px;font-size:13px;color:var(--muted)}
+  .note{font-size:14px;color:var(--body);margin:0 0 10px}
+  .tbl{border:1px solid var(--line);border-radius:var(--radius);background:#fff;overflow:hidden;box-shadow:var(--shadow-sm)}
+  table.pl{width:100%;border-collapse:collapse;table-layout:fixed}
+  table.pl th,table.pl td{padding:0 6px;vertical-align:middle}
+  table.pl th:first-child,table.pl td:first-child{padding-left:12px}
+  table.pl th:last-child,table.pl td:last-child{padding-right:12px}
+  table.pl thead th{height:34px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:var(--bg-soft);border-bottom:1px solid var(--line);text-align:left}
+  table.pl .r{text-align:right}
+  table.pl .x{display:none}
+  tr.item{cursor:pointer;height:44px;border-bottom:1px solid var(--line)}
+  tr.item td{height:44px}
+  tr.item.open{border-bottom:0}
+  tr.detrow{border-bottom:1px solid var(--line)}
+  tr.detrow[hidden]{display:none}
+  .chev{width:20px;color:var(--muted);transition:transform .15s;text-align:center}
+  tr.open .chev{transform:rotate(90deg)}
+  .nm{font-weight:700;color:var(--ink);font-size:14px;line-height:1.25;padding:4px 0;overflow-wrap:anywhere}
+  .tot{font-weight:700;color:var(--ink);white-space:nowrap;text-align:right;font-size:14px}
+  .tot.tbc,.cell.tbc{font-weight:400;color:var(--muted)}
+  .cell{text-align:right;white-space:nowrap;font-size:14px}
+  .cell.l{text-align:left}
+  .chev{display:block}
+  tr.item.done .nm{text-decoration:line-through;opacity:.6}
+  .det{padding:4px 14px 14px 42px;font-size:14px;color:var(--body)}
+  .det p{margin:0 0 8px;overflow-wrap:anywhere}
+  .det .k{font-weight:700;color:var(--ink)}
+  .det .cad{background:var(--amber-soft);color:var(--amber);border-radius:10px;padding:8px 10px}
+  .det a{font-weight:700;color:var(--green)}
+  .det .mob{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+  .det .mob .chip{margin:0}
+  .sub{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;font-weight:700;color:var(--ink);background:var(--bg-soft);border-top:1px solid var(--line)}
+  .grand{margin:22px 0 0;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 16px;border-radius:var(--radius);background:var(--ink);color:#fff;font-weight:700}
+  details.fold{border:1px solid var(--line);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow-sm)}
+  details.fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 14px;min-height:44px;font-family:var(--serif);font-weight:700;font-size:19px;color:var(--ink)}
+  details.fold>summary::-webkit-details-marker{display:none}
+  details.fold[open]>summary .chev{transform:rotate(90deg)}
+  details.fold>.body{padding:0 16px 10px 40px}
+  details.fold li{margin-bottom:8px}
+  @media(min-width:760px){
+    table.pl .x{display:table-cell}
+    table.pl col.x{display:table-column}
+    .det .mob{display:none}
+  }
 </style>
 </head>
 <body>
@@ -34,47 +68,98 @@
 <footer class="site">Designed in London, being built in São Paulo.</footer>
 <script>
 const ORDER=['to get','ordered','have'];
-const LABEL={'to get':'To get','ordered':'Ordered','have':'Have'};
+const LABEL={'to get':'To buy','ordered':'Ordered','have':'Have'};
+const WHERE={'uk-now':'UK arm','uk-carry':'UK carry','brazil':'Brazil'};
 const SYM={USD:'$',GBP:'£',BRL:'R$'};
 function money(v,c){return (SYM[c]||c+' ')+v.toLocaleString('en-GB',{maximumFractionDigits:2});}
+function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+function addTotals(t,i){if(i.status!=='to get'||i.printed||i.unit_price==null)return;t[i.currency]=(t[i.currency]||0)+i.unit_price*(i.qty||1);}
+function fmt(t){const p=Object.entries(t).map(([c,v])=>'~'+money(v,c));return p.length?p.join(' + '):'No prices yet';}
+function fold(list,title,right,tag,build){
+  const sec=el('section','block');const inner=el('div','inner');
+  const d=el('details','fold');const sm=el('summary');sm.append(el('span','chev','›'),el('span',null,title));
+  if(right){const r=el('span','total',right);r.style.marginLeft='auto';r.style.fontFamily='var(--sans)';r.style.fontSize='14px';sm.appendChild(r);}
+  const b=el('div','body');build(b);d.append(sm,b);inner.appendChild(d);sec.appendChild(inner);list.appendChild(sec);
+}
+function olist(arr){const ol=el('ol');arr.forEach(x=>ol.appendChild(el('li',null,x)));return ol;}
+function row(i,g,tb){
+  const tr=el('tr','item'+(i.status==='have'?' done':''));
+  const missing=i.printed||i.unit_price==null;
+  const unit=missing?'—':(i.approx?'~':'')+money(i.unit_price,i.currency);
+  const line=missing?'—':(i.approx?'~':'')+money(i.unit_price*(i.qty||1),i.currency);
+  const cls=i.status==='have'?'now':i.status==='ordered'?'next':'later';
+  const td=(c,t)=>{const e=el('td',c);if(t!=null)e.textContent=t;return e;};
+  const c0=td();c0.appendChild(el('span','chev','›'));
+  const c1=td();c1.appendChild(el('div','nm',i.item));
+  const c3=td('r x cell'+(missing?' tbc':''),unit);
+  const c4=td('r tot'+(missing?' tbc':''),line);
+  const c5=td('x cell l',WHERE[g.id]||i.where);
+  const c6=td('x cell l');c6.appendChild(el('span','chip '+cls,LABEL[i.status]));
+  tr.append(c0,c1,td('r x cell',i.qty!=null?String(i.qty):'–'),c3,c4,c5,c6);
+  const dr=el('tr','detrow');dr.hidden=true;
+  const dc=el('td');dc.colSpan=7;dr.appendChild(dc);
+  tr.tabIndex=0;tr.setAttribute('aria-expanded','false');
+  const flip=()=>{const o=dr.hidden;dr.hidden=!o;tr.classList.toggle('open',o);tr.setAttribute('aria-expanded',String(o));};
+  tr.addEventListener('click',flip);
+  tr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();flip();}});
+  tb.append(tr,dr);
+  const det=dc.appendChild(el('div','det'));
+  const mob=el('p','mob');mob.append(el('span',null,(i.qty?i.qty+' ×':'–')+(missing?'':' '+unit)),el('span','chip '+cls,LABEL[i.status]),el('span','chip where',WHERE[g.id]||i.where));det.appendChild(mob);
+  let note=i.note||'',cad='';
+  const k=note.search(/DIMENSIONS:|CAD mismatch/);
+  if(k>=0){cad=note.slice(k).replace(/^DIMENSIONS:\s*/,'');note=note.slice(0,k).trim();}
+  if(note){const p=el('p');p.append(el('span','k','Details: '),document.createTextNode(note));det.appendChild(p);}
+  det.appendChild(Object.assign(el('p'),{innerHTML:''})).append(el('span','k','For: '),document.createTextNode(i.for+(i.eta?' · arriving '+i.eta:'')));
+  if(i.weight_g!=null){const p=el('p');p.append(el('span','k','Weight: '),document.createTextNode('about '+i.weight_g+' g'+(i.qty>1?' in total':'')));det.appendChild(p);}
+  if(cad){const p=el('p','cad');p.append(el('span','k','CAD mismatch: '),document.createTextNode(cad));det.appendChild(p);}
+  const lp=el('p');
+  if(i.link){const a=el('a',null,i.link_label||'Buy here →');a.href=i.link;a.target='_blank';a.rel='noopener';lp.appendChild(a);}
+  else lp.appendChild(el('span','note','No link yet'));
+  det.appendChild(lp);
+}
 fetch('part-list.json').then(r=>r.json()).then(d=>{
   document.getElementById('updated').textContent='Last updated '+d.updated;
   const list=document.getElementById('list');
-  ['UK','Brazil'].forEach(w=>{
-    const items=d.items.filter(i=>i.where===w).sort((a,b)=>ORDER.indexOf(a.status)-ORDER.indexOf(b.status));
+  if(d.before_ordering)fold(list,'Before ordering',null,0,b=>b.appendChild(olist(d.before_ordering)));
+  const grand={};let grandUnpriced=0;
+  d.groups.forEach(g=>{
+    const items=d.items.filter(i=>i.group===g.id).sort((a,b)=>ORDER.indexOf(a.status)-ORDER.indexOf(b.status));
     if(!items.length)return;
     const totals={};let unpriced=0;
-    items.forEach(i=>{if(i.status!=='to get'||i.printed)return;if(i.unit_price!=null){totals[i.currency]=(totals[i.currency]||0)+i.unit_price*(i.qty||1);}else unpriced++;});
-    const sec=document.createElement('section');sec.className='block';
-    const inner=document.createElement('div');inner.className='inner';
-    const head=document.createElement('div');head.className='sechead';
-    const h=document.createElement('h2');h.textContent='Buy in '+w;
-    const t=document.createElement('div');t.className='total';
-    const parts=Object.entries(totals).map(([c,v])=>'~'+money(v,c));
-    t.textContent=parts.length?parts.join(' + '):'No prices yet';
-    if(unpriced){const s=document.createElement('small');s.textContent=' + '+unpriced+' without a price';t.appendChild(s);}
-    head.append(h,t);inner.appendChild(head);
-    const lst=document.createElement('div');lst.className='list';
-    items.forEach(i=>{
-      const c=document.createElement('div');c.className='card item'+(i.status==='have'?' done':'');
-      c.innerHTML='<div class="tick"></div><div class="main"><div class="top"><h3></h3><div class="price"></div></div><div class="chips"></div></div>';
-      c.querySelector('.tick').textContent=i.status==='have'?'✅':i.status==='ordered'?'📦':'⬜';
-      c.querySelector('h3').textContent=(i.qty?i.qty+' × ':'')+i.item;
-      const p=c.querySelector('.price');
-      if(i.printed){p.textContent='3D printed';p.classList.add('tbc');}
-      else if(i.unit_price!=null){p.textContent=(i.approx?'~':'')+money(i.unit_price*(i.qty||1),i.currency);}
-      else{p.textContent='price tbc';p.classList.add('tbc');}
-      const m=c.querySelector('.main');const chips=c.querySelector('.chips');
-      if(i.unit_price!=null&&i.qty>1){const s=document.createElement('span');s.className='chip';s.textContent=money(i.unit_price,i.currency)+' each';chips.appendChild(s);}
-      const st=document.createElement('span');st.className='chip '+(i.status==='have'?'now':i.status==='ordered'?'next':'later');st.textContent=LABEL[i.status]+(i.eta?', arriving '+i.eta:'');chips.appendChild(st);
-      const f=document.createElement('span');f.className='chip';f.textContent=i.for;chips.appendChild(f);
-      if(i.note){const n=document.createElement('div');n.className='note';n.textContent=i.note;m.appendChild(n);}
-      if(i.link){const a=document.createElement('a');a.className='buy';a.href=i.link;a.target='_blank';a.rel='noopener';a.textContent=i.link_label||'Buy here →';m.appendChild(a);}
-      else{const s=document.createElement('span');s.className='nolink';s.textContent='No link yet';m.appendChild(s);}
-      lst.appendChild(c);
-    });
-    inner.appendChild(lst);sec.appendChild(inner);list.appendChild(sec);
+    items.forEach(i=>{addTotals(totals,i);addTotals(grand,i);if(i.status==='to get'&&!i.printed&&i.unit_price==null){unpriced++;grandUnpriced++;}});
+    const sec=el('section','block');const inner=el('div','inner wide');
+    const head=el('div','sechead');head.appendChild(el('h2',null,g.title));
+    const t=el('div','total',fmt(totals));
+    if(unpriced)t.appendChild(el('small',null,' + '+unpriced+' without a price'));
+    head.appendChild(t);inner.appendChild(head);
+    inner.appendChild(el('p','note',g.blurb));
+    if(g.carry_note){
+      const dd=el('details','fold');dd.style.marginBottom='12px';
+      const sm=el('summary');sm.style.fontSize='15px';sm.style.fontFamily='var(--sans)';sm.append(el('span','chev','›'),el('span',null,'Carry weight and cabin bag notes'));
+      const b=el('div','body');b.appendChild(el('p','note',g.carry_note));dd.append(sm,b);inner.appendChild(dd);
+    }
+    const tbl=el('div','tbl');
+    const tb2=el('table','pl');
+    const cg=el('colgroup');[['',20],['',0],['x',44],['x',84],['',92],['x',84],['x',84]].forEach(([c,w])=>{const e=el('col',c);if(w)e.style.width=w+'px';cg.appendChild(e);});
+    tb2.appendChild(cg);
+    const hr=el('tr');[['',''],['','Item'],['x r','Qty'],['x r','Unit'],['r','Total'],['x','Buy'],['x','Status']].forEach(([c,t])=>hr.appendChild(el('th',c,t)));
+    const th=el('thead');th.appendChild(hr);tb2.appendChild(th);
+    const tb=el('tbody');
+    items.forEach(i=>row(i,g,tb));
+    tb2.appendChild(tb);tbl.appendChild(tb2);
+    const sub=el('div','sub');sub.append(el('span',null,'Subtotal'),el('span',null,fmt(totals)));
+    tbl.appendChild(sub);inner.appendChild(tbl);sec.appendChild(inner);list.appendChild(sec);
   });
+  const gs=el('section','block');const gi=el('div','inner');
+  const gt=el('div','grand');gt.append(el('span',null,'Grand total (still to buy)'),el('span',null,fmt(grand)+(grandUnpriced?' + '+grandUnpriced+' without a price':'')));
+  gi.appendChild(gt);gi.appendChild(el('p','note','Pounds and reais are not added together, and items marked Have or Ordered are left out.')).style.marginTop='8px';
+  gs.appendChild(gi);list.appendChild(gs);
+  if(d.wiring){
+    const cart=d.items.filter(i=>/^Cart/.test(i.for)&&i.unit_price!=null&&i.currency==='GBP'&&i.group==='uk-carry');
+    const ct=cart.reduce((a,i)=>a+i.unit_price*(i.qty||1),0);
+    fold(list,d.wiring.title,'Cart parts from UK: ~'+money(ct,'GBP'),0,b=>b.appendChild(olist(d.wiring.steps)));
+  }
+  if(d.power)fold(list,d.power.title,null,0,b=>b.appendChild(olist(d.power.steps)));
 });
 </script>
 </body>
