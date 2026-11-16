@@ -12,6 +12,9 @@
 // ASSUMED here (not in the repo): hole height ZH 0.80 m; the ring sleeve (inner R 75, outer R 83, 90 mm long: wide enough to slide over the collar) and its outrigger; the seedling tray (3 cells) on the tank lid;
 // the cart is brought up past the collar (the ring slides over it) and works from 100 mm above the hole centre.
 import { armMjcf } from '../model.ts';
+import { cartInner } from '../cart/transfer-model.ts';
+import { CART_COL } from '../cart/model.ts';
+import * as D from '../cart/dims.ts';
 
 const f = (n: number) => +n.toFixed(5);
 const mm = (v: number) => v / 1000;
@@ -29,7 +32,6 @@ export const PROUD = CAP_T - RECESS_T;                // 6 mm of cap stand proud
 export const PIPE_RP = mm(37.5), PIPE_WALL = mm(3), PIPE_TOP = 1.55;
 export const TANK_L = 0.7, TANK_W = 0.4, LID = 0.304;     // tank 700 x 400, lid top at 304 mm (unit_v3_aframe.py: TH 300 + 4)
 export const SOCKET_R = PIPE_RP + mm(10);
-export const RING_RI = mm(75), RING_RO = mm(83), RING_H = 0.045, RING_UP = 0.12;       // the cart's ring sleeve round the pipe (ASSUMED), half length, centred RING_UP above the cart origin so the hand has the room below it: wide enough to slide over the collar and the parts standing in it (max 70 mm from the axis)
 export const DRILL_R = mm(22.5);
 export const ZH = 0.80;                               // hole centre height (ASSUMED)
 export const ZP = ZH - mm(44);                        // plug holder height
@@ -45,10 +47,8 @@ export const PARK_CAP_TOP: V3 = [X_TOP - RECESS_T + PARK_DX + CAP_T, 0, ZP];
 export const D_PARK: V3 = [1, 0, 0];
 
 // --- the cart (CART frame of cad/cart_dims.py: x across the pipes, y out of the pipe plane, plate on -y, z up the pipes)
-export const XT = 0.55;                               // world x of the cart's plate/hand axis: the outrigger from the ring sleeve on the pipe is this long (ASSUMED; see the header: the arm cannot do its job any nearer)
-export const ARM_CX = mm(-12);                        // arm base centre across the plate
-export const PLATE_CY0 = mm(-52), PLATE_CY1 = mm(-46), PLATE_CX0 = mm(-83), PLATE_CX1 = mm(59), PLATE_ZH = mm(56);
-export const BATT = [mm(70), mm(50), mm(70)] as const;
+export const XT = 0.55;                               // world x of the track pipes (the plane of the plate/hand axes), from the growing pipe axis (ASSUMED: the CAD's 0.29 m leaves the SO-101 out of reach of the collar, see check_transplant_reach.py)
+export const ARM_CX = 0;                              // arm base centre across the plate (cad/cart_dims.py ARM_X = 0)
 export const ARM_CY = mm(-102);                       // arm base underside (on the battery front)
 export const BASE_BOTTOM = 0.0085;                    // the arm model's base origin is 8.5 mm out from the base underside (model.ts)
 export const XB = XT + ARM_CY - BASE_BOTTOM;          // world x of the arm base origin; the base axis (z) points along -x
@@ -56,7 +56,7 @@ export const XB = XT + ARM_CY - BASE_BOTTOM;          // world x of the arm base
 export const cartToWorld = (cx: number, cy: number, cz: number): V3 => [cy, -(cx - ARM_CX), cz];
 // pod holder cup (cart_pod_holder.py): axis out of the plate (cart -y) and up (+z), 45 degrees
 export const CUP_ROOT: V3 = [ARM_CX, mm(-70), mm(-88)];
-export const CUP_DROP = 0.13;                        // the cup is this much LOWER on the plate than in the CAD: at the CAD position its pod is under the arm base, out of reach
+export const CUP_DROP = 0;                        // the cup is this much LOWER on the plate than in the CAD: at the CAD position its pod is under the arm base, out of reach
 export const CUP_L = mm(40), CUP_R = mm(21);
 /** Direction out of the cup, in world coordinates (out of the plate = world -x, and up). */
 export const D_CUP: V3 = [-S, 0, S];
@@ -177,22 +177,14 @@ const podColor = rgba(0.85, 0.65, 0.3), plugColor = rgba(0.12, 0.12, 0.14);
 /** The cart and what it carries (cart frame -> world axes), as the text to put inside the cart body. */
 function cartGeoms(): string[] {
   const out: string[] = [];
-  const box = (cx0: number, cx1: number, cy0: number, cy1: number, cz0: number, cz1: number, c: string, a = OBST) => {
-    const [x0, y0, z0] = cartToWorld(cx0, cy0, cz0), [x1, y1, z1] = cartToWorld(cx1, cy1, cz1);
-    out.push(`<geom type="box" pos="${f((x0 + x1) / 2)} ${f((y0 + y1) / 2)} ${f((z0 + z1) / 2)}" size="${f(Math.abs(x1 - x0) / 2)} ${f(Math.abs(y1 - y0) / 2)} ${f(Math.abs(z1 - z0) / 2)}" ${a} ${c}/>`);
-  };
-  box(PLATE_CX0, PLATE_CX1, PLATE_CY0, PLATE_CY1, -PLATE_ZH, PLATE_ZH, rgba(0.35, 0.37, 0.4));
-  box(ARM_CX - BATT[0] / 2, ARM_CX + BATT[0] / 2, ARM_CY, PLATE_CY0, -BATT[2] / 2, BATT[2] / 2, rgba(0.2, 0.45, 0.85));
-  for (const cx of [mm(-65), mm(41)]) {                      // the two drive motors (28 x 55)
-    const [x, y, z] = cartToWorld(cx, PLATE_CY0 - mm(14), mm(10));
-    out.push(`<geom type="cylinder" pos="${f(x)} ${f(y)} ${f(z)}" size="0.014 ${mm(27.5)}" ${OBST} ${rgba(0.85, 0.25, 0.25)}/>`);
-  }
-  // the one hand: a ring sleeve round the growing pipe (the cart origin stands XT out from the pipe), and an outrigger on each side of the arm that carries the plate (shown only)
-  out.push(...tube([-XT, 0, RING_UP], [0, 0, 1], -RING_H, RING_H, RING_RI, RING_RO, 32, `${OBST} ${rgba(0.18, 0.45, 0.35)}`, { name: 'ring' }));
-  for (const y of [mm(-40), mm(55)]) {
-    out.push(`<geom type="box" pos="${f((-XT + RING_RO + PLATE_CY0) / 2)} ${y} ${mm(50)}" size="${f((XT - RING_RO + PLATE_CY0) / 2)} ${mm(6)} ${mm(6)}" ${VIS} ${rgba(0.18, 0.45, 0.35)}/>`);
-    out.push(`<geom type="box" pos="${f(-XT + RING_RO - mm(6))} ${y} ${f((mm(50) + RING_UP) / 2)}" size="${mm(6)} ${mm(6)} ${f((RING_UP - mm(50)) / 2 + mm(6))}" ${VIS} ${rgba(0.18, 0.45, 0.35)}/>`);   // post up to the ring
-  }
+  // The real cart (cad/cart_base.py, cart_hinge.py, hand_sleeve.py via cart/transfer-model.ts, exactly as in the Transfer scene): plate, battery, drive motors, hinges, worm drives and
+  // the two hands with their wheel pairs and jaws, on the plate frame (CAD x across = world -y, CAD y out of the pipe plane = world x, z up). The arm is the scene's own moving one.
+  // The plate-side parts are checked against the arm; the hands ride the track pipes B and C (trackPipes()).
+  const plateParts = cartInner(false, 'plate').replaceAll(CART_COL, OBST);
+  out.push(`<body name="plate" xyaxes="0 -1 0 1 0 0"><joint name="plate_lock" type="hinge" axis="0 0 1" range="0 0"/>
+      ${plateParts}
+      ${cartInner(false, 'hands')}
+    </body>`);
   // pod holder: the cup on a web from the plate's bottom edge, axis 45 degrees out and up
   const root = cupRoot();
   out.push(...tube(root, D_CUP, 0, CUP_L - RECESS_T - GAP, BORE_R, CUP_R, 16, `${OBST} ${STEEL}`, { name: 'cup' }));
@@ -203,6 +195,12 @@ function cartGeoms(): string[] {
   return out;
 }
 
+/** The track: the Cart scene's two pipes B and C (16 mm radius, 120 mm apart, cad/cart_dims.py) running up beside the central pipe, in the track plane x = XT (the straight part only, no bend). */
+function trackPipes(): string[] {
+  const r = mm(16);
+  return [D.PIPE_X.B, D.PIPE_X.C].map((px, i) => `<geom name="track${i ? 'C' : 'B'}" type="cylinder" fromto="${XT} ${f(-mm(px))} 0 ${XT} ${f(-mm(px))} ${PIPE_TOP}" size="${r}" ${OBST} ${rgba(0.62, 0.66, 0.7)}/>`);
+}
+
 /** MJCF of the whole scene. */
 export function transplantMjcf(): string {
   const [qw, qx, qy, qz] = [1, 0, 0, 0];
@@ -210,7 +208,7 @@ export function transplantMjcf(): string {
   const mocap = (name: string, pos: V3, geoms: string) => `<body name="${name}" pos="${pos.map(f).join(' ')}" quat="${qw} ${qx} ${qy} ${qz}"><joint type="free"/>${geoms}</body>`;
   const world = [
     `<geom name="floor" type="plane" size="1.6 1.2 0.01" pos="0 0 0" ${OBST} ${rgba(0.84, 0.88, 0.92)}/>`,
-    ...pipeAndCollar(), ...tray(),
+    ...pipeAndCollar(), ...tray(), ...trackPipes(),
     mocap(BODIES.pod, [0, 0, 2], podGeoms(POD_BODY_R, POD_BODY_L, podColor, false)),
     mocap(BODIES.plug, [0, 0, 2.2], podGeoms(PLUG_BODY_R, PLUG_BODY_L, plugColor, true)),
     mocap(BODIES.other[0], [0, 0, 2.4], podGeoms(POD_BODY_R, POD_BODY_L, podColor, false)),

@@ -36,7 +36,7 @@ const hbox = (name: string, cx: number, cy: number, cz: number, hx: number, hy: 
 const hcyl = (a: number, b: number, x: number, y: number, r: number, col: string, extra = CART_COL) =>
   `<geom type="cylinder" fromto="${f(m(a))} ${f(m(-y))} ${f(m(x * MZ))} ${f(m(b))} ${f(m(-y))} ${f(m(x * MZ))}" size="${f(m(r))}" ${col} ${extra}/>`;
 
-function plateGeoms(): string {
+function plateGeoms(withArm = true): string {
   const g: string[] = [];
   const plateHx = (D.PLATE_X1 - D.PLATE_X0) / 2, plateCx = (D.PLATE_X1 + D.PLATE_X0) / 2, plateCy = (D.PLATE_Y0 + D.PLATE_Y1) / 2;
   // v4 plate (cad/cart_base.py): a plain rectangle (no battery tongue), plus a small tongue above its top rim at each hinge that carries the worm bracket.
@@ -49,8 +49,8 @@ function plateGeoms(): string {
     g.push(pbox('', x, D.PLATE_Y0 - D.MOTOR_R / 2, 0, 14, D.MOTOR_R / 2, 20, PLATE_COL));
   }
   // Arm base block (70 x 70 x 8) bolted to the battery's front face, and the shoulder column that carries the arm's pivot.
-  g.push(pbox('armbase', D.ARM_X, D.ARM_Y0 - 4, 0, D.ARM_BASE_W / 2, 4, D.ARM_BASE_W / 2, ARM_COL));
-  g.push(pbox('armcolumn', D.ARM_X, D.ARM_Y0 - 8 - (D.SHOULDER_H - 8) / 2, 0, 22, (D.SHOULDER_H - 8) / 2, 24, ARM_COL));
+  if (withArm) g.push(pbox('armbase', D.ARM_X, D.ARM_Y0 - 4, 0, D.ARM_BASE_W / 2, 4, D.ARM_BASE_W / 2, ARM_COL));
+  if (withArm) g.push(pbox('armcolumn', D.ARM_X, D.ARM_Y0 - 8 - (D.SHOULDER_H - 8) / 2, 0, 22, (D.SHOULDER_H - 8) / 2, 24, ARM_COL));
   for (const h of [1, 2] as const) {
     const hx = D.hingeX(h), inward = h === 1 ? -1 : 1;   // inward: towards the plate along x (+1 for hand B's hinge, -1 for C's)
     // plate leaf (30 x 3 x 31) behind the plate, and its knuckle on the hinge axis
@@ -172,8 +172,9 @@ export function pipesXml(): string {
   return [pipeGeoms(m(D.PIPE_X.B), -1, TRACK_HORIZ_MM, 'pipeB'), pipeGeoms(m(D.PIPE_X.C), 1, TRACK_HORIZ_MM, 'pipeC')].join('\n    ');
 }
 
-/** The cart: the plate (mocap) with arm, and the two hands on their hinges. Hand 1 rides the pipe at +x (C), hand 2 the one at -x (B). Hand C is the true mirror of hand B (as in the CAD since Pond #227). */
-export function transferCartBody(): string {
+/** The plate-side parts and the two hands of the real cart, in the CAD frame (x across, y out of the pipe plane, plate on -y, z up the pipes), as text to put inside a body.
+ *  withArm = false leaves out the stowed arm and its base block (a scene with a moving arm brings its own). */
+export function cartInner(withArm = true, part: 'both' | 'plate' | 'hands' = 'both'): string {
   const hand = (h: 1 | 2) => {
     const hx = D.hingeX(h) - D.restPipeX(h);
     MZ = h === 1 ? -1 : 1;   // hand C (1) is built as the mirror of hand B (2)
@@ -185,13 +186,19 @@ export function transferCartBody(): string {
     MZ = 1;
     return body;
   };
+  const plate = `${plateGeoms(withArm)}
+      ${withArm ? armGeoms() : ''}`;
+  const hands = `${hand(1)}
+      ${hand(2)}`;
+  return part === 'plate' ? plate : part === 'hands' ? hands : `${plate}\n      ${hands}`;
+}
+
+/** The cart: the plate (mocap) with arm, and the two hands on their hinges. Hand 1 rides the pipe at +x (C), hand 2 the one at -x (B). Hand C is the true mirror of hand B (as in the CAD since Pond #227). */
+export function transferCartBody(): string {
   // The mocap body "cart" carries the plate's pose. The plate sits on one locked dummy hinge: MuJoCo skips contacts between geoms that are all welded to the
   // world, so without a degree of freedom the plate-side parts (battery, motors, arm) would never be checked against the pipes.
   return `<body name="cart" mocap="true" pos="0 0 0.5"><body name="plate"><joint name="plate_lock" type="hinge" axis="0 0 1" range="0 0"/>
-      ${plateGeoms()}
-      ${armGeoms()}
-      ${hand(1)}
-      ${hand(2)}
+      ${cartInner()}
     </body></body>`;
 }
 
