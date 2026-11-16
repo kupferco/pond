@@ -477,8 +477,8 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('transplant: seated cap top is 29.7 mm along the 45 degree axis', Math.abs(Math.hypot(SEAT_CAP_TOP[0] - P0[0], SEAT_CAP_TOP[2] - P0[2]) - (U_CAP + CAP_T)) < 1e-9);
   check('transplant: holder floor under the plug', Math.abs(PARK_CAP_TOP[0] - CAP_T - 0.017 - HOLDER_FLOOR_X) < 1e-9);
   // the base of the hand origin from the model matches the IK frame (pose with the hand pointing down)
-  tr.pose.tool = { x: 0.3, z: 0.1, phi: 0 }; bind.apply(tr.pose);
-  { const h = bind.handPos(); check('transplant: IK frame matches the arm model', Math.abs(h[0] - (0.3 + 0.011)) < 1e-6 && Math.abs(h[2] - (0.1 + 0.0785)) < 1e-6, JSON.stringify(h)); }
+  tr.pose.tool = { x: 0.3, z: CART_Z0 - 0.2, phi: 0 }; bind.apply(tr.pose);
+  { const h = bind.handPos(); check('transplant: IK frame matches the arm model', Math.abs(h[0] - (0.3 + 0.011)) < 1e-6 && Math.abs(h[2] - (CART_Z0 - 0.2 + 0.0785)) < 1e-6, JSON.stringify(h)); }
   tr.reset();
   const dts = 0.004;
   for (let s = 0; s < STEPS.length; s++) {
