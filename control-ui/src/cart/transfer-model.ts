@@ -43,7 +43,7 @@ function plateGeoms(): string {
   g.push(pbox('plate', plateCx, plateCy, 0, plateHx, D.PLATE_T / 2, D.PLATE_ZH, PLATE_COL));
   // Stack out from the plate (cart_dims.py, v3): plate | battery | SO-101 arm base. The battery sits UNDER the arm, same x and z as the arm base.
   g.push(pbox('battery', D.BATT_X, D.PLATE_Y0 - D.BATT[1] / 2, D.BATT_Z, D.BATT[0] / 2, D.BATT[1] / 2, D.BATT[2] / 2, BATT_COL));
-  // Drive motors: 28 x 55 mm, axis along the pipe, in a row with the arm as drawn (motor B at x -65, motor C at x +41), in saddles on the plate.
+  // Drive motors: 28 x 55 mm, axis along the pipe, in a row with the arm as drawn (motor B at x -53, motor C at x +53), in saddles on the plate.
   for (const [h, x] of [[2, D.MOTOR_B_X], [1, D.MOTOR_C_X]] as const) {
     g.push(pcyl(`motor_drive${h}`, [x, D.PLATE_Y0 - D.MOTOR_R, -D.MOTOR_L / 2], [x, D.PLATE_Y0 - D.MOTOR_R, D.MOTOR_L / 2], D.MOTOR_R, MOTOR_COL));
     g.push(pbox('', x, D.PLATE_Y0 - D.MOTOR_R / 2, 0, 14, D.MOTOR_R / 2, 20, PLATE_COL));

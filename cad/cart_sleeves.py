@@ -221,19 +221,26 @@ def hand_parts(jaw_open=0.0):
 WHEEL_COL, STATIC_WHEEL_COL = (0.15, 0.15, 0.15, 1), (0.1, 0.35, 0.8, 1)
 TAGS = (("B", -1), ("C", 1))                      # (tag, sgn): pipe B at -x, pipe C at +x, as cart_assembly.py
 
-def build_pair(static=None, angle=0.0, with_plate=True, jaws=None, off=None):
+def build_pair(static=None, angle=0.0, with_plate=True, jaws=None, off=None, own=0.0):
     """Both hands, each on its own pipe, each with its hinge and worm drive (cart_hinge.py) and the plate.
     static: None (plain pair) or "B"/"C": that hand is the STATIC hand (wheels blue, clamped on its pipe) and the plate
-    swings by `angle` degrees on its hinge, carrying the other (released) hand; the pipes stay where they are."""
+    swings by `angle` degrees on its hinge, carrying the other (released) hand; the pipes stay where they are.
+    own: degrees the released hand turns on its OWN hinge, on top of the plate swing (the sim's swing path turns it about 9 deg so
+    its sleeve clears the pipe; sleeve-side parts only). Sign fix, Pond #227: the plate swings to -Y (out from the pipes), as drawn in the sim."""
     a = cq.Assembly()
     swing = static is not None and angle != 0.0
     jaws = jaws or {}                      # tag -> jaw opening in deg (default 0 = clamped)
     off_mm = off or {}                     # tag -> mm the hand is moved off its pipe along the exit direction (sleeve parts only)
     sgn_s = dict(TAGS).get(static, 0)
-    # rotation about the static hinge axis, towards -Y (out from the pads), as the plate swings "like a door"
+    # rotation about the static hinge axis, towards -Y (out from the pads), as the plate swings "like a door": a plate that lies on the -X
+    # side of hinge C turns counter-clockwise (+angle), one on the +X side of hinge B clockwise (-angle). (Before #227 the sign was the other
+    # way round and the plate swung into the pipes; only the picture, no number depended on it.)
     ax_pt = (ch.hinge_x(sgn_s), 0, 0) if sgn_s else (0, 0, 0)
     def moved(shape):
-        return shape.rotate(ax_pt, (ax_pt[0], 0, 1), -sgn_s * angle) if swing else shape
+        return shape.rotate(ax_pt, (ax_pt[0], 0, 1), sgn_s * angle) if swing else shape
+    def own_turn(shape, sgn):
+        """The released hand turning on its own hinge (before the plate carries it)."""
+        return shape.rotate((ch.hinge_x(sgn), 0, 0), (ch.hinge_x(sgn), 0, 1), sgn_s * own) if (swing and own) else shape
     for tag, sgn in TAGS:
         hx = sgn * HAND_X
         a.add(cyl(hs.R_PIPE, PIPE_STUB_L, "z", (hx, 0, 0)), name="track_pipe_%s" % tag, color=cq.Color(0.75, 0.78, 0.8, 1))
@@ -247,12 +254,13 @@ def build_pair(static=None, angle=0.0, with_plate=True, jaws=None, off=None):
             d = off_mm.get(tag, 0.0)
             shp = shp.translate((-d * math.cos(math.radians(EXIT_DIR_DEG)), -d * math.sin(math.radians(EXIT_DIR_DEG)), 0))   # exit path in hand B's frame
             shp = place_hand(shp, sgn)                          # hand C is mirrored, so its exit path points to +X
-            a.add(moved(shp) if riding else shp, name="%s_%s_%s" % (role, tag, name), color=cq.Color(*col))
+            a.add(moved(own_turn(shp, sgn)) if riding else shp, name="%s_%s_%s" % (role, tag, name), color=cq.Color(*col))
         for nm, shp, col in ch.hinge_parts(sgn):
             # on the plate side (turns with the plate when it swings) or on the sleeve side (stays with its sleeve)
             on_plate = nm in ("plate_leaf_knuckle", "plate_leaf_screws", "worm", "worm_bracket", "bracket_screws", "worm_motor")
             turns = riding or (swing and is_static and on_plate)
-            a.add(moved(shp) if turns else shp, name="hinge_%s_%s" % (tag, nm), color=cq.Color(*col))
+            sleeve_side = nm in ("sleeve_leaf_knuckles", "sleeve_leaf_screws", "worm_wheel_hub")
+            a.add(moved(own_turn(shp, sgn) if (riding and sleeve_side) else shp) if turns else shp, name="hinge_%s_%s" % (tag, nm), color=cq.Color(*col))
     if with_plate:
         a.add(moved(cg.plate) if swing else cg.plate, name="base_plate", color=cq.Color(0.35, 0.35, 0.38, 1))
     return a
