@@ -86,6 +86,16 @@ fetch('part-list.json').then(r=>r.json()).then(d=>{
       const ol=document.createElement('ol');
       d.wiring.steps.forEach(x=>{const li=document.createElement('li');li.textContent=x;li.style.marginBottom='8px';ol.appendChild(li);});
       wi.appendChild(ol);ws.appendChild(wi);list.appendChild(ws);
+      if(d.power){
+        const ps=document.createElement('section');ps.className='block';
+        const pi=document.createElement('div');pi.className='inner';
+        const ph=document.createElement('div');ph.className='sechead';
+        const h3=document.createElement('h2');h3.textContent=d.power.title;
+        ph.appendChild(h3);pi.appendChild(ph);
+        const ol2=document.createElement('ol');
+        d.power.steps.forEach(x=>{const li=document.createElement('li');li.textContent=x;li.style.marginBottom='8px';ol2.appendChild(li);});
+        pi.appendChild(ol2);ps.appendChild(pi);list.appendChild(ps);
+      }
     }
   });
 });
