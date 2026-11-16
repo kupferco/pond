@@ -60,7 +60,7 @@ HX = cb.HX
 YF = cb.PLATE_Y0
 OVERLAYS = {
     "front": [
-        ("dim", (X0, YF, -ZH), (X1, YF, -ZH), 66, "plate 142 (ASSUMED)"),
+        ("dim", (X0, YF, -ZH), (X1, YF, -ZH), 66, "plate 166 (ASSUMED)"),
         ("dim", (-HX, YF, -ZH), (HX, YF, -ZH), 88, "pipes 120 apart (ASSUMED)"),
         ("dim", (X1, YF, -ZH), (X1, YF, ZH), 40, "112"),
         ("tag", (cb.ca.hinge_x(-1), YF, 15), -50, -128, "hinge B: pad -X edge"),
@@ -72,7 +72,7 @@ OVERLAYS = {
         ("tag", (cb.ca.hinge_x(1), cb.ch.worm_axis_y(), cb.ch.WORM_ZC), 50, -20, "worm C + wheel (ASSUMED)"),
     ],
     "top": [
-        ("dim", (X0, YF, 0), (X1, YF, 0), 0, "142"),
+        ("dim", (X0, YF, 0), (X1, YF, 0), 0, "166"),
     ],
     "right": [
         ("dim", (0, YF - cb.BATT[1], -ZH), (0, YF, -ZH), 30, "battery 50 out (ASSUMED)"),

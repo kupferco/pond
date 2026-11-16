@@ -30,7 +30,7 @@
 #  1. Pipe spacing: 120 mm, centre to centre (two units' tanks touching, pipes 60 mm in from the tank edge; the
 #     budget that sets it is in cart_dims.py).
 #     One hand per pipe, both facing the same way (no 90 deg swivel yet).
-#  2. Base plate: solid, 112 (Z) x 142 (X) x 6 mm, hung between the two hinge axes (not bolted to the pads any
+#  2. Base plate: solid, 112 (Z) x 166 (X) x 6 mm, hung between the two hinge axes (not bolted to the pads any
 #     more; the pads carry the hinge leaves). Tongues above it carry the two worm brackets (no battery shelf any more).
 #  3. Battery: 70 (X) x 50 (out from plate) x 70 (Z) mm block, flat on the plate centre UNDER the arm: stack plate | battery |
 #     SO-101 arm base (v6, Viber #109; the shelf tongue above the arm is gone, the plate is a plain rectangle plus the two
@@ -127,7 +127,7 @@ add(plate, "base_plate", (0.35, 0.35, 0.38, 1))
 for tag, sgn in (("C", 1), ("B", -1)):
     add(xshift(cyl(hs.R_PIPE, PIPE_STUB_L, "z", (0, 0, 0)), sgn * HX), "track_pipe_%s" % tag, (0.75, 0.78, 0.8, 1))
     for nm, shp, col in clamp_hand_parts():
-        add(xshift(shp, sgn * HX), "hand_on_pipe_%s_%s" % (tag, nm), col)
+        add(csl.place_hand(shp, sgn), "hand_on_pipe_%s_%s" % (tag, nm), col)
     for nm, shp, col in ch.hinge_parts(sgn):
         add(shp, "hinge_pipe_%s_%s" % (tag, nm), col)
 add(battery, "battery", (0.2, 0.45, 0.85, 1))

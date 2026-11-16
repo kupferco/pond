@@ -40,7 +40,7 @@
 #  1. Pipe OD 32 mm (also assumed in hand_sleeve.py), shown as a 330 mm stub.
 #  2. Pipe spacing 120 mm centre to centre (Viber #97; was 280, now from cart_dims.py), one hand per pipe (same assumed value as cart_arm.py v2; the
 #     real spacing between neighbouring units is not decided). Both hands at the same height along the pipes.
-#     Hinge and plate (v3): cart_hinge.py / cart_assembly.py as they are (hinge on the pad edge at -Y, plate 142 x 112 x 6).
+#     Hinge and plate (v3): cart_hinge.py / cart_assembly.py as they are (hinge on the pad edge at -Y, plate 166 x 112 x 6).
 #     The plate's own motors, arm and battery are not drawn here (see cart_base.py, cart_arm.py).
 #  3. Drive layout: ONE worm shaft per hand, along the pipe, beside the sleeve on -X, meshing with a worm
 #     wheel on each driven axle (both 180 deg wheels, one per row). Worm wheel R 7 mm, worm R 3 mm, worm 80 mm
@@ -53,7 +53,8 @@
 #  7. Clamp: the spring idlers still carry the 60 N preload (arrows). The jaw (items 10-12) is what OPENS the C so the
 #     hand can leave the pipe: closed, the jaw holds the +60 deg idler pair on the pipe; open, that side is gone.
 #     (Replaces the v3 note "v4.1 has no jaw, no open/closed state".)
-#  8. Both hands identical and the same way round (C-gap facing +X), drive on the +Z end of each hand.
+#  8. Hand C is the TRUE MIRROR of hand B across the cart centre plane x = 0 (Pond #227; it used to be a copy): each C-gap
+#     faces the plate (B: +X, C: -X), pads, hinges and worm drives on the outer sides, drive on the +Z end of each hand.
 #  9. Exploded view offsets are for readability only.
 # 10. Jaw (ASSUMED): the wall from 0 deg (middle of the C-gap, +X) to +110 deg, with the +60 deg idler pair, is the jaw, 110 deg of
 #     the ring, ONE connected piece (a v4 cut at -30 deg left a loose 20 deg sliver beyond the gap: fixed). Hinge: steel
@@ -82,6 +83,11 @@ import cart_geom as cg          # reused: box/cyl helpers and the base plate (mo
 box, cyl = cg.box, cg.cyl
 from cart_dims import PIPE_SPACING, torque_budget, PIPE_STUB_L, MOTOR_R, MOTOR_L   # 120, ASSUMED in cart_dims.py: pipe-to-pipe
 HAND_X = PIPE_SPACING / 2                         # hands at x = -/+ 60, one per pipe
+
+def place_hand(shape, sgn):
+    """Put a hand-frame shape (hand B as drawn: pad on -X, C-gap facing +X, towards the plate) on pipe sgn (-1 = B, +1 = C).
+    Hand C is the TRUE MIRROR of hand B across the cart centre plane x = 0 (Pond #227), not a copy: mirrored in X, then moved to its pipe."""
+    return (shape.mirror("YZ") if sgn > 0 else shape).translate((sgn * HAND_X, 0, 0))
 
 # ---------------- Drive (all ASSUMED) ----------------
 AXLE_PIN_R = hs.AXLE_D / 2
@@ -239,7 +245,8 @@ def build_pair(static=None, angle=0.0, with_plate=True, jaws=None, off=None):
                 col = STATIC_WHEEL_COL if name.endswith("wheels") else col
                 name = "static_" + name
             d = off_mm.get(tag, 0.0)
-            shp = shp.translate((hx - d * math.cos(math.radians(EXIT_DIR_DEG)), -d * math.sin(math.radians(EXIT_DIR_DEG)), 0))
+            shp = shp.translate((-d * math.cos(math.radians(EXIT_DIR_DEG)), -d * math.sin(math.radians(EXIT_DIR_DEG)), 0))   # exit path in hand B's frame
+            shp = place_hand(shp, sgn)                          # hand C is mirrored, so its exit path points to +X
             a.add(moved(shp) if riding else shp, name="%s_%s_%s" % (role, tag, name), color=cq.Color(*col))
         for nm, shp, col in ch.hinge_parts(sgn):
             # on the plate side (turns with the plate when it swings) or on the sleeve side (stays with its sleeve)

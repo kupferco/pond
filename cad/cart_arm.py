@@ -23,7 +23,7 @@
 #  0. Pipe spacing: the two pipes the cart clamps are 120 mm apart (v3, Viber #97; was 280), centre to centre (ASSUMED; the real
 #     spacing between neighbouring units is not decided). One hand per pipe, both facing the same way.
 #  1. Arm mount, hands, wheels, sleeves, plate, battery and drive motors: exactly as cart_assembly.py / cart_dims.py (itself
-#     assumed): solid plate 142 (X) x 112 (Z) x 6 mm hung between the two hinge axes (v3: the old text here said
+#     assumed): solid plate 166 (X) x 112 (Z) x 6 mm hung between the two hinge axes (v3: the old text here said
 #     PIPE_SPACING + 100 and an open frame, which no longer matched), battery 70 x 50 x 70 UNDER the arm base (plate | battery | arm; the shelf
 #     tongue is gone, Viber #109), one drive motor per hand beside the arm on the plate, plate hung on each hand's hinge with the worm
 #     rotation drive of cart_hinge.py v3 (Viber #97). All ASSUMED positions.
@@ -258,7 +258,7 @@ for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):
     cart.append(("track_%s" % tag, xshift(ca.cyl(hs.R_PIPE, PIPE_Z1 - PIPE_Z0, "z", (0, 0, (PIPE_Z0 + PIPE_Z1) / 2)), sgn * HX),
                  (0.75, 0.78, 0.8, 1)))
     for nm, shp, col in ca.clamp_hand_parts():     # clamp/jaw sleeve, clamped (cart_sleeves.py)
-        cart.append(("hand_on_%s_%s" % (tag, nm), xshift(shp, sgn * HX), col))
+        cart.append(("hand_on_%s_%s" % (tag, nm), ca.csl.place_hand(shp, sgn), col))
     for nm, shp, col in ch.hinge_parts(sgn):
         cart.append(("hinge_%s_%s" % (tag, nm), shp, col))
 
