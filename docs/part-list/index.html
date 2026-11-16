@@ -12,26 +12,27 @@
   .total small{font-weight:400;color:var(--muted)}
   .note{font-size:14px;color:var(--body);margin:0 0 10px}
   .tbl{border:1px solid var(--line);border-radius:var(--radius);background:#fff;overflow:hidden;box-shadow:var(--shadow-sm)}
-  .cols,details.row>summary{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding:10px 12px}
-  .cols{display:none;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:var(--bg-soft);border-bottom:1px solid var(--line)}
+  :root{--cols:20px minmax(0,1fr) auto}
+  .cols,.line{display:grid;grid-template-columns:var(--cols);gap:0 10px;align-items:center;padding:0 12px;min-height:44px}
+  .cols{display:none;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:var(--bg-soft);border-bottom:1px solid var(--line);min-height:34px}
   details.row{border-bottom:1px solid var(--line)}
-  details.row:last-of-type{border-bottom:0}
-  details.row>summary{list-style:none;cursor:pointer;min-height:44px}
+  details.row>summary{list-style:none;cursor:pointer;display:block}
   details.row>summary::-webkit-details-marker{display:none}
   .chev{width:20px;color:var(--muted);transition:transform .15s;text-align:center}
   details[open]>summary .chev{transform:rotate(90deg)}
-  .nm{font-weight:700;color:var(--ink);font-size:15px;line-height:1.3;overflow-wrap:anywhere}
-  .tot{font-weight:700;color:var(--ink);white-space:nowrap;text-align:right}
+  .nm{font-weight:700;color:var(--ink);font-size:14px;line-height:1.25;padding:4px 0;overflow-wrap:anywhere}
+  .tot{font-weight:700;color:var(--ink);white-space:nowrap;text-align:right;font-size:14px}
   .tot.tbc,.cell.tbc{font-weight:400;color:var(--muted)}
-  .meta{grid-column:2 / 4;display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center;font-size:13px;color:var(--muted)}
-  .meta .chip{margin:0}
   .cell{display:none;text-align:right;white-space:nowrap;font-size:14px}
+  .cell.l{text-align:left}
   details.row.done .nm{text-decoration:line-through;opacity:.6}
   .det{padding:4px 14px 14px 42px;font-size:14px;color:var(--body)}
   .det p{margin:0 0 8px;overflow-wrap:anywhere}
   .det .k{font-weight:700;color:var(--ink)}
   .det .cad{background:var(--amber-soft);color:var(--amber);border-radius:10px;padding:8px 10px}
   .det a{font-weight:700;color:var(--green)}
+  .det .mob{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+  .det .mob .chip{margin:0}
   .sub{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;font-weight:700;color:var(--ink);background:var(--bg-soft);border-top:1px solid var(--line)}
   .grand{margin:22px 0 0;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 16px;border-radius:var(--radius);background:var(--ink);color:#fff;font-weight:700}
   details.fold{border:1px solid var(--line);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow-sm)}
@@ -41,12 +42,10 @@
   details.fold>.body{padding:0 16px 10px 40px}
   details.fold li{margin-bottom:8px}
   @media(min-width:760px){
-    .cols,details.row>summary{grid-template-columns:20px minmax(0,1fr) 44px 80px 90px 100px 84px}
+    :root{--cols:20px minmax(0,1fr) 44px 84px 92px 84px 84px}
     .cols{display:grid}
-    .meta{display:none}
-    summary>.chev{order:1}.nm{order:2}.cell.q{order:3}.cell.u{order:4}.tot{order:5}.cell.w{order:6}.cell.s{order:7}
     .cell{display:block}
-    .det{padding-left:42px}
+    .det .mob{display:none}
   }
 </style>
 </head>
@@ -79,24 +78,22 @@ function fold(list,title,right,tag,build){
 function olist(arr){const ol=el('ol');arr.forEach(x=>ol.appendChild(el('li',null,x)));return ol;}
 function row(i,g){
   const d=el('details','row'+(i.status==='have'?' done':''));
-  const sm=el('summary');
-  const unit=i.printed?'printed':i.unit_price!=null?(i.approx?'~':'')+money(i.unit_price,i.currency):'tbc';
-  const line=i.printed?'3D printed':i.unit_price!=null?(i.approx?'~':'')+money(i.unit_price*(i.qty||1),i.currency):'price tbc';
+  const sm=el('summary');const ln=el('div','line');
   const missing=i.printed||i.unit_price==null;
+  const unit=missing?'—':(i.approx?'~':'')+money(i.unit_price,i.currency);
+  const line=missing?'—':(i.approx?'~':'')+money(i.unit_price*(i.qty||1),i.currency);
+  const cls=i.status==='have'?'now':i.status==='ordered'?'next':'later';
   const nm=el('div','nm',i.item);
   const tot=el('div','tot'+(missing?' tbc':''),line);
-  const meta=el('div','meta');
-  meta.append(el('span',null,(i.qty?i.qty+' ×':'–')+(i.unit_price!=null&&!i.printed?' '+unit:'')));
-  const st=el('span','chip st '+(i.status==='have'?'now':i.status==='ordered'?'next':'later'),LABEL[i.status]);meta.appendChild(st);
-  meta.appendChild(el('span','chip where',WHERE[g.id]||i.where));
   const q=el('div','cell q',i.qty!=null?String(i.qty):'–');
   const u=el('div','cell u'+(missing?' tbc':''),unit);
-  const w=el('div','cell w',WHERE[g.id]||i.where);
-  const s2=el('div','cell s');s2.appendChild(el('span','chip '+(i.status==='have'?'now':i.status==='ordered'?'next':'later'),LABEL[i.status]));
-  sm.append(el('span','chev','›'),nm,q,u,tot,w,s2);
-  sm.appendChild(meta);
+  const w=el('div','cell l w',WHERE[g.id]||i.where);
+  const s2=el('div','cell l s');s2.appendChild(el('span','chip '+cls,LABEL[i.status]));
+  ln.append(el('span','chev','›'),nm,q,u,tot,w,s2);
+  sm.appendChild(ln);
   d.appendChild(sm);
   const det=el('div','det');
+  const mob=el('p','mob');mob.append(el('span',null,(i.qty?i.qty+' ×':'–')+(missing?'':' '+unit)),el('span','chip '+cls,LABEL[i.status]),el('span','chip where',WHERE[g.id]||i.where));det.appendChild(mob);
   let note=i.note||'',cad='';
   const k=note.search(/DIMENSIONS:|CAD mismatch/);
   if(k>=0){cad=note.slice(k).replace(/^DIMENSIONS:\s*/,'');note=note.slice(0,k).trim();}
