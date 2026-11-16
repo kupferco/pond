@@ -40,20 +40,32 @@ function money(v,c){return (SYM[c]||c+' ')+v.toLocaleString('en-GB',{maximumFrac
 fetch('part-list.json').then(r=>r.json()).then(d=>{
   document.getElementById('updated').textContent='Last updated '+d.updated;
   const list=document.getElementById('list');
-  ['UK','Brazil'].forEach(w=>{
-    const items=d.items.filter(i=>i.where===w).sort((a,b)=>ORDER.indexOf(a.status)-ORDER.indexOf(b.status));
+  if(d.before_ordering){
+    const bs=document.createElement('section');bs.className='block';
+    const bi=document.createElement('div');bi.className='inner';
+    const bh=document.createElement('div');bh.className='sechead';
+    const bh2=document.createElement('h2');bh2.textContent='Before ordering';bh.appendChild(bh2);bi.appendChild(bh);
+    const bl=document.createElement('ul');
+    d.before_ordering.forEach(x=>{const li=document.createElement('li');li.textContent=x;li.style.marginBottom='6px';bl.appendChild(li);});
+    bi.appendChild(bl);bs.appendChild(bi);list.appendChild(bs);
+  }
+  d.groups.forEach(g=>{
+    const w=g.id==='brazil'?'Brazil':'UK';
+    const items=d.items.filter(i=>i.group===g.id).sort((a,b)=>ORDER.indexOf(a.status)-ORDER.indexOf(b.status));
     if(!items.length)return;
     const totals={};let unpriced=0;
     items.forEach(i=>{if(i.status!=='to get'||i.printed)return;if(i.unit_price!=null){totals[i.currency]=(totals[i.currency]||0)+i.unit_price*(i.qty||1);}else unpriced++;});
     const sec=document.createElement('section');sec.className='block';
     const inner=document.createElement('div');inner.className='inner';
     const head=document.createElement('div');head.className='sechead';
-    const h=document.createElement('h2');h.textContent='Buy in '+w;
+    const h=document.createElement('h2');h.textContent=g.title;
     const t=document.createElement('div');t.className='total';
     const parts=Object.entries(totals).map(([c,v])=>'~'+money(v,c));
     t.textContent=parts.length?parts.join(' + '):'No prices yet';
     if(unpriced){const s=document.createElement('small');s.textContent=' + '+unpriced+' without a price';t.appendChild(s);}
     head.append(h,t);inner.appendChild(head);
+    const bp=document.createElement('p');bp.className='note';bp.textContent=g.blurb;bp.style.marginBottom='10px';inner.appendChild(bp);
+    if(g.carry_note){const cp=document.createElement('p');cp.className='note';cp.style.marginBottom='10px';cp.style.fontWeight='700';cp.textContent=g.carry_note;inner.appendChild(cp);}
     const lst=document.createElement('div');lst.className='list';
     items.forEach(i=>{
       const c=document.createElement('div');c.className='card item'+(i.status==='have'?' done':'');
@@ -74,7 +86,7 @@ fetch('part-list.json').then(r=>r.json()).then(d=>{
       lst.appendChild(c);
     });
     inner.appendChild(lst);sec.appendChild(inner);list.appendChild(sec);
-    if(w==='UK'&&d.wiring){
+    if(g.id==='uk-carry'&&d.wiring){
       const cart=items.filter(i=>/^Cart/.test(i.for)&&i.unit_price!=null);
       const ct=cart.reduce((a,i)=>a+i.unit_price*(i.qty||1),0);
       const ws=document.createElement('section');ws.className='block';
