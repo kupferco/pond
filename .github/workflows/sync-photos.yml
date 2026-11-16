@@ -22,7 +22,12 @@ jobs:
           cache: npm
           cache-dependency-path: control-ui/package-lock.json
       - run: npm ci
-      - run: ffmpeg -version | head -1  # preinstalled on ubuntu-latest; used to transcode videos
+      - name: Install ffmpeg (transcodes videos)
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version | head -1
       - name: Sync
         env:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POND_CONTROL }}
