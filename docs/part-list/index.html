@@ -74,6 +74,19 @@ fetch('part-list.json').then(r=>r.json()).then(d=>{
       lst.appendChild(c);
     });
     inner.appendChild(lst);sec.appendChild(inner);list.appendChild(sec);
+    if(w==='UK'&&d.wiring){
+      const cart=items.filter(i=>/^Cart/.test(i.for)&&i.unit_price!=null);
+      const ct=cart.reduce((a,i)=>a+i.unit_price*(i.qty||1),0);
+      const ws=document.createElement('section');ws.className='block';
+      const wi=document.createElement('div');wi.className='inner';
+      const wh=document.createElement('div');wh.className='sechead';
+      const h2=document.createElement('h2');h2.textContent=d.wiring.title;
+      const wt=document.createElement('div');wt.className='total';wt.textContent='Cart motors + control: ~'+money(ct,'GBP');
+      wh.append(h2,wt);wi.appendChild(wh);
+      const ol=document.createElement('ol');
+      d.wiring.steps.forEach(x=>{const li=document.createElement('li');li.textContent=x;li.style.marginBottom='8px';ol.appendChild(li);});
+      wi.appendChild(ol);ws.appendChild(wi);list.appendChild(ws);
+    }
   });
 });
 </script>
