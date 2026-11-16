@@ -18,8 +18,8 @@ export const transferScene: Scene = {
   async load({ mujoco, view, panel, status }) {
     const model = mujoco.MjModel.from_xml_string(transferMjcf());
     const data = new mujoco.MjData(model);
-    // Camera behind the pipes (+y), a little to one side, looking at the hands; the plate swings out to the front.
-    const viewer = new Viewer(view, { mujoco, model, data }, { target: [0.05, 0, 0.35], dist: 1.6, maxDist: 4, az: Math.PI + 0.55, el: 0.25, far: 20 });
+    // Camera in front of the pipes (-y side, as the CAD front view: pipe B on the left, C on the right), a little to one side, looking at the hands.
+    const viewer = new Viewer(view, { mujoco, model, data }, { target: [0.05, 0, 0.35], dist: 1.6, maxDist: 4, az: 0.55, el: 0.25, far: 20 });
     status.textContent = '';
 
     panel.innerHTML = `
@@ -31,6 +31,7 @@ export const transferScene: Scene = {
         <dt>Contacts</dt><dd id="t-hit">none</dd>
       </dl>
     </section>
+    <div class="row"><button class="big grow" id="t-press">Press: next trip (1: up pipe C, 2: back, up pipe B, 3: back, up pipe C ...)</button></div>
     <div class="row"><button class="big grow" id="t-transfer">Run transfer to pipe C (release hand B)</button></div>
     <div class="row"><button class="big grow" id="t-transfer-b">Run transfer to pipe B (release hand C)</button></div>
     <div class="row"><button class="big grow" id="t-reset">Reset</button></div>
@@ -87,6 +88,7 @@ export const transferScene: Scene = {
     act('t-rminus', () => run.rotate(0));
     act('t-stop', () => run.stop());
     act('t-reset', () => { run.reset(); failed = 0; lastNames = ''; });
+    act('t-press', () => run.press());
     act('t-transfer', () => run.start(2));
     act('t-transfer-b', () => run.start(1));
 
@@ -112,7 +114,7 @@ export const transferScene: Scene = {
       $('t-hinges').textContent = `C ${deg(k.hinge1)}°, B ${deg(k.hinge2)}°`;
       $('t-clampb').textContent = run.goal.open2 < 0.5 ? 'Release hand B' : 'Clamp hand B'; $('t-clampc').textContent = run.goal.open1 < 0.5 ? 'Release hand C' : 'Clamp hand C';
       $('t-step-now').textContent = run.current ? stepLabel(run.current, run.free) : 'Idle';
-      const m = $('t-msg'); m.textContent = run.done && !run.busy ? (onTop ? `Transfer done: the cart is at the top ${sN === 'C' ? 'right of pipe C' : 'left of pipe B'}, hand ${sN} clamped, hand ${fN} free. Press its Run transfer button again to bring it back.` : 'Back at the top of pipes B and C, clamped on both.') : run.msg;
+      const m = $('t-msg'); m.textContent = run.done && !run.busy ? (onTop ? `Transfer done: the cart is at the top ${sN === 'C' ? 'right of pipe C' : 'left of pipe B'}, hand ${sN} clamped, hand ${fN} free. Press it again to bring it back, or the other Run transfer button to go on up the other pipe in one go.` : 'Back at the top of pipes B and C, clamped on both.') : run.msg;
     };
     update(); show();
 
