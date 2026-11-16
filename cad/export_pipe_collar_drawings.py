@@ -37,3 +37,16 @@ for c in pc.scene("pod").children:
 for v, el, az in (("section", 0, 90), ("section-iso", 22, 35)):
     rl.draw(keep, el, az, os.path.join(out, "pipe-collar-pod-closeup-v1-%s.png" % v), "Pod seated in the collar (cut through the hole)")
 print("wrote closeup")
+# magnet closure: horizontal section through the first magnet pair (z = 38), seen from above, plus a 3D cut-away
+zc = cq.Workplane("XY").box(200, 200, 12, centered=(True, True, False)).translate((0, 0, pc.MAG_ZS[0] - 12))
+mk = []
+for c in pc.scene("empty", with_pipe=False).children:
+    objs = c.obj.vals() if hasattr(c.obj, "vals") else [c.obj]
+    col = c.color.toTuple() if c.color else (0.7, 0.7, 0.7, 1)
+    for o in objs:
+        o = cq.Workplane("XY").add(o).intersect(zc).val()
+        if o.isNull() or o.Volume() < 1e-6: continue
+        mk.append(rl.tris(o, col))
+for v, el, az in (("top", 90, 0), ("iso", 35, 60)):
+    rl.draw(mk, el, az, os.path.join(out, "pipe-collar-magnet-closure-v1-%s.png" % v), "Magnet closure: section through a magnet pair (red N, blue S)")
+print("wrote magnets")

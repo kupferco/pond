@@ -3,7 +3,9 @@
 #
 # DESIGN (decided with Dani): the holes are simply DRILLED through the 75 mm pipe (no heat-forming). A 3D-printed
 # clamshell collar clips round the pipe at each hole: front half (carries the pod seat and the plug holder, ONE piece),
-# back half, a hinge on one side (pin through three knuckles), one M4 screw and captured nut on the other side.
+# back half, a hinge on one side (pin through three knuckles), a magnetic closure on the other side (4 disc magnets 10 x 3 mm
+# N52, 2 in each tab, no screw: the spigot in the drilled hole already stops the collar sliding or turning and only a
+# trickle runs down inside the pipe, so the closure only has to keep the halves shut and aligned; it does not clamp).
 #   - SEAL: a 2.5 mm cord/O-ring in a groove on the collar's inner face rings the hole (light + water); a short
 #     spigot on the collar goes into the drilled hole (the KEY: the collar cannot rotate or slide on the pipe).
 #   - SEAT: the outer face is a round socket, bore 26 mm, with an O-ring (24 x 2) for the pod body and a 2 mm
@@ -36,7 +38,7 @@ WALL = 5.0
 RO = RI + WALL
 H = 92.0
 ZH, ZP = 24.0, 68.0                     # hole centre, plug-holder centre (44 mm apart)
-SPLIT = 1.0                             # gap between the halves at the YZ plane; the screw closes it and so grips the pipe
+SPLIT = 1.0                             # gap between the halves at the YZ plane; the magnets pull it closed to about 1.2 mm
 BOSS_D = 40.0
 X_TOP = 54.0                            # seat face
 BORE_D = 26.0
@@ -52,7 +54,11 @@ YH = RO + 3.5
 KR = 5.0
 PIN_D = 3.0
 TAB_X, TAB_Z0, TAB_Z1 = 15.0, 31.0, 61.0
-YB = -(RO + 6.5)                        # screw axis
+YB = -(RO + 6.5)                        # tab centre line (-Y side)
+MAG_D, MAG_T = 10.0, 3.0                # N52 neodymium disc 10 x 3 mm
+MAG_POCKET_D, MAG_POCKET_T = 10.2, 3.2  # press-fit / glue pocket: +0.2 mm dia for print tolerance, +0.2 mm deep
+MAG_ZS = (38.0, 54.0)                   # two magnets per tab, 16 mm apart, inside the 31..61 tab
+MAG_Y = YB + 1.5                       # centre of the tab in Y (tab spans YB-6.5 .. -RO+3)
 # ---------------- pod and plug ----------------
 POD_BODY_D, POD_BODY_L = 25.0, 32.0
 CAP_D, CAP_T = 34.0, 8.0
@@ -107,28 +113,26 @@ def collar_halves():
     kb_big = cylz(KR + 0.3, 30.2, 61.8, 0, YH)
     front_k = front.union(kf, clean=False).cut(back, clean=False).cut(kb_big, clean=False)
     back_k = back.union(kb, clean=False).cut(front, clean=False).cut(kf_big, clean=False)
-    # closure tabs on the -Y side, one on each half, screw along X
+    # closure tabs on the -Y side, one on each half, magnets along X
     ft = boxc(SPLIT / 2, TAB_X, YB - 6.5, -RO + 3, TAB_Z0, TAB_Z1)
     bt = boxc(-TAB_X, -SPLIT / 2, YB - 6.5, -RO + 3, TAB_Z0, TAB_Z1)
     front_k = front_k.union(ft, clean=False)
     back_k = back_k.union(bt, clean=False)
-    screw_hole = cylx(2.2, -TAB_X - 1, TAB_X + 1, YB, H / 2)
-    head_cb = cylx(4.2, TAB_X - 4.5, TAB_X + 1, YB, H / 2)
-    nut_pocket = (cq.Workplane("YZ").workplane(offset=-TAB_X - 1).center(YB, H / 2).polygon(6, 8.4).extrude(1 + 3.6))
-    front_k = front_k.cut(screw_hole, clean=False).cut(head_cb, clean=False)
-    back_k = back_k.cut(screw_hole, clean=False).cut(nut_pocket, clean=False)
+    # magnet pockets open on the closing faces. Front tab: N-out at the first position, S-out at the second;
+    # back tab is the mirror, so each facing pair attracts and the two pairs together also stop the halves sliding.
+    for z in MAG_ZS:
+        front_k = front_k.cut(cylx(MAG_POCKET_D / 2, SPLIT / 2 - 0.1, SPLIT / 2 + MAG_POCKET_T, MAG_Y, z), clean=False)
+        back_k = back_k.cut(cylx(MAG_POCKET_D / 2, -SPLIT / 2 - MAG_POCKET_T, -SPLIT / 2 + 0.1, MAG_Y, z), clean=False)
     pin_hole = cylz(PIN_D / 2 + 0.2, -1, H + 1, 0, YH)
     return front_k.cut(pin_hole, clean=False), back_k.cut(pin_hole, clean=False)
 
 def pin():
     return cylz(PIN_D / 2, 1, H - 1, 0, YH)
 
-def screw():
-    return cylx(2.0, -TAB_X + 0.5, TAB_X - 4.5, YB, H / 2).union(cylx(3.5, TAB_X - 4.5, TAB_X - 0.5, YB, H / 2))
-
-def nut():
-    return (cq.Workplane("YZ").workplane(offset=-TAB_X).center(YB, H / 2).polygon(6, 8.0).extrude(3.2)
-            .cut(cylx(1.8, -TAB_X - 1, 0, YB, H / 2)))
+def magnet(side, z):
+    """side +1 = in the front tab, -1 = in the back tab; glued to the pocket floor, 0.1 mm below the closing face."""
+    x0 = SPLIT / 2 + MAG_POCKET_T - MAG_T
+    return cylx(MAG_D / 2, x0, x0 + MAG_T, MAG_Y, z) if side > 0 else cylx(MAG_D / 2, -x0 - MAG_T, -x0, MAG_Y, z)
 
 def gasket():
     ring = tubex(GASKET_R1 - 0.1, GASKET_R0 + 0.1, 0, RO, 0, ZH)
@@ -160,6 +164,7 @@ def plug_alone():
 # ---------------- colours ----------------
 C_COLLAR, C_BACK = (0.25, 0.28, 0.3, 1), (0.34, 0.37, 0.4, 1)
 C_PLUG, C_POD = (0.2, 0.2, 0.22, 1), (0.85, 0.65, 0.3, 1)
+C_MAG_N, C_MAG_S = (0.8, 0.15, 0.15, 1), (0.15, 0.3, 0.8, 1)
 C_PIPE, C_SEAL, C_METAL = (0.95, 0.95, 0.95, 0.30), (0.1, 0.5, 0.2, 1), (0.7, 0.7, 0.72, 1)
 
 def scene(content="empty", with_pipe=True):
@@ -170,8 +175,10 @@ def scene(content="empty", with_pipe=True):
     add(front, "collar_front_half", C_COLLAR)
     add(back, "collar_back_half", C_BACK)
     add(pin(), "hinge_pin", C_METAL)
-    add(screw(), "screw_M4x25", C_METAL)
-    add(nut(), "nut_M4", C_METAL)
+    # polarity: front tab pocket 1 N-out (red), pocket 2 S-out (blue); back tab opposite, so facing pairs attract
+    for i, z in enumerate(MAG_ZS):
+        add(magnet(1, z), "magnet_front_%d_%s" % (i + 1, "N" if i == 0 else "S"), C_MAG_N if i == 0 else C_MAG_S)
+        add(magnet(-1, z), "magnet_back_%d_%s" % (i + 1, "S" if i == 0 else "N"), C_MAG_S if i == 0 else C_MAG_N)
     add(gasket(), "gasket_EPDM", C_SEAL)
     add(seat_orings(), "seat_oring_24x2", C_SEAL)
     if with_pipe:
@@ -198,6 +205,10 @@ def checks():
     for n, o, zz in (("plug_vs_collar", plug(), ZH), ("pod_vs_collar", pod(), ZH), ("plug_parked_vs_collar", plug(X_TOP - RECESS_T + PARK_DX, ZP), ZP)):
         i = o.intersect(f)
         out[n] = i.val().Volume() if i.vals() else 0.0
+    for i, z in enumerate(MAG_ZS):
+        for sd, h in ((1, f), (-1, b)):
+            x = magnet(sd, z).intersect(h)
+            out["magnet%d_%s_overlap" % (i + 1, "front" if sd > 0 else "back")] = x.val().Volume() if x.vals() else 0.0
     out["spine_gap_mm"] = (X_TOP - RECESS_T - POD_BODY_L) - SPINE_R
     return out
 
