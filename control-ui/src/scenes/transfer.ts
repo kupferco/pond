@@ -114,7 +114,7 @@ export const transferScene: Scene = {
       $('t-hinges').textContent = `C ${deg(k.hinge1)}°, B ${deg(k.hinge2)}°`;
       $('t-clampb').textContent = run.goal.open2 < 0.5 ? 'Release hand B' : 'Clamp hand B'; $('t-clampc').textContent = run.goal.open1 < 0.5 ? 'Release hand C' : 'Clamp hand C';
       $('t-step-now').textContent = run.current ? stepLabel(run.current, run.free) : 'Idle';
-      const m = $('t-msg'); m.textContent = run.done && !run.busy ? (onTop ? `Transfer done: the cart is at the top ${sN === 'C' ? 'right of pipe C' : 'left of pipe B'}, hand ${sN} clamped, hand ${fN} free. Press its Run transfer button again to bring it back.` : 'Back at the top of pipes B and C, clamped on both.') : run.msg;
+      const m = $('t-msg'); m.textContent = run.done && !run.busy ? (onTop ? `Transfer done: the cart is at the top ${sN === 'C' ? 'right of pipe C' : 'left of pipe B'}, hand ${sN} clamped, hand ${fN} free. Press it again to bring it back, or the other Run transfer button to go on up the other pipe in one go.` : 'Back at the top of pipes B and C, clamped on both.') : run.msg;
     };
     update(); show();
 

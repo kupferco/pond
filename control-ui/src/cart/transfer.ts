@@ -243,8 +243,9 @@ export class TransferRun {
     const trip = (R: StaticHand): { name: StepName; goal: Partial<Goal> }[] => [{ name: 'release', goal: { [this.key(R)]: 1 } }, { name: 'rotate', goal: { t: 1 } }, { name: 'move', goal: { s: S_FLAT_CM } }, { name: 'rotateBack', goal: { t: 0 } }, { name: 'moveTop', goal: { s: P_TOP_CM } }];
     if (s.s > S_MAX_CM + EPS && this.open(F) >= 1 - EPS && this.goal[k] >= 1 - EPS && this.open(F === 1 ? 2 : 1) <= EPS) {
       this.queue = [{ name: 'moveFlat', goal: { s: S_FLAT_CM } }, { name: 'rotate', goal: { t: 1 } }, { name: 'moveBack', goal: { s: S_MAX_CM } }, { name: 'rotateBack', goal: { t: 0 } }, { name: 'clamp', goal: { [k]: 0 } }];
-      // chain: straight on from rest with the trip up the other pipe (hand S, the one that rode this pipe, releases and the plate turns on the freed hand's hinge)
-      if (chain) { const R: StaticHand = F === 1 ? 2 : 1; this.queue.push(...trip(R)); this.lastTrip = R; this.hint = R; }
+      // chain (asked for, or a Run transfer button for the other pipe than the one the cart is on): straight on from rest with the trip up the other pipe (hand S, the one that rode this pipe, releases and the plate turns on the freed hand's hinge)
+      const R: StaticHand = F === 1 ? 2 : 1;
+      if (chain || release === R) { this.queue.push(...trip(R)); this.lastTrip = R; this.hint = R; }
     } else {
       if (s.open1 > EPS || s.open2 > EPS || this.goal.open1 > EPS || this.goal.open2 > EPS) return this.refuse('Clamp both hands first (on the straight part), or press Reset.');
       if (s.s > S_MAX_CM + EPS) return this.refuse('Press Reset: the released hand has no pipe to clamp here.');

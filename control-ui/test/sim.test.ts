@@ -359,6 +359,15 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     }
     check('three presses: up C, up B, up C, ending on the top bar each time', ends.join(' ') === `true:${P_TOP_CM}:2 true:${P_TOP_CM}:1 true:${P_TOP_CM}:2`, ends.join(' '));
     check('three presses: zero contacts on every frame', bad === 0, `${bad} frames, worst ${(deep * 1000).toFixed(2)} mm ${names}`); }
+  { // one click runs the whole transfer (Pond #228): from the top of one pipe, the Run button for the other pipe returns, clamps, releases the other hand and goes up, without a second click
+    for (const [first, second, endFree] of [[2, 1, 1], [1, 2, 2]] as const) {
+      const r = new TransferRun(); r.reset(); r.setSpeed(10); r.swingDegS = 30; r.start(first); for (let i = 0; i < 40000 && !r.done; i++) r.advance(0.02);
+      const ph: string[] = []; const ok = r.start(second); let bad = 0;
+      for (let i = 0; i < 40000 && !r.done; i++) { r.advance(0.02); if (r.current && ph[ph.length - 1] !== r.current) ph.push(r.current); applyPose(tm, td, r.st); mj.mj_forward(tm, td); if (worstContact(tm, td).depth < 0) bad++; }
+      check(`single click to ${second === 1 ? 'pipe B' : 'pipe C'} from the top of the other: whole sequence in one run`, ok && r.done && !r.busy && r.st.s === P_TOP_CM && r.free === endFree && ph.join('>') === 'moveFlat>rotate>moveBack>rotateBack>clamp>release>rotate>move>rotateBack>moveTop', ph.join('>'));
+      check(`single click to ${second === 1 ? 'pipe B' : 'pipe C'}: zero contacts`, bad === 0, `${bad} frames`);
+    }
+  }
   { // the mirror symmetry itself: the same trip both ways gives mirror-image poses (x -> -x, the hands swapped) all the way: hand B's pose on the trip up pipe B is hand C's on the trip up pipe C
     const a = new TransferRun(), b = new TransferRun(); for (const r of [a, b]) { r.st.s = 30; r.goal.s = 30; r.swingDegS = 30; r.setSpeed(10); } a.start(2); b.start(1);
     let worst = 0; for (let i = 0; i < 20000 && !(a.done && b.done); i++) { a.advance(0.02); b.advance(0.02);
