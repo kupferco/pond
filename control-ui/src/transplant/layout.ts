@@ -56,7 +56,7 @@ export const XB = XT + ARM_CY - BASE_BOTTOM;          // world x of the arm base
 export const cartToWorld = (cx: number, cy: number, cz: number): V3 => [cy, -(cx - ARM_CX), cz];
 // pod holder cup (cart_pod_holder.py): axis out of the plate (cart -y) and up (+z), 45 degrees
 export const CUP_ROOT: V3 = [ARM_CX, mm(-70), mm(-88)];
-export const CUP_DROP = 0;                        // the cup is this much LOWER on the plate than in the CAD: at the CAD position its pod is under the arm base, out of reach
+export const CUP_DROP = 0;                        // the pod holder sits exactly where cad/cart_pod_holder.py puts it. Lowering it (0.13 m made all four steps reachable) needs a long strut: not a repo part, so not done
 export const CUP_L = mm(40), CUP_R = mm(21);
 /** Direction out of the cup, in world coordinates (out of the plate = world -x, and up). */
 export const D_CUP: V3 = [-S, 0, S];
