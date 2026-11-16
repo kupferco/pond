@@ -35,7 +35,11 @@ export interface Kin { alpha: number; ox: number; oy: number; hinge1: number; hi
  * The last point is the smallest plate angle at which hand 2's sleeve is completely off pipe B (22 deg, checked at 1 deg steps): CLEAR_DEG.
  */
 export const SWING_PATH: readonly (readonly [number, number])[] = [[0, 0], [2, 2], [4, 4], [6, 6], [8, 8], [12, 8], [16, 8], [22, 8]];
-/** The same path for the mirror case: static hand 2 on pipe B, hand 1 released. Searched the same way (see test/sim.test.ts). */
+/**
+ * NOT a usable path: the mirror case (hand 2 static on pipe B, hand 1 released, plate turning on hinge B). Both hands are copies, not mirrors (cad/check_transfer_hands.py), so hand C's
+ * C gap faces +x, away from the plate, and a swing about hinge B (x -90) pushes pipe C into hand C's -x wall. Searched with contact detection (test/sim.test.ts): the plate can turn
+ * at most 4 deg before hand C's sleeve hits pipe C, whatever hand C's own hinge does (+-30 deg), and 14 deg is the least that would free it. TransferRun refuses this case.
+ */
 export const SWING_PATH_B: (readonly [number, number])[] = [[0, 0], [22, 8]];
 export const CLEAR_DEG = SWING_PATH[SWING_PATH.length - 1][0];
 /** The largest hinge angle (deg) either hinge uses. */
@@ -55,7 +59,11 @@ const swingAt = (u: number, hand: StaticHand = 1): [number, number] => {
 /** The hand that stays clamped while the other one is released and the plate rotates: hand 1 on pipe C or hand 2 on pipe B. */
 export type StaticHand = 1 | 2;
 export function kinematics(t: number, hand: StaticHand = 1, extra = 0, extraTurn = 0): Kin {
-  const [ad, hd] = swingAt(t, hand), alpha = (ad * Math.PI) / 180 + (t >= 1 - 1e-9 ? extra : 0), turn = (hd * Math.PI) / 180 + (t >= 1 - 1e-9 ? extraTurn : 0);
+  const [ad, hd] = swingAt(t, hand);
+  return kinFromAngles(hand, (ad * Math.PI) / 180 + (t >= 1 - 1e-9 ? extra : 0), (hd * Math.PI) / 180 + (t >= 1 - 1e-9 ? extraTurn : 0));
+}
+/** Plate swing `alpha` and the free hand's own hinge angle `turn` (rad, both positive towards the free hand leaving its pipe) about the static hand's hinge. */
+export function kinFromAngles(hand: StaticHand, alpha: number, turn: number): Kin {
   const hx = hingeX(hand) / 1000, hy = HINGE_Y / 1000;
   // the plate is rotated by phi about the static hand's hinge point: origin O = h - R h. About hinge 1 it turns by +alpha, about hinge 2 by -alpha (the mirror image, so the free hand always swings out to the plate side).
   const phi = hand === 1 ? alpha : -alpha, c = Math.cos(phi), s = Math.sin(phi);
@@ -106,8 +114,8 @@ export function pathPose(hand: StaticHand, s: number): { x: number; z: number; t
 const HX_C = 0.06, HX_B = -0.06;
 
 /** Plate pose in the world for a state: the static hand rides its pipe's path, the plate is rotated by the swing about that hand's hinge. Returns position, quaternion (w x y z) and the Kin. */
-export function platePose(st: CartState, trim?: BendTrim): { pos: Vec3; quat: Quat; kin: Kin; hand: StaticHand; eps: number } {
-  const hand = staticHand(st), tr = trim ?? bendTrim(st.s), k = kinematics(st.t, hand, tr.da, tr.dh), pp = pathPose(hand, st.s);
+export function platePose(st: CartState, trim?: BendTrim, kinOverride?: Kin): { pos: Vec3; quat: Quat; kin: Kin; hand: StaticHand; eps: number } {
+  const hand = staticHand(st), tr = trim ?? bendTrim(st.s), k = kinOverride ?? kinematics(st.t, hand, tr.da, tr.dh), pp = pathPose(hand, st.s);
   pp.theta += (hand === 1 ? 1 : -1) * tr.yaw;
   const cy = Math.cos(pp.theta / 2), sy = Math.sin(pp.theta / 2), cz = Math.cos(k.alpha / 2), sz = Math.sin(k.alpha / 2);
   // plate = Ry(theta) * Rz(alpha); the plate origin in the hand's own frame (hand axis at x = 0 on the pipe, z = 0 at the hand's mid point) is (ox - pipe x, oy, 0)
@@ -119,8 +127,8 @@ export function platePose(st: CartState, trim?: BendTrim): { pos: Vec3; quat: Qu
 }
 
 /** Write a cart state into the model: the plate's mocap pose, both hinges, both clamps and the drive wheels, and the matching actuator targets. */
-export function applyPose(model: ModelLike, data: DataLike, st: CartState, trim?: BendTrim): Kin {
-  const { pos, quat, kin: k, hand, eps } = platePose(st, trim), mc = model.body_mocapid[model.body('cart').id];
+export function applyPose(model: ModelLike, data: DataLike, st: CartState, trim?: BendTrim, kinOverride?: Kin): Kin {
+  const { pos, quat, kin: k, hand, eps } = platePose(st, trim, kinOverride), mc = model.body_mocapid[model.body('cart').id];
   for (let i = 0; i < 3; i++) data.mocap_pos[3 * mc + i] = pos[i];
   for (let i = 0; i < 4; i++) data.mocap_quat[4 * mc + i] = quat[i];
   const q = (n: string) => model.jnt_qposadr[model.jnt(n).id], a = (n: string) => model.actuator(n).id;
@@ -203,7 +211,7 @@ export class TransferRun {
   /** Rotate: turn the plate on hand C's hinge (toward = 1: clear of pipe B, 0: back). */
   rotate(toward: 0 | 1): boolean {
     if (this.busy) return this.refuse('Wait for the running transfer to finish.');
-    if (this.st.open1 > EPS) return this.refuse('Hand C must stay clamped: the plate rotates on its hinge.');
+    if (this.st.open1 > EPS) return this.refuse('Hand C must stay clamped: the plate rotates on its hinge. (The other way round does not work: hand C\'s gap faces away from the plate, so its sleeve hits pipe C after 4 degrees.)');
     if (this.st.open2 < 1 - EPS) return this.refuse('Release hand B first.');
     if (!toward && this.st.s > S_MAX_CM + EPS && this.st.s < S_FLAT_CM - EPS) return this.refuse(`Drive on to ${S_FLAT_CM} cm first: the plate can only turn back flat beyond pipe B's bend.`);
     this.goal.t = toward; this.msg = ''; return true;

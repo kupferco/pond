@@ -11,7 +11,7 @@ import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/pl
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
 import { cartMjcf, WHEEL_OPEN_M, cartActuators, cartBody, setMotors } from '../src/cart/model.ts';
-import { S_FLAT_CM, CLEAR_DEG, HINGE_DEG_S_CAD, MAX_HINGE_DEG, MAX_BEND_HINGE_DEG, P_TOP_CM, TransferRun, applyPose, initialState, kinematics, worstContact, type CartState } from '../src/cart/transfer.ts';
+import { S_FLAT_CM, CLEAR_DEG, HINGE_DEG_S_CAD, MAX_HINGE_DEG, MAX_BEND_HINGE_DEG, P_TOP_CM, TransferRun, applyPose, initialState, kinFromAngles, kinematics, worstContact, type CartState } from '../src/cart/transfer.ts';
 import { S_MAX_CM, S_MIN_CM, transferMjcf, worldToCad } from '../src/cart/transfer-model.ts';
 import * as DIMS from '../src/cart/dims.ts';
 import { readFileSync } from 'node:fs';
@@ -258,6 +258,21 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   { let bad = 0;
     for (let s = S_MIN_CM; s <= S_MAX_CM; s += 0.5) { const st = initialState(); st.s = s; applyPose(tm, td, st); mj.mj_forward(tm, td); if (worstContact(tm, td).depth < 0) bad++; }
     check('riding along both pipes: no contact', bad === 0, `${bad} poses`); }
+  // The trip up each pipe (Pond #244). Pipe C: hand B released, plate swings on hinge C: contact-free over the whole swing at three heights (also the full transfer tests below).
+  // Pipe B: hand C released, plate swings on hinge B. Both hands are copies (gap towards +x), so this cannot work: search the (plate angle, own hinge angle) plane for a path.
+  { const tripFree = (staticHand: 1 | 2, a: number, h: number, s = 30) => { const st = initialState(); st.s = s; st.open1 = staticHand === 2 ? 1 : 0; st.open2 = staticHand === 1 ? 1 : 0;
+      applyPose(tm, td, st, undefined, kinFromAngles(staticHand, a * Math.PI / 180, h * Math.PI / 180)); mj.mj_forward(tm, td); return worstContact(tm, td).depth > -1e-4; };
+    // pipe C trip: the sim's own swing path, hand B released
+    let badC = 0; for (const s of [S_MIN_CM, 30, S_MAX_CM]) for (let i = 0; i <= 200; i++) { const st = initialState(); st.s = s; st.t = i / 200; st.open2 = 1; applyPose(tm, td, st); mj.mj_forward(tm, td); if (worstContact(tm, td).depth < -1e-4) badC++; }
+    check('trip up pipe C (hand B released, plate turning on hinge C): no collision at 603 poses', badC === 0, `${badC} poses`);
+    // pipe B trip: flood fill (0.5 deg plate, 0.5 deg own hinge) from rest through contact-free cells
+    const A = 0.5, nA = 81, nH = 121, seen = new Set<string>(['0,60']), stack: [number, number][] = [[0, 60]]; let maxAlpha = 0;
+    while (stack.length) { const [i, j] = stack.pop()!; maxAlpha = Math.max(maxAlpha, i * A);
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ni = i + di, nj = j + dj; if (ni < 0 || ni >= nA || nj < 0 || nj >= nH || seen.has(ni + ',' + nj)) continue; seen.add(ni + ',' + nj); if (tripFree(2, ni * A, nj * A - 30)) stack.push([ni, nj]); } }
+    check('pipe B trip with hand C released cannot work as designed: the plate turns at most 4 deg before hand C hits pipe C (14 deg would be needed), whatever hand C\'s own hinge does', maxAlpha > 0 && maxAlpha <= 4.5, `${maxAlpha} deg`);
+    check('the old pipe B swing path (22 deg plate, 8 deg hinge) collides, so the controller must refuse it', !tripFree(2, 22, 8));
+    const refuse = new TransferRun(); refuse.reset(); refuse.clampHand(1, true); for (let i = 0; i < 200; i++) refuse.advance(0.02);
+    check('the controller refuses to turn the plate with hand C released (hand B static)', refuse.rotate(1) === false && /hand C/i.test(refuse.msg) && refuse.st.t === 0, refuse.msg); }
   check('the arm is rigid on the plate: no arm joints, links and pins on the plate body, folded close to the hinge', ![...Array(tm.njnt).keys()].some((j) => tm.jnt(j).name.startsWith('arm')) && ['arm_l1', 'arm_l2', 'arm_l3', 'arm_pin1', 'arm_pin2'].every((n) => bodyOf(n) === 'plate'));
   // The track is the Cart scene's: B runs straight and bends LEFT, C runs straight and bends RIGHT. Geom centres of the arcs tell which way.
   { const xh = (n: string) => td.geom_xpos[3 * g(n)], zh = (n: string) => td.geom_xpos[3 * g(n) + 2];
