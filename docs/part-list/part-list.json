@@ -194,19 +194,19 @@
       "weight_g": 240
     },
     {
-      "item": "Cart omni wheels: rubber-roller omni wheel, common size 48 mm (or 58 mm), double row",
-      "qty": 6,
+      "item": "Reference omni wheels (bench test only): bought 38 mm double aluminium omni wheel",
+      "qty": 2,
       "where": "UK",
-      "unit_price": 10,
+      "unit_price": 18.89,
       "currency": "GBP",
       "approx": true,
-      "link": "https://www.amazon.co.uk/s?k=48mm+omni+wheel+rubber+rollers",
+      "link": "https://www.amazon.co.uk/s?k=38mm+double+aluminium+omni+wheel",
       "link_label": "Search on Amazon UK →",
-      "for": "Cart: 4 driven (2 drive + 2 roll) + 2 spare for the grip tests",
-      "note": "Rubber rollers (not hard plastic), so they grip the smooth PVC pipe. Pick a COMMON size, 48 or 58 mm (not one exact model), that is also sold on Mercado Livre and AliExpress for the Brazil builds; the plan's 38 mm is only a starting figure and the final size is fixed by the bench test and the CAD. Rating is usually about 2 kg (20 N) per wheel: design value 20 N preload, up to 40 N allowed in tests. Check the bore and hub size against the motor shaft hub below. Prototype: buy all the wheels needed in the UK now, they are cheap and light here. Price is an estimate, not a quote.",
+      "for": "Bench test (task 290): compare the printed wheel against a bought pair",
+      "note": "Only a reference pair, not for the cart: the cart uses the printed wheels below. Price about £18.89 each on Amazon UK, an estimate.",
       "status": "to get",
       "group": "uk-carry",
-      "weight_g": 180
+      "weight_g": 70
     },
     {
       "item": "Shaft hub for omni wheel: 6 mm D-shaft to wheel bore",
@@ -517,6 +517,79 @@
       "status": "to get",
       "group": "uk-carry",
       "weight_g": 40
+    },
+    {
+      "item": "Cart omni wheels: printed 38 mm double-row omni wheel (hub halves + rollers)",
+      "qty": 4,
+      "where": "Brazil",
+      "unit_price": null,
+      "currency": "BRL",
+      "approx": true,
+      "link": null,
+      "for": "Cart: 2 per sleeve (drive wheel and roll wheel), 4 per cart",
+      "note": "Replaces the bought 38 mm omni wheels (about £14 to £19 each, £56 to £76 for four). Print them: files in cad/stl/, print notes in docs/omni-wheel/README.md. Per wheel: 2 hub halves, 14 rollers (print 70 for the cart, 56 plus spares), about 25 g of PETG or ASA. Filament comes from the PLA/PETG line in the Brazil list. Cost is only the filament, about R$ 3 per wheel.",
+      "status": "to get",
+      "group": "brazil"
+    },
+    {
+      "item": "Omni wheel roller pins: 2 mm steel rod (silver steel or cut nail), cut to 14 mm",
+      "qty": 1,
+      "where": "UK",
+      "unit_price": 3,
+      "for": "Cart: 14 pins per wheel, 56 per cart",
+      "link": "https://www.amazon.co.uk/s?k=2mm+silver+steel+rod+1m",
+      "link_label": "Amazon UK →",
+      "note": "One 1 m rod gives 70 pins of 14 mm, enough for 4 wheels plus spares. Cut with a hacksaw or a cut-off wheel and file the ends. Stainless 2 mm rod is better outdoors (about £4); carbon steel rusts. Brazil: 'vareta de aço inox 2 mm' or 'barra de aço prata 2 mm', Mercado Livre, about R$ 15.",
+      "currency": "GBP",
+      "approx": true,
+      "status": "to get",
+      "group": "uk-carry",
+      "weight_g": 25
+    },
+    {
+      "item": "Omni wheel screws and nuts: M3 x 14 socket head (stainless) and M3 nuts",
+      "qty": 16,
+      "where": "UK",
+      "unit_price": 0.15,
+      "for": "Cart: 4 per wheel",
+      "link": "https://www.amazon.co.uk/s?k=M3+x+14+stainless+socket+screws+nuts+assortment",
+      "link_label": "Amazon UK →",
+      "note": "16 screws and 16 nuts, about £0.15 per pair when bought in a pack of 50 or a small M3 kit (about £7). Brazil: 'parafuso allen M3 x 14 inox' and 'porca M3 inox', Mercado Livre, about R$ 20 for 50. The nuts sit in hex traps in the hub; the heads sit in open recesses.",
+      "currency": "GBP",
+      "approx": true,
+      "status": "to get",
+      "group": "uk-carry",
+      "weight_g": 15
+    },
+    {
+      "item": "Omni wheel grip, variant 1 (picked): O-ring 5 x 1.5 mm, silicone or EPDM",
+      "qty": 56,
+      "where": "UK",
+      "unit_price": 0.07,
+      "for": "Cart: 14 rings per wheel, 56 per cart (buy 100)",
+      "link": "https://www.amazon.co.uk/s?k=O+ring+5mm+x+1.5mm+silicone",
+      "link_label": "Amazon UK →",
+      "note": "5 mm inside diameter, 1.5 mm thick (written 5 x 1.5, sometimes 5 x 8 outside). A bag of 100 is about £6 to £8. Silicone or EPDM lasts in sun and rain better than the usual black NBR. Brazil: 'o-ring silicone 5 x 1,5 mm' or 'anel o-ring 5x1,5 NBR', Mercado Livre or a local vedações shop, about R$ 25 for 100.",
+      "currency": "GBP",
+      "approx": true,
+      "status": "to get",
+      "group": "uk-carry",
+      "weight_g": 15
+    },
+    {
+      "item": "Omni wheel grip, variant 2 (fallback to test): silicone tube 6 mm inside x 9 mm outside",
+      "qty": 1,
+      "where": "UK",
+      "unit_price": 7,
+      "for": "Cart: 56 pieces of 7 mm, so 0.4 m, buy 1 m",
+      "link": "https://www.amazon.co.uk/s?k=silicone+tubing+6mm+x+9mm",
+      "link_label": "Amazon UK →",
+      "note": "Only if the bench test shows the O-rings slip. Buy 1 m of soft food-grade silicone tube, 6 mm inside, 9 mm outside (1.5 mm wall). About £5 to £9. Brazil: 'mangueira de silicone 6 x 9 mm', Mercado Livre, about R$ 20 per metre.",
+      "currency": "GBP",
+      "approx": true,
+      "status": "to get",
+      "group": "uk-carry",
+      "weight_g": 30
     }
   ],
   "power": {
@@ -542,8 +615,8 @@
       "id": "uk-carry",
       "title": "UK – carry to Brazil",
       "blurb": "Cart parts that are cheaper in the UK and small and light enough for hand luggage. Nothing lithium, nothing bulky. Order them to your UK address in time: the AliExpress ones take 2–4 weeks.",
-      "weight_g": 964,
-      "carry_note": "Weight: about 0.96 kg in total (rough, from typical listings; weigh the parcels when they arrive). Awkward in cabin baggage: the motors are small metal gearboxes, so they are dense and show up as dark blobs on the X-ray; pack them in one clear bag, together with the driver boards, so they can be lifted out if asked. The fuse holder, switch and wire kit are fine but can look odd, so keep the receipts. Loose wire spools get tangled, so coil and tape them. Keep it all in one small bag, not in a checked bag, so nothing gets lost. Brazil lets a traveller bring goods up to about US$1,000 by air without import tax, so this is well inside that. Nothing here contains a battery."
+      "weight_g": 939,
+      "carry_note": "Weight: about 0.94 kg in total (rough, from typical listings; weigh the parcels when they arrive). Awkward in cabin baggage: the motors are small metal gearboxes, so they are dense and show up as dark blobs on the X-ray; pack them in one clear bag, together with the driver boards, so they can be lifted out if asked. The fuse holder, switch and wire kit are fine but can look odd, so keep the receipts. Loose wire spools get tangled, so coil and tape them. Keep it all in one small bag, not in a checked bag, so nothing gets lost. Brazil lets a traveller bring goods up to about US$1,000 by air without import tax, so this is well inside that. Nothing here contains a battery."
     },
     {
       "id": "brazil",
@@ -559,6 +632,7 @@
     "CAD mismatch, jaw motors: an N20 motor is smaller than the 16 × 30 mm motor in the CAD, so it fits, but the pin mount needs redrawing.",
     "The 20 Ah battery (about 180 × 80 × 170 mm) does not fit the 70 × 50 × 70 mm battery slot in the CAD. The cart needs a bigger battery space, or the battery sits in the unit with a cable to the cart.",
     "No battery is bought in the UK at all. Every battery comes from Brazil.",
+    "Omni wheels: the printed 38 mm wheel (docs/omni-wheel/README.md) replaces the bought ones, about £14 to £19 each. One pair of bought 38 mm double aluminium omni wheels (about £18.89 each on Amazon UK) can still be bought as a reference for the bench test (task 290).",
     "Roll redesign (plan task 265): omni wheels are bought in a common 48 or 58 mm size, not the plan's 38 mm, so they are easy to find in both the UK and Brazil. The old hinge worm wheels, worms and hinge pins were never separate lines here, so nothing else is removed."
   ]
 }
