@@ -182,7 +182,7 @@ Answer: 32 mm, a standard PVC pipe easy to buy off the shelf in both the UK and 
 ### Q2. May the sleeve be a three-lobe frame instead of a full ring, so the 120 mm pipe spacing stays?
 Context: a full ring around 38 mm wheels is about 122 mm across and the two hands are only 120 mm apart; a lobed frame fits but is less stiff and leaves the wheels less enclosed.
 Assumed: yes, three-lobe frame, spacing stays 120 mm.
-Answer: _open_
+Answer: yes, three-lobe frame, spacing stays 120 mm.
 
 ### Q3. If the free hand clears the curved track in only one roll direction, is it fine for the controller to always use that direction?
 Context: the Transfer check (section 8) may show the spine side is blocked by the growing pipe; the brief asks for both directions to be checked, not necessarily both to work.
