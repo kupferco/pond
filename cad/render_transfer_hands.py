@@ -24,7 +24,7 @@ def scene(static=None):
     a = csl.build_pair(static, SWING_DEG if static else 0.0, jaws={rel: csl.JAW_OPEN} if rel else None)
     sgn = dict(csl.TAGS).get(static, 0)
     ax = sgn * csl.HAND_X if sgn else 0.0
-    for nm, shp, col in (("battery", ca.battery, (0.2, 0.45, 0.85, 1)), ("drive_motors", ca.motors, (0.85, 0.25, 0.25, 1)), ("arm_envelope", ca.arm, (0.88, 0.88, 0.9, 1))):
+    for nm, shp, col in (("battery", ca.battery, (0.2, 0.45, 0.85, 1)), ("arm_envelope", ca.arm, (0.88, 0.88, 0.9, 1))):
         a.add(shp.rotate((ax, 0, 0), (ax, 0, 1), sgn * SWING_DEG) if sgn else shp, name=nm, color=cq.Color(*col))
     return a
 

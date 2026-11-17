@@ -6,7 +6,12 @@
 #   cart-sleeves-transfer  hand C static, hand B released, whole cart rolled 36 deg about pipe C
 #   cart-wheel-pairs     both hands' wheel pairs on the two pipes (cart_wheel_pairs.py context)
 #   cart-wheel-pairs-corner  the hand on the 150 mm loop corner
-#   assembly.glb         cart_sleeves.clamped for the 3D viewer
+#   cart-assembly        (OpenPocket #280) the whole cart: plate, battery, arm folded, both omni hands on two pipes
+#   cart-arm-stowed      whole cart, arm folded for travel (cart_arm.py)
+#   cart-arm-working     whole cart, arm reaching a pick hole and a seedling cell (cart_arm.py)
+#   cart-base            the rigid base plate with battery stops, cables and the hands in context (cart_base.py)
+#   cart-pod-holder      the pod holder cup with a pod on the plate, hands and arm base around it (cart_pod_holder.py)
+#   assembly.glb         the whole cart (cart_assembly.py) for the 3D viewer
 import os
 import sys
 import time
@@ -32,6 +37,10 @@ def scenes():
     import cart_sleeves as cs
     import cart_wheel_pairs as cw
     import hand_sleeve as hs
+    import cart_assembly as ca
+    import cart_arm as arm
+    import cart_base as cb
+    import cart_pod_holder as ph
     hand = cq.Assembly()
     hand.add(cs.cyl(hs.R_PIPE, 250.0, "z", (0, 0, 0)), name="track_pipe", color=cq.Color(0.75, 0.78, 0.8, 1))
     for n, (s, col) in cs.hand_parts().items():
@@ -39,6 +48,11 @@ def scenes():
     return {
         "cart-omni": (cw.result, "Omni wheels, ball cups and motors of one hand on the 32 mm pipe"),
         "hand-sleeve": (hand, "Hand sleeve v5 (three lobes) with wheels, cups and motors, on the pipe"),
+        "cart-assembly": (ca.result, "Whole cart: rigid plate, battery, folded arm, two omni hands on two pipes"),
+        "cart-arm-stowed": (arm.result_stowed, "Arm folded for travel on the cart"),
+        "cart-arm-working": (arm.result, "Arm working on the cart"),
+        "cart-base": (cb.result, "Rigid base plate on the sleeve pads, battery, cables"),
+        "cart-pod-holder": (ph.scene(True, show=("plate", "battery", "arm_base")), "Pod holder with a pod, below the plate"),
         "cart-sleeves": (cs.clamped, "Cart: both hands clamped, rigid plate"),
         "cart-sleeves-transfer": (cs.transfer, "Cart rolled 36 deg about the static pipe, other hand released"),
         "cart-wheel-pairs": (cw.context, "Wheel pairs of both hands on pipes 120 mm apart"),
@@ -50,8 +64,8 @@ if __name__ == "__main__":
     want = sys.argv[1:]
     sc = scenes()
     if not want or "assembly.glb" in want:
-        import cart_sleeves as cs
-        cs.clamped.export(os.path.join(R, "assembly.glb"))
+        import cart_assembly as ca
+        ca.result.export(os.path.join(R, "assembly.glb"))
         print("GLB done", flush=True)
     for name, (assy, title) in sc.items():
         if not want or name in want:

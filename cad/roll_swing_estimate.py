@@ -30,7 +30,6 @@ def boxes(static_sgn):
         return (xs[0], xs[1], min(y0, y1), max(y0, y1))
     return {"plate": b(cd.PLATE_X0, cd.PLATE_X1, cd.PLATE_Y0, cd.PLATE_Y0 + cd.PLATE_T),
             "battery": b(cd.BATT_X - cd.BATT[0] / 2, cd.BATT_X + cd.BATT[0] / 2, cd.PLATE_Y0, cd.PLATE_Y0 - cd.BATT[1]),
-            "motors": b(cd.MOTOR_XS[-1] - cd.MOTOR_R, cd.MOTOR_XS[1] + cd.MOTOR_R, cd.PLATE_Y0, cd.PLATE_Y0 - 2 * cd.MOTOR_R),
             "arm": b(-cd.ARM_BASE_W / 2, cd.ARM_BASE_W / 2, cd.PLATE_Y0 - cd.BATT[1], ARM_TOP)}
 
 

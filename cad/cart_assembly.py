@@ -10,6 +10,8 @@
 # Frame: the hand_sleeve.py frame. Track pipes run along Z (vertical sides of the loop), the cart's
 # mounting pads face -Y, so the cart base plate and everything on it sits on the -Y side of the pipes.
 # Pipe B at x = -60, pipe C at x = +60 (v4, Viber #97: was +/-140).
+# v8 (Pond #280, plan task 265 part 6): whole cart on the rigid plate with the v5 omni sleeves; the plate-mounted motor placeholders are removed
+# (the sleeves carry all four motors); every part pair is checked for overlap in check() below.
 # v7 (Viber #109 follow-up, 15 Nov 2026): each hand is now the clamp/jaw sleeve of cart_sleeves.py, shown CLAMPED (jaw closed):
 # fixed body + jaw on its knuckle hinge, hinge pin, jaw actuator (gearbox + micro motor), jaw-side wheels. Imported
 # (clamp_hand_parts), not redrawn; closed it equals hs.result. Helpers box/cyl and the plate moved to cart_geom.py (no change)
@@ -35,9 +37,8 @@
 #  3. Battery: 70 (X) x 50 (out from plate) x 70 (Z) mm block, flat on the plate centre UNDER the arm: stack plate | battery |
 #     SO-101 arm base (v6, Viber #109; the shelf tongue above the arm is gone, the plate is a plain rectangle plus the two
 #     worm-bracket tongues). A battery housing/straps and the arm bolting to it are not designed.
-#  4. Drive motors: one worm-gear motor per hand, on the plate beside the hand (+X of each pipe), shaft along
-#     the pipe, 28 mm diameter x 55 mm placeholder cylinder with a gearbox block. Positions are an open
-#     roadmap item; power transmission from motor to the driven wheel is not drawn.
+#  4. Motors (Pond #280): all four (a drive motor and a roll motor per hand, 28 x 55 mm placeholders) are inside the sleeves, drawn by
+#     cart_omni.py with their wheels. The old plate-mounted drive-motor placeholders are gone.
 #  5. Arm mount: SO-101 base on top of the battery at the plate centre (x = -12, midway between the pads), arm shown folded over
 #     the cart (counterweight idea from the 31 Oct decisions).
 #  6. SO-101 arm is an envelope only (boxes sized from cad/so101_servo_layout.py), not real parts.
@@ -68,17 +69,7 @@ def clamp_hand_parts(jaw_open=0.0):
 def xshift(shape, x):
     return shape.translate((x, 0, 0))
 
-def build_motors():
-    motors = None
-    for sgn in (1, -1):
-        mx = MOTOR_XS[sgn]
-        m = cyl(MOTOR_R, MOTOR_L, "z", (mx, PLATE_Y0 - MOTOR_R, 0.0))
-        m = m.union(box(26, 2 * MOTOR_R, 20, (mx, PLATE_Y0 - MOTOR_R, MOTOR_L / 2 + 10)))   # gearbox up (ASSUMED)
-        motors = m if motors is None else motors.union(m)
-    return motors
-
 battery = box(BATT[0], BATT[1], BATT[2], (BATT_X, PLATE_Y0 - BATT[1] / 2, BATT_Z))
-motors = build_motors()
 
 def arm_envelope():
     """Simplified SO-101 envelope in the arm frame (Z up, X forward), folded over the cart.
@@ -115,7 +106,6 @@ for tag, sgn in (("C", 1), ("B", -1)):
     for nm, shp, col in clamp_hand_parts():
         add(csl.place_hand(shp, sgn), "hand_on_pipe_%s_%s" % (tag, nm), col)
 add(battery, "battery", (0.2, 0.45, 0.85, 1))
-add(motors, "drive_motors", (0.85, 0.25, 0.25, 1))
 add(arm, "so101_arm_envelope", (0.88, 0.88, 0.9, 1))
 
 result = assy
