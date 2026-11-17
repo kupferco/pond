@@ -212,7 +212,7 @@ Answer: held through the bend, as today.
 ### Q8. Should the 180 degree roll for the reach test be allowed only on the vertical legs?
 Context: on a tilted pipe the roll with the arm carries up to about 3 N m, more than the roll motor gives (about 0.55 N m); on the legs it carries almost nothing.
 Assumed: yes, legs only (the reach test stations are already on the legs and the runs; the run stations would then count as "roll 0 only").
-Answer: _open_
+Answer: Yes, the 180 degree roll is allowed on the vertical legs only. On the top and bottom runs the cart stays flat (roll 0, parallel to the track plane) so it can pass the brackets that hold the track; run stations count as roll 0 only.
 
 ### Q9. Is it acceptable to order one real worm motor and one pair of omni wheels now, before the CAD is final?
 Context: real 28 mm worm motors are 60 to 75 mm long with the shaft at a right angle, and the omni wheels' real hub and bore are unknown; both decide the sleeve's real width and the traction answer. About GBP 30 in total.
