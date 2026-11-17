@@ -194,19 +194,19 @@
       "weight_g": 240
     },
     {
-      "item": "Cart omni wheels: rubber-roller omni wheel, common size 48 mm (or 58 mm), double row",
-      "qty": 6,
+      "item": "Reference omni wheels (bench test only): bought 38 mm double aluminium omni wheel",
+      "qty": 2,
       "where": "UK",
-      "unit_price": 10,
+      "unit_price": 18.89,
       "currency": "GBP",
       "approx": true,
-      "link": "https://www.amazon.co.uk/s?k=48mm+omni+wheel+rubber+rollers",
+      "link": "https://www.amazon.co.uk/s?k=38mm+double+aluminium+omni+wheel",
       "link_label": "Search on Amazon UK →",
-      "for": "Cart: 4 driven (2 drive + 2 roll) + 2 spare for the grip tests",
-      "note": "Rubber rollers (not hard plastic), so they grip the smooth PVC pipe. Pick a COMMON size, 48 or 58 mm (not one exact model), that is also sold on Mercado Livre and AliExpress for the Brazil builds; the plan's 38 mm is only a starting figure and the final size is fixed by the bench test and the CAD. Rating is usually about 2 kg (20 N) per wheel: design value 20 N preload, up to 40 N allowed in tests. Check the bore and hub size against the motor shaft hub below. Prototype: buy all the wheels needed in the UK now, they are cheap and light here. Price is an estimate, not a quote.",
+      "for": "Bench test (task 290): compare the printed wheel against a bought pair",
+      "note": "Only a reference pair, not for the cart: the cart uses the printed wheels below. Price about £18.89 each on Amazon UK, an estimate.",
       "status": "to get",
       "group": "uk-carry",
-      "weight_g": 180
+      "weight_g": 70
     },
     {
       "item": "Shaft hub for omni wheel: 6 mm D-shaft to wheel bore",
@@ -615,8 +615,8 @@
       "id": "uk-carry",
       "title": "UK – carry to Brazil",
       "blurb": "Cart parts that are cheaper in the UK and small and light enough for hand luggage. Nothing lithium, nothing bulky. Order them to your UK address in time: the AliExpress ones take 2–4 weeks.",
-      "weight_g": 1049,
-      "carry_note": "Weight: about 1.05 kg in total (rough, from typical listings; weigh the parcels when they arrive). Awkward in cabin baggage: the motors are small metal gearboxes, so they are dense and show up as dark blobs on the X-ray; pack them in one clear bag, together with the driver boards, so they can be lifted out if asked. The fuse holder, switch and wire kit are fine but can look odd, so keep the receipts. Loose wire spools get tangled, so coil and tape them. Keep it all in one small bag, not in a checked bag, so nothing gets lost. Brazil lets a traveller bring goods up to about US$1,000 by air without import tax, so this is well inside that. Nothing here contains a battery."
+      "weight_g": 939,
+      "carry_note": "Weight: about 0.94 kg in total (rough, from typical listings; weigh the parcels when they arrive). Awkward in cabin baggage: the motors are small metal gearboxes, so they are dense and show up as dark blobs on the X-ray; pack them in one clear bag, together with the driver boards, so they can be lifted out if asked. The fuse holder, switch and wire kit are fine but can look odd, so keep the receipts. Loose wire spools get tangled, so coil and tape them. Keep it all in one small bag, not in a checked bag, so nothing gets lost. Brazil lets a traveller bring goods up to about US$1,000 by air without import tax, so this is well inside that. Nothing here contains a battery."
     },
     {
       "id": "brazil",
