@@ -5,18 +5,29 @@
 // The hole is open from the moment the plug leaves its seat until the pod is seated; step 3 ends with the hand already waiting at the holder so step 4 starts straight on the pod.
 import { solvePlanar, toolPoint } from '../arm/kinematics.ts';
 import {
-  BODIES, CART_Z0, CART_Z1, CUP_CAP_TOP_REL, D_CUP, D_PARK, D_SEAT, GRIP_TX, GRIP_TZ, JAW_CAP_DEG, JAW_OPEN_DEG, PARK_CAP_TOP, S, SEAT_CAP_TOP, TRAY_CAP_TOP, TRAY_T, TRAY_Y, XB, XT, quatZ,
+  BODIES, CART_Z0, CART_Z1, CART_ZP, CUP_CAP_TOP_REL, D_CUP, D_PARK, D_SEAT, GRIP_TX, GRIP_TZ, JAW_CAP_DEG, JAW_OPEN_DEG, PARK_CAP_TOP, S, SEAT_CAP_TOP, TRAY_CAP_TOP, TRAY_T, TRAY_Y, XB, XT, YC, quatZ,
   POD_BODY_L, CAP_T,
 } from './layout.ts';
 
 type V3 = [number, number, number];
 const DEG = 180 / Math.PI;
 
-/** Hand pose in world terms: the cap-top point (x, z; y is 0, the arm plane) and the pitch phi: the hand points along (sin phi, -cos phi) in (x, z). phi 0 = straight down, -45 = down and towards the pipe, -90 = horizontal towards the pipe, +45 = down and towards the cart. */
-export interface Tool { x: number; z: number; phi: number }
-export const toolOf = (p: V3, axisIn: V3): Tool => ({ x: p[0], z: p[2], phi: Math.atan2(axisIn[0], -axisIn[2]) * DEG });
+/** Hand pose in world terms: the cap-top point (x, y, z) and the pitch phi. The arm can only point its hand along a plane through its base axis (the line along world x at y = YC, z = cart height): pan turns that plane
+ *  about the base axis, so the pan angle follows from the point, and the hand points along (sin phi, -cos phi sin pan, -cos phi cos pan) (pan 0 = in the vertical plane y = YC, phi 0 = straight down, -90 = horizontal towards -x). */
+export interface Tool { x: number; y: number; z: number; phi: number }
+/** The tool point in the arm base's frame (base x = down, base y = -y, base z = -x): [down, sideways, along the base axis]. */
+const baseFrame = (t: { x: number; y: number; z: number }, cartZ: number): V3 => [cartZ - t.z, -(t.y - YC), XB - t.x];
+const panOf = (t: { x: number; y: number; z: number }, cartZ: number) => { const b = baseFrame(t, cartZ); return Math.atan2(b[1], b[0]); };
 /** Unit vector the hand points along, in world coordinates. */
-export const handDir = (phi: number): V3 => [Math.sin(phi / DEG), 0, -Math.cos(phi / DEG)];
+export const handDir = (t: Tool, cartZ: number): V3 => { const p = panOf(t, cartZ), ph = t.phi / DEG; return [Math.sin(ph), -Math.cos(ph) * Math.sin(p), -Math.cos(ph) * Math.cos(p)]; };
+/** The hand pose that puts the cap-top point p on a pod axis (into the part) axisIn; the angle (deg) between that axis and the nearest one the arm can point along is returned as `err`. */
+export const toolOf = (p: V3, axisIn: V3, cartZ: number): Tool & { err: number } => {
+  const pan = panOf({ x: p[0], y: p[1], z: p[2] }, cartZ);
+  const phi = Math.atan2(axisIn[0], -(axisIn[1] * Math.sin(pan) + axisIn[2] * Math.cos(pan))) * DEG;
+  const t = { x: p[0], y: p[1], z: p[2], phi };
+  const a = handDir(t, cartZ), err = Math.acos(Math.min(1, a[0] * axisIn[0] + a[1] * axisIn[1] + a[2] * axisIn[2])) * DEG;
+  return { ...t, err };
+};
 const add = (a: V3, b: V3, k = 1): V3 => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
 const neg = (a: V3): V3 => [-a[0], -a[1], -a[2]];
 
@@ -25,7 +36,13 @@ export const ELBOW_BACK = false;
 export interface Joints { A: number; B: number; C: number; D: number; E: number }
 /** Joint angles (deg) that put the cap-top point at the tool pose with the cart at height cartZ; null when out of reach or past a joint limit. */
 export function ikTool(t: Tool, cartZ: number): Joints | null {
-  return solvePlanar(0, cartZ - t.z, XB - t.x, GRIP_TX, GRIP_TZ, t.phi, ELBOW_BACK);
+  const b = baseFrame(t, cartZ);
+  return solvePlanar(Math.atan2(b[1], b[0]) * DEG, Math.hypot(b[0], b[1]), b[2], GRIP_TX, GRIP_TZ, t.phi, ELBOW_BACK);
+}
+/** The tool pose of given joint angles (the inverse of ikTool). */
+export function toolFromJoints(q: { A: number; B: number; C: number; D: number }, cartZ: number): Tool {
+  const [bx, by, bz] = toolPoint(q, GRIP_TX, GRIP_TZ);
+  return { x: XB - bz, y: YC - by, z: cartZ - bx, phi: q.B + q.C + q.D };
 }
 
 // --- the places a pod or plug can be
@@ -38,7 +55,7 @@ export type ObjName = typeof OBJECTS[number];
 export function placePose(place: Exclude<Place, 'hand'>, cartZ: number): { pos: V3; axis: V3 } {
   switch (place) {
     case 'tray': return { pos: TRAY_CAP_TOP, axis: [0, 0, -1] };
-    case 'cup': return { pos: [XT + CUP_CAP_TOP_REL[0], CUP_CAP_TOP_REL[1], cartZ + CUP_CAP_TOP_REL[2]], axis: neg(D_CUP) };
+    case 'cup': return { pos: [XT + CUP_CAP_TOP_REL[0], YC + CUP_CAP_TOP_REL[1], cartZ + CUP_CAP_TOP_REL[2]], axis: neg(D_CUP) };
     case 'seat': return { pos: SEAT_CAP_TOP, axis: neg(D_SEAT) };
     case 'park': return { pos: PARK_CAP_TOP, axis: neg(D_PARK) };
   }
@@ -61,31 +78,31 @@ type Action =
 export interface StepInfo { id: string; title: string; text: string }
 export const STEPS: readonly StepInfo[] = [
   { id: 'pick', title: '1. Pick a seedling', text: 'At the seedling tray on top of the tank the arm picks a seedling pod by its cap, lifts it out and puts it in the pod holder on the cart.' },
-  { id: 'drive', title: '2. Drive to the hole', text: 'The cart drives up the pipe to the target hole, the arm folded.' },
-  { id: 'plug', title: '3. Park the plug', text: 'The arm pulls the plug out of the hole, tilts it from 45° to horizontal and parks it in the collar\'s plug holder, then waits at the pod holder.' },
-  { id: 'insert', title: '4. Seat the seedling', text: 'The arm takes the seedling pod from the cart holder and pushes it into the hole.' },
+  { id: 'drive', title: '2. Drive to the hole', text: 'The cart drives up the track (one sleeve riding the leg) to the stop at the target hole, the arm folded.' },
+  { id: 'plug', title: '3. Park the plug', text: 'The arm pulls the plug out of the hole, tilts it from 45° to horizontal, drives down to the plug holder\'s height and parks it there.' },
+  { id: 'insert', title: '4. Seat the seedling', text: 'The arm takes the seedling pod from the cart holder, the cart drives back up to the hole and the arm pushes the pod in.' },
 ];
 
 const at = (p: V3, d: V3, u: number): V3 => add(p, d, u);
 /** The hand pose for a part at a place, and for the approach point `APPROACH` out along its seat axis `out`. */
-const gripAt = (place: Exclude<Place, 'hand'>, cartZ: number): Tool => { const p = placePose(place, cartZ); return toolOf(p.pos, p.axis); };
+const gripAt = (place: Exclude<Place, 'hand'>, cartZ: number): Tool => { const p = placePose(place, cartZ); return toolOf(p.pos, p.axis, cartZ); };
 const OUT: Record<Exclude<Place, 'hand'>, V3> = { tray: [0, 0, 1], cup: D_CUP, seat: D_SEAT, park: D_PARK };
 const APPROACH_AT: Record<Exclude<Place, 'hand'>, number> = { tray: 0.07, cup: 0.07, seat: 0.06, park: 0.05 };   // park is shorter: the arm is nearly stretched out horizontally there
 const approachAt = (place: Exclude<Place, 'hand'>, cartZ: number, dist = APPROACH_AT[place]): Tool => {
-  const p = placePose(place, cartZ), a = toolOf(p.pos, p.axis), o = at(p.pos, OUT[place], dist);
-  return { x: o[0], z: o[2], phi: a.phi };
+  const p = placePose(place, cartZ), a = toolOf(p.pos, p.axis, cartZ), o = at(p.pos, OUT[place], dist);
+  return { x: o[0], y: o[1], z: o[2], phi: a.phi };
 };
 /** The folded pose the arm rests in while it drives: above the seedling tray, hand straight down. */
 export const STOW_Z_ABOVE = 0.07;
-const stow = (cartZ: number): Tool => ({ x: TRAY_CAP_TOP[0], z: cartZ - 0.15, phi: 0 });
+const stow = (cartZ: number): Tool => ({ x: TRAY_CAP_TOP[0], y: YC, z: cartZ - 0.15, phi: 0 });
 export const stowTool = stow;
 
-/** A free point between the cup's approach and the collar's, where the hand has turned most of the way (found by searching the transit with the contact check: the straight joint-space move grazes the collar's rim). */
-const VIA_SEAT: Tool = { x: 0.16, z: 0.92, phi: -20 };
+/** A free point between the cup's approach and the collar's, where the hand has turned most of the way (the straight joint-space move would graze the collar's rim). */
+const VIA_SEAT: Tool = { x: 0.16, y: YC, z: 0.92, phi: -20 };
 
-/** Actions of step i (0..3). */
+/** Actions of step i (0..3). The cart makes three stops: the seedling tray (CART_Z0), the hole (CART_Z1) and the plug holder (CART_ZP): the SO-101 points its hand only along planes through its base axis, which a stop at the right height provides. */
 export function planStep(i: number): Action[] {
-  const z0 = CART_Z0, z1 = CART_Z1, A: Action[] = [];
+  const z0 = CART_Z0, z1 = CART_Z1, zp = CART_ZP, A: Action[] = [];
   /** A straight line of the hand (slow ones go into or out of a seat) or, with free, a move in joint space between two poses that is checked for contacts instead. */
   const m = (to: Tool, slow = false, free = false) => A.push({ t: 'move', to, slow, free });
   if (i === 0) {
@@ -103,21 +120,23 @@ export function planStep(i: number): Action[] {
     A.push({ t: 'cart', z: z1 });
   } else if (i === 2) {
     A.push({ t: 'jaw', deg: JAW_OPEN_DEG });
-    m(approachAt('seat', z1)); m(gripAt('seat', z1), true);
+    m(approachAt('seat', z1), false, true); m(gripAt('seat', z1), true);
     A.push({ t: 'jaw', deg: JAW_CAP_DEG }, { t: 'attach', obj: 'plug' }, { t: 'mark', what: 'open' });
     m(approachAt('seat', z1), true);
-    m(approachAt('park', z1));
-    m(gripAt('park', z1), true);
+    A.push({ t: 'cart', z: zp });
+    m(approachAt('park', zp), false, true);
+    m(gripAt('park', zp), true);
     A.push({ t: 'place', obj: 'plug', at: 'park' }, { t: 'jaw', deg: JAW_OPEN_DEG });
-    m(approachAt('park', z1), true);
-    m(approachAt('cup', z1, 0.1), false, true);
-    m(approachAt('cup', z1));
+    m(approachAt('park', zp), true);
   } else {
-    m(gripAt('cup', z1), true);
+    m(approachAt('cup', zp, 0.1), false, true);
+    m(approachAt('cup', zp));
+    m(gripAt('cup', zp), true);
     A.push({ t: 'jaw', deg: JAW_CAP_DEG }, { t: 'attach', obj: 'pod' });
-    m(approachAt('cup', z1), true);
-    m(VIA_SEAT, false, true);
-    m(approachAt('seat', z1));
+    m(approachAt('cup', zp), true);
+    m(approachAt('cup', zp, 0.1), false, true);
+    A.push({ t: 'cart', z: z1 });
+    m(approachAt('seat', z1), false, true);
     m(gripAt('seat', z1), true);
     A.push({ t: 'mark', what: 'closed' }, { t: 'place', obj: 'pod', at: 'seat' }, { t: 'jaw', deg: JAW_OPEN_DEG });
     m(approachAt('seat', z1), true);
@@ -134,7 +153,7 @@ export const initialPose = (): Pose => ({ cartZ: CART_Z0, tool: stow(CART_Z0), j
 export function objectPose(p: Pose, o: ObjName): { pos: V3; axis: V3 } {
   const pl = p.places[o];
   if (pl !== 'hand') return placePose(pl, p.cartZ);
-  return { pos: [p.tool.x, 0, p.tool.z], axis: handDir(p.tool.phi) };
+  return { pos: [p.tool.x, p.tool.y, p.tool.z], axis: handDir(p.tool, p.cartZ) };
 }
 export const objectQuat = (p: Pose, o: ObjName) => quatZ(objectPose(p, o).axis);
 
@@ -172,7 +191,7 @@ export class TransplantRun {
   private start(a: Action) {
     const p = this.pose;
     if (a.t === 'move') {
-      const d = Math.hypot(a.to.x - p.tool.x, a.to.z - p.tool.z);
+      const d = Math.hypot(a.to.x - p.tool.x, a.to.y - p.tool.y, a.to.z - p.tool.z);
       const boost = this.holeOpen ? OPEN_BOOST : 1;   // the hole is open: the arm moves faster
       let dur = Math.max(d / ((a.slow ? V_SLOW : V_FREE) * (a.slow ? 1 : boost)), Math.abs(a.to.phi - p.tool.phi) / (W_DEG_S * boost), 0.05);
       let j: [Joints, Joints] | undefined;
@@ -180,7 +199,7 @@ export class TransplantRun {
         const j0 = ikTool(p.tool, p.cartZ), j1 = ikTool(a.to, p.cartZ);
         if (j0 && j1) { j = [j0, j1]; dur = Math.max(dur, ...(['B', 'C', 'D'] as const).map((k) => Math.abs(j1[k] - j0[k]) / (W_DEG_S * boost))); }
       }
-      this.seg = { from: { ...p.tool }, to: a.to, dur, t: 0, j };
+      this.seg = { from: { ...p.tool }, to: { x: a.to.x, y: a.to.y, z: a.to.z, phi: a.to.phi }, dur, t: 0, j };
     } else if (a.t === 'jaw') {
       this.wait = { until: Math.abs(a.deg - p.jaw) / JAW_DEG_S, t: 0, from: p.jaw, to: a.deg };
     } else if (a.t === 'cart') {
@@ -211,11 +230,10 @@ export class TransplantRun {
         s.t += use; left -= use; if (this.holeOpen) this.holeOpenS += use;
         const k = s.dur > 0 ? s.t / s.dur : 1;
         if (s.j) {
-          const [j0, j1] = s.j, q = { A: 0, B: j0.B + (j1.B - j0.B) * k, C: j0.C + (j1.C - j0.C) * k, D: j0.D + (j1.D - j0.D) * k };
-          const [r, , zb] = toolPoint(q, GRIP_TX, GRIP_TZ);
-          this.pose.tool = { x: XB - zb, z: this.pose.cartZ - r, phi: q.B + q.C + q.D };
-        } else this.pose.tool = { x: s.from.x + (s.to.x - s.from.x) * k, z: s.from.z + (s.to.z - s.from.z) * k, phi: s.from.phi + (s.to.phi - s.from.phi) * k };
-        if (s.t >= s.dur - 1e-12) { this.pose.tool = { ...s.to }; this.seg = null; }
+          const [j0, j1] = s.j, q = { A: j0.A + (j1.A - j0.A) * k, B: j0.B + (j1.B - j0.B) * k, C: j0.C + (j1.C - j0.C) * k, D: j0.D + (j1.D - j0.D) * k };
+          this.pose.tool = toolFromJoints(q, this.pose.cartZ);
+        } else this.pose.tool = { x: s.from.x + (s.to.x - s.from.x) * k, y: s.from.y + (s.to.y - s.from.y) * k, z: s.from.z + (s.to.z - s.from.z) * k, phi: s.from.phi + (s.to.phi - s.from.phi) * k };
+        if (s.t >= s.dur - 1e-12) { this.pose.tool = { x: s.to.x, y: s.to.y, z: s.to.z, phi: s.to.phi }; this.seg = null; }
       } else if (this.wait) {
         const w = this.wait, use = Math.min(left, w.until - w.t);
         w.t += use; left -= use; if (this.holeOpen) this.holeOpenS += use;

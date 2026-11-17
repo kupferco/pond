@@ -1,8 +1,8 @@
 // Writes a Pose into the MuJoCo model (joint angles, cart height, part placements) and checks it for contacts.
 import type { MjData, MjModel, MainModule } from '@mujoco/mujoco';
 import { MOTORS } from '../model.ts';
-import { BODIES, CART_Z0, TRAY_CAP_TOP, TRAY_Y, XT, quatZ } from './layout.ts';
-import { OBJECTS, ikTool, objectPose, type Pose } from './task.ts';
+import { BODIES, CART_Z0, TRAY_CAP_TOP, TRAY_Y, XT, YC, quatZ } from './layout.ts';
+import { OBJECTS, ikTool, objectPose, type Pose, type Tool } from './task.ts';
 
 const RAD = Math.PI / 180;
 
@@ -10,6 +10,8 @@ export class Binder {
   readonly qpos: Record<string, number> = {};
   readonly mocap: Record<string, number> = {};
   readonly free: Record<string, number> = {};
+  /** The last hand pose the arm could reach: where the arm stays, and what an attached part rides with, while a commanded pose is out of reach. */
+  private lastTool: Tool | null = null;
   readonly mujoco: MainModule; readonly model: MjModel; readonly data: MjData;
   constructor(mujoco: MainModule, model: MjModel, data: MjData) {
     this.mujoco = mujoco; this.model = model; this.data = data;
@@ -31,9 +33,11 @@ export class Binder {
   /** Pose everything, run forward kinematics. Returns false (and leaves the arm where it was) when the hand pose is out of reach. */
   apply(p: Pose): boolean {
     const j = ikTool(p.tool, p.cartZ);
+    if (j) this.lastTool = { ...p.tool };
+    else if (this.lastTool) p = { ...p, tool: { ...this.lastTool } };   // out of reach: the arm stays where it was and a part in the hand stays with it (it is not dragged through the cart)
     if (j) for (const m of MOTORS) { if (m.id !== 'F') this.data.qpos[this.qpos[m.id]] = (j[m.id as keyof typeof j] ?? 0) * RAD; }
     this.data.qpos[this.qpos.F] = p.jaw * RAD;
-    this.setMocap('cart', [XT, 0, p.cartZ], [1, 0, 0, 0]);
+    this.setMocap('cart', [XT, YC, p.cartZ], [1, 0, 0, 0]);
     for (const o of OBJECTS) { const { pos, axis } = objectPose(p, o); this.setMocap(BODIES[o], pos, quatZ(axis)); }
     BODIES.other.forEach((n, i) => this.setMocap(n, [TRAY_CAP_TOP[0], TRAY_Y[i * 2], TRAY_CAP_TOP[2]], quatZ([0, 0, -1])));
     this.mujoco.mj_forward(this.model, this.data);

@@ -2,16 +2,16 @@
 // The four steps and the geometry are in src/transplant/ (the choreography is scripted and kinematic, like the Transfer scene; every frame is checked for contacts).
 import { Viewer } from '../viewer.ts';
 import { Binder, worstContact } from '../transplant/apply.ts';
-import { CART_Z0, CART_Z1, CUP_DROP, ZH, XT, transplantMjcf } from '../transplant/layout.ts';
+import { CART_Z0, CART_Z1, CART_ZP, ZH, YC, transplantMjcf } from '../transplant/layout.ts';
 import { STEPS, TransplantRun } from '../transplant/task.ts';
 import { SCENE_INFOS } from './list.ts';
 import type { Scene } from './scene.ts';
 
 const info = SCENE_INFOS.find((s) => s.id === 'transplant')!;
 const VIEWS: Record<string, { target: [number, number, number]; dist: number; az: number; el: number }> = {
-  overview: { target: [0.25, 0, 0.62], dist: 2.2, az: 0.5, el: 0.2 },
-  tray: { target: [0.25, 0, 0.42], dist: 0.8, az: 0.5, el: 0.25 },
-  hole: { target: [0.2, 0, ZH], dist: 0.8, az: 0.6, el: 0.2 },
+  overview: { target: [0.1, 0.1, 0.95], dist: 3.2, az: 0.5, el: 0.2 },
+  tray: { target: [-0.1, YC, 0.5], dist: 0.8, az: 0.5, el: 0.25 },
+  hole: { target: [-0.03, 0.1, ZH], dist: 0.8, az: 0.6, el: 0.2 },
 };
 
 export const transplantScene: Scene = {
@@ -53,8 +53,8 @@ export const transplantScene: Scene = {
     </div>
     <details class="card">
       <summary>About this scene</summary>
-      <p class="hint">One pipe: the growing pipe with its collar (pod seat at 45° up, hole 45 mm, plug holder 44 mm below, from cad/pipe_collar.py), standing on the tank (700 × 400 × 300 mm, from cad/unit_v3_aframe.py) with the seedling tray on the tank lid. The cart is the Transfer scene's cart (its hands ride the track pipes B and C, 120 mm apart) with the plate, battery, SO-101 stand-in arm and the seedling pod holder (cad/cart_dims.py, cad/cart_pod_holder.py). One press per step; Play all runs what is left. The arm is posed by inverse kinematics and every frame is checked for contacts (arm, cart, pod and plug against the pipe, tank, collar, holder and tray); the line above turns red if anything touches.</p>
-      <p class="hint">Assumed (not in the CAD): the hole is ${ZH.toFixed(2)} m up; the track pipes B and C (the Cart scene's) stand ${XT.toFixed(2)} m from the growing pipe axis (the CAD has them 0.29 m away; at that distance the SO-101 cannot reach the hole, the plug holder and the cart holder). The cart is at ${CART_Z0.toFixed(2)} m for picking and ${CART_Z1.toFixed(2)} m at the hole. The pod holder is exactly where cad/cart_pod_holder.py puts it; there the SO-101 cannot reach the pod in it, so steps 1, 3 and 4 are not fully in reach yet (known gap).</p>
+      <p class="hint">One pipe: the growing pipe with its collar (pod seat at 45° up, hole 45 mm, plug holder 44 mm below, from cad/pipe_collar.py), standing on the tank (700 × 400 × 300 mm, from cad/unit_v3_aframe.py) with the seedling tray on the tank lid. One track: the unit's rounded-corner portrait loop of cad/unit_v3_dimensioned.py, 60 mm in front of the pipe, joined to the spine by its top and bottom brackets. The cart is the Transfer scene's cart: ONE of its two hands (one sleeve) rides a leg of the track, the other hand hangs open (it is only for transfers between pipes). Plate, battery, SO-101 stand-in arm and the seedling pod holder come from cad/cart_dims.py and cad/cart_pod_holder.py. One press per step; Play all runs what is left. The arm is posed by inverse kinematics and every frame is checked for contacts (arm, cart, pod and plug against the pipe, track, collar, holder and tray); the line above turns red if anything touches.</p>
+      <p class="hint">Assumed (not in the CAD): the hole is ${ZH.toFixed(2)} m up and the collar faces 132° round the pipe. The SO-101 can only point its hand along a plane through its base axis, so the cart stops at three heights: ${CART_Z0.toFixed(2)} m at the tray, ${CART_Z1.toFixed(2)} m at the hole and ${CART_ZP.toFixed(2)} m at the plug holder. Known gap: the pod holder is exactly where cad/cart_pod_holder.py puts it, and there the SO-101 cannot reach the pod in it, so the arm stands still (and the pod is placed in or taken from the holder) during those moves.</p>
     </details>
     <p id="x-msg" class="hint"></p>
 `;
