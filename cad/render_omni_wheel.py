@@ -37,7 +37,7 @@ if __name__ == "__main__":
     cq.exporters.export(w.roller("tube").rotate((0, 0, 0), (0, 1, 0), 90), os.path.join(S, "omni_roller_tube.stl"))
     print("STLs done")
     oring = w.assembly("oring")
-    oring.export(os.path.join(R, "assembly.glb"))
+    oring.export(os.path.join(R, "omni-wheel.glb"))
     print("GLB done")
     views(oring, "omni-wheel-oring", "Omni wheel 38 mm, O-ring variant, on the 32 mm pipe")
     views(w.assembly("tube"), "omni-wheel-tube", "Omni wheel 38 mm, silicone tube variant")

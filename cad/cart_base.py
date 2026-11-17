@@ -61,7 +61,7 @@ import sys
 import cadquery as cq
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import hand_sleeve as hs
+import hand_sleeve_v4 as hs
 import cart_assembly as ca
 import cart_arm as arm            # shared layout numbers; importing builds the arm drawing too
 import cart_hinge as ch

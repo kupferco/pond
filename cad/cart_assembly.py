@@ -49,8 +49,8 @@ import cadquery as cq
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cart_hinge as ch     # plate hinge and worm drive of each hand (Viber #97)
-import cart_sleeves as csl   # clamp/jaw sleeve of each hand (Viber #109), reused, not redrawn
-import hand_sleeve as hs   # reused, not redrawn; importing runs the model and exposes hs.result and dims
+import cart_sleeves_v4 as csl   # clamp/jaw sleeve of each hand (Viber #109), reused, not redrawn
+import hand_sleeve_v4 as hs   # reused, not redrawn; importing runs the model and exposes hs.result and dims
 
 # ---------------- Layout (mm): all shared numbers come from cart_dims.py ----------------
 from cart_dims import *   # noqa: F401,F403  (PIPE_SPACING, HX, PLATE_*, BATT*, MOTOR_*, ARM_*, PIPE_STUB_L, ...)
