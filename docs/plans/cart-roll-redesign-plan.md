@@ -207,7 +207,7 @@ Answer: No, not as written. The pipe runs are secured in the centre, so the midd
 ### Q7. During a transfer, is the roll allowed to be held while the pipe tilts through the bend, or must the plate be rolled back flat before the bend?
 Context: today the plate is held rotated through the bend (rotate, drive round the bend, rotate back at 75 cm). Holding rolled while the axis tilts loads the roll wheel with gravity; rolling back first would remove that load but the hand cannot then clear the curve.
 Assumed: held through the bend, as today.
-Answer: _open_
+Answer: held through the bend, as today.
 
 ### Q8. Should the 180 degree roll for the reach test be allowed only on the vertical legs?
 Context: on a tilted pipe the roll with the arm carries up to about 3 N m, more than the roll motor gives (about 0.55 N m); on the legs it carries almost nothing.
