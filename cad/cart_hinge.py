@@ -36,7 +36,7 @@ import sys
 import cadquery as cq
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import hand_sleeve as hs
+import hand_sleeve_v4 as hs
 from cart_dims import *   # noqa: F401,F403
 
 

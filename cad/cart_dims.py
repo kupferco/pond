@@ -10,7 +10,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import hand_sleeve as hs
+import hand_sleeve_v4 as hs
 
 # ---------------- Hand envelope (from hand_sleeve.py, DECIDED numbers) ----------------
 SLEEVE_R = hs.WALL_OUT_R                # 34: sleeve outer radius

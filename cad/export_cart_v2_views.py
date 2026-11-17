@@ -16,7 +16,7 @@ sys.path.insert(0, HERE)
 import cart_assembly as ca
 import cart_base as cb
 import cart_hinge as ch
-import cart_sleeves as csl
+import cart_sleeves_v4 as csl
 from cart_dims import HX
 
 OUT = os.path.join(HERE, "..", "renders", "cart_v2")

@@ -11,7 +11,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import cart_assembly as ca
 import cart_hinge as ch
-import cart_sleeves as csl
+import cart_sleeves_v4 as csl
 from export_cart_v2_views import parts_of, render
 
 OUT = os.path.join(HERE, "..", "renders", "transfer_hands")

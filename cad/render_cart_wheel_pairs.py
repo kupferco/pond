@@ -13,7 +13,7 @@ import cairosvg
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-import cart_wheel_pairs as cw
+import cart_wheel_pairs_v4 as cw
 hs = cw.hs
 
 spec = importlib.util.spec_from_file_location(

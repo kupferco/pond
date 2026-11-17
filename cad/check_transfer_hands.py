@@ -7,11 +7,11 @@ import sys
 import cadquery as cq
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import cart_sleeves as csl
+import cart_sleeves_v4 as csl
 import cart_hinge as ch
 import cart_dims as cd
 import cart_geom as cg
-import hand_sleeve as hs
+import hand_sleeve_v4 as hs
 
 
 def vol(w):

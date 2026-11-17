@@ -60,7 +60,7 @@ import sys
 import cadquery as cq
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import hand_sleeve as hs          # reused via cart_assembly
+import hand_sleeve_v4 as hs          # reused via cart_assembly
 import cart_assembly as ca        # reused, not redrawn
 import cart_hinge as ch           # plate hinge and worm drive of each hand (Viber #97)
 
