@@ -197,7 +197,7 @@ Answer: allow up to 40 N in tests, and treat 20 N as the design value until the 
 ### Q5. If the worm gears alone cannot hold the plate rolled on a tilted pipe, do we go straight to the latching brake?
 Context: the decision was "no brake at first"; the rough budget in section 3 suggests friction at the roll wheel is not enough when the pipe is not vertical (during the bend).
 Assumed: yes, build the brake then (suggested task 13), and before that try the cheaper options (rubber on the pipe, a rubber-tyred roll wheel).
-Answer: yes, build the brake then (suggested task 13), and before that try the cheaper options (rubber on the pipe, a rubber-tyred roll wheel). Also: choose a common omni wheel size (e.g. 48 or 58 mm) that is easy to buy in both the UK and Brazil (Mercado Livre, AliExpress), not one exact model.
+Answer: First choice: use omni wheels with rubber rollers (not hard plastic) so they grip the smooth PVC. If the worm gears plus rubber-roller omni wheels still cannot hold the cart rolled on a tilted pipe, try the other cheap options (rubber on the pipe, a rubber-tyred roll wheel), and only then build the latching brake (suggested task 13). Choose a common omni wheel size (e.g. 48 or 58 mm) easy to buy in both the UK and Brazil (Mercado Livre, AliExpress), not one exact model.
 
 ### Q6. May the rule "the cart stays within 500 mm of the legs, never on the middle of the top or bottom run" be written down?
 Context: an R54 wheel ring does not fit between the track and the growing pipe (22.5 mm gap), and the spine brackets sit mid-run; today's R34 sleeve already cannot pass either.
