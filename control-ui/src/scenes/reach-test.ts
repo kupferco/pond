@@ -7,7 +7,10 @@ import { YC } from '../transplant/layout.ts';
 import { HOLES, reachMjcf } from '../reach/layout.ts';
 import { ANGLE_TOL, Rig, RESULT_RGB, colourParts, runReach, summary, type Attempt, type Colour, type Target } from '../reach/test.ts';
 import { checkPass } from '../reach/pass.ts';
-import { refStation, type Station } from '../reach/station.ts';
+import { stations, type Station } from '../reach/station.ts';
+
+/** The cart as shown at load and when the arm is folded: rolled 180° about leg A's own axis, at 1.0 m. */
+const ROLLED_HOME = stations('leg A', 180).find((s) => Math.abs(s.at - 1.0) < 1e-6)!;
 import { JAW_CAP_DEG } from '../transplant/layout.ts';
 import { SCENE_INFOS } from './list.ts';
 import type { Scene } from './scene.ts';
@@ -94,6 +97,9 @@ export const reachScene: Scene = {
       <table class="runs"><thead><tr><th>Run</th><th>Roll</th><th>Spine bracket</th><th>Pipe</th></tr></thead><tbody>${passRows}</tbody></table>
       <p class="hint">The cart is driven along the straight part of the run (arm folded) with the cart rolled about the track pipe's own axis by the angle shown; "touches" is the deepest overlap in mm. On the legs (where the cart stands for the tests above) there is no bracket in the way, only on the runs.</p>
     </details>
+    <details class="card"><summary>What would make the holes reachable (study, no collision test)</summary>
+      <p class="hint">Rolling the cart 180° about leg A's own axis puts the plate and the arm in FRONT of the track (arm base 109 mm in front of the track plane, 60 mm outside the loop) with the arm pointing at the front of the tank, so it faces the tray side, not the spine: it does not point at the pipe, and no hole is reached. Study (scripts/reach-variants.ts; distance, angle and joint limits only, cart on both legs, 20 mm steps): with the plate in front of the track and the arm pointing at the spine (the cart mirrored, not rolled) 7 of the 24 holes are reachable (H1, H5, H7, H11, H13, H17, H19); the same with the arm base 100 mm inside the loop (from the leg) instead of 60 mm, 10 holes (H1, H3, H5 … every odd hole to H19); the best mount found, arm base 200 mm in front of the track plane and 150 mm inside the loop, 15 of the 24. None of the 16 pods is reached by any mount: they need the cart at the bottom run, where, with today's mount, rolled 180°, P15 is 3 mm and P9 5 mm out of reach.</p>
+    </details>
     <details class="card">
       <summary>About this scene</summary>
       <p class="hint">The unit, track, cart (one sleeve on the −y leg), straight 90° pod holder and tank are those of the Transplant scene. The 24 holes are the unit's own planting-site rule (cad/unit_v1_assembly.py): three columns 120° apart round the growing pipe, every other level turned 60°, 130 mm between levels, the lowest at ${HOLES[0].z.toFixed(3)} m, eight levels (the rule gives nine with today's pipe top; the ninth, at 1.694 m, is left out to make 24). Each has its collar, seat, plug holder and plug (cad/pipe_collar.py). The 16 pods stand in a 4 × 4 tray (45 mm between columns, 38 mm between rows) flat on two rails in the front half of the tank, under the lid, and are reached through 16 pick holes (34 mm, silicone collar) in the lid, exactly as in the Pod grab scene; the sloping pod store with its 6 pick holes is there too, and the central pipe is the spine.</p>
@@ -104,17 +110,17 @@ export const reachScene: Scene = {
     const $ = <T extends HTMLElement>(id: string) => panel.querySelector<T>('#' + id)!;
     let sel: Target | null = null, showRolled = false;
     const show = () => {
-      let text = 'Nothing picked: arm folded', cart = '', pose: { st: Station; z: number; j: Attempt["joints"] } = { st: refStation(0.63), z: 0.63, j: { A: 0, B: 0, C: 0, D: 0, E: 0 } };
+      let text = 'Nothing picked: arm folded', cart = '', pose: { st: Station; z: number; j: Attempt["joints"] } = { st: ROLLED_HOME, z: 1.0, j: { A: 0, B: 0, C: 0, D: 0, E: 0 } };
       if (sel) {
         const a = showRolled ? sel.rolled : sel.direct;
         text = `${sel.label}: ${COLOUR[sel.colour].word}`;
         if (a.ok) { pose = { st: a.station!, z: a.station!.at, j: a.joints }; cart = a.station!.label;
           const j = a.joints!; $('r-text').textContent = `${sel.label}. ${describe(a)}. Joints: ${(['A', 'B', 'C', 'D'] as const).map((k) => `${NAMES[k]} ${j[k].toFixed(0)}°`).join(', ')}.`; }
-        else { cart = 'arm folded'; $('r-text').textContent = `${sel.label}. ${showRolled ? 'Rolled 180°' : 'As is'}: ${describe(a)}.${a.looseErr !== undefined ? ` (The point can be reached with the hand ${a.looseErr.toFixed(0)}° off the axis.)` : ''}`; }
+        else { cart = 'arm folded, ' + ROLLED_HOME.label; $('r-text').textContent = `${sel.label}. ${showRolled ? 'Rolled 180°' : 'As is'}: ${describe(a)}.${a.looseErr !== undefined ? ` (The point can be reached with the hand ${a.looseErr.toFixed(0)}° off the axis.)` : ''}`; }
       } else $('r-text').textContent = 'Pick a hole or a pod. Green parts the arm reaches as the cart is, amber ones only after the cart is rolled 180° about its leg of the track, red ones not at all.';
       rig.pose(pose.st, pose.j ?? null, JAW_CAP_DEG);
       const { depth, names } = worstContact(model, data);
-      $('r-now').textContent = text; $('r-cart').textContent = cart || `${pose.z.toFixed(2)} m, as is`;
+      $('r-now').textContent = text; $('r-cart').textContent = cart || `${ROLLED_HOME.label}`;
       const hit = $('r-hit'); hit.textContent = depth < 0 ? `FAIL: ${names} touched (${(-depth * 1000).toFixed(1)} mm)` : 'none (arm, cart and the part against pipe, collars, other plugs and pods, tank, track)'; hit.style.color = depth < 0 ? '#c0392b' : '';
       ($('r-direct') as HTMLButtonElement).disabled = !sel || !sel.direct.ok; ($('r-rolled') as HTMLButtonElement).disabled = !sel || !sel.rolled.ok;
     };

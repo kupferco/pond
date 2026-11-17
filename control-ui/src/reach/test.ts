@@ -98,7 +98,7 @@ function setTargetCollide(model: MjModel, bodies: string[], on: boolean, saved: 
 interface Try { fail?: { reason: Reason; mag: number; detail: string }; joints?: Joints; margin?: number }
 const RANK: Record<Reason, number> = { distance: 0, 'joint limit': 1, angle: 2, collision: 3 };
 
-function attempt(rig: Rig, sts: Station[], pos: V3, axisIn: V3, out: V3): Attempt {
+export function attempt(rig: Rig | null, sts: Station[], pos: V3, axisIn: V3, out: V3): Attempt {
   // The cart at station st reaches the point p as the reference cart (hand C on leg A, height 0) reaches the point as seen from the station.
   let best: { st: Station; j: Joints; m: number } | null = null, loose: { st: Station; err: number } | null = null, worst: { rank: number; mag: number; reason: Reason; detail: string; st: Station } | null = null;
   for (const st of sts) {
@@ -112,7 +112,7 @@ function attempt(rig: Rig, sts: Station[], pos: V3, axisIn: V3, out: V3): Attemp
     if (!angleOk) note({ reason: 'angle', mag: t.err, detail: `hand ${t.err.toFixed(0)}° off the part's axis` });
     const j = ikTool(t, 0)!, ja = ikTool(ap, 0)!;
     let hit = 0, names = '';
-    for (const jj of [j, ja]) { rig.pose(st, jj, JAW_CAP_DEG); const c = rig.contact(); if (c.depth < hit) { hit = c.depth; names = c.names; } }
+    if (rig) for (const jj of [j, ja]) { rig.pose(st, jj, JAW_CAP_DEG); const c = rig.contact(); if (c.depth < hit) { hit = c.depth; names = c.names; } }
     if (hit < 0) { if (angleOk) note({ reason: 'collision', mag: -hit, detail: `${names} (${(-hit * 1000).toFixed(1)} mm)` }); continue; }
     if (!loose || t.err < loose.err) loose = { st, err: t.err };   // the point can be reached, clear of everything, with the hand this far off the axis
     if (!angleOk) continue;

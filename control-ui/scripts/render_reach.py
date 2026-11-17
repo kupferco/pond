@@ -22,7 +22,7 @@ CART_FRONT = (0.0, 0.0, 0.85, 0.55, 0.45)
 def main():
     src, out = sys.argv[1], sys.argv[2]
     os.makedirs(out, exist_ok=True)
-    for stage, name in (("result", "reach-test-result-v2"), ("example", "reach-test-example-v2"), ("cart-asis", "reach-test-cart-asis-v2"), ("cart-rolled", "reach-test-cart-rolled-v2")):
+    for stage, name in (("result", "reach-test-result-v3"), ("example", "reach-test-example-v3"), ("cart-asis", "reach-test-cart-asis-v3"), ("cart-rolled", "reach-test-cart-rolled-v3")):
         tris = json.load(open(os.path.join(src, stage + ".json")))
         if stage == "result":
             for v, box in FULL.items():

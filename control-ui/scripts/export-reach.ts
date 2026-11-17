@@ -6,7 +6,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { reachMjcf } from '../src/reach/layout.ts';
 import { Rig, colourParts, runReach, summary, type Target } from '../src/reach/test.ts';
-import { stations, refStation } from '../src/reach/station.ts';
+import { stations } from '../src/reach/station.ts';
 import { checkPass } from '../src/reach/pass.ts';
 import { JAW_CAP_DEG } from '../src/transplant/layout.ts';
 import { glb, triangles } from './tri-export.ts';
@@ -23,11 +23,12 @@ colourParts(model, results);
 const rig = new Rig(mj, model, data);
 const round = (t: number[][]) => t.map((r) => r.map((v, i) => (i < 9 ? +v.toFixed(4) : v)));
 const write = (id: string) => { const t = triangles(mj, model, data); writeFileSync(join(out, id + '.glb'), glb(t, 'pond control-ui export-reach')); writeFileSync(join(out, id + '.json'), JSON.stringify(round(t))); };
-rig.pose(refStation(0.63), { A: 0, B: 0, C: 0, D: 0, E: 0 });
+const HOME = stations('leg A', 180).find((s) => Math.abs(s.at - 1.0) < 1e-6)!;   // the pose shown by default: rolled 180 degrees about leg A's own axis, 1.0 m
+rig.pose(HOME, { A: 0, B: 0, C: 0, D: 0, E: 0 });
 write('result');
 // the cart as it is and rolled 180 degrees about leg A, arm folded, at the same height, to show which way the arm faces
-rig.pose(stations('leg A', 0)[75], { A: 0, B: 0, C: 0, D: 0, E: 0 }); write('cart-asis');
-rig.pose(stations('leg A', 180)[75], { A: 0, B: 0, C: 0, D: 0, E: 0 }); write('cart-rolled');
+rig.pose(stations('leg A', 0).find((s) => Math.abs(s.at - 1.0) < 1e-6)!, { A: 0, B: 0, C: 0, D: 0, E: 0 }); write('cart-asis');
+rig.pose(HOME, { A: 0, B: 0, C: 0, D: 0, E: 0 }); write('cart-rolled');
 // an example the arm reaches: the first green or amber part, else the first red one that works at another roll angle
 const ex = results.find((t) => t.colour !== 'red') ?? results.find((t) => t.other.ok)!;
 const exA = ex.colour === 'green' ? ex.direct : ex.colour === 'amber' ? ex.rolled : ex.other;
