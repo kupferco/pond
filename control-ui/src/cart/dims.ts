@@ -1,4 +1,4 @@
-// The v2 cart's layout numbers (mm), mirrored from cad/cart_dims.py and cad/hand_sleeve.py (Viber #97). The Python file is the source of truth:
+// LEGACY (Pond #279): the hinge-era cart numbers; cad/cart_hinge.py is retired and the rigid omni-wheel scene replaces this later. The v2 cart's layout numbers (mm), mirrored from cad/cart_dims.py and cad/hand_sleeve.py (Viber #97). The Python file is the source of truth:
 // test/sim.test.ts reads cad/cart_dims.py and fails if any number here drifts from it.
 // CAD frame, also the transfer scene's world frame: x across (pipes in a row), y out of the pipe plane (the plate is on the -y side), z along the pipes (up).
 export const PIPE_SPACING = 120;                 // cart_dims.py PIPE_SPACING: pipe B to pipe C

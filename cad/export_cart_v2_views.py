@@ -4,7 +4,7 @@
 # Run:  python cad/export_cart_v2_views.py   (from anywhere; writes renders/cart_v2/ at the repo root)
 # Extra packages used only here (not project dependencies): cadquery, numpy, pillow.
 # The PNGs come from a tiny numpy z-buffer rasteriser (flat shading, part colours), so no GL/display is needed.
-# No geometry is changed or redrawn: everything comes from cart_assembly, cart_base and cart_hinge as they are.
+# No geometry is changed or redrawn: everything comes from cart_assembly, cart_base and cart_sleeves as they are.
 import os
 import sys
 import numpy as np
@@ -15,8 +15,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import cart_assembly as ca
 import cart_base as cb
-import cart_hinge as ch
-import cart_sleeves_v4 as csl
+import cart_sleeves as csl
 from cart_dims import HX
 
 OUT = os.path.join(HERE, "..", "renders", "cart_v2")
@@ -97,21 +96,12 @@ def main():
     render(parts, (0, -1, 0), up, os.path.join(OUT, "front.png"))
     render(parts, (0, 0, 1), (0, 1, 0), os.path.join(OUT, "top.png"))
 
-    # close-up: hand C's hinge, its sleeve, pipe and servo, plate trimmed to the hinge end
-    sgn = 1
-    det = cq.Assembly()
-    for nm, shp, col in ch.hinge_parts(sgn):
-        det.add(shp, name=nm, color=cq.Color(*col))
-    det.add(ca.xshift(ca.hs.result, sgn * HX), name="sleeve", color=cq.Color(0.95, 0.75, 0.2, 1))
-    det.add(ca.xshift(ca.cyl(ca.hs.R_PIPE, 120, "z", (0, 0, 0)), sgn * HX), name="pipe", color=cq.Color(0.75, 0.78, 0.8, 1))
-    dparts = parts_of(det)
-    render(dparts, (1, -1.1, 0.8), up, os.path.join(OUT, "hinge_closeup.png"))
     export_sleeves()
 
 def export_sleeves():
-    """cart_sleeves.py v4: both hands with hinge + worm drive + plate, the transfer scene (static hand in blue, plate swung
-    on its hinge, other hand released with its jaw open), the clamp states (clamped, released, released and moved off the
-    pipe: jaw closed/open, with its hinge pin and actuator) and one exploded hand."""
+    """cart_sleeves.py v5: both hands with the rigid plate, the transfer scene (static hand in blue, whole cart rolled about its
+    pipe, other hand released with its jaw open) and the clamp states (clamped, released, released and moved off the
+    pipe: jaw closed/open, with its hinge pin and actuator)."""
     up = (0, 0, 1)
     for tag, assy_ in (("sleeves_pair", csl.pair), ("sleeves_transfer", csl.transfer),
                        ("sleeves_clamped", csl.clamped), ("sleeves_released", csl.released),
@@ -122,9 +112,6 @@ def export_sleeves():
         render(parts, (1, -1.1, 0.8), up, os.path.join(OUT, tag + "_iso.png"))
         render(parts, (0, -1, 0), up, os.path.join(OUT, tag + "_front.png"))
         render(parts, (0, 0, 1), (0, 1, 0), os.path.join(OUT, tag + "_top.png"))
-    csl.exploded.save(os.path.join(OUT, "sleeves_exploded.glb"), "GLTF")
-    print("wrote renders/cart_v2/sleeves_exploded.glb")
-    render(parts_of(csl.exploded), (1, -1.1, 0.8), up, os.path.join(OUT, "sleeves_exploded_iso.png"))
 
 if __name__ == "__main__":
     main()

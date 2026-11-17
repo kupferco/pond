@@ -200,9 +200,12 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const cd = py('cart_dims.py'), hs = py('hand_sleeve.py');
   check('pipe spacing is 120 mm, as in cad/cart_dims.py', num(cd, 'PIPE_SPACING') === 120 && DIMS.PIPE_SPACING === 120 && Math.abs(DIMS.PIPE_X.C - DIMS.PIPE_X.B - 120) < 1e-9);
   const same = (names: string[], src: string, ts: Record<string, number>) => names.filter((n) => num(src, n) !== ts[n]);
-  const bad = [...same(['HINGE_R', 'HINGE_LEAF_T', 'PLATE_T', 'HINGE_CLEAR', 'WHEEL_Z', 'WORM_M', 'WHEEL_Z0', 'WHEEL_T', 'KNUCKLE_Z', 'ARM_BASE_W', 'PART_GAP', 'END_GAP'], cd, DIMS as any),
-    ...same(['PAD_X0', 'PAD_X1', 'PAD_Y0', 'PAD_Y1', 'WALL_OUT_R'], hs, { PAD_X0: DIMS.PAD_X0, PAD_X1: DIMS.PAD_X1, PAD_Y0: DIMS.PAD_Y0, PAD_Y1: DIMS.PAD_Y1, WALL_OUT_R: DIMS.SLEEVE_R })];
-  check('hinge, plate and hand numbers in cart/dims.ts equal the CAD files', bad.length === 0, bad.join(','));
+  // Pond #279: cad/cart_hinge.py and the hinge and worm constants are gone from the CAD (rigid base on the omni wheels). This TypeScript
+  // scene is still the old hinge scene until the scene part of the plan (docs/plans/cart-roll-redesign-plan.md section 10), so only the
+  // numbers that still exist in cart_dims.py are compared, and the hinge-era numbers in cart/dims.ts are frozen legacy values.
+  const bad = [...same(['PLATE_T', 'ARM_BASE_W', 'PART_GAP', 'END_GAP'], cd, DIMS as any),
+    ...same(['PAD_X0', 'PAD_X1'], hs, { PAD_X0: DIMS.PAD_X0, PAD_X1: DIMS.PAD_X1 })];
+  check('plate and pad numbers in cart/dims.ts that still exist in the CAD equal the CAD files', bad.length === 0, bad.join(','));
   check('derived layout (mirrored hands): hinge axes at -90 and +90, plate -83..+83 (166 wide), arm at 0, motors at +-53', DIMS.hingeX(2) === -90 && DIMS.hingeX(1) === 90 && DIMS.PLATE_X0 === -83 && DIMS.PLATE_X1 === 83 && DIMS.ARM_X === 0 && DIMS.MOTOR_B_X === -53 && DIMS.MOTOR_C_X === 53 && DIMS.PLATE_Y0 === -52);
   check('the scene has only two pipes, B and C: no pipe D anywhere', Object.keys(DIMS.PIPE_X).join() === 'B,C' && !/pipeD/.test(transferMjcf()));
 

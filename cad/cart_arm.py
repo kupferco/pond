@@ -60,9 +60,8 @@ import sys
 import cadquery as cq
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import hand_sleeve_v4 as hs          # reused via cart_assembly
+import hand_sleeve as hs          # reused via cart_assembly
 import cart_assembly as ca        # reused, not redrawn
-import cart_hinge as ch           # plate hinge and worm drive of each hand (Viber #97)
 
 # ---------------- Numbers ----------------
 L1, L2, L3 = 120.0, 130.0, 100.0        # ASSUMED: shoulder-elbow, elbow-wrist, wrist-gripper tip (350 total)
@@ -259,8 +258,6 @@ for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):
                  (0.75, 0.78, 0.8, 1)))
     for nm, shp, col in ca.clamp_hand_parts():     # clamp/jaw sleeve, clamped (cart_sleeves.py)
         cart.append(("hand_on_%s_%s" % (tag, nm), ca.csl.place_hand(shp, sgn), col))
-    for nm, shp, col in ch.hinge_parts(sgn):
-        cart.append(("hinge_%s_%s" % (tag, nm), shp, col))
 
 # ---------------- Waveshare board and bracket ----------------
 BOARD = (42.0, 33.0, 12.0)                       # ASSUMED: X (along plate), out from plate, Z (thin side)
