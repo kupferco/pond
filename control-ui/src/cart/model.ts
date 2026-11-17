@@ -1,3 +1,4 @@
+// LEGACY (OpenPocket #281): this is the hinge-era cart. The omni-wheel cart with roll joints is src/cart/omni.ts; the scenes (cart, transfer, pod grab, transplant, reach test) move over to it in plan parts 8 to 11, and this file is deleted with the last of them.
 // MJCF for the Cart scene: floor, a single pipe (up, bend, right), the cart and a target marker.
 // The cart and the marker are mocap bodies: their poses are set from the path coordinate, not by physics.
 import { BEND_R_MM, HORIZONTAL_MM, PIPE_D_MM, PIPE_SPACING_MM, PLATE_MM, VERTICAL_MM } from './track.ts';
