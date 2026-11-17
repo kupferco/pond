@@ -217,4 +217,4 @@ Answer: Yes, the 180 degree roll is allowed on the vertical legs only. On the to
 ### Q9. Is it acceptable to order one real worm motor and one pair of omni wheels now, before the CAD is final?
 Context: real 28 mm worm motors are 60 to 75 mm long with the shaft at a right angle, and the omni wheels' real hub and bore are unknown; both decide the sleeve's real width and the traction answer. About GBP 30 in total.
 Assumed: yes, order two wheels and one motor now.
-Answer: _open_
+Answer: Yes, order now for a bench test (grip on real PVC, preload, worm hold on a tilt, exact sizes for the CAD): one worm motor and the rubber-roller omni wheels. The owner is happy to buy all the wheels needed for the prototype in the UK now, as they're cheap and light there. Later production units will be built in Brazil, so the chosen wheel and motor must also be easy to buy there.
