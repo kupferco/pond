@@ -76,6 +76,14 @@ export class Viewer {
     }
   }
 
+  /** Move the camera (a close-up, or back to the overview). Only the given fields change. */
+  setView(v: { target?: [number, number, number]; dist?: number; az?: number; el?: number }) {
+    if (v.target) this.target.set(...v.target);
+    if (v.dist !== undefined) this.orbit.dist = v.dist;
+    if (v.az !== undefined) this.orbit.az = v.az;
+    if (v.el !== undefined) this.orbit.el = v.el;
+  }
+
   private bindOrbit() {
     const el = this.renderer.domElement;
     // touch-action: none (set in CSS too) so drags on the canvas orbit instead of scrolling the page;

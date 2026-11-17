@@ -1,4 +1,10 @@
-# cad/cart_pod_holder.py: seedling-pod holder on the cart plate (DRAFT v2, 16 Nov 2026, OpenPocket #229).
+# cad/cart_pod_holder.py: seedling-pod holder on the cart plate (DRAFT v3, 17 Nov 2026, OpenPocket #229, #230).
+# v3: the cup is STRAIGHT again, axis square to the plate (90 degrees, no tilt): CUP_TILT = 0. WHY: the cart goes up pipe A and comes down
+#   pipe B, so it is upside down for part of the trip. The pod sits in the cup on the 24 x 2 O-ring (it squeezes the pod body, a friction fit)
+#   and must stay put upside down, which a straight cup does better than a tilted one; it also takes the cup out of the arm's way (the 45 degree
+#   cup swung up towards the arm base and made the pod hard to reach). The pod axis is now horizontal (out of the plate) when the cart stands
+#   upright; the arm turns the pod to the collar's 45 degree seat itself (one wrist move). Friction fit: see check() 'oring_squeeze_mm'.
+# v2 (superseded): the cup was ANGLED 45 degrees (axis out of the plate AND up the pipe, +Z), to match the collar's 45 degree pod seat.
 # v2: the cup is ANGLED 45 degrees (axis out of the plate AND up the pipe, +Z), to match the collar's 45 degree pod seat.
 #   WHY: the robot then carries the pod at the same attitude it goes into the seat, so pick (from the cup) and insert (into
 #   the collar) are one straight pull-and-push with the same gripper angle; no wrist re-orientation in between. The cost is
@@ -40,7 +46,7 @@ def ytube(ro, ri, y0, y1, x, z):
 def bx(x0, x1, y0, y1, z0, z1):
     return cq.Workplane("XY").box(x1 - x0, y1 - y0, z1 - z0, centered=False).translate((x0, y0, z0))
 
-CUP_TILT = 45.0                         # cup axis tilted 45 degrees UP the pipe (+Z), like the collar's pod seat
+CUP_TILT = 0.0                          # 90 degrees to the plate: no tilt (v2 had 45 degrees UP the pipe, +Z, like the collar's pod seat)
 ROOT_Y = Y_FACE - 18.0                  # where the angled cup starts (18 mm out from the plate face; web joins it to the pads)
 
 def _rot(wp):
@@ -118,6 +124,7 @@ def check():
         res["pod_vs_" + k] = i.val().Volume() if i.vals() else 0.0
     pb = pod.val().BoundingBox()
     res["pod_bbox"] = (pb.xmin, pb.xmax, pb.ymin, pb.ymax, pb.zmin, pb.zmax)
+    res["oring_squeeze_mm"] = pc.POD_BODY_D / 2 - 12.0   # pod body radius minus the O-ring bore radius (12.0, as cut in oring()): >0 means the ring squeezes the pod
     res["pod_vs_holder"] = (lambda i: i.val().Volume() if i.vals() else 0.0)(pod.intersect(h))
     bb = h.val().BoundingBox()
     res["bbox"] = (bb.xmin, bb.xmax, bb.ymin, bb.ymax, bb.zmin, bb.zmax)

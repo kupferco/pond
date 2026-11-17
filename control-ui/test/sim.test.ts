@@ -19,6 +19,9 @@ import { BASE_BOTTOM, LID_Z, PIPE_Z, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, R
 import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
 
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
+import { transplantMjcf, D_CUP, LID as LID_TOP, TRAY_CAP_TOP, CART_Z0, CART_Z1, CART_ZP, YC, XT, LEG, PSI, CUP_DROP, SEAT_CAP_TOP, PARK_CAP_TOP, ZH, ZP, P0, U_CAP, CAP_T, HOLDER_FLOOR_X, X_TOP, RECESS_T } from '../src/transplant/layout.ts';
+import { TransplantRun, STEPS, ikTool, toolOf } from '../src/transplant/task.ts';
+import { Binder, worstContact as podContact } from '../src/transplant/apply.ts';
 
 const MOTORS_JOINT: Record<string, string> = { A: 'shoulder_pan', B: 'shoulder_lift', C: 'elbow_flex', D: 'wrist_flex', E: 'wrist_roll' };
 const mj = await loadMujoco();
@@ -51,7 +54,7 @@ let msg = '';
 try { await cmd.setMode('real'); } catch (e) { msg = (e as Error).message; }
 check('real mode refuses, stays on sim', msg.includes('not connected') && cmd.mode === 'sim');
 
-check('seven scenes, two groups', SCENE_INFOS.length === 7 && SCENE_INFOS.filter((s) => s.group === 'Tests').length === 5);
+check('eight scenes, two groups, Transplant seedling under the Tests', SCENE_INFOS.length === 8 && SCENE_INFOS.filter((s) => s.group === 'Tests').length === 6 && SCENE_INFOS.some((s) => s.id === 'transplant' && s.group === 'Tests'));
 check('scene default is arm', resolveSceneId('', null) === 'arm');
 check('scene URL wins over stored', resolveSceneId('?scene=cart', 'pillar') === 'cart');
 check('stored scene used without URL', resolveSceneId('', 'pillar') === 'pillar');
@@ -518,6 +521,64 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   while (!task.done) task.advance(0.5);
   check('8 mm of perception error misses the hole', task.failReason.includes('missed'), task.failReason);
   pg.dispose();
+}
+
+// --- Transplant seedling scene: the whole trip, every frame posed by IK and checked for contacts -------------------
+{
+  const tm = mj.MjModel.from_xml_string(transplantMjcf());
+  const td = new mj.MjData(tm);
+  const bind = new Binder(mj, tm, td);
+  const tr = new TransplantRun();
+  tr.reset();
+  check('transplant: rest pose is clear and reachable', bind.apply(tr.pose) && podContact(tm, td).depth === 0);
+  // geometry from the collar CAD: parked plug stands 5 mm further out than a seated one, holder 44 mm under the hole, seat axis through the hole centre
+  check('transplant: plug holder is 44 mm below the hole', Math.abs(ZH - ZP - 0.044) < 1e-9);
+  const out = (p: number[]) => Math.hypot(p[0], p[1]);   // distance from the pipe axis (the collar is turned about it by PSI)
+  check('transplant: parked plug cap top is 5 mm past a seated one (blind floor), at the holder height', Math.abs(out(PARK_CAP_TOP) - (X_TOP - RECESS_T + 0.005 + CAP_T)) < 1e-9 && Math.abs(PARK_CAP_TOP[2] - ZP) < 1e-9);
+  check('transplant: seated cap top is 29.7 mm along the 45 degree axis', Math.abs(Math.hypot(SEAT_CAP_TOP[0] - P0[0], SEAT_CAP_TOP[1] - P0[1], SEAT_CAP_TOP[2] - P0[2]) - (U_CAP + CAP_T)) < 1e-9);
+  check('transplant: holder floor under the plug', Math.abs(out(PARK_CAP_TOP) - CAP_T - 0.017 - HOLDER_FLOOR_X) < 1e-9);
+  check('transplant: seat and plug holder face the same way (azimuth PSI)', Math.abs(Math.atan2(PARK_CAP_TOP[1], PARK_CAP_TOP[0]) - PSI) < 1e-9 && Math.abs(Math.atan2(SEAT_CAP_TOP[1], SEAT_CAP_TOP[0]) - PSI) < 1e-9);
+  // ONE track: the unit's loop, 60 mm in front of the pipe, legs 290 mm either side; the cart's hand B rides the +y leg, hand C hangs open (no pipe 120 mm further)
+  {
+    const names: string[] = [];
+    for (let g = 0; g < tm.ngeom; g++) { const n = tm.geom(g).name; if (n) names.push(n); }
+    check('transplant: one track loop (two legs, top and bottom run), no second loop', names.filter((n) => /^trackleg/.test(n)).length === 2 && names.filter((n) => /^track(L|R)/.test(n)).length === 0 && names.includes('tracktop') && names.includes('trackbot'));
+    check('transplant: track plane 60 mm in front of the pipe axis, legs 290 mm either side, the cart (hand C, 60 mm from the cart centre) on the -y leg', XT === 0.06 && LEG === 0.29 && Math.abs(YC - 0.06 + LEG) < 1e-12);
+  }
+  // the base of the hand origin from the model matches the IK frame (pose with the hand pointing down)
+  tr.pose.tool = { x: TRAY_CAP_TOP[0], y: YC, z: CART_Z0 - 0.2, phi: 0 }; bind.apply(tr.pose);
+  { const h = bind.handPos(); check('transplant: IK frame matches the arm model', Math.abs(h[0] - (TRAY_CAP_TOP[0] + 0.011)) < 1e-6 && Math.abs(h[1] - YC) < 1e-6 && Math.abs(h[2] - (CART_Z0 - 0.2 + 0.0785)) < 1e-6, JSON.stringify(h)); }
+  tr.reset();
+  const dts = 0.004;
+  for (let s = 0; s < STEPS.length; s++) {
+    let touched = 0, unreachable = 0, worstMm = 0, names = '', minMargin = 90;
+    tr.step();
+    while (tr.busy) {
+      tr.advance(dts);
+      if (!bind.apply(tr.pose)) unreachable++;
+      const j = ikTool(tr.pose.tool, tr.pose.cartZ);
+      if (j) minMargin = Math.min(minMargin, ...(['A', 'B', 'C', 'D'] as const).map((id) => Math.min(j[id] - (id === 'A' ? -110 : id === 'B' ? -100 : id === 'C' ? -97 : -95), (id === 'A' ? 110 : id === 'B' ? 100 : id === 'C' ? 97 : 95) - j[id])));
+      const c = podContact(tm, td);
+      if (c.depth < 0) { touched++; if (-c.depth * 1000 > worstMm) { worstMm = -c.depth * 1000; names = c.names; } }
+    }
+    // Pond #230 round 7: the pod holder is straight (cart_pod_holder.py v3, 90 degrees) and the tray is in the tank; every step is in reach and touches nothing.
+    const info = `unreachable frames ${unreachable}, touching frames ${touched} ${names} ${worstMm.toFixed(2)} mm, joint margin ${minMargin.toFixed(0)} deg`;
+    check(`transplant: ${STEPS[s].title}: no contacts`, touched === 0, info);
+    check(`transplant: ${STEPS[s].title}: in reach, inside the joint limits`, unreachable === 0 && minMargin > 5, info);
+  }
+  check('transplant: all steps done, pod in the hole, plug parked, cart at the hole', tr.done && tr.pose.places.pod === 'seat' && tr.pose.places.plug === 'park' && Math.abs(tr.pose.cartZ - CART_Z1) < 1e-9);
+  check('transplant: hole was open once, for under 15 s', tr.holeTimes.length === 1 && tr.holeTimes[0] > 0 && tr.holeTimes[0] < 15, JSON.stringify(tr.holeTimes));
+  // Play all gives the same end state
+  tr.reset(); tr.playAll(); let guard = 0; while ((tr.busy || tr.next < STEPS.length) && guard++ < 20000) tr.advance(0.05);
+  check('transplant: Play all runs the four steps', tr.done && tr.pose.places.pod === 'seat' && tr.pose.places.plug === 'park', `${tr.next}`);
+  // the contact check can fail: a plug dragged into the pipe is caught
+  tr.reset(); tr.pose.places.plug = 'hand'; tr.pose.cartZ = CART_ZP;
+  { const t = toolOf([0.036 * Math.cos(PSI), 0.036 * Math.sin(PSI), ZP - 0.03], [-Math.cos(PSI), -Math.sin(PSI), 0], CART_ZP); tr.pose.tool = { x: t.x, y: t.y, z: t.z, phi: t.phi }; }
+  check('transplant: the pipe-wall test pose is in reach', bind.apply(tr.pose));
+  check('transplant: a part pushed into the pipe is a contact', podContact(tm, td).depth < -0.002);
+  check('transplant: pod holder is where the CAD puts it (not lowered) and the start is the seedling tray height', CUP_DROP === 0 && CART_Z0 < CART_Z1);
+  check('transplant: pod holder is straight (90 degrees to the plate: cup axis horizontal) and the tray stands inside the tank, under the lid', D_CUP[2] === 0 && D_CUP[0] === -1 && TRAY_CAP_TOP[2] < LID_TOP);
+  td.delete(); tm.delete();
 }
 
 const t0 = performance.now(); run(5); const ms = performance.now() - t0;
