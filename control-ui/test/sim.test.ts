@@ -14,6 +14,7 @@ import { cartMjcf, WHEEL_OPEN_M, cartActuators, cartBody, setMotors } from '../s
 import { S_FLAT_CM, CLEAR_DEG, HINGE_DEG_S_CAD, MAX_HINGE_DEG, MAX_BEND_HINGE_DEG, P_TOP_CM, TransferRun, applyPose, initialState, kinFromAngles, kinematics, worstContact, type CartState } from '../src/cart/transfer.ts';
 import { S_MAX_CM, S_MIN_CM, transferMjcf, worldToCad } from '../src/cart/transfer-model.ts';
 import * as DIMS from '../src/cart/dims.ts';
+import * as OC from '../src/cart/omni.ts';
 import { readFileSync } from 'node:fs';
 import { BASE_BOTTOM, LID_Z, PIPE_Z, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
 import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
@@ -622,6 +623,59 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const ps = checkPass(mj, rm, rd, [0, 180]);
   check('reach: the bracket / pipe pass check runs for the top and bottom run, as is and rolled', ps.length === 4 && ps.every((p) => p.steps > 10));
   rd.delete(); rm.delete();
+}
+
+// --- Omni-wheel cart model (OpenPocket #281, plan task 265 part 7): src/cart/omni.ts ---------------------------------------------------------------------
+{
+  const py = (fl: string) => readFileSync(new URL(`../../cad/${fl}`, import.meta.url), 'utf8');
+  const num = (src: string, name: string) => {
+    const one = src.match(new RegExp(`^${name}\\s*=\\s*(-?[0-9.]+)\\s*(#|$)`, 'm')); if (one) return parseFloat(one[1]);
+    for (const mm of src.matchAll(/^([A-Z_0-9]+(?:\s*,\s*[A-Z_0-9]+)+)\s*=\s*(-?[0-9.]+(?:\s*,\s*-?[0-9.]+)+)/gm)) { const ns = mm[1].split(',').map((q) => q.trim()), vs = mm[2].split(',').map(parseFloat), i = ns.indexOf(name); if (i >= 0) return vs[i]; }
+    return NaN;
+  };
+  const cd = py('cart_dims.py'), hs = py('hand_sleeve.py'), co = py('cart_omni.py');
+  const bad = [['PIPE_SPACING', cd, OC.PIPE_SPACING], ['PLATE_T', cd, OC.PLATE_T], ['ARM_BASE_W', cd, OC.ARM_BASE_W], ['MOTOR_R', cd, OC.MOTOR_R], ['MOTOR_L', cd, OC.MOTOR_L],
+    ['ROW_Z', hs, OC.ROW_Z], ['TUBE_R_MIN', hs, OC.TUBE_R_MIN], ['END_WALL', hs, OC.END_WALL], ['PAD_X0', hs, OC.PAD.x0], ['PAD_X1', hs, OC.PAD.x1], ['PAD_Y0', hs, OC.PAD.y0], ['PAD_Y1', hs, OC.PAD.y1],
+    ['PIPE_D', co, 2 * OC.R_PIPE], ['BALL_D', co, OC.BALL_D], ['GB_T', co, OC.GB_T], ['GB_L', co, OC.GB_L]].filter(([n, src, v]) => num(src as string, n as string) !== v).map((x) => x[0]);
+  check('omni cart numbers in cart/omni.ts equal cad/cart_dims.py, hand_sleeve.py and cart_omni.py', bad.length === 0, bad.join(','));
+  check('derived: sleeve 124 long, outer lobe 61, plate -84..84 and -56..-50, wheel reach 54', OC.SLEEVE_L === 2 * OC.ROW_Z + 2 * OC.OMNI_R + 2 + 2 * OC.END_WALL && OC.R_ARM_OMNI === OC.OMNI_REACH + 3 + OC.END_WALL && OC.PLATE_X0 === -84 && OC.PLATE_X1 === 84 && OC.PLATE_Y0 === -56 && OC.OMNI_REACH === 54);
+
+  const om = mj.MjModel.from_xml_string(OC.omniCartMjcf()), od = new mj.MjData(om);
+  const gid = (n: string) => om.geom(n).id;
+  check('omni cart: no hinge, worm or tongue geoms and no hinge1/hinge2 joints; rigid base is one body', !/worm|tongue|hinge[12]/i.test(OC.omniCartBody()) && ['hinge1', 'hinge2'].every((n) => { try { om.jnt(n); return false; } catch { return true; } }) && om.body(om.geom_bodyid[gid('plate')]).name === 'base' && om.body(om.geom_bodyid[gid('armbase')]).name === 'base');
+  check('omni cart: 6 actuators (2 drive, 2 roll motor, 2 roll joint), 2 roll joints, 4 wheel spin joints, 8 passive ball joints', om.nu === 6 && om.nmocap === 1 && [...Array(om.njnt).keys()].filter((j) => om.jnt_type[j] === 3 && /^roll[BC]$/.test(om.jnt(j).name)).length === 2 && OC.WHEEL_JOINTS.every((n) => om.jnt(n).id >= 0) && [...Array(om.njnt).keys()].filter((j) => om.jnt_type[j] === 1).length === 8);
+  const nCon = () => { mj.mj_forward(om, od); return od.ncon; };
+  const model = om as unknown as Parameters<typeof OC.setOmniCart>[0];
+  const place = (o: Parameters<typeof OC.setOmniCart>[2]) => OC.setOmniCart(model, od as any, o);
+  place({ roll: 0 });
+  check('omni cart clamped on both pipes at roll 0: no contact (wheels and balls 0.3 mm off the pipes, sleeve bores clear)', nCon() === 0, `ncon ${od.ncon}`);
+  const worldXY = (n: string) => [od.geom_xpos[3 * gid(n)], od.geom_xpos[3 * gid(n) + 1]];
+  const hit = (staticHand: 'B' | 'C', pipes: { pipeB: boolean; pipeC: boolean }) => {
+    const mm = mj.MjModel.from_xml_string(OC.omniCartMjcf(pipes)), dd = new mj.MjData(mm); let worst = 0;
+    for (let deg = -360; deg <= 360; deg += 5) { OC.setOmniCart(mm as any, dd as any, { roll: (deg * Math.PI) / 180, staticHand }); mj.mj_forward(mm, dd); worst = Math.max(worst, dd.ncon); }
+    mm.delete(); dd.delete(); return worst;
+  };
+  check('omni cart rolled a full turn both ways about pipe C (hand B released, off its pipe): no contact at any 5 degrees', hit('C', { pipeB: false, pipeC: true }) === 0);
+  check('omni cart rolled a full turn both ways about pipe B (hand C released): no contact at any 5 degrees', hit('B', { pipeB: true, pipeC: false }) === 0);
+  check('rolling about pipe C with pipe B still clamped drives hand B into it (the contact check does see the swept sleeve)', hit('C', { pipeB: true, pipeC: true }) > 0);
+  place({ roll: Math.PI / 2, staticHand: 'C' }); nCon();
+  const [px, py_] = worldXY('plate');
+  check('roll is about the static pipe axis: the plate (at x 0, y -53) quarter-turns about pipe C (x +60) to x = 60 + 53, y = -60', Math.abs(px - 0.113) < 1e-6 && Math.abs(py_ + 0.06) < 1e-6, `${px},${py_}`);
+  place({ roll: Math.PI / 2, staticHand: 'B' }); nCon();
+  check('roll about pipe B by +90 deg: plate (relative 60, -53) goes to x = -60 + 53 = -7 mm, y = +60 mm', Math.abs(worldXY('plate')[0] + 0.007) < 1e-6 && Math.abs(worldXY('plate')[1] - 0.06) < 1e-6, String(worldXY('plate')));
+  place({ roll: 0 }); nCon();
+  const x = (n: string) => od.geom_xpos[3 * gid(n)];
+  check('hand C is the true mirror of hand B across x = 0 (outer lobe, +/-60 deg lobes, pad)', ['o', 'p', 'm'].every((k) => Math.abs(x(`lobeB${k}`) + x(`lobeC${k}`)) < 1e-9) && Math.abs(x('padB') + x('padC')) < 1e-9 && Math.abs(x('lobeBo') - (-0.06 - 0.0395)) < 1e-4);
+  check('outer lobes face away from the neighbour (B at -x of its pipe, C at +x), pads too', x('lobeBo') < -0.06 && x('lobeCo') > 0.06 && x('padB') < -0.06 && x('padC') > 0.06);
+  // omni friction model and roll budget
+  const c = OC.omniContact(20);
+  check('omni friction: grip along the rolling direction mu x N = 6 N at 20 N, across it 50 times less', Math.abs(c.along - 6) < 1e-9 && c.across * 50 <= c.along + 1e-9);
+  const rb = OC.rollBudget();
+  check('roll kinematics: a carried motor turns the sleeve at wheelR / pipeR times its speed (71 rpm for 60 rpm), 180 degrees in about 0.4 s', Math.abs(rb.rollRpm - 60 * 19 / 16) < 1e-9 && rb.t180S < 0.5, `${rb.rollRpm} rpm`);
+  check('roll torque: motor gives T x pipeR / wheelR = 0.25 N m, friction holds only 0.096 N m at 20 N and mu 0.3: far below the 2.9 N m worst load, so the roll hold stays the plan\'s first risk', Math.abs(rb.motorRollNm - 0.3 * 16 / 19) < 1e-9 && Math.abs(rb.frictionRollNm - 0.0960) < 1e-6 && !rb.wornOk && rb.preloadNeededRollN > 100 * 2);
+  // rolling without slipping: wheel spin relative to the sleeve = (pipeR / wheelR) x sleeve angle gives zero contact velocity
+  const L = OC.OMNI_AXLE_R, phi = 1, spinRel = phi * OC.rollSpinPerRoll(), abs = phi + spinRel;
+  check('roll wheel contact does not slip: absolute wheel spin x wheelR = sleeve angle x lever', Math.abs(abs * OC.OMNI_R - phi * L) < 1e-9);
 }
 
 const t0 = performance.now(); run(5); const ms = performance.now() - t0;
