@@ -19,7 +19,7 @@ import { BASE_BOTTOM, LID_Z, PIPE_Z, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, R
 import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
 
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
-import { transplantMjcf, TRAY_CAP_TOP, CART_Z0, CART_Z1, CART_ZP, YC, XT, LEG, PSI, CUP_DROP, SEAT_CAP_TOP, PARK_CAP_TOP, ZH, ZP, P0, U_CAP, CAP_T, HOLDER_FLOOR_X, X_TOP, RECESS_T } from '../src/transplant/layout.ts';
+import { transplantMjcf, D_CUP, LID as LID_TOP, TRAY_CAP_TOP, CART_Z0, CART_Z1, CART_ZP, YC, XT, LEG, PSI, CUP_DROP, SEAT_CAP_TOP, PARK_CAP_TOP, ZH, ZP, P0, U_CAP, CAP_T, HOLDER_FLOOR_X, X_TOP, RECESS_T } from '../src/transplant/layout.ts';
 import { TransplantRun, STEPS, ikTool, toolOf } from '../src/transplant/task.ts';
 import { Binder, worstContact as podContact } from '../src/transplant/apply.ts';
 
@@ -543,7 +543,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     const names: string[] = [];
     for (let g = 0; g < tm.ngeom; g++) { const n = tm.geom(g).name; if (n) names.push(n); }
     check('transplant: one track loop (two legs, top and bottom run), no second loop', names.filter((n) => /^trackleg/.test(n)).length === 2 && names.filter((n) => /^track(L|R)/.test(n)).length === 0 && names.includes('tracktop') && names.includes('trackbot'));
-    check('transplant: track plane 60 mm in front of the pipe axis, legs 290 mm either side, hand B on the +y leg', XT === 0.06 && LEG === 0.29 && Math.abs(YC + 0.06 - LEG) < 1e-12);
+    check('transplant: track plane 60 mm in front of the pipe axis, legs 290 mm either side, the cart (hand C, 60 mm from the cart centre) on the -y leg', XT === 0.06 && LEG === 0.29 && Math.abs(YC - 0.06 + LEG) < 1e-12);
   }
   // the base of the hand origin from the model matches the IK frame (pose with the hand pointing down)
   tr.pose.tool = { x: TRAY_CAP_TOP[0], y: YC, z: CART_Z0 - 0.2, phi: 0 }; bind.apply(tr.pose);
@@ -561,13 +561,10 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
       const c = podContact(tm, td);
       if (c.depth < 0) { touched++; if (-c.depth * 1000 > worstMm) { worstMm = -c.depth * 1000; names = c.names; } }
     }
-    // KNOWN GAP (Pond #230): the pod holder is exactly where cad/cart_pod_holder.py puts it, and there the SO-101 cannot reach the pod in it (the cup's cap is 55 mm under and 8 mm in front of the arm's shoulder:
-    // the elbow would have to fold past its 97 degree limit; the CAD note says "NOT IK-CHECKED"). Steps 1 and 4 therefore have out-of-reach stretches (the arm stays where it was there; the pod is placed in or taken from the cup
-    // without the arm following). Reported as GAP lines so the gap stays visible. What must hold for every step: NO contact (the pod never touches the cart's battery or anything else); steps 2 and 3 fully in reach.
-    const ok = unreachable === 0 && touched === 0 && minMargin > 5, info = `unreachable frames ${unreachable}, touching frames ${touched} ${names} ${worstMm.toFixed(2)} mm, joint margin ${minMargin.toFixed(0)} deg`;
+    // Pond #230 round 7: the pod holder is straight (cart_pod_holder.py v3, 90 degrees) and the tray is in the tank; every step is in reach and touches nothing.
+    const info = `unreachable frames ${unreachable}, touching frames ${touched} ${names} ${worstMm.toFixed(2)} mm, joint margin ${minMargin.toFixed(0)} deg`;
     check(`transplant: ${STEPS[s].title}: no contacts`, touched === 0, info);
-    if (s === 1 || s === 2) check(`transplant: ${STEPS[s].title}: in reach, inside the joint limits`, unreachable === 0 && minMargin > 5, info);
-    else console.log(ok ? 'ok  ' : 'GAP ', `transplant: ${STEPS[s].title}: in reach (known gap: the pod holder, see Pond #230)`, info);
+    check(`transplant: ${STEPS[s].title}: in reach, inside the joint limits`, unreachable === 0 && minMargin > 5, info);
   }
   check('transplant: all steps done, pod in the hole, plug parked, cart at the hole', tr.done && tr.pose.places.pod === 'seat' && tr.pose.places.plug === 'park' && Math.abs(tr.pose.cartZ - CART_Z1) < 1e-9);
   check('transplant: hole was open once, for under 15 s', tr.holeTimes.length === 1 && tr.holeTimes[0] > 0 && tr.holeTimes[0] < 15, JSON.stringify(tr.holeTimes));
@@ -580,6 +577,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('transplant: the pipe-wall test pose is in reach', bind.apply(tr.pose));
   check('transplant: a part pushed into the pipe is a contact', podContact(tm, td).depth < -0.002);
   check('transplant: pod holder is where the CAD puts it (not lowered) and the start is the seedling tray height', CUP_DROP === 0 && CART_Z0 < CART_Z1);
+  check('transplant: pod holder is straight (90 degrees to the plate: cup axis horizontal) and the tray stands inside the tank, under the lid', D_CUP[2] === 0 && D_CUP[0] === -1 && TRAY_CAP_TOP[2] < LID_TOP);
   td.delete(); tm.delete();
 }
 

@@ -77,7 +77,7 @@ type Action =
 
 export interface StepInfo { id: string; title: string; text: string }
 export const STEPS: readonly StepInfo[] = [
-  { id: 'pick', title: '1. Pick a seedling', text: 'At the seedling tray on top of the tank the arm picks a seedling pod by its cap, lifts it out and puts it in the pod holder on the cart.' },
+  { id: 'pick', title: '1. Pick a seedling', text: 'At the seedling tray inside the tank (through the opening in the lid) the arm picks a seedling pod by its cap, lifts it out and puts it in the pod holder on the cart (the cup is straight, 90° to the plate, and grips the pod on an O-ring so it stays put upside down).' },
   { id: 'drive', title: '2. Drive to the hole', text: 'The cart drives up the track (one sleeve riding the leg) to the stop at the target hole, the arm folded.' },
   { id: 'plug', title: '3. Park the plug', text: 'The arm pulls the plug out of the hole, tilts it from 45° to horizontal, drives down to the plug holder\'s height and parks it there.' },
   { id: 'insert', title: '4. Seat the seedling', text: 'The arm takes the seedling pod from the cart holder, the cart drives back up to the hole and the arm pushes the pod in.' },
@@ -110,10 +110,9 @@ export function planStep(i: number): Action[] {
     m(approachAt('tray', z0)); m(gripAt('tray', z0), true);
     A.push({ t: 'jaw', deg: JAW_CAP_DEG }, { t: 'attach', obj: 'pod' });
     m(approachAt('tray', z0), true);
-    m(approachAt('cup', z0, 0.1), false, true);
-    m(approachAt('cup', z0)); m(gripAt('cup', z0), true);
+    m(approachAt('cup', z0), false, true); m(gripAt('cup', z0), true);
     A.push({ t: 'place', obj: 'pod', at: 'cup' }, { t: 'jaw', deg: JAW_OPEN_DEG });
-    m(approachAt('cup', z0), true); m(approachAt('cup', z0, 0.1));
+    m(approachAt('cup', z0), true);
     m(stow(z0), false, true);
     A.push({ t: 'jaw', deg: 0 });
   } else if (i === 1) {
@@ -129,12 +128,10 @@ export function planStep(i: number): Action[] {
     A.push({ t: 'place', obj: 'plug', at: 'park' }, { t: 'jaw', deg: JAW_OPEN_DEG });
     m(approachAt('park', zp), true);
   } else {
-    m(approachAt('cup', zp, 0.1), false, true);
-    m(approachAt('cup', zp));
+    m(approachAt('cup', zp), false, true);
     m(gripAt('cup', zp), true);
     A.push({ t: 'jaw', deg: JAW_CAP_DEG }, { t: 'attach', obj: 'pod' });
     m(approachAt('cup', zp), true);
-    m(approachAt('cup', zp, 0.1), false, true);
     A.push({ t: 'cart', z: z1 });
     m(approachAt('seat', z1), false, true);
     m(gripAt('seat', z1), true);
