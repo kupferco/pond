@@ -11,7 +11,7 @@ touch the cart). So nothing here contradicts another plan. It does build on Pond
 Today the plate hangs on a hinge at each hand (`cad/cart_hinge.py`, `cad/cart_base.py`), turned by a worm drive per hinge. During a transfer the free hand
 lets go, the plate swings about the static hand's hinge (hinge axis 30 mm beside the pipe) plus a few degrees on the free hand's own hinge
 (`SWING_PATH` in `control-ui/src/cart/transfer.ts`), the cart drives round the bend, and the plate swings back. The new design removes both hinges and both hinge motors.
-Each sleeve instead carries 38 mm omni wheels on the pipe. One driven wheel rolls the cart along the pipe. One omni wheel turned 90 degrees (the roll wheel) rolls the whole sleeve, and so
+Each sleeve instead carries wheels on the pipe: 38 mm rubber-roller omni wheels only where a motor drives them, cheap passive rollers everywhere else (owner decision on cost, section 3a). One driven wheel rolls the cart along the pipe. One omni wheel turned 90 degrees (the roll wheel) rolls the whole sleeve, and so
 the plate, round the pipe. The plate is now rigidly bolted to both sleeves; the swing is a roll about the static pipe's own centre line.
 
 ## 2. What the repo says today (facts the plan relies on)
@@ -30,20 +30,32 @@ The reach-test 180 degree roll has only one sleeve on the pipe, so it is fine th
 Both sleeves carry a roll wheel because transfers go both ways (trip up pipe C releases B and rolls about C, and the other way round). The two sleeves stay true mirrors (check in `check_transfer_hands.py`).
 
 Wheel layout per sleeve, from the draft: top row 3 drive-direction wheels at 120 degrees, bottom row 2 drive-direction wheels plus 1 roll wheel (axle along the pipe).
-12 omni wheels for the cart. Motors: per sleeve one driven drive wheel and the roll wheel, the other four wheels freewheel and grip. Four motors total, the same count as today (2 drive + 2 hinge worm drives become 2 drive + 2 roll).
+Wheels (owner decision, 17 Nov, cost: 12 omni wheels at about GBP 10 is too expensive): only the 2 driven wheels per sleeve (the drive wheel and the roll wheel, 4 per cart) are 38 mm rubber-roller omni wheels. The other 4 wheels per sleeve (8 per cart) are cheap passive rollers, see section 3a. Motors: per sleeve one driven drive wheel and the roll wheel. Four motors total, the same count as today (2 drive + 2 hinge worm drives become 2 drive + 2 roll).
 
 Speed and torque, rough (CAD task 1 turns this into a `roll_budget()` next to `torque_budget()` in `cart_dims.py`):
 - Roll ratio is poor. A wheel of R19 on a pipe of R16 turns the sleeve at only 19/35 of its own speed. A 0.3 N m worm motor at 60 rpm gives about 16 N at the pipe surface, which is only about 0.55 N m of roll torque (the old 38:1 hinge worm gave about 4 N m). Roll speed is about 33 rpm, fast enough.
 - On a vertical pipe (the legs) rolling the plate costs almost nothing (gravity is along the axis). On a tilted or horizontal pipe, a plate cantilevered 150 to 170 mm off the axis carrying about 2 kg of arm and battery needs up to about 3 N m to turn or hold. The transfer rolls the plate before the bend and rides the bend rolled, so the axis tilts while the plate is held rolled.
 - Holding is friction, not the gear. The worm locks the roll wheel's shaft, but the sleeve then holds only by that one wheel's contact on the pipe: roughly mu x preload x radius ratio. At 3 N m that is about 100 N of tangential force at the contact, which at mu 0.3 wet needs hundreds of newtons of preload. This is the biggest risk in the redesign (Q4, Q5).
 - Along the pipe the same holds: the cart weighs about 3 kg (30 N), held only at the driven wheel's contact. Needs about 100 N preload on that wheel at mu 0.3.
-- The 38 mm omni wheels are rated 2 kg (about 20 N) each. The current design uses 60 N per wheel. Preload is therefore limited by the wheel rating, not by the design.
+- The 38 mm omni wheels (now only the 4 driven ones) are rated 2 kg (about 20 N) each. The current design uses 60 N per wheel. Preload is therefore limited by the wheel rating, not by the design.
+
+## 3a. Driven omni wheels, passive rollers (owner decision, cost)
+
+Reason: an undriven omni wheel freewheels anyway, so it never helped hold the roll. Grip matters only on the driven wheels, so only those need rubber-roller omni wheels.
+
+- Driven, 38 mm rubber-roller omni: 1 drive wheel and 1 roll wheel per sleeve, 4 per cart (about GBP 40 instead of GBP 120).
+- Passive, 4 per sleeve, 8 per cart: either (a) ball transfer units, or (b) rubber-coated skate bearings (a bearing with a rubber tyre, on a fixed axle). Not decided: the bench test compares them.
+- Ball transfer: rolls in any direction, so it suits a passive wheel that must let the sleeve move both along and round the pipe. Risk outdoors: dirt and rain can make the ball stick.
+- Skate bearing with rubber tyre: sealed, so better in dirt and rain, but it rolls in one direction only. Across that direction it drags, so each one must be mounted in the direction it can roll and the pair of motions checked (a drag across the roll would work against the drive or the roll wheel). May need a rubber tyre with a crowned profile to skid sideways easily.
+- The passive rollers carry the preload and keep the sleeve centred only; the driven wheels carry the traction. Preload on the driven wheels stays as in section 5.
+- Their size differs from 38 mm, so the wheel centre radius and pocket depth differ per wheel type: the sleeve is no longer one repeated pocket (see sections 4 and 9).
+- Both options must be easy to buy in Brazil (Q9).
 
 ## 4. Sleeve dimensions with 38 mm wheels (ASSUMED, to be fixed in CAD task 1)
 
 | Item | Today | Proposed | Note |
 |---|---|---|---|
-| Wheel | 20 x 8 | 38 x 12 (double row omni) | draft: R19, width 12, hub R13 |
+| Wheel | 20 x 8 | driven: 38 x 12 (double row omni); passive: ball transfer unit or skate-bearing roller, smaller (size set by the chosen part) | draft: R19, width 12, hub R13 for the omni; the 54 mm reach below applies to the omni wheels only, passive rollers reach less, so the sleeve can be smaller where only they are |
 | Wheel centre radius | 26 | 35 (= 16 + 19) | on the 32 mm tube; 27 if the tube were 16 mm (Q1) |
 | Furthest wheel point from the pipe axis | 36 | 54 | radial, because the wheel stands on its edge |
 | Sleeve outer radius | 34 | about 61 (54 + 3 clearance + 4 wall) as a full ring | but see "spacing" |
@@ -61,7 +73,7 @@ and its motor; the jaw-motor stays (N20). Its wedge and knuckle move out with th
 
 ## 5. Grip and preload
 
-- Three wheels per row at 120 degrees around the pipe, one fixed, two on spring carriers (rigid pairs as in `cart_wheel_pairs.py`, rows now 76 mm apart).
+- Three wheel positions per row at 120 degrees around the pipe, one fixed, two on spring carriers. Driven omni wheels sit on the carriers that give the most contact; passive rollers fill the other positions (rigid pairs as in `cart_wheel_pairs.py`, rows now 76 mm apart; with passive rollers the pairs mix a driven omni wheel and a passive roller).
 - Target preload per wheel is capped by the wheel rating: aim for 20 N, test up to 40 N, never the 60 N of today. Total clamp across a row is then 20 to 40 N per wheel.
 - Springs sized for 2.5 mm travel as today. Omni rollers have gaps, so preload is measured per contact with a spring scale in CAD task 3, not assumed.
 - Grip is tested statically first (cart on a vertical pipe, power off): along the pipe with 3 kg, and round the pipe with a 150 mm lever and 2 kg (Q4).
@@ -93,10 +105,10 @@ Check method (CAD task 1 produces the numbers, scene task 8 proves them):
 
 | # | File | Change |
 |---|---|---|
-| 1 | new `cad/cart_omni.py` | One shared 38 mm double-row omni wheel (from the draft), the motor placeholder and place_drive / place_roll helpers. No numbers duplicated elsewhere. |
-| 1 | `cad/hand_sleeve.py` | New sleeve: 38 mm wheel pockets, three-lobe shape, about 125 mm long, 76 mm rows, roll-wheel pocket, C-gap kept, pad kept or moved (see plate). Version bump v5. |
+| 1 | new `cad/cart_omni.py` | One shared 38 mm double-row omni wheel (from the draft) for the 4 driven wheels, the motor placeholder and place_drive / place_roll helpers. Also the two passive roller options (ball transfer unit, rubber-coated skate bearing) as swappable parts with their own size, so the sleeve can be drawn with either. No numbers duplicated elsewhere. |
+| 1 | `cad/hand_sleeve.py` | New sleeve: 38 mm pockets for the 2 driven wheels, smaller seats for the 4 passive rollers (swappable between ball transfer and skate bearing), three-lobe shape, about 125 mm long, 76 mm rows, roll-wheel pocket, C-gap kept, pad kept or moved (see plate). Version bump v5. |
 | 1 | `cad/cart_sleeves.py` | Redraw the hand around the new sleeve; jaw and its wedge re-cut for the bigger wheels; remove hinge leaves, worm wheel, worm and bracket; add the drive motor and roll motor on each sleeve; scenes clamped / released / released_off / transfer updated (transfer shows the roll). |
-| 1 | `cad/cart_wheel_pairs.py` | Rigid pairs now carry omni wheels (drive pair 38 x 12, roll wheel single). `corner` model (150 mm bend) redone with the bigger rigid sleeve: check it still bends (sagitta of a 125 mm sleeve on R150 is about 13 mm, so the wheel clearance must grow). |
+| 1 | `cad/cart_wheel_pairs.py` | Rigid pairs now carry a driven omni wheel (38 x 12) and passive rollers; the roll wheel is a single driven omni. `corner` model (150 mm bend) redone with the bigger rigid sleeve: check it still bends (sagitta of a 125 mm sleeve on R150 is about 13 mm, so the wheel clearance must grow). |
 | 2 | `cad/cart_hinge.py` | Retired: delete after the last import is gone (cart_sleeves, cart_assembly, check_transfer_hands). |
 | 2 | `cad/cart_dims.py` | Delete hinge and worm-drive constants (`HINGE_*`, `WORM_*`, `WHEEL_Z*`, `KNUCKLE_Z`, `TONGUE_*`, `torque_budget`), new sleeve numbers, `PLATE_X0/X1` from pipe spacing and sleeve pad (no hinge offset), new `roll_budget()`, spacing asserts rewritten. `control-ui/src/cart/dims.ts` mirrors these (see scenes). |
 | 2 | `cad/cart_base.py` | Plate rigidly bolted to both sleeve pads: no leaves, no tongues; plate edges and widths from the new pad position; stays 6 mm. |
@@ -128,13 +140,14 @@ The scene geometry is written by hand in TypeScript (it does not read the CAD), 
 
 ## 11. Parts list update (`docs/part-list/part-list.json`)
 
-- Add: 38 mm double-row omni wheels, 12, about GBP 10 each (GBP 120), rated 2 kg each. Check the bore and the hub (the draft hub R13), and buy 2 extra for the grip tests.
+- Add: 38 mm double-row rubber-roller omni wheels, 4 (2 drive + 2 roll), about GBP 10 each (GBP 40), rated 2 kg each. Check the bore and the hub (the draft hub R13). Buy 2 extra for the grip tests (6 in total).
+- Add: passive rollers, 8 (4 per sleeve): ball transfer units or rubber-coated skate bearings, whichever the bench test prefers outdoors (dirt and rain can make ball transfers stick). Not decided, so buy a few of each to compare now (for example 4 ball transfer units and 4 skate bearings with rubber tyres, a few pounds in all); the final line is 8 of the winner.
 - Change: "Cart drive and hinge motors" (4, 12 V worm-gear motor with Hall encoder) becomes "Cart drive and roll motors", "Cart: 2 pipe drives + 2 roll drives". Count stays 4. The wheel on each shaft is now a 38 mm omni wheel on a hub that fits the motor's D-shaft: add 4 shaft hubs (6 mm D-shaft to the wheel bore, check which shaft the listing has).
 - Remove: the brass worm wheels (38 teeth, module 1), the steel worms, hinge pins and knuckles, and any bearing for the worm blocks, if they are listed (the part list has no separate lines for them today: only the motors; the CAD has them as parts, so confirm when the BOM is next checked).
 - Drivers: 4 x DRV8871 stays (one per 28 mm motor). The roll motors can stall while holding a load; the DRV8871 handles 3.6 A peak against 1.5 to 3 A stalled, so no change, but the stall current is to be measured in task 3.
 - Fuses and wire: unchanged unless the stall test shows more than the assumed 3 A.
 - Optional (only if the brake is needed): 2 latching solenoids (one per sleeve) and a driver channel each. Not bought now.
-- Weight: 12 wheels and the bigger sleeves add about 0.5 kg (to be measured); the note in the part list about motor lengths (real motors are 60 to 75 mm, shaft at right angle) matters more now: the motor sits beside the wheel inside the sleeve, so it decides the sleeve's real width. Order one motor early (task 1 depends on it).
+- Weight: the 4 omni wheels, 8 passive rollers and the bigger sleeves add about 0.5 kg (to be measured); the note in the part list about motor lengths (real motors are 60 to 75 mm, shaft at right angle) matters more now: the motor sits beside the wheel inside the sleeve, so it decides the sleeve's real width. Order one motor early (task 1 depends on it).
 
 ## 12. Build order
 
@@ -159,8 +172,8 @@ Parts list (item 11) and the 2D swing check can start now in parallel with step 
 5. Omni wheels on the bend: the bigger rigid sleeve on R150.
 
 ## Suggested tasks
-1. Bench test: two real 38 mm omni wheels on a 32 mm pipe, measure hold along and round the pipe, dry and wet, at 20, 40 and 60 N preload: gives the data for Q4 and Q5 (no CAD needed, can start now).
-2. Parts list: add the 38 mm omni wheels, hubs and rename the cart motors to drive and roll, remove the hinge worm parts: edits `docs/part-list/part-list.json` only (can start now).
+1. Bench test: two real 38 mm omni wheels plus a few passive roller options (ball transfer units and rubber-coated skate bearings) on a 32 mm pipe; measure hold along and round the pipe, dry and wet, at 20, 40 and 60 N preload, and compare the passive rollers dry, wet and with dirt for sticking and sideways drag: gives the data for Q4 and Q5 and the passive roller choice (no CAD needed, can start now).
+2. Parts list: add the 4 driven 38 mm omni wheels, the passive rollers, hubs and rename the cart motors to drive and roll, remove the hinge worm parts: edits `docs/part-list/part-list.json` only (can start now).
 3. Roll budget and swing estimate: a `roll_budget()` (torque, traction, speed) in `cart_dims.py` plus a 2D script that estimates the roll angle needed to clear the curved track in both directions: numbers only, no drawing change (can start now; answers Q2 and Q3 early).
 4. Omni wheel module and new sleeve: `cart_omni.py`, `hand_sleeve.py` v5, `cart_sleeves.py`, `cart_wheel_pairs.py`, with the spacing interference check and the roll wheel and motors drawn (after 3).
 5. Remove the hinges: retire `cart_hinge.py`, update `cart_dims.py`, `cart_base.py`, `cart_geom.py` for a rigid plate (after 4).
@@ -218,3 +231,5 @@ Answer: Yes, the 180 degree roll is allowed on the vertical legs only. On the to
 Context: real 28 mm worm motors are 60 to 75 mm long with the shaft at a right angle, and the omni wheels' real hub and bore are unknown; both decide the sleeve's real width and the traction answer. About GBP 30 in total.
 Assumed: yes, order two wheels and one motor now.
 Answer: Yes, order now for a bench test (grip on real PVC, preload, worm hold on a tilt, exact sizes for the CAD): one worm motor and the rubber-roller omni wheels. The owner is happy to buy all the wheels needed for the prototype in the UK now, as they're cheap and light there. Later production units will be built in Brazil, so the chosen wheel and motor must also be easy to buy there.
+
+Update (17 Nov, owner decision on wheel cost, see section 3a): the bench test order for Q9 is now one worm motor, the driven rubber-roller omni wheels (2 for the bench test, 4 are needed per cart), plus a few passive roller options to compare: ball transfer units and rubber-coated skate bearings, tested wet and dirty for sticking. The answer above is unchanged.
