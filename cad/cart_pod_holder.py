@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cart_dims as cd
 import pipe_collar as pc
 
-PLATE_Y0 = cd.PLATE_Y0                  # plate front face, -52
+PLATE_Y0 = cd.PLATE_Y0                  # plate front face, -56 (plate back face on the pads)
 CUP_X, CUP_Z = cd.ARM_X, -88.0
 CUP_D = 42.0
 CUP_L = 40.0                            # cup body length, from the pads' outer face to the mouth

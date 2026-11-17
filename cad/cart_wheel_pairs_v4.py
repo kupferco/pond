@@ -56,9 +56,8 @@ import cadquery as cq
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cart_dims as cd   # PIPE_SPACING shared with cart_arm, cart_assembly, cart_base (two-pipe layout)
-import cart_hinge as ch   # plate hinge + worm rotation drive (Viber #97), shown in the context model
 import cart_assembly as ca   # reuses motor size; importing runs it and also imports hand_sleeve as ca.hs
-hs = ca.hs
+import hand_sleeve_v4 as hs   # v4 sleeve, kept for this legacy file (ca.hs is the v5 sleeve since Pond #279)
 
 # ---------------- Dimensions (mm) ----------------
 PIPE_D, R_PIPE = hs.PIPE_D, hs.R_PIPE
@@ -228,8 +227,6 @@ def two_hand_model():
             sp, cap = idler_extras()
             cadd(mv(rot(sp, ang)), "%s_idler_%s_springs" % (tag, t), (0.9, 0.2, 0.2, 1))
             cadd(mv(rot(cap, ang)), "%s_idler_%s_spring_cap" % (tag, t), (0.6, 0.6, 0.62, 1))
-        for nm, shp, col in ch.hinge_parts(-1 if tag == "B" else 1):     # already in cart coordinates
-            cadd(shp, "%s_hinge_%s" % (tag, nm), col)
     cadd(ca.plate, "base_plate", (0.35, 0.35, 0.38, 1))
     return c
 

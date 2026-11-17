@@ -48,36 +48,22 @@ import sys
 import cadquery as cq
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import cart_hinge as ch     # plate hinge and worm drive of each hand (Viber #97)
-import cart_sleeves_v4 as csl   # clamp/jaw sleeve of each hand (Viber #109), reused, not redrawn
-import hand_sleeve_v4 as hs   # reused, not redrawn; importing runs the model and exposes hs.result and dims
+import cart_sleeves as csl   # three-lobe omni sleeve of each hand with its jaw (v5, Pond #278), reused, not redrawn
+import hand_sleeve as hs   # reused, not redrawn; importing runs the model and exposes hs.result and dims
 
 # ---------------- Layout (mm): all shared numbers come from cart_dims.py ----------------
 from cart_dims import *   # noqa: F401,F403  (PIPE_SPACING, HX, PLATE_*, BATT*, MOTOR_*, ARM_*, PIPE_STUB_L, ...)
-from cart_geom import box, cyl, window, build_plate, plate, PLATE_CY   # moved to cart_geom.py, unchanged
+from cart_geom import box, cyl, window, build_plate, plate, pad_x, PLATE_CY   # moved to cart_geom.py, unchanged
 
 pad_cx = (hs.PAD_X0 + hs.PAD_X1) / 2
 
 # ---------------- Parts ----------------
-def hand_wheels():
-    """The 12 wheels of one hand (6 per ring pair), sitting in the pockets of hs.result."""
-    w = None
-    for z in (hs.RING_Z, -hs.RING_Z):
-        for ang in (hs.OUTER_WHEEL_ANG,) + tuple(hs.INNER_WHEEL_ANGS):
-            wheel = cyl(hs.WHEEL_R, hs.WHEEL_W, "y", (hs.AXLE_R_POS, 0, z))
-            wheel = wheel.rotate((0, 0, 0), (0, 0, 1), ang)
-            w = wheel if w is None else w.union(wheel)
-    return w
-
-WHEELS = hand_wheels()
-
 # Each hand = the clamp/jaw sleeve of cart_sleeves.py, shown CLAMPED (jaw closed): fixed body + jaw on its knuckle hinge,
 # jaw hinge pin, jaw actuator (gearbox + micro motor), wheels (the +60 deg pair rides on the jaw). Closed, fixed body + jaw
 # are exactly hs.result (checked in cart_sleeves.py), so the geometry is unchanged. Hand-frame parts, centred at x = 0.
-HAND_KEYS = ("sleeve", "jaw", "wheels", "jaw_wheels", "jaw_hinge_pin", "jaw_gearbox", "jaw_motor")
 def clamp_hand_parts(jaw_open=0.0):
-    hp = csl.hand_parts(jaw_open)
-    return [(k, hp[k][0], hp[k][1]) for k in HAND_KEYS]
+    """Every part of the v5 hand (sleeve, jaw, driven omni wheels, ball cups, jaw hinge pin, jaw drive), as (name, shape, colour)."""
+    return [(k, shp, col) for k, (shp, col) in csl.hand_parts(jaw_open).items()]
 
 def xshift(shape, x):
     return shape.translate((x, 0, 0))
@@ -128,8 +114,6 @@ for tag, sgn in (("C", 1), ("B", -1)):
     add(xshift(cyl(hs.R_PIPE, PIPE_STUB_L, "z", (0, 0, 0)), sgn * HX), "track_pipe_%s" % tag, (0.75, 0.78, 0.8, 1))
     for nm, shp, col in clamp_hand_parts():
         add(csl.place_hand(shp, sgn), "hand_on_pipe_%s_%s" % (tag, nm), col)
-    for nm, shp, col in ch.hinge_parts(sgn):
-        add(shp, "hinge_pipe_%s_%s" % (tag, nm), col)
 add(battery, "battery", (0.2, 0.45, 0.85, 1))
 add(motors, "drive_motors", (0.85, 0.25, 0.25, 1))
 add(arm, "so101_arm_envelope", (0.88, 0.88, 0.9, 1))
