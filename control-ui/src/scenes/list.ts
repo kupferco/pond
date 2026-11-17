@@ -15,8 +15,9 @@ export const SCENE_INFOS: readonly SceneInfo[] = [
   { id: 'pod-grab', name: '4. Pod grab', group: 'Tests', description: 'Grab a pod inside the tank and move it to the seedling tray.' },
   { id: 'pillar', name: '5. Pillar', group: 'Tests', description: 'Push pods into and pull them out of the central pillar, including the blank plug.' },
   { id: 'transplant', name: '6. Transplant seedling', group: 'Tests', description: 'One trip: pick a seedling, ride the cart up to the hole, park the plug, seat the seedling.' },
-  { id: 'single-unit', name: '7. Single unit', group: 'Systems', description: 'One complete unit in isolation, with full control.' },
-  { id: 'four-units', name: '8. Four units', group: 'Systems', description: 'Four complete units with full tracks, one unit placed at an angle; the robot drives along the tracks and grabs pods.' },
+  { id: 'reach-test', name: '7. Reach test', group: 'Tests', description: 'Can the arm reach all 24 planting holes and all 16 seedling pods, as is and with the cart rolled 180°? Green, amber, red.' },
+  { id: 'single-unit', name: '8. Single unit', group: 'Systems', description: 'One complete unit in isolation, with full control.' },
+  { id: 'four-units', name: '9. Four units', group: 'Systems', description: 'Four complete units with full tracks, one unit placed at an angle; the robot drives along the tracks and grabs pods.' },
 ];
 
 export const GROUPS: readonly SceneGroup[] = ['Tests', 'Systems'];

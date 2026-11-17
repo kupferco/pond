@@ -21,9 +21,9 @@ import * as D from '../cart/dims.ts';
 /** Which leg of the track the cart rides: -1 = the leg at world y = -0.29. The seedling tray is in the tank's back corner on that same side (the arm works along its base axis, towards the back), so the pods are
  *  in the corner opposite to where they were (v5: +y leg, tray at +y). */
 export const SIDE = -1;
-const f = (n: number) => +n.toFixed(5);
+export const f = (n: number) => +n.toFixed(5);
 const mm = (v: number) => v / 1000;
-type V3 = [number, number, number];
+export type V3 = [number, number, number];
 export const S = Math.SQRT1_2;
 
 // --- pod, plug (mm in the CAD)
@@ -99,9 +99,9 @@ export const CART_Z_MAX = 1.3;
 export const GRIP_TX = 0.0785, GRIP_TZ = 0.011;
 export const JAW_OPEN_DEG = 50, JAW_CAP_DEG = 30;
 
-const rgba = (r: number, g: number, b: number, a = 1) => `rgba="${r} ${g} ${b} ${a}"`;
-const OBST = 'contype="1" conaffinity="3" margin="0.001"';
-const VIS = 'contype="0" conaffinity="0"';
+export const rgba = (r: number, g: number, b: number, a = 1) => `rgba="${r} ${g} ${b} ${a}"`;
+export const OBST = 'contype="1" conaffinity="3" margin="0.001"';
+export const VIS = 'contype="0" conaffinity="0"';
 
 const dot = (a: V3, b: V3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const cross = (a: V3, b: V3): V3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
@@ -120,7 +120,7 @@ export function quatZ(a: V3): [number, number, number, number] {
 }
 
 /** A tube of box slats round the axis a through p0, from u0 to u1 along it, inner radius rIn, outer rOut. skip(angle, u) leaves a slat piece out. */
-function tube(p0: V3, a: V3, u0: number, u1: number, rIn: number, rOut: number, n: number, attrs: string, opts: { name?: string; chunk?: number; skip?: (px: number, py: number, pz: number) => boolean } = {}): string[] {
+export function tube(p0: V3, a: V3, u0: number, u1: number, rIn: number, rOut: number, n: number, attrs: string, opts: { name?: string; chunk?: number; skip?: (px: number, py: number, pz: number) => boolean } = {}): string[] {
   const out: string[] = [], [e1, e2] = basis(a);
   const th = (rOut - rIn) / 2, rc = (rIn + rOut) / 2, half = rOut * Math.tan(Math.PI / n) + 0.0003;
   const chunk = opts.chunk ?? (u1 - u0);
@@ -146,7 +146,7 @@ function tube(p0: V3, a: V3, u0: number, u1: number, rIn: number, rOut: number, 
   return out;
 }
 
-const GAP = 0.0005;   // seats end this far below a part's resting face, so a part seated or parked is clear of it (the CAD parts rest face to face)
+export const GAP = 0.0005;   // seats end this far below a part's resting face, so a part seated or parked is clear of it (the CAD parts rest face to face)
 const SILVER = rgba(0.62, 0.66, 0.7), DARK = rgba(0.3, 0.36, 0.45), STEEL = rgba(0.3, 0.32, 0.36);
 
 /** The central pipe, drilled; the collar's two seats; the plug holder. Static, in world coordinates. */
@@ -210,7 +210,7 @@ export const BODIES = { pod: 'seedling_pod', plug: 'plug', other: ['seedling_a',
 const podColor = rgba(0.85, 0.65, 0.3), plugColor = rgba(0.12, 0.12, 0.14);
 
 /** The cart and what it carries (cart frame -> world axes), as the text to put inside the cart body. */
-function cartGeoms(): string[] {
+export function cartGeoms(): string[] {
   const out: string[] = [];
   // The real cart (cad/cart_base.py, cart_hinge.py, hand_sleeve.py via cart/transfer-model.ts, exactly as in the Transfer scene): plate, battery, drive motors, hinges, worm drives and
   // the two hands with their wheel pairs and jaws, on the plate frame (CAD x across = world -y, CAD y out of the pipe plane = world x, z up). The arm is the scene's own moving one.
@@ -234,7 +234,7 @@ function cartGeoms(): string[] {
  *  in front of the central pipe, in the plane x = XT; plus what joins it to the spine: the spine tube (33.7 x 2, on the pipe axis, inside the growing pipe, up to the top run) and the two spine brackets (16 x 30 x 30 mm,
  *  at the top and at the bottom run, on the pipe's centre line), and the joint rings of cad/unit_v1_assembly.py (6 mm, r 17.5, at four heights on each leg; shown only, the wheel pairs ride over them flush). */
 export const LOOP_TX = LEG, LOOP_R = 0.15, LOOP_ZB = 0.45, LOOP_ZT = ZT, LOOP_TR = mm(16);
-function track(): string[] {
+export function track(): string[] {
   const out: string[] = [], r = LOOP_TR;
   const seg = (name: string, a: V3, b: V3) => out.push(`<geom name="${name}" type="cylinder" fromto="${a.map(f).join(' ')} ${b.map(f).join(' ')}" size="${r}" ${OBST} ${rgba(0.62, 0.66, 0.7)}/>`);
   for (const e of [-1, 1]) seg(`trackleg${e}`, [XT, e * LOOP_TX, LOOP_ZB + LOOP_R], [XT, e * LOOP_TX, LOOP_ZT - LOOP_R]);
@@ -254,7 +254,7 @@ function track(): string[] {
   }
   // spine tube and the two brackets joining the track's top and bottom run to it
   out.push(...tube([0, 0, 0], [0, 0, 1], 0, ZT, mm(33.7 / 2 - 2), mm(33.7 / 2), 24, `${VIS} ${rgba(0.35, 0.35, 0.35)}`));
-  for (const z of [LOOP_ZT, LOOP_ZB]) out.push(`<geom type="box" pos="${f(XT - mm(15))} 0 ${f(z)}" size="${mm(15)} ${mm(8)} ${mm(15)}" ${OBST} ${rgba(0.2, 0.2, 0.2)}/>`);
+  for (const z of [LOOP_ZT, LOOP_ZB]) out.push(`<geom name="bracket${z === LOOP_ZT ? 'top' : 'bot'}" type="box" pos="${f(XT - mm(15))} 0 ${f(z)}" size="${mm(15)} ${mm(8)} ${mm(15)}" ${OBST} ${rgba(0.2, 0.2, 0.2)}/>`);
   return out;
 }
 
