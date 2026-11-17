@@ -13,23 +13,31 @@ R.VIEWS["pipe-right"] = (0.0, 6.0)      # from +x (the track side)
 
 FULL = {"iso": (0.0, 0.1, 0.98, 1.2, 1.2), "front": (0.0, 0.0, 0.98, 0.75, 1.05), "side": (0.0, 0.0, 0.98, 0.6, 1.05), "top": (0.0, 0.0, 0.0, 0.5, 0.5)}
 PIPE = (0.0, 0.0, 1.1, 0.3, 0.62)          # the pipe from the side, the holes between 0.65 and 1.56 m
-TRAY_TOP = (-0.11, -0.23, 0.3, 0.2, 0.2)    # from above on the tray, the cart's arm beside it
-TRAY_FRONT = (-0.1, -0.2, 0.45, 0.4, 0.33)
+TRAY_TOP = (0.1, -0.24, 0.3, 0.2, 0.2)      # from above on the tray with its 16 pods (the lid is drawn: the pods show through the pick holes)
+TRAY_ISO = (0.1, -0.24, 0.25, 0.25, 0.2)
+CART = (0.0, -0.2, 0.0, 0.45, 0.45)         # from above on the cart on leg A and the pipe: which way the arm faces
+CART_FRONT = (0.0, 0.0, 0.85, 0.55, 0.45)
 
 
 def main():
     src, out = sys.argv[1], sys.argv[2]
     os.makedirs(out, exist_ok=True)
-    for stage, name in (("result", "reach-test-result-v1"), ("example", "reach-test-pod-example-v1")):
+    for stage, name in (("result", "reach-test-result-v2"), ("example", "reach-test-example-v2"), ("cart-asis", "reach-test-cart-asis-v2"), ("cart-rolled", "reach-test-cart-rolled-v2")):
         tris = json.load(open(os.path.join(src, stage + ".json")))
-        for v, box in FULL.items():
-            R.draw(tris, v, box, os.path.join(out, f"{name}-{v}.png"))
         if stage == "result":
+            for v, box in FULL.items():
+                R.draw(tris, v, box, os.path.join(out, f"{name}-{v}.png"))
             for v in ("pipe-front", "pipe-back", "pipe-left", "pipe-right"):
                 R.draw(tris, v, PIPE, os.path.join(out, f"{name}-{v}.png"), px=900)
             R.draw(tris, "top", TRAY_TOP, os.path.join(out, f"{name}-tray-top.png"), px=900)
+            R.draw(tris, "iso", TRAY_ISO, os.path.join(out, f"{name}-tray-iso.png"), px=900)
+        elif stage == "example":
+            for v, box in FULL.items():
+                R.draw(tris, v, box, os.path.join(out, f"{name}-{v}.png"))
+            R.draw(tris, "hole", (0.0, 0.0, 1.05, 0.4, 0.4), os.path.join(out, f"{name}-closeup.png"))
         else:
-            R.draw(tris, "front", TRAY_FRONT, os.path.join(out, f"{name}-closeup.png"))
+            R.draw(tris, "top", CART, os.path.join(out, f"{name}-top.png"))
+            R.draw(tris, "front", CART_FRONT, os.path.join(out, f"{name}-front.png"))
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
-// Reach test scene: the unit of the Transplant scene with all 24 planting holes (collar and plug each) on the central pipe and all 16 pods in the 4 x 4 seedling tray. At load the arm tries every hole and every pod,
-// with the cart as it is and rolled 180 degrees about its track leg (src/reach/test.ts); each plug cap and pod cap is coloured green (reachable as is), amber (only after the roll) or red (not reachable).
+// Reach test scene: the unit of the Transplant scene with all 24 planting holes (collar and plug each) on the central pipe and all 16 pods in the 4 x 4 seedling tray (in the front of the tank under the lid, as in the Pod grab scene). At load the arm tries every hole and every pod,
+// with the cart at every station of the track (both legs and both runs), as it is and rolled 180 degrees about the pipe it rides (src/reach/test.ts); each plug cap and pod cap is coloured green (reachable as is), amber (only after the roll) or red (not reachable).
 // Pick a part to see the arm do it. Contacts stay at none (the pose shown is checked every time).
 import { Viewer } from '../viewer.ts';
 import { worstContact } from '../transplant/apply.ts';
@@ -7,6 +7,7 @@ import { YC } from '../transplant/layout.ts';
 import { HOLES, reachMjcf } from '../reach/layout.ts';
 import { ANGLE_TOL, Rig, RESULT_RGB, colourParts, runReach, summary, type Attempt, type Colour, type Target } from '../reach/test.ts';
 import { checkPass } from '../reach/pass.ts';
+import { refStation, type Station } from '../reach/station.ts';
 import { JAW_CAP_DEG } from '../transplant/layout.ts';
 import { SCENE_INFOS } from './list.ts';
 import type { Scene } from './scene.ts';
@@ -14,7 +15,7 @@ import type { Scene } from './scene.ts';
 const info = SCENE_INFOS.find((s) => s.id === 'reach-test')!;
 const VIEWS: Record<string, { target: [number, number, number]; dist: number; az: number; el: number }> = {
   overview: { target: [0.1, 0.1, 0.95], dist: 3.2, az: 0.5, el: 0.2 },
-  tray: { target: [-0.1, YC, 0.45], dist: 0.8, az: 0.5, el: 0.25 },
+  tray: { target: [0.1, -0.24, 0.3], dist: 0.9, az: 0.4, el: 0.45 },
   pipe: { target: [0, 0, 1.1], dist: 1.9, az: -0.6, el: 0.15 },
 };
 export const COLOUR: Record<Colour, { css: string; word: string }> = {
@@ -26,7 +27,7 @@ const NAMES = { A: 'shoulder pan', B: 'shoulder lift', C: 'elbow', D: 'wrist' };
 
 /** Plain words for one orientation's result. */
 export function describe(a: Attempt): string {
-  if (a.ok) return `reachable, cart at ${a.cartZ!.toFixed(3)} m, ${a.margin!.toFixed(0)}° from the nearest joint limit`;
+  if (a.ok) return `reachable, cart on ${a.station!.label}, ${a.margin!.toFixed(0)}° from the nearest joint limit`;
   const why = a.reason === 'distance' ? `distance: ${a.detail}` : a.reason === 'joint limit' ? `joint limit: ${a.detail}` : a.reason === 'angle' ? `angle: ${a.detail} (limit ${ANGLE_TOL}°)` : `collision: ${a.detail}`;
   return why;
 }
@@ -49,7 +50,9 @@ export const reachScene: Scene = {
     const dot = (c: Colour) => `<span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${COLOUR[c].css};vertical-align:-1px"></span>`;
     const chip = (t: Target) => `<button data-t="${t.id}" title="${t.label}: ${COLOUR[t.colour].word}" style="min-width:42px;padding:6px 4px;border:2px solid ${COLOUR[t.colour].css};border-radius:8px;background:${COLOUR[t.colour].css}33">${t.id}</button>`;
     const reds = results.filter((t) => t.colour === 'red'), ambers = results.filter((t) => t.colour === 'amber');
-    const reasonRows = reds.map((t) => `<tr><td>${t.id}</td><td>${describe(t.direct)}</td><td>${describe(t.rolled)}</td></tr>`).join('');
+    const reasonRows = reds.map((t) => `<tr><td>${t.id}</td><td>${describe(t.direct)}</td><td>${describe(t.rolled)}</td><td>${t.other.ok ? 'works: ' : ''}${describe(t.other)}</td></tr>`).join('');
+    const best = (t: Target) => (t.colour === 'green' ? t.direct : t.colour === 'amber' ? t.rolled : null);
+    const fullRows = (k: 'hole' | 'pod') => results.filter((t) => t.kind === k).map((t) => { const b = best(t); return `<tr><td>${dot(t.colour)} ${t.id}</td><td>${b ? `${t.colour === 'green' ? 'as is' : 'rolled 180°'}: ${b.station!.label}, ${b.margin!.toFixed(0)}° joint margin` : `${t.direct.reason} ${t.direct.detail} / rolled 180°: ${t.rolled.reason} ${t.rolled.detail}`}</td></tr>`; }).join('');
     const near = (k: 'holes' | 'pods') => results.filter((t) => t.kind === (k === 'holes' ? 'hole' : 'pod') && t.colour === 'red' && (t.direct.looseErr !== undefined || t.rolled.looseErr !== undefined));
     const passRows = passes.map((p) => `<tr><td>${p.run}</td><td>${p.roll}°</td><td>${p.bracket ? `touches (${(-p.bracketWorst * 1000).toFixed(0)} mm)` : 'clear'}</td><td>${p.pipe ? 'touches' : 'clear'}</td></tr>`).join('');
     const row = (n: string, s: typeof sum.holes) => `<tr><td>${n}</td><td>${dot('green')} ${s.green}</td><td>${dot('amber')} ${s.amber}</td><td>${dot('red')} ${s.red}</td><td>${s.total}</td></tr>`;
@@ -65,7 +68,7 @@ export const reachScene: Scene = {
     </section>
     <h2>Result</h2>
     <table><thead><tr><th></th><th>Green: as is</th><th>Amber: after the roll</th><th>Red: no</th><th>Total</th></tr></thead><tbody>${row('Holes', sum.holes)}${row('Pods', sum.pods)}</tbody></table>
-    <p class="hint">${sum.holes.green + sum.holes.amber === 0 ? 'No hole can be reached, with or without the roll.' : `Holes that need the roll: ${ambers.filter((t) => t.kind === 'hole').map((t) => t.id).join(', ') || 'none'}.`} ${sum.pods.amber ? `Pods that need the roll: ${ambers.filter((t) => t.kind === 'pod').map((t) => t.id).join(', ')}.` : 'No pod needs the roll.'} A hand that could reach the point but not point along the part's axis within ${ANGLE_TOL}° counts as red: ${near('holes').length} holes and ${near('pods').length} pods get their point reached that way.</p>
+    <p class="hint">${sum.holes.green + sum.holes.amber === 0 ? 'No hole can be reached, with or without the roll.' : `Holes that need the roll: ${ambers.filter((t) => t.kind === 'hole').map((t) => t.id).join(', ') || 'none'}.`} ${sum.pods.amber ? `Pods that need the roll: ${ambers.filter((t) => t.kind === 'pod').map((t) => t.id).join(', ')}.` : 'No pod needs the roll.'} A hand that could reach the point but not point along the part's axis within ${ANGLE_TOL}° counts as red: ${near('holes').length} holes and ${near('pods').length} pods get their point reached that way. ${results.filter((t) => t.colour === 'red' && t.other.ok).length} of the red parts would be reachable at another roll angle (see the list below).</p>
     <h2>Pick a part (colour = result)</h2>
     <p class="hint">Holes, numbered from the bottom, three to a level:</p>
     <div class="row wrap" id="r-holes">${results.filter((t) => t.kind === 'hole').map(chip).join('')}</div>
@@ -82,32 +85,34 @@ export const reachScene: Scene = {
       <button class="big grow" data-view="pipe">Pipe</button>
       <button class="big grow" data-view="tray">Seedling tray</button>
     </div>
+    <details class="card"><summary>Best result for every hole</summary><table class="runs"><tbody>${fullRows('hole')}</tbody></table></details>
+    <details class="card"><summary>Best result for every pod</summary><table class="runs"><tbody>${fullRows('pod')}</tbody></table></details>
     <details class="card"><summary>Why each red part is red</summary>
-      <table class="runs"><thead><tr><th>Part</th><th>Cart as is</th><th>Cart rolled 180°</th></tr></thead><tbody>${reasonRows}</tbody></table>
+      <table class="runs"><thead><tr><th>Part</th><th>Cart as is (best station)</th><th>Cart rolled 180° (best station)</th><th>Any other roll (30° steps)</th></tr></thead><tbody>${reasonRows}</tbody></table>
     </details>
-    <details class="card"><summary>Can the cart pass the bracket and the pipe on the track's top and bottom run?</summary>
+    <details class="card"><summary>Can the cart pass the bracket that joins the spine to the track (on the top and bottom run), and the pipe?</summary>
       <table class="runs"><thead><tr><th>Run</th><th>Roll</th><th>Spine bracket</th><th>Pipe</th></tr></thead><tbody>${passRows}</tbody></table>
-      <p class="hint">The cart is driven along the straight part of the run (arm folded) with the hand rolled about the track pipe's own axis by the angle shown; "touches" is the deepest overlap in mm. 180° is the roll the brief asks about.</p>
+      <p class="hint">The cart is driven along the straight part of the run (arm folded) with the cart rolled about the track pipe's own axis by the angle shown; "touches" is the deepest overlap in mm. On the legs (where the cart stands for the tests above) there is no bracket in the way, only on the runs.</p>
     </details>
     <details class="card">
       <summary>About this scene</summary>
-      <p class="hint">The unit, track, cart (one sleeve on the −y leg), straight 90° pod holder and tank are those of the Transplant scene. The 24 holes are the unit's own planting-site rule (cad/unit_v1_assembly.py): three columns 120° apart round the growing pipe, every other level turned 60°, 130 mm between levels, the lowest at ${HOLES[0].z.toFixed(3)} m, eight levels (the rule gives nine with today's pipe top; the ninth, at 1.694 m, is left out to make 24). Each has its collar, seat, plug holder and plug (cad/pipe_collar.py). The 16 pods stand in a 4 × 4 tray at 45 mm pitch inside the tank (as in the Pod grab scene), under an opening in the lid.</p>
-      <p class="hint">The test tries the cart at every height of the leg's straight part (${0.63} to ${1.67} m, 5 mm steps), as is and rolled 180° about the leg's own axis (the arm then stands on the far side of the leg, pointing away from the pipe). A height passes when the arm can put the hand on the cap with the hand within ${ANGLE_TOL}° of the part's axis, also at a waiting point 60 mm out along the axis, inside all joint limits, with no contact of arm, cart or the part itself against anything. The SO-101 can point its hand only along a plane through its base axis, which is why the cart height matters.</p>
+      <p class="hint">The unit, track, cart (one sleeve on the −y leg), straight 90° pod holder and tank are those of the Transplant scene. The 24 holes are the unit's own planting-site rule (cad/unit_v1_assembly.py): three columns 120° apart round the growing pipe, every other level turned 60°, 130 mm between levels, the lowest at ${HOLES[0].z.toFixed(3)} m, eight levels (the rule gives nine with today's pipe top; the ninth, at 1.694 m, is left out to make 24). Each has its collar, seat, plug holder and plug (cad/pipe_collar.py). The 16 pods stand in a 4 × 4 tray (45 mm between columns, 38 mm between rows) flat on two rails in the front half of the tank, under the lid, and are reached through 16 pick holes (34 mm, silicone collar) in the lid, exactly as in the Pod grab scene; the sloping pod store with its 6 pick holes is there too, and the central pipe is the spine.</p>
+      <p class="hint">The test tries the cart at every height of the straight part of both legs (leg A, the one it stands on, and leg B; ${0.63} to ${1.67} m, 5 mm steps) and along the straight part of the bottom and top run (5 mm steps), as is and rolled 180° about the pipe's own axis (the arm then stands on the other side of the pipe, pointing the other way); the best station is kept for each part. Other roll angles (30° steps) are tried too and listed under the red parts, but do not change the colour. A height passes when the arm can put the hand on the cap with the hand within ${ANGLE_TOL}° of the part's axis, also at a waiting point 60 mm out along the axis, inside all joint limits, with no contact of arm, cart or the part itself against anything. The SO-101 can point its hand only along a plane through its base axis, which is why the cart height matters.</p>
     </details>
     <p id="r-msg" class="hint"></p>
 `;
     const $ = <T extends HTMLElement>(id: string) => panel.querySelector<T>('#' + id)!;
     let sel: Target | null = null, showRolled = false;
     const show = () => {
-      let text = 'Nothing picked: arm folded', cart = '', pose: { rolled: boolean; z: number; j: Attempt['joints'] } = { rolled: false, z: 0.63, j: { A: 0, B: 0, C: 0, D: 0, E: 0 } };
+      let text = 'Nothing picked: arm folded', cart = '', pose: { st: Station; z: number; j: Attempt["joints"] } = { st: refStation(0.63), z: 0.63, j: { A: 0, B: 0, C: 0, D: 0, E: 0 } };
       if (sel) {
         const a = showRolled ? sel.rolled : sel.direct;
         text = `${sel.label}: ${COLOUR[sel.colour].word}`;
-        if (a.ok) { pose = { rolled: showRolled, z: a.cartZ!, j: a.joints }; cart = `${a.cartZ!.toFixed(3)} m, ${showRolled ? 'rolled 180°' : 'as is'}`;
+        if (a.ok) { pose = { st: a.station!, z: a.station!.at, j: a.joints }; cart = a.station!.label;
           const j = a.joints!; $('r-text').textContent = `${sel.label}. ${describe(a)}. Joints: ${(['A', 'B', 'C', 'D'] as const).map((k) => `${NAMES[k]} ${j[k].toFixed(0)}°`).join(', ')}.`; }
         else { cart = 'arm folded'; $('r-text').textContent = `${sel.label}. ${showRolled ? 'Rolled 180°' : 'As is'}: ${describe(a)}.${a.looseErr !== undefined ? ` (The point can be reached with the hand ${a.looseErr.toFixed(0)}° off the axis.)` : ''}`; }
       } else $('r-text').textContent = 'Pick a hole or a pod. Green parts the arm reaches as the cart is, amber ones only after the cart is rolled 180° about its leg of the track, red ones not at all.';
-      rig.pose(pose.rolled, pose.z, pose.j ?? null, JAW_CAP_DEG);
+      rig.pose(pose.st, pose.j ?? null, JAW_CAP_DEG);
       const { depth, names } = worstContact(model, data);
       $('r-now').textContent = text; $('r-cart').textContent = cart || `${pose.z.toFixed(2)} m, as is`;
       const hit = $('r-hit'); hit.textContent = depth < 0 ? `FAIL: ${names} touched (${(-depth * 1000).toFixed(1)} mm)` : 'none (arm, cart and the part against pipe, collars, other plugs and pods, tank, track)'; hit.style.color = depth < 0 ? '#c0392b' : '';

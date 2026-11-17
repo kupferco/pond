@@ -583,14 +583,15 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
 
 // Reach test scene
 {
-  const { HOLES, PODS, reachMjcf, seatCapTop, podCapTop, cartPose } = await import('../src/reach/layout.ts');
+  const { HOLES, PODS, reachMjcf, seatCapTop, podCapTop } = await import('../src/reach/layout.ts');
+  const { refStation, stations, toRef } = await import('../src/reach/station.ts');
   const { runReach, summary, Rig, ANGLE_TOL } = await import('../src/reach/test.ts');
   const { checkPass } = await import('../src/reach/pass.ts');
   const { GRIP_TX, GRIP_TZ } = await import('../src/transplant/layout.ts');
   const rm = mj.MjModel.from_xml_string(reachMjcf()), rd = new mj.MjData(rm), rig = new Rig(mj, rm, rd);
   check('reach: 24 holes (3 columns 120 degrees apart, 8 levels 130 mm apart, every other level turned 60) and 16 pods (4 x 4)', HOLES.length === 24 && PODS.length === 16 && new Set(HOLES.map((h) => h.z.toFixed(3))).size === 8 && Math.abs(HOLES[3].z - HOLES[0].z - 0.13) < 1e-9 && Math.abs(HOLES[3].cadDeg - HOLES[0].cadDeg - 60) < 1e-9);
   check('reach: every hole has its plug and every pod its body in the model', HOLES.every((h) => rm.body(`plug${h.n}`).id > 0 && rm.body(`collar${h.n}`).id > 0) && PODS.every((p) => rm.body(`pod${p.n}`).id > 0));
-  rig.pose(false, 0.63, { A: 0, B: 0, C: 0, D: 0, E: 0 });
+  rig.pose(refStation(0.63), { A: 0, B: 0, C: 0, D: 0, E: 0 });
   check('reach: the folded arm at the lowest cart stop touches nothing (no contacts)', podContact(rm, rd).depth === 0, podContact(rm, rd).names);
   const res = runReach(mj, rm, rd), sm = summary(res);
   check('reach: every hole and pod has a colour, counts add up', res.length === 40 && sm.holes.green + sm.holes.amber + sm.holes.red === 24 && sm.pods.green + sm.pods.amber + sm.pods.red === 16);
@@ -598,7 +599,8 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   let bad = '';
   for (const t of res) for (const [rolled, a] of [[false, t.direct], [true, t.rolled]] as const) {
     if (!a.ok) continue;
-    rig.pose(rolled, a.cartZ!, a.joints!, 30);
+    rig.pose(a.station!, a.joints!, 30);
+    if (a.station!.roll !== (rolled ? 180 : 0)) bad += ` ${t.id}: wrong roll`;
     const hid = rm.body('hand').id, R = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((k) => rd.xmat[9 * hid + k]);
     const tool = [0, 1, 2].map((r) => rd.xpos[3 * hid + r] + R[3 * r] * GRIP_TX + R[3 * r + 2] * GRIP_TZ);
     const miss = Math.hypot(tool[0] - t.pos[0], tool[1] - t.pos[1], tool[2] - t.pos[2]);
@@ -608,9 +610,12 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('reach: for every green or amber part the posed hand really is on the cap-top point (rolled poses too)', bad === '', bad);
   check('reach: amber only when the roll works and the plain pose does not', res.every((t) => (t.colour === 'amber') === (!t.direct.ok && t.rolled.ok)));
   check('reach: the angle tolerance is a few degrees', ANGLE_TOL > 0 && ANGLE_TOL <= 10);
-  const cp = cartPose(true, 1), c0 = cartPose(false, 1);
-  check('reach: rolling 180 degrees about the leg keeps the sleeve on the leg (leg axis x = 0.06, y = -0.29 is the mid point of the two cart origins)', Math.abs((cp.pos[0] + c0.pos[0]) / 2 - 0.06) < 1e-9 && Math.abs((cp.pos[1] + c0.pos[1]) / 2 + 0.29) < 1e-9);
-  check('reach: hole cap-top points are on the 45 degree seat axes', HOLES.every((h) => { const p = seatCapTop(h); return Math.hypot(p[0], p[1]) > 0.05 && p[2] > h.z; }) && podCapTop(PODS[0])[2] < 0.304);
+  { const A0 = stations('leg A', 0)[10], A180 = stations('leg A', 180)[10], B0 = stations('leg B', 0)[10], B180 = stations('leg B', 180)[10];
+    check('reach: rolling 180 degrees about leg A keeps the sleeve on leg A (leg axis x = 0.06, y = -0.29 is the mid point of the two cart origins); leg B is the mirror on y = +0.29', Math.abs((A0.pos[0] + A180.pos[0]) / 2 - 0.06) < 1e-9 && Math.abs((A0.pos[1] + A180.pos[1]) / 2 + 0.29) < 1e-9 && Math.abs((B0.pos[1] + B180.pos[1]) / 2 - 0.29) < 1e-9);
+    const p: [number, number, number] = [0.1, -0.2, 0.5], q = toRef(A180, p);
+    check('reach: a target seen from a rolled station and put back by the roll is where it was', Math.abs(q[0] - (2 * 0.06 - p[0])) < 1e-9 && Math.abs(q[1] - (2 * (-0.23 - 0.06) - p[1])) < 1e-9);
+    check('reach: stations cover both legs and both runs, 209 heights on a leg', stations('leg A', 0).length === 209 && stations('leg B', 180).length === 209 && stations('bottom run', 0).length > 20 && stations('top run', 180).length > 20); }
+  check('reach: hole cap-top points are on the 45 degree seat axes', HOLES.every((h) => { const p = seatCapTop(h); return Math.hypot(p[0], p[1]) > 0.05 && p[2] > h.z; }) && podCapTop(PODS[0])[2] < 0.304 && PODS.every((p) => p.x > 0 && p.y < 0));   // the tray is in the tank's front (+x) half, on the leg-A side
   const ps = checkPass(mj, rm, rd, [0, 180]);
   check('reach: the bracket / pipe pass check runs for the top and bottom run, as is and rolled', ps.length === 4 && ps.every((p) => p.steps > 10));
   rd.delete(); rm.delete();

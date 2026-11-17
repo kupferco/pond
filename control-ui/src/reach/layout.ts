@@ -1,5 +1,5 @@
-// Reach test scene layout: the Transplant scene's unit (ONE track joined to the spine, the cart riding its -y leg with one sleeve, the straight 90-degree pod holder, the tank with the seedling tray
-// inside it) with the central pipe filled with ALL 24 planting holes (each with its collar, seat, plug holder and plug) and the seedling tray filled with all 16 pods (4 x 4, as in the Pod grab scene).
+// Reach test scene layout: the Transplant scene's unit (ONE track joined to the spine, the cart riding its -y leg with one sleeve, the straight 90-degree pod holder) in the tank of the Pod grab scene (podgrab/layout.ts:
+// the 4 x 4 seedling tray flat under the lid in the FRONT half of the tank, reached through 16 pick holes in the lid with silicone collars, and the sloping pod store with its 6 lid pick holes) with the central pipe filled with ALL 24 planting holes (each with its collar, seat, plug holder and plug) and the seedling tray filled with all 16 pods (4 x 4, as in the Pod grab scene).
 //
 // Where the 24 holes come from: cad/unit_v1_assembly.py "pod_sites" (the unit's own site rule, kept in unit_v3_dimensioned.py's geometry): THREE columns 120 degrees apart round the growing pipe, every other level
 // turned 60 degrees (a staggered spiral), a vertical pitch of 130 mm, the lowest at 100 mm above the pipe's lower end (z0 = tank 300 + 254 = 554 mm, so z = 654 mm). The CAD rule would give nine levels (27 sites)
@@ -7,13 +7,11 @@
 // (world x = -CAD y, world y = CAD x), so the CAD azimuth a is world azimuth a + 90 degrees. Collar, hole, seat, plug holder and plug are those of cad/pipe_collar.py as in the Transplant scene (layout.ts).
 import { armMjcf } from '../model.ts';
 import {
-  BORE_R, CAP_R, CAP_T, CELL_H, CELL_RIN, DRILL_R, HOLDER_FLOOR_X, LID, OBST, P0, PIPE_RP, PIPE_TOP, PIPE_WALL, PLUG_BODY_L, PLUG_BODY_R, POD_BODY_L, POD_BODY_R, RECESS_R, RECESS_T, S, SHELF_T, SHELF_Z,
-  SOCKET_R, TANK_L, TANK_W, TRAY_T, TRAY_Z0, U_CAP, U_FACE, VIS, WALL, X_TOP, XB, XT, YC, GAP, SIDE, LEG, ZH, ZP, cartGeoms, f, quatZ, rgba, track, tube, type V3,
+  BORE_R, CAP_R, CAP_T, DRILL_R, HOLDER_FLOOR_X, LID, OBST, P0, PIPE_RP, PIPE_TOP, PIPE_WALL, PLUG_BODY_L, PLUG_BODY_R, POD_BODY_L, POD_BODY_R, RECESS_R, RECESS_T, S, SHELF_T, SHELF_Z,
+  SOCKET_R, TANK_L, TANK_W, U_CAP, U_FACE, VIS, WALL, X_TOP, XB, XT, YC, GAP, SIDE, LEG, ZH, ZP, cartGeoms, f, quatZ, rgba, track, tube, type V3,
 } from '../transplant/layout.ts';
 
 const mm = (v: number) => v / 1000;
-const PITCH_MM = 45;
-export const TRAY_PITCH = mm(PITCH_MM);
 
 // --- the 24 holes
 export const LEVELS = 8, COLS = 3, Z_PITCH = 0.13, Z_FIRST = 0.3 + 0.254 + 0.1;
@@ -29,24 +27,24 @@ export const seatDir = (h: HoleSpec): V3 => rotZ(h.psi, [S, 0, S]);
 export const seatCapTop = (h: HoleSpec): V3 => { const p0 = rotZ(h.psi, [P0Local[0], 0, 0]), d = seatDir(h), u = U_CAP + CAP_T; return [p0[0] + d[0] * u, p0[1] + d[1] * u, h.z + d[2] * u]; };
 const P0Local: V3 = [PIPE_RP - mm(1.5), 0, 0];
 
-// --- the seedling tray: 4 x 4 pods at 45 mm pitch inside the tank (Pod grab: tray 190 wide, 4 x 45 mm cells), under an opening in the lid. Rows along world x (into the tank), columns along y.
-export const TRAY_CX = -0.11, TRAY_N = 4;
-export const TRAY_HALF = 0.0835;
+// --- the seedling tray, as in the Pod grab scene (podgrab/layout.ts), turned into this scene's frame (Pod grab x = along the tank, y front (-) to back; here world y = Pod grab x and world x = -Pod grab y, so the tank's FRONT is +x,
+// the side the track stands on): 4 x 4 cells, 45 mm between columns (along y), 38 mm between rows (along x), tray plate 190 x 370 mm, flat on two rails 200 mm over the tank floor, in the front half of the tank, centred at Pod grab (-0.24, -0.098).
+export const TRAY_N = 4, TRAY_CAD_CX = -0.24, TRAY_CAD_CY = -0.098, TRAY_COL_PITCH = 0.045, TRAY_ROW_PITCH = 0.038;
+export const TRAY_HX = 0.095, TRAY_HY = 0.185;      // half size of the plate in Pod grab x and y
+export const TRAY_Z0 = 0.2, TRAY_T = 0.004;         // plate 200 .. 204 mm (Pod grab values; the Transplant scene had it 40 mm higher)
+export const TRAY_TOP = TRAY_Z0 + TRAY_T;
+export const HOLE_HALF = 0.017, COLLAR_H = 0.004, COLLAR_IN = 0.017;   // lid pick holes (34 mm) and their silicone collars
+export const CELL_R = 0.016, CELL_HT = 0.016;                          // silicone collar round a pod in the tray
 export interface PodSpec { id: string; n: number; row: number; col: number; x: number; y: number }
 export const PODS: PodSpec[] = [];
-for (let r = 0; r < TRAY_N; r++) for (let c = 0; c < TRAY_N; c++) PODS.push({ id: `P${PODS.length + 1}`, n: PODS.length + 1, row: r + 1, col: c + 1, x: TRAY_CX + (r - 1.5) * TRAY_PITCH, y: YC + (c - 1.5) * TRAY_PITCH });
-export const TRAY_TOP = TRAY_Z0 + TRAY_T;
+for (let r = 0; r < TRAY_N; r++) for (let c = 0; c < TRAY_N; c++) PODS.push({ id: `P${PODS.length + 1}`, n: PODS.length + 1, row: r + 1, col: c + 1, x: -(TRAY_CAD_CY + (r - 1.5) * TRAY_ROW_PITCH), y: TRAY_CAD_CX + (c - 1.5) * TRAY_COL_PITCH });
 export const podCapTop = (p: PodSpec): V3 => [p.x, p.y, TRAY_TOP + POD_BODY_L + CAP_T + 0.0003];
 
-// --- cart: heights it can ride to on the straight part of the leg (below 0.63 m the sleeve touches the lower corner, above 1.67 m the upper one), and the 180-degree roll about the leg's own axis
+// --- the pod store (Pod grab: 6 rows 35 mm apart from x = 70 mm, channels sloping DOWN 12 degrees towards the pick line at the front, floor 205 mm at the pick line, one 34 mm pick hole in the lid over each row)
+export const STORE_ROWS = 6, ROW_PITCH = 0.035, ROW_X0 = 0.07 + ROW_PITCH / 2, SLOPE = 12 * Math.PI / 180, STORE_Z0 = 0.205, STORE_CAD_Y0 = -0.145, STORE_LEN = 0.33, RAIL_H = 0.0415;
+
+// --- cart: heights it can ride to on the straight part of a leg (below 0.63 m the sleeve touches the lower corner, above 1.67 m the upper one)
 export const CART_MIN = 0.63, CART_MAX = 1.67, CART_STEP = 0.005;
-export const LEG_Y = SIDE * LEG;
-/** World point of the rolled cart's counterpart: turning the cart 180 degrees about the leg's own axis (x = XT, y = LEG_Y, vertical) is the same, for the arm, as turning the TARGET the other way. */
-export const rollPoint = (p: V3): V3 => [2 * XT - p[0], 2 * LEG_Y - p[1], p[2]];
-export const rollDir = (d: V3): V3 => [-d[0], -d[1], d[2]];
-/** Pose of the cart body: origin (m) and quaternion (w x y z). Rolled: 180 degrees about the vertical axis through the leg. */
-export const cartPose = (rolled: boolean, z: number): { pos: V3; quat: [number, number, number, number] } =>
-  rolled ? { pos: [XT, 2 * LEG_Y - YC, z], quat: [0, 0, 0, 1] } : { pos: [XT, YC, z], quat: [1, 0, 0, 0] };
 
 const DARK = rgba(0.3, 0.36, 0.45);
 const GREY = rgba(0.62, 0.66, 0.7);
@@ -94,9 +92,21 @@ function pipeAndCollars(): string[] {
   return out;
 }
 
-/** The tank as in the Transplant scene, with the 4 x 4 seedling tray (inside, on two rails over the 155 mm shelf, under a larger opening in the lid). */
+/** A flat plate (z0..z1) over x0..x1 x y0..y1 with square holes (centre, half side) cut out, as boxes. */
+function plateWithHoles(x0: number, x1: number, y0: number, y1: number, z0: number, z1: number, holes: [number, number][], h: number, c: string, add: (s: string) => void) {
+  const box = (xa: number, xb: number, ya: number, yb: number) => { if (xb - xa > 1e-6 && yb - ya > 1e-6) add(`<geom type="box" pos="${f((xa + xb) / 2)} ${f((ya + yb) / 2)} ${f((z0 + z1) / 2)}" size="${f((xb - xa) / 2)} ${f((yb - ya) / 2)} ${f((z1 - z0) / 2)}" ${OBST} ${c}/>`); };
+  const ys = [...new Set([y0, y1, ...holes.flatMap(([, y]) => [y - h, y + h])])].sort((a, b) => a - b);
+  for (let i = 0; i + 1 < ys.length; i++) {
+    const ya = ys[i], yb = ys[i + 1], mid = (ya + yb) / 2;
+    const cuts = holes.filter(([, y]) => Math.abs(mid - y) < h).map(([x]) => [x - h, x + h]).sort((a, b) => a[0] - b[0]);
+    let xa = x0; for (const [cx0, cx1] of cuts) { box(xa, cx0, ya, yb); xa = cx1; } box(xa, x1, ya, yb);
+  }
+}
+
+/** The tank as in the Pod grab scene: 700 (along y) x 400 (along x) x 300, hollow (4 mm walls and floor), the 155 mm shelf, a 4 mm lid with a 34 mm pick hole and silicone collar over every one of the 16 tray cells and over every store row,
+ *  the tray flat on two rails, and the sloping store (floor and a guide wall between rows). */
 function tank(): string[] {
-  const out: string[] = [], hx = TANK_W / 2, hy = TANK_L / 2, glass = rgba(0.75, 0.77, 0.82, 0.35), lid = rgba(0.6, 0.62, 0.68), green = rgba(0.2, 0.62, 0.38);
+  const out: string[] = [], hx = TANK_W / 2, hy = TANK_L / 2, glass = rgba(0.75, 0.77, 0.82, 0.35), lid = rgba(0.6, 0.62, 0.68), green = rgba(0.2, 0.62, 0.38), silicone = rgba(0.95, 0.55, 0.2), steel = rgba(0.42, 0.44, 0.5);
   const box = (x0: number, x1: number, y0: number, y1: number, z0: number, z1: number, c: string) =>
     out.push(`<geom type="box" pos="${f((x0 + x1) / 2)} ${f((y0 + y1) / 2)} ${f((z0 + z1) / 2)}" size="${f((x1 - x0) / 2)} ${f((y1 - y0) / 2)} ${f((z1 - z0) / 2)}" ${OBST} ${c}/>`);
   const zl = LID - 0.004;
@@ -104,12 +114,20 @@ function tank(): string[] {
   box(-hx, -hx + WALL, -hy, hy, WALL, zl, glass); box(hx - WALL, hx, -hy, hy, WALL, zl, glass);
   box(-hx + WALL, hx - WALL, -hy, -hy + WALL, WALL, zl, glass); box(-hx + WALL, hx - WALL, hy - WALL, hy, WALL, zl, glass);
   box(-hx + WALL, hx - WALL, -hy + WALL, hy - WALL, SHELF_Z, SHELF_Z + SHELF_T, glass);
-  const ox0 = -hx + WALL + 0.001, ox1 = TRAY_CX + 0.0825 + 0.002, oy0 = YC - 0.095, oy1 = YC + 0.095;   // the lid opening over the tray
-  box(-hx, ox0, -hy, hy, zl, LID, lid); box(ox1, hx, -hy, hy, zl, LID, lid);
-  box(ox0, ox1, -hy, oy0, zl, LID, lid); box(ox0, ox1, oy1, hy, zl, LID, lid);
-  box(TRAY_CX - TRAY_HALF, TRAY_CX + TRAY_HALF, YC - 0.095, YC + 0.095, TRAY_Z0, TRAY_TOP, green);
-  for (const sx of [-1, 1]) box(TRAY_CX + sx * (TRAY_HALF - 0.01) - 0.004, TRAY_CX + sx * (TRAY_HALF - 0.01) + 0.004, YC - 0.095, YC + 0.095, SHELF_Z + SHELF_T, TRAY_Z0, green);
-  for (const p of PODS) out.push(...tube([p.x, p.y, TRAY_TOP], [0, 0, 1], 0, CELL_H, CELL_RIN, CELL_RIN + mm(3), 12, `${OBST} ${rgba(0.95, 0.55, 0.2)}`));
+  // lid: pick holes over the 16 cells and over each store row (over position 0 of the row: the channel floor's pick point, a little further out along the slope's tilt, see podgrab pickHoleY)
+  const pickX = -(STORE_CAD_Y0 - (zl + 0.002 - (STORE_Z0 + 0.02)) * Math.tan(SLOPE));
+  const holes: [number, number][] = [...PODS.map((p) => [p.x, p.y] as [number, number]), ...Array.from({ length: STORE_ROWS }, (_, r) => [pickX, ROW_X0 + r * ROW_PITCH] as [number, number])];
+  plateWithHoles(-hx, hx, -hy, hy, zl, LID, holes, HOLE_HALF, lid, (g) => out.push(g));
+  for (const [x, y] of holes) out.push(...tube([x, y, LID], [0, 0, 1], 0, COLLAR_H, COLLAR_IN, COLLAR_IN + 0.0005, 8, `${OBST} ${silicone}`));
+  // the tray: a thin plate on two rails over the shelf, the cells' silicone collars
+  box(-TRAY_HY, TRAY_HY, TRAY_CAD_CX - TRAY_HX, TRAY_CAD_CX + TRAY_HX, TRAY_Z0, TRAY_TOP, green);
+  for (const sy of [-1, 1]) box(-TRAY_HY, TRAY_HY, TRAY_CAD_CX + sy * (TRAY_HX - 0.01) - 0.01, TRAY_CAD_CX + sy * (TRAY_HX - 0.01) + 0.01, SHELF_Z + SHELF_T, TRAY_Z0, steel);
+  for (const p of PODS) out.push(...tube([p.x, p.y, TRAY_TOP], [0, 0, 1], 0, CELL_HT, CELL_R, CELL_R + mm(3), 12, `${OBST} ${silicone}`));
+  // the store: per row a floor and, on the boundaries, a guide wall, in the tilted frame (slope runs to -x and up; the pick line at x = +0.145)
+  const sT = Math.sin(SLOPE), cT = Math.cos(SLOPE), ax = `xyaxes="${f(-cT)} 0 ${f(sT)} 0 -1 0"`;
+  const at = (s: number, h: number): V3 => [-STORE_CAD_Y0 - s * cT + h * sT, 0, STORE_Z0 + s * sT + h * cT];
+  for (let r = 0; r < STORE_ROWS; r++) { const p = at(STORE_LEN / 2 - 0.03, -0.002); out.push(`<geom type="box" pos="${f(p[0])} ${f(ROW_X0 + r * ROW_PITCH)} ${f(p[2])}" size="${f(STORE_LEN / 2)} ${f(ROW_PITCH / 2 - 0.002)} 0.002" ${ax} ${OBST} ${steel}/>`); }
+  for (let r = 0; r <= STORE_ROWS; r++) { const p = at(STORE_LEN / 2 - 0.03, RAIL_H / 2), y = ROW_X0 + (r - 0.5) * ROW_PITCH; out.push(`<geom type="box" pos="${f(p[0])} ${f(y)} ${f(p[2])}" size="${f(STORE_LEN / 2)} 0.002 ${f(RAIL_H / 2)}" ${ax} ${OBST} ${steel}/>`); }
   return out;
 }
 
