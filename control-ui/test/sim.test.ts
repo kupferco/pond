@@ -54,7 +54,7 @@ let msg = '';
 try { await cmd.setMode('real'); } catch (e) { msg = (e as Error).message; }
 check('real mode refuses, stays on sim', msg.includes('not connected') && cmd.mode === 'sim');
 
-check('eight scenes, two groups, Transplant seedling under the Tests', SCENE_INFOS.length === 8 && SCENE_INFOS.filter((s) => s.group === 'Tests').length === 6 && SCENE_INFOS.some((s) => s.id === 'transplant' && s.group === 'Tests'));
+check('nine scenes, two groups, Transplant seedling and Reach test under the Tests', SCENE_INFOS.length === 9 && SCENE_INFOS.filter((s) => s.group === 'Tests').length === 7 && SCENE_INFOS.some((s) => s.id === 'transplant' && s.group === 'Tests') && SCENE_INFOS.some((s) => s.id === 'reach-test' && s.group === 'Tests'));
 check('scene default is arm', resolveSceneId('', null) === 'arm');
 check('scene URL wins over stored', resolveSceneId('?scene=cart', 'pillar') === 'cart');
 check('stored scene used without URL', resolveSceneId('', 'pillar') === 'pillar');
@@ -579,6 +579,41 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('transplant: pod holder is where the CAD puts it (not lowered) and the start is the seedling tray height', CUP_DROP === 0 && CART_Z0 < CART_Z1);
   check('transplant: pod holder is straight (90 degrees to the plate: cup axis horizontal) and the tray stands inside the tank, under the lid', D_CUP[2] === 0 && D_CUP[0] === -1 && TRAY_CAP_TOP[2] < LID_TOP);
   td.delete(); tm.delete();
+}
+
+// Reach test scene
+{
+  const { HOLES, PODS, reachMjcf, seatCapTop, podCapTop, cartPose } = await import('../src/reach/layout.ts');
+  const { runReach, summary, Rig, ANGLE_TOL } = await import('../src/reach/test.ts');
+  const { checkPass } = await import('../src/reach/pass.ts');
+  const { GRIP_TX, GRIP_TZ } = await import('../src/transplant/layout.ts');
+  const rm = mj.MjModel.from_xml_string(reachMjcf()), rd = new mj.MjData(rm), rig = new Rig(mj, rm, rd);
+  check('reach: 24 holes (3 columns 120 degrees apart, 8 levels 130 mm apart, every other level turned 60) and 16 pods (4 x 4)', HOLES.length === 24 && PODS.length === 16 && new Set(HOLES.map((h) => h.z.toFixed(3))).size === 8 && Math.abs(HOLES[3].z - HOLES[0].z - 0.13) < 1e-9 && Math.abs(HOLES[3].cadDeg - HOLES[0].cadDeg - 60) < 1e-9);
+  check('reach: every hole has its plug and every pod its body in the model', HOLES.every((h) => rm.body(`plug${h.n}`).id > 0 && rm.body(`collar${h.n}`).id > 0) && PODS.every((p) => rm.body(`pod${p.n}`).id > 0));
+  rig.pose(false, 0.63, { A: 0, B: 0, C: 0, D: 0, E: 0 });
+  check('reach: the folded arm at the lowest cart stop touches nothing (no contacts)', podContact(rm, rd).depth === 0, podContact(rm, rd).names);
+  const res = runReach(mj, rm, rd), sm = summary(res);
+  check('reach: every hole and pod has a colour, counts add up', res.length === 40 && sm.holes.green + sm.holes.amber + sm.holes.red === 24 && sm.pods.green + sm.pods.amber + sm.pods.red === 16);
+  check('reach: red parts say why', res.filter((t) => t.colour === 'red').every((t) => t.direct.reason && t.rolled.reason));
+  let bad = '';
+  for (const t of res) for (const [rolled, a] of [[false, t.direct], [true, t.rolled]] as const) {
+    if (!a.ok) continue;
+    rig.pose(rolled, a.cartZ!, a.joints!, 30);
+    const hid = rm.body('hand').id, R = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((k) => rd.xmat[9 * hid + k]);
+    const tool = [0, 1, 2].map((r) => rd.xpos[3 * hid + r] + R[3 * r] * GRIP_TX + R[3 * r + 2] * GRIP_TZ);
+    const miss = Math.hypot(tool[0] - t.pos[0], tool[1] - t.pos[1], tool[2] - t.pos[2]);
+    // the target's own geoms are not tested for contacts here (they are gripped), everything else must be clear
+    if (miss > 0.002) bad += ` ${t.id}${rolled ? 'r' : ''}: hand ${(miss * 1000).toFixed(1)} mm off`;
+  }
+  check('reach: for every green or amber part the posed hand really is on the cap-top point (rolled poses too)', bad === '', bad);
+  check('reach: amber only when the roll works and the plain pose does not', res.every((t) => (t.colour === 'amber') === (!t.direct.ok && t.rolled.ok)));
+  check('reach: the angle tolerance is a few degrees', ANGLE_TOL > 0 && ANGLE_TOL <= 10);
+  const cp = cartPose(true, 1), c0 = cartPose(false, 1);
+  check('reach: rolling 180 degrees about the leg keeps the sleeve on the leg (leg axis x = 0.06, y = -0.29 is the mid point of the two cart origins)', Math.abs((cp.pos[0] + c0.pos[0]) / 2 - 0.06) < 1e-9 && Math.abs((cp.pos[1] + c0.pos[1]) / 2 + 0.29) < 1e-9);
+  check('reach: hole cap-top points are on the 45 degree seat axes', HOLES.every((h) => { const p = seatCapTop(h); return Math.hypot(p[0], p[1]) > 0.05 && p[2] > h.z; }) && podCapTop(PODS[0])[2] < 0.304);
+  const ps = checkPass(mj, rm, rd, [0, 180]);
+  check('reach: the bracket / pipe pass check runs for the top and bottom run, as is and rolled', ps.length === 4 && ps.every((p) => p.steps > 10));
+  rd.delete(); rm.delete();
 }
 
 const t0 = performance.now(); run(5); const ms = performance.now() - t0;
