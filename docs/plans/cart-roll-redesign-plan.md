@@ -177,7 +177,7 @@ Parts list (item 11) and the 2D swing check can start now in parallel with step 
 ### Q1. Is the track tube 32 mm (as in the repo) or 16 mm (as in the draft sketch)?
 Context: the draft `cart_roll_option_a.py` uses a pipe radius of 8, but `hand_sleeve.py`, the track and the Transplant layout all use 32 mm OD. The wheel centre radius, the sleeve size and the roll ratio all follow from this.
 Assumed: 32 mm (the repo), and the draft's 8 mm radius is a sketch slip.
-Answer: _open_
+Answer: 32 mm, a standard PVC pipe easy to buy off the shelf in both the UK and Brazil. The draft's 8 mm radius is a sketch slip. The goal is the thinnest standard pipe that won't bend: work out the sag with the real span between supports and the cart's weight (allowing for plastic creep over time), and flag it if a standard 25 mm pipe would be stiff enough.
 
 ### Q2. May the sleeve be a three-lobe frame instead of a full ring, so the 120 mm pipe spacing stays?
 Context: a full ring around 38 mm wheels is about 122 mm across and the two hands are only 120 mm apart; a lobed frame fits but is less stiff and leaves the wheels less enclosed.
