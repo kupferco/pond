@@ -33,29 +33,28 @@ PLATE_Y0 = PLATE_Y1 - PLATE_T           # plate front face -56
 # Limit 1, hands: with the three-lobe sleeve only the two ball-cup lobes face the neighbour, NEIGHBOUR_REACH (about 34) each.
 #   Sleeve to sleeve needs 2 x 34 = 68, and a sleeve to the neighbour pipe 34 + 16 = 50. Both are below 120.
 #   A full ring of R61 would need 122 (does not fit), which is why the sleeve is a three-lobe frame (owner answer Q2).
-# Limit 2, the plate: it runs from the outer edge of pad B to the outer edge of pad C, 168 mm. Everything that sits on the plate
-#   in X is motor 28 + arm base 70 + motor 28 = 126 mm, plus 4 mm between parts and 4 mm to each plate end = 142 mm. Met with 26 to spare.
+# Limit 2, the plate: it runs from the outer edge of pad B to the outer edge of pad C, 168 mm. Pond #280: the drive and roll motors now sit
+#   in the sleeves, so the only thing on the plate in X is the 70 mm arm base (and the battery under it): 86 mm needed with gaps, 168 given.
 # The battery (70 x 50 x 70) is the same 70 x 70 footprint as the arm base, so it sits flat on the plate centre between
 #   the two motors and the arm base is bolted on top of it (Viber #109: stack plate | battery | arm; no shelf tongue).
 ARM_BASE_W = 70.0                       # SO-101 base footprint (given, 70 x 70 mm)
-MOTOR_R, MOTOR_L = 14.0, 55.0           # ASSUMED worm-gear motor placeholder, 28 x 55 mm
+MOTOR_R, MOTOR_L = 14.0, 55.0           # ASSUMED worm-gear motor placeholder, 28 x 55 mm. All 4 motors (2 drive, 2 roll) are inside the sleeves (cart_omni.py); none on the plate
 PART_GAP, END_GAP = 4.0, 4.0            # ASSUMED gaps: between plate parts, motor to plate end
-NEEDED_PLATE_W = 2 * (2 * MOTOR_R) + ARM_BASE_W + 2 * PART_GAP + 2 * END_GAP    # 142
+NEEDED_PLATE_W = ARM_BASE_W + 2 * END_GAP + 2 * PART_GAP    # 86: arm base and battery only (Pond #280: the motors moved into the sleeves)
 PIPE_SPACING = 120.0                    # pipe B to pipe C, centre to centre (two tanks touching, pipes 60 from edge)
 HX = PIPE_SPACING / 2                   # each pipe's x offset from the cart centre line
 PLATE_X0 = -HX + hs.PAD_X0              # -84: outer edge of pad B
 PLATE_X1 = HX - hs.PAD_X0               # +84: outer edge of pad C (mirror of PLATE_X0)
 assert abs(PLATE_X0 + PLATE_X1) < 1e-9, "plate must be symmetric about x = 0"
-assert PLATE_X1 - PLATE_X0 >= NEEDED_PLATE_W, "plate too narrow for the motors and the arm base"
+assert PLATE_X1 - PLATE_X0 >= NEEDED_PLATE_W, "plate too narrow for the arm base"
 assert PIPE_SPACING - 2 * NEIGHBOUR_REACH >= 10.0, "hands too close"
 assert PIPE_SPACING - NEIGHBOUR_REACH - PIPE_R >= 10.0, "sleeve too close to the neighbour pipe"
 PLATE_ZH = (hs.SLEEVE_L + 22.0) / 2     # ASSUMED half height, 11 mm margin beyond each sleeve end (146 mm for the 124 mm sleeve; as cart_sleeves.py)
 assert hs.PAD_HOLE_Z + hs.PAD_HOLE_D / 2 < PLATE_ZH, "pad holes must land on the plate"
 RIM, BOSS_HX, BOSS_HZ = 10.0, 18.0, 28.0   # ASSUMED open-frame details
-# Parts on the plate, left to right (x): motor B, arm, motor C
+# On the plate: the arm base and the battery under it, at the plate centre. (Pond #280: no motors on the plate any more.)
 ARM_X = 0.0                                                                      # arm base centre: the plate centre (symmetric, v4)
-MOTOR_XS = {-1: ARM_X - ARM_BASE_W / 2 - PART_GAP - MOTOR_R,                     # motor B centre, -53
-            1: ARM_X + ARM_BASE_W / 2 + PART_GAP + MOTOR_R}                      # +53: motor C centre (mirror)
+LEAD_SLOT_XS = (-53.0, 53.0)                                                     # cable-tie slot centres in the top band (sleeve motor leads), as before
 ARM_Z = 0.0
 ARM_BLOCK_HX = ARM_BASE_W / 2 + 2.0     # arm block on the plate, 2 mm beyond the arm base each side
 BATT = (70.0, 50.0, 70.0)               # ASSUMED: X, Y (out from plate), Z
@@ -88,9 +87,9 @@ CART_MASS_KG = 3.0                      # whole cart, plan section 3
 # y: the plate's front face is at PLATE_Y0 (-56), battery and arm stack on it. No hinge, so the lever is from the pipe axis.
 ROLL_LOAD_ITEMS = (("plate 168x146x6", 0.30, ARM_X, PLATE_Y0 + PLATE_T / 2),
                    ("battery 70x50x70 under the arm", 0.35, BATT_X, PLATE_Y0 - BATT[1] / 2),
-                   ("arm SO-101, folded pose", 0.80, ARM_X + 20.0, PLATE_Y0 - BATT[1] - 55.0),
-                   ("drive motor B", 0.15, MOTOR_XS[-1], PLATE_Y0 - MOTOR_R),
-                   ("drive motor C", 0.15, MOTOR_XS[1], PLATE_Y0 - MOTOR_R))
+                   ("arm SO-101, folded pose", 0.80, ARM_X + 20.0, PLATE_Y0 - BATT[1] - 55.0))
+# (Pond #280: the two plate motors are gone from this list: all four motors are in the sleeves, on or beside the pipe axis, so they add
+#  no roll lever; the released hand's motors are in ROLL_OTHER_HAND_KG below.)
 ROLL_OTHER_HAND_KG = 0.30               # the released hand: sleeve, wheels, motors, at its pipe (PIPE_SPACING away), on the axis plane
 
 

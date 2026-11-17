@@ -246,13 +246,12 @@ def xshift(shape, x):
     return shape.translate((x, 0, 0))
 
 PLATE_X0, PLATE_X1, PLATE_CY = ca.PLATE_X0, ca.PLATE_X1, ca.PLATE_CY
-plate, battery, motors = ca.plate, ca.battery, ca.motors    # the same parts as the whole-cart drawing
+plate, battery = ca.plate, ca.battery    # the same parts as the whole-cart drawing
 BATT_C = ca.BATT_X
 BATT, BATT_Y = ca.BATT, ca.BATT[1]
 
 cart = [("base_plate", plate, (0.35, 0.35, 0.38, 1)),
-        ("battery", battery, (0.2, 0.45, 0.85, 1)),
-        ("drive_motors", motors, (0.85, 0.25, 0.25, 1))]
+        ("battery", battery, (0.2, 0.45, 0.85, 1))]
 for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):
     cart.append(("track_%s" % tag, xshift(ca.cyl(hs.R_PIPE, PIPE_Z1 - PIPE_Z0, "z", (0, 0, (PIPE_Z0 + PIPE_Z1) / 2)), sgn * HX),
                  (0.75, 0.78, 0.8, 1)))

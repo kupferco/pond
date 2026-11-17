@@ -36,7 +36,7 @@ bad = 0
 print("pipes: B at x=%+.0f, C at x=%+.0f (front = -Y where the plate hangs, so B is on the LEFT seen from the front)" % (-cd.HX, cd.HX))
 print("pad centres: B x=%+.0f, C x=%+.0f   (mirror needs B = -C)" % (cg.pad_x(-1), cg.pad_x(1)))
 print("plate x: %+.0f .. %+.0f, %.0f mm wide (centre %+.0f; symmetric needs centre 0)" % (cd.PLATE_X0, cd.PLATE_X1, cd.PLATE_X1 - cd.PLATE_X0, (cd.PLATE_X0 + cd.PLATE_X1) / 2))
-print("arm x %+.0f, motors x %+.0f / %+.0f" % (cd.ARM_X, cd.MOTOR_XS[-1], cd.MOTOR_XS[1]))
+print("arm x %+.0f (no motors on the plate: all four are in the sleeves)" % cd.ARM_X)
 # C-gap direction: the hand-frame gap faces +X (B, towards the plate); on C it must face -X (towards the plate)
 gap_b = placed(-1, "sleeve").intersect(cg.box(40, 6, 20, (-cd.HX + 34, 0, 0)))
 gap_c = placed(1, "sleeve").intersect(cg.box(40, 6, 20, (cd.HX - 34, 0, 0)))
@@ -59,5 +59,5 @@ for tag, sgn in csl.TAGS:
         ov = vol(hand.intersect(pipe))
         bad += ov > 1e-3
         print("  hand %s clamped vs pipe %s: overlap %.2f mm3 (must be 0)" % (tag, ptag, ov))
-print("plate needs %.0f mm for motor + arm + motor, has %.0f mm" % (cd.NEEDED_PLATE_W, cd.PLATE_X1 - cd.PLATE_X0))
+print("plate needs %.0f mm for the arm base and battery, has %.0f mm" % (cd.NEEDED_PLATE_W, cd.PLATE_X1 - cd.PLATE_X0))
 print("TRUE MIRROR:", "yes" if bad == 0 and abs(cg.pad_x(-1) + cg.pad_x(1)) < 1e-6 else "NO")

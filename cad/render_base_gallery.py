@@ -67,7 +67,6 @@ OVERLAYS = {
         ("tag", (cb.ca.pad_x(1), YF, cb.ca.hs.PAD_HOLE_Z), 50, -128, "pad C bolts (2 x M4)"),
         ("tag", (cb.ARM_X + 25, YF, 25), 60, -78, "battery M4 square 50 (ASSUMED)"),
         ("tag", (cb.BATT_C, YF, cb.BATT_Z), 30, 96, "battery under arm base (ASSUMED)"),
-        ("tag", (cb.MOTOR_XS[-1], YF, -20), 30, 70, "motor saddles (ASSUMED)"),
     ],
     "top": [
         ("dim", (X0, YF, 0), (X1, YF, 0), 0, "%.0f" % (X1 - X0)),
