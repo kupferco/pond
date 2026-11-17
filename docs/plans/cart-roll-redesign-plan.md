@@ -202,7 +202,7 @@ Answer: First choice: use omni wheels with rubber rollers (not hard plastic) so 
 ### Q6. May the rule "the cart stays within 500 mm of the legs, never on the middle of the top or bottom run" be written down?
 Context: an R54 wheel ring does not fit between the track and the growing pipe (22.5 mm gap), and the spine brackets sit mid-run; today's R34 sleeve already cannot pass either.
 Assumed: yes, the cart only works on the legs and corners; the middle of the runs is off limits.
-Answer: _open_
+Answer: No, not as written. The cart must work along the bottom run: that is where it moves the seedlings (picks up and transfers them). Keep the bottom run stiff enough by adding extra supports along it as needed (it is near the ground, so this is easy). The middle of the top run can be off limits: the cart only needs the legs and corners up there.
 
 ### Q7. During a transfer, is the roll allowed to be held while the pipe tilts through the bend, or must the plate be rolled back flat before the bend?
 Context: today the plate is held rotated through the bend (rotate, drive round the bend, rotate back at 75 cm). Holding rolled while the axis tilts loads the roll wheel with gravity; rolling back first would remove that load but the hand cannot then clear the curve.
