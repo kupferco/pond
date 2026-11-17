@@ -15,6 +15,10 @@ import { S_FLAT_CM, CLEAR_DEG, HINGE_DEG_S_CAD, MAX_HINGE_DEG, MAX_BEND_HINGE_DE
 import { S_MAX_CM, S_MIN_CM, transferMjcf, worldToCad } from '../src/cart/transfer-model.ts';
 import * as DIMS from '../src/cart/dims.ts';
 import * as OC from '../src/cart/omni.ts';
+import { BEND_TRIM_ROWS, NO_TRIM, bendTrim, omniTrackMjcf, placeOmniCart, trackContacts } from '../src/cart/omni-track.ts';
+import { RollMotion, ROLL_HOME_TOL_DEG, canRoll, driveLimit, pickRollDirection, sweep } from '../src/cart/roll.ts';
+import { POINT_CM, RING_CM, hall, runHoming } from '../src/cart/homing.ts';
+import { LOAD_N, PIPES, maxCantileverMm, sagTable } from '../src/cart/track-sag.ts';
 import { readFileSync } from 'node:fs';
 import { BASE_BOTTOM, LID_Z, PIPE_Z, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
 import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
@@ -676,6 +680,56 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   // rolling without slipping: wheel spin relative to the sleeve = (pipeR / wheelR) x sleeve angle gives zero contact velocity
   const L = OC.OMNI_AXLE_R, phi = 1, spinRel = phi * OC.rollSpinPerRoll(), abs = phi + spinRel;
   check('roll wheel contact does not slip: absolute wheel spin x wheelR = sleeve angle x lever', Math.abs(abs * OC.OMNI_R - phi * L) < 1e-9);
+}
+
+// --- Cart on track with the omni cart (OpenPocket #282, plan task 265 part 8) -------------------------------------------------------------------------------
+{
+  const tm = mj.MjModel.from_xml_string(omniTrackMjcf()), td = new mj.MjData(tm);
+  for (let i = 0; i < tm.ngeom; i++) tm.geom_margin[i] = 0.0002;
+  const at = (s: number, rollDeg = 0, trim = NO_TRIM) => { placeOmniCart(tm as any, td as any, s, (rollDeg * Math.PI) / 180, trim); mj.mj_forward(tm, td); return trackContacts(tm as any, td as any); };
+  const touch = (c: Record<string, number>) => Math.min(c.rider, c.freehand, c.base);
+  check('cart on track: flat, riding on hand B, no contact with the track at every 5 cm on the leg and on the run', [5, 10, 20, 30, 40, 50, 100, 110, 120, 140].every((s) => touch(at(s)) >= -1e-9));
+  // the riding pipe axis really sits on the track (hand B body frame)
+  at(30); const hb = tm.body('handB').id;
+  check('hand B\'s pipe axis is on the track centre line on the leg (x 0, z 0.30)', Math.abs(td.xpos[3 * hb]) < 1e-6 && Math.abs(td.xpos[3 * hb + 2] - 0.3) < 1e-6, `${td.xpos[3 * hb]},${td.xpos[3 * hb + 2]}`);
+  at(110); check('and on the run (x past the bend, z = 0.75)', Math.abs(td.xpos[3 * hb + 2] - 0.75) < 1e-6 && td.xpos[3 * hb] > 0.15);
+  const rollClear = (dir: 1 | -1, s: number) => sweep(0, dir * 180, 5).every((a) => { const c = at(s, a); return c.rider >= -1e-9 && c.freehand >= -1e-9 && c.base >= -1e-9; });
+  check('roll on the leg, both directions, 0 to 180 in 5 degree steps: rider, free hand and base never touch the track (Q3: both clear, + chosen)', rollClear(1, 30) && rollClear(-1, 30) && pickRollDirection({ plus: true, minus: true }).dir === 1);
+  check('Q3: if only one direction clears the controller uses that one; if neither does it stops and asks the owner', pickRollDirection({ plus: false, minus: true }).dir === -1 && pickRollDirection({ plus: false, minus: false }).dir === null);
+  // roll held through the bend (Q7), free hand and base only
+  const heldClear = (dir: 1 | -1) => { for (let s = L_VERT - 4; s <= L_VERT + L_ARC + 4; s += 2) for (let a = 0; a <= 180; a += 30) { const c = at(s, dir * a, bendTrim(s)); if (c.freehand < -1e-9 || c.base < -1e-9) return false; } return true; };
+  check('roll held through the bend (Q7), both directions: the free hand and the base clear the curved track at every 2 cm and every 30 degrees', heldClear(1) && heldClear(-1));
+  // the bend with the rigid sleeve: the finding of this scene. The straight 124 mm sleeve does not follow the R150 bend: the best trim still hits.
+  let worstBend = 0, worstZero = 0;
+  for (let s = L_VERT; s <= L_VERT + L_ARC; s += 1) { worstBend = Math.min(worstBend, at(s, 0, bendTrim(s)).rider); worstZero = Math.min(worstZero, at(s, 0).rider); }
+  check('bend: the rigid sleeve on R150 hits the pipe even with the best trim (about 4 mm deep; update BEND_TRIM_ROWS and this test when the sleeve or bore changes)', worstBend < -0.003 && worstBend > -0.0045, `${(worstBend * 1000).toFixed(2)} mm`);
+  check('bend: the trim rows help (the trimmed worst penetration is smaller than with no trim)', worstBend > worstZero + 0.001, `${(worstZero * 1000).toFixed(2)} mm untrimmed`);
+  check('bend trim is zero on the straights and rows run in order', bendTrim(30).dx === 0 && bendTrim(100).yaw === 0 && BEND_TRIM_ROWS.every((r, i, a) => i === 0 || a[i - 1][0] < r[0]));
+}
+{
+  const runStart = L_VERT + L_ARC;
+  check('roll allowed on the vertical leg up to 180 degrees, refused beyond', canRoll(30, 180).ok && canRoll(30, -180).ok && !canRoll(30, 181).ok);
+  check('Q7: no roll change on the bend; Q8: no roll on the top and bottom runs (cart stays flat)', !canRoll(L_VERT + 5, 20).ok && !canRoll(runStart + 10, 20).ok && !canRoll(runStart + 10, 0).ok);
+  check('interlock: flat (within 3 degrees) drives anywhere; rolled without a declared transfer roll does not drive', driveLimit(30, 90, 2, false, runStart).s === 90 && driveLimit(30, 90, 20, false, runStart).s === 30 && ROLL_HOME_TOL_DEG === 3);
+  check('interlock: a carried roll goes up the leg and round the bend but stops at the start of the run', driveLimit(30, 50, 90, true, runStart).s === 50 && driveLimit(30, 120, 90, true, runStart).s === runStart);
+  const rm = new RollMotion(); rm.moveTo(180); let t = 0; while (!rm.advance(0.01) && t < 5) t += 0.01;
+  check('roll motion reaches 180 degrees in about half a second without turning back', rm.roll === 180 && t < 0.6, `${t.toFixed(2)} s`);
+  // sensing and homing
+  check('hall sensor: the ring is seen at any roll, the point magnet only at roll 0 and its column', hall(RING_CM, 123).ring && !hall(RING_CM + 3, 0).ring && hall(POINT_CM, 2).point && !hall(POINT_CM, 40).point && !hall(POINT_CM + 2, 0).point);
+  let homed = 0, worstS = 0, worstR = 0;
+  for (const s0 of [0, 3, 12, 25, 40, 55, 70, 100, 140]) for (const r0 of [0, 37, -120, 180]) {
+    const r = runHoming(s0, r0, { slip: 0.03, rollSlip: 0.05 });
+    if (r.ok) { homed++; worstS = Math.max(worstS, Math.abs(r.sErr)); worstR = Math.max(worstR, Math.abs(r.rollErr)); }
+  }
+  check('homing from any start (leg, bend, run, rolled any way) finds the ring, then the point, and ends within 0.5 cm and 2 degrees', homed === 36 && worstS <= 0.5 && worstR <= 2, `${homed}/36, worst ${worstS.toFixed(2)} cm ${worstR.toFixed(1)} deg`);
+  const lost = runHoming(2, 90);
+  check('homing from just below the ring: hits the base end, turns round and finds the ring', lost.ok && lost.steps.some((x) => /turning round/.test(x)));
+  // pipe sag (Q1, Q6)
+  const rows = sagTable();
+  const row = (name: string, span: number) => rows.find((r) => r.pipe.startsWith(name) && r.spanMm === span)!;
+  check('sag: 25 mm PVC is NOT stiff enough (creep sag at the end of the straight run over 4 mm, limit 2 mm)', !row('25 mm PVC (1.5', 140).ok && row('25 mm PVC (1.5', 140).creepMm > 4);
+  check('sag: 32 mm with the 3 mm wall holds the end of the straight run (creep sag under 2 mm), the 1.8 mm wall is marginal; the corner end needs a support either way', row('32 mm PVC (3.0', 140).ok && !row('32 mm PVC (1.8', 140).ok && !row('32 mm PVC (3.0', 290).ok);
+  check('sag: longest unsupported run from a support, long term, is about 138 mm for 32 x 1.8 and about 101 mm for 25 x 1.5 at the cart load', maxCantileverMm(PIPES[0]) > 130 && maxCantileverMm(PIPES[0]) < 145 && maxCantileverMm(PIPES[2]) > 95 && maxCantileverMm(PIPES[2]) < 105 && LOAD_N > 40, `${maxCantileverMm(PIPES[0]).toFixed(0)} / ${maxCantileverMm(PIPES[2]).toFixed(0)} mm`);
 }
 
 const t0 = performance.now(); run(5); const ms = performance.now() - t0;
