@@ -192,7 +192,7 @@ Answer: Yes, always use the roll direction that clears; if neither does, stop an
 ### Q4. Can the omni wheels be preloaded above their 2 kg (about 20 N) rating, say up to 60 N like today?
 Context: holding a 3 kg cart on a wet pipe by one wheel's friction needs far more than 20 N; the rating is probably a static load figure, but it is not known.
 Assumed: allow up to 40 N in tests, and treat 20 N as the design value until the bench test says otherwise.
-Answer: _open_
+Answer: allow up to 40 N in tests, and treat 20 N as the design value until the bench test says otherwise.
 
 ### Q5. If the worm gears alone cannot hold the plate rolled on a tilted pipe, do we go straight to the latching brake?
 Context: the decision was "no brake at first"; the rough budget in section 3 suggests friction at the roll wheel is not enough when the pipe is not vertical (during the bend).
