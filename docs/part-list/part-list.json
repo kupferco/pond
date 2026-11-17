@@ -1,5 +1,5 @@
 {
-  "updated": "16 Nov 2026",
+  "updated": "17 Nov 2026",
   "wiring": {
     "title": "Cart wiring, in plain words",
     "steps": [
@@ -179,7 +179,7 @@
       "group": "brazil"
     },
     {
-      "item": "Cart drive and hinge motors: 12 V worm-gear motor, 28 mm, with Hall encoder, about 60 rpm",
+      "item": "Cart drive and roll motors: 12 V worm-gear motor, 28 mm, with Hall encoder, about 60 rpm",
       "qty": 4,
       "where": "UK",
       "unit_price": 9,
@@ -187,11 +187,116 @@
       "approx": true,
       "link": "https://www.aliexpress.com/wholesale?SearchText=12V+28mm+worm+gear+motor+hall+encoder+60rpm+self-locking",
       "link_label": "Search on AliExpress →",
-      "for": "Cart: 2 pipe drives + 2 hinge worm drives",
-      "note": "Cheapest reliable: the 28 mm 'GA28' / 'JGY-28' style self-locking worm motor with a 2-channel Hall encoder. Pick the 12 V, 50–65 rpm version whose listing shows 3 kg·cm or more rated torque and says 'encoder'. Link is a search because AliExpress listings come and go; check the seller has 500+ sales and 4.7+ stars. Shipping about 2–4 weeks standard (about 10 days with Choice). UK import VAT is added at checkout. Backup if you want it in a week: a similar 12 V worm motor with encoder on eBay UK, about £15 each. Prices are estimates, not quotes. DIMENSIONS: real motors of this type are about 28 mm wide but often 60–75 mm long once the worm box and the encoder cap are counted, against the 55 mm in the CAD; and the worm gearbox puts the output shaft at a right angle to the motor, while the CAD has the motor in line with the worm shaft. Measure the real one and update MOTOR_L and the brackets before cutting anything.",
+      "for": "Cart: 2 pipe drives + 2 roll drives (the roll motor turns the whole cart round the pipe)",
+      "note": "Cheapest reliable: the 28 mm 'GA28' / 'JGY-28' style self-locking worm motor with a 2-channel Hall encoder. Pick the 12 V, 50–65 rpm version whose listing shows 3 kg·cm or more rated torque and says 'encoder'. Link is a search because AliExpress listings come and go; check the seller has 500+ sales and 4.7+ stars. Shipping about 2–4 weeks standard (about 10 days with Choice). UK import VAT is added at checkout. Backup if you want it in a week: a similar 12 V worm motor with encoder on eBay UK, about £15 each. Prices are estimates, not quotes. ORDER ONE NOW for the bench test (hold on a tilted pipe, exact size for the CAD); the other three follow once it checks out. The old hinge worm drives are gone in the new design: the four motors now drive an omni wheel each (a drive wheel and a roll wheel on each hand). Later production units are built in Brazil, so keep the listing's model name and size: the same family has to be easy to find on Mercado Livre. DIMENSIONS: real motors of this type are about 28 mm wide but often 60–75 mm long once the worm box and the encoder cap are counted, against the 55 mm in the CAD; and the worm gearbox puts the output shaft at a right angle to the motor, while the CAD has the motor in line with the worm shaft. Measure the real one and update MOTOR_L and the brackets before cutting anything. The roll motor can stall while holding a load: measure the stall current (the DRV8871 takes 3.6 A peak).",
       "status": "to get",
       "group": "uk-carry",
       "weight_g": 240
+    },
+    {
+      "item": "Cart omni wheels: rubber-roller omni wheel, common size 48 mm (or 58 mm), double row",
+      "qty": 6,
+      "where": "UK",
+      "unit_price": 10,
+      "currency": "GBP",
+      "approx": true,
+      "link": "https://www.amazon.co.uk/s?k=48mm+omni+wheel+rubber+rollers",
+      "link_label": "Search on Amazon UK →",
+      "for": "Cart: 4 driven (2 drive + 2 roll) + 2 spare for the grip tests",
+      "note": "Rubber rollers (not hard plastic), so they grip the smooth PVC pipe. Pick a COMMON size, 48 or 58 mm (not one exact model), that is also sold on Mercado Livre and AliExpress for the Brazil builds; the plan's 38 mm is only a starting figure and the final size is fixed by the bench test and the CAD. Rating is usually about 2 kg (20 N) per wheel: design value 20 N preload, up to 40 N allowed in tests. Check the bore and hub size against the motor shaft hub below. Prototype: buy all the wheels needed in the UK now, they are cheap and light here. Price is an estimate, not a quote.",
+      "status": "to get",
+      "group": "uk-carry",
+      "weight_g": 180
+    },
+    {
+      "item": "Shaft hub for omni wheel: 6 mm D-shaft to wheel bore",
+      "qty": 4,
+      "where": "UK",
+      "unit_price": 3,
+      "currency": "GBP",
+      "approx": true,
+      "link": "https://www.amazon.co.uk/s?k=6mm+shaft+coupling+hub+motor+wheel",
+      "link_label": "Search on Amazon UK →",
+      "for": "Cart: one per driven wheel",
+      "note": "Check which shaft the motor listing has (6 mm D-shaft assumed) and the bore of the wheel you buy; some omni wheels ship with a hub. Buy to match both.",
+      "status": "to get",
+      "group": "uk-carry",
+      "weight_g": 60
+    },
+    {
+      "item": "Stainless steel balls (304/316), 10–12 mm, for the printed ball cups",
+      "qty": 12,
+      "where": "UK",
+      "unit_price": 4,
+      "currency": "GBP",
+      "approx": true,
+      "link": "https://www.amazon.co.uk/s?k=stainless+steel+ball+10mm+12mm",
+      "link_label": "Search on Amazon UK →",
+      "for": "Cart: passive ball rollers (8 on the cart, 4 per hand); extras for the bench test",
+      "note": "Stainless, not chrome steel, which rusts outdoors. Bought for the bench test against the Delrin balls (a couple of sizes if cheap); the final line becomes 8 balls of the winner plus spares. The cups are 3D-printed in PETG or nylon: no purchase. Standard stock item, to confirm for Brazil.",
+      "status": "to get",
+      "group": "uk-carry",
+      "weight_g": 30
+    },
+    {
+      "item": "Delrin (acetal) balls, 10–12 mm, for the printed ball cups",
+      "qty": 12,
+      "where": "UK",
+      "unit_price": 4,
+      "currency": "GBP",
+      "approx": true,
+      "link": "https://www.amazon.co.uk/s?k=acetal+POM+ball+10mm+12mm",
+      "link_label": "Search on Amazon UK →",
+      "for": "Cart: passive ball rollers; extras for the bench test",
+      "note": "Bought for the bench test against the stainless balls (sticking, drag, rust, water held in the cup). Same size range. Standard stock item, to confirm for Brazil.",
+      "status": "to get",
+      "group": "uk-carry",
+      "weight_g": 15
+    },
+    {
+      "item": "Magnet tape, flexible, adhesive (home ring round the pipe)",
+      "qty": 1,
+      "where": "UK",
+      "unit_price": 5,
+      "currency": "GBP",
+      "approx": true,
+      "link": "https://www.amazon.co.uk/s?k=flexible+magnetic+tape+adhesive",
+      "link_label": "Search on Amazon UK →",
+      "for": "Track: home station near the base of the track",
+      "note": "A ring of tape all the way round the pipe means 'you are at home'; a single point magnet shortly after it marks zero (zero roll angle and zero position). The 10 x 3 mm N52 disc magnets already in this list can serve as the point magnets, plus a few more as optional checkpoints at corners and legs. Check the tape's polarity and strength against the sensor below.",
+      "status": "to get",
+      "group": "uk-carry",
+      "weight_g": 30
+    },
+    {
+      "item": "Hall sensor board (3.3 V)",
+      "qty": 2,
+      "where": "UK",
+      "unit_price": 3,
+      "currency": "GBP",
+      "approx": true,
+      "link": "https://www.amazon.co.uk/s?k=hall+effect+sensor+module+3.3V",
+      "link_label": "Search on Amazon UK →",
+      "for": "Cart: reads the home ring and the zero magnet (one per hand, one spare)",
+      "note": "The controller counts wheel turns for roll angle and position and corrects drift at the home station. If the cart is lost it drives until it hits the ring, moves on to the point magnet and rolls until it finds it.",
+      "status": "to get",
+      "group": "uk-carry",
+      "weight_g": 5
+    },
+    {
+      "item": "Optional: BNO055 IMU board",
+      "qty": 1,
+      "where": "UK",
+      "unit_price": 20,
+      "currency": "GBP",
+      "approx": true,
+      "link": "https://www.amazon.co.uk/s?k=BNO055+breakout",
+      "link_label": "Search on Amazon UK →",
+      "for": "Cart: absolute roll angle on horizontal pipe sections (optional)",
+      "note": "Only if counting wheel turns plus the home magnets is not accurate enough. Not needed for the first bench test.",
+      "status": "to get",
+      "group": "uk-carry",
+      "weight_g": 5
     },
     {
       "item": "Jaw motor: N20 worm-gear micro motor with encoder, 6 V, about 30 rpm",
@@ -424,7 +529,7 @@
       "Pi supply: never power the Pi from the motor rail directly; on the cart use the 5 V, 5 A converter on its own fuse. On the bench in the UK the Pi 3 runs from its own 5.1 V 2.5 A charger (in the part list); if the Pi and the arm adapter share a laptop or USB link, that gives a common ground.",
       "Daily energy budget (rough): about 2 hours a day of real movement at about 60 W is 120 Wh, plus about 22 hours of waiting at about 5 W (Pi, idle servos, converter losses) is 110 Wh, so about 230 Wh a day, call it 250 Wh. The 256 Wh battery then holds about one day with no sun.",
       "Solar for São Paulo: about 4.5 'full-sun hours' a day on average, about 3.5 in winter (typical published figures, tilted to face north). A panel gives about 70% of its label watts after losses. 250 Wh ÷ (3.5 h × 0.7) is about 100 W, so a 100 W panel just covers the budget in winter and has room to spare in summer. If you move more than 2 hours a day, add a second 100 W panel; the controller already allows it.",
-      "What to buy where: three groups in the part list. The arm's bench supply, Pi 3 charger and plug adapter in the UK now. The small, light cart parts (motors, drivers, PCA9685, converters, fuses, connectors, about 0.65 kg) in the UK, carried to Brazil in hand luggage. The battery, solar panel, charge controller, solar cable and heavy wire in Brazil: they are bulky, the battery is lithium and too big for the cabin, and warranty is easier locally. Brazil prices are estimates; check the Mercado Livre pages before paying."
+      "What to buy where: three groups in the part list. The arm's bench supply, Pi 3 charger and plug adapter in the UK now. The small, light cart parts (motors, wheels, balls, drivers, PCA9685, converters, fuses, connectors, about 1.0 kg) in the UK, carried to Brazil in hand luggage. The battery, solar panel, charge controller, solar cable and heavy wire in Brazil: they are bulky, the battery is lithium and too big for the cabin, and warranty is easier locally. Brazil prices are estimates; check the Mercado Livre pages before paying."
     ]
   },
   "groups": [
@@ -437,8 +542,8 @@
       "id": "uk-carry",
       "title": "UK – carry to Brazil",
       "blurb": "Cart parts that are cheaper in the UK and small and light enough for hand luggage. Nothing lithium, nothing bulky. Order them to your UK address in time: the AliExpress ones take 2–4 weeks.",
-      "weight_g": 639,
-      "carry_note": "Weight: about 0.64 kg in total (rough, from typical listings; weigh the parcels when they arrive). Awkward in cabin baggage: the motors are small metal gearboxes, so they are dense and show up as dark blobs on the X-ray; pack them in one clear bag, together with the driver boards, so they can be lifted out if asked. The fuse holder, switch and wire kit are fine but can look odd, so keep the receipts. Loose wire spools get tangled, so coil and tape them. Keep it all in one small bag, not in a checked bag, so nothing gets lost. Brazil lets a traveller bring goods up to about US$1,000 by air without import tax, so this is well inside that. Nothing here contains a battery."
+      "weight_g": 964,
+      "carry_note": "Weight: about 0.96 kg in total (rough, from typical listings; weigh the parcels when they arrive). Awkward in cabin baggage: the motors are small metal gearboxes, so they are dense and show up as dark blobs on the X-ray; pack them in one clear bag, together with the driver boards, so they can be lifted out if asked. The fuse holder, switch and wire kit are fine but can look odd, so keep the receipts. Loose wire spools get tangled, so coil and tape them. Keep it all in one small bag, not in a checked bag, so nothing gets lost. Brazil lets a traveller bring goods up to about US$1,000 by air without import tax, so this is well inside that. Nothing here contains a battery."
     },
     {
       "id": "brazil",
@@ -450,9 +555,10 @@
     "Links that say 'Search on AliExpress' or 'Amazon UK' are searches, not exact products. Listings come and go, so check each one against the notes before paying.",
     "All prices are estimates, not quotes. The Brazil prices in BRL are from memory of typical Mercado Livre listings: check them.",
     "Rule used: buy in the UK if it is cheaper and light (counting Brazilian import tax on AliExpress orders); buy in Brazil if it is bulky, heavy, lithium, or cheaper there.",
-    "CAD mismatch, cart motors: real 28 mm worm motors are often 60–75 mm long, not 55 mm, and the shaft comes out at a right angle. Measure the real motor before changing MOTOR_L or cutting anything.",
+    "CAD mismatch, cart motors: real 28 mm worm motors are often 60–75 mm long, not 55 mm, and the shaft comes out at a right angle. Measure the real motor before changing MOTOR_L or cutting anything. The hinge worm drives are gone in the roll redesign: the four motors are now 2 drives + 2 roll drives.",
     "CAD mismatch, jaw motors: an N20 motor is smaller than the 16 × 30 mm motor in the CAD, so it fits, but the pin mount needs redrawing.",
     "The 20 Ah battery (about 180 × 80 × 170 mm) does not fit the 70 × 50 × 70 mm battery slot in the CAD. The cart needs a bigger battery space, or the battery sits in the unit with a cable to the cart.",
-    "No battery is bought in the UK at all. Every battery comes from Brazil."
+    "No battery is bought in the UK at all. Every battery comes from Brazil.",
+    "Roll redesign (plan task 265): omni wheels are bought in a common 48 or 58 mm size, not the plan's 38 mm, so they are easy to find in both the UK and Brazil. The old hinge worm wheels, worms and hinge pins were never separate lines here, so nothing else is removed."
   ]
 }
