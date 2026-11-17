@@ -71,7 +71,7 @@ export const CELL_RIN = mm(13), CELL_H = mm(30);
 export const TRAY_CAP_TOP: V3 = [TRAY_X, 0, LID + TRAY_T + POD_BODY_L + CAP_T + 0.0003];
 
 // --- cart heights (cart origin = arm base axis height), driving range
-export const CART_Z0 = 0.60;                          // at the seedling tray
+export const CART_Z0 = 0.68;                          // at the seedling tray
 export const CART_Z1 = ZH + 0.10;                     // at the target hole: the ring sleeve rides above the collar (it cannot pass the pod seat)
 export const CART_Z_MAX = 1.3;
 
@@ -179,7 +179,7 @@ function cartGeoms(): string[] {
   const out: string[] = [];
   // The real cart (cad/cart_base.py, cart_hinge.py, hand_sleeve.py via cart/transfer-model.ts, exactly as in the Transfer scene): plate, battery, drive motors, hinges, worm drives and
   // the two hands with their wheel pairs and jaws, on the plate frame (CAD x across = world -y, CAD y out of the pipe plane = world x, z up). The arm is the scene's own moving one.
-  // The plate-side parts are checked against the arm; the hands ride the track pipes B and C (trackPipes()).
+  // The plate-side parts are checked against the arm; the hands ride the track pipes B and C (trackLoops()).
   const plateParts = cartInner(false, 'plate').replaceAll(CART_COL, OBST);
   out.push(`<body name="plate" xyaxes="0 -1 0 1 0 0"><joint name="plate_lock" type="hinge" axis="0 0 1" range="0 0"/>
       ${plateParts}
@@ -195,10 +195,26 @@ function cartGeoms(): string[] {
   return out;
 }
 
-/** The track: the Cart scene's two pipes B and C (16 mm radius, 120 mm apart, cad/cart_dims.py) running up beside the central pipe, in the track plane x = XT (the straight part only, no bend). */
-function trackPipes(): string[] {
-  const r = mm(16);
-  return [D.PIPE_X.B, D.PIPE_X.C].map((px, i) => `<geom name="track${i ? 'C' : 'B'}" type="cylinder" fromto="${XT} ${f(-mm(px))} 0 ${XT} ${f(-mm(px))} ${PIPE_TOP}" size="${r}" ${OBST} ${rgba(0.62, 0.66, 0.7)}/>`);
+/** The track: the unit's track loop of cad/unit_v3_dimensioned.py, a rounded-corner PORTRAIT rectangle (tube radius 16 mm, corner radius 150 mm, legs 580 mm apart, bottom run at 450 mm, top at 1884 mm)
+ *  standing in front of the central pipe, in the track plane x = XT. Two touching tanks put the neighbouring loops' legs 120 mm apart (cad/cart_dims.py PIPE_SPACING): the cart's two hands (pipes B and C, y = -/+60 mm
+ *  here) ride the legs of the two adjacent loops, one centred at y = +0.35 and one at y = -0.35. */
+export const LOOP_TX = 0.29, LOOP_R = 0.15, LOOP_ZB = 0.45, LOOP_ZT = 1.9 - mm(16), LOOP_TR = mm(16);
+function trackLoops(): string[] {
+  const out: string[] = [], r = LOOP_TR, half = D.PIPE_X.C / 1000;   // 0.06
+  const seg = (name: string, a: V3, b: V3) => out.push(`<geom name="${name}" type="cylinder" fromto="${a.map(f).join(' ')} ${b.map(f).join(' ')}" size="${r}" ${OBST} ${rgba(0.62, 0.66, 0.7)}/>`);
+  for (const sgn of [1, -1]) {
+    const cy = sgn * (half + LOOP_TX), nm = sgn > 0 ? 'trackL' : 'trackR';
+    for (const e of [-1, 1]) seg(`${nm}leg${e}`, [XT, cy + e * LOOP_TX, LOOP_ZB + LOOP_R], [XT, cy + e * LOOP_TX, LOOP_ZT - LOOP_R]);
+    seg(`${nm}top`, [XT, cy - LOOP_TX + LOOP_R, LOOP_ZT], [XT, cy + LOOP_TX - LOOP_R, LOOP_ZT]);
+    seg(`${nm}bot`, [XT, cy - LOOP_TX + LOOP_R, LOOP_ZB], [XT, cy + LOOP_TX - LOOP_R, LOOP_ZB]);
+    const N = 10;
+    for (const [ex, ez] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {   // four quarter-circle corners, N straight pieces each
+      const ccy = cy + ex * (LOOP_TX - LOOP_R), ccz = ez > 0 ? LOOP_ZT - LOOP_R : LOOP_ZB + LOOP_R;
+      const pt = (k: number): V3 => [XT, ccy + ex * LOOP_R * Math.sin(k / N * Math.PI / 2), ccz + ez * LOOP_R * Math.cos(k / N * Math.PI / 2)];
+      for (let k = 0; k < N; k++) seg(`${nm}c${ex}${ez}_${k}`, pt(k), pt(k + 1));
+    }
+  }
+  return out;
 }
 
 /** MJCF of the whole scene. */
@@ -208,7 +224,7 @@ export function transplantMjcf(): string {
   const mocap = (name: string, pos: V3, geoms: string) => `<body name="${name}" pos="${pos.map(f).join(' ')}" quat="${qw} ${qx} ${qy} ${qz}"><joint type="free"/>${geoms}</body>`;
   const world = [
     `<geom name="floor" type="plane" size="1.6 1.2 0.01" pos="0 0 0" ${OBST} ${rgba(0.84, 0.88, 0.92)}/>`,
-    ...pipeAndCollar(), ...tray(), ...trackPipes(),
+    ...pipeAndCollar(), ...tray(), ...trackLoops(),
     mocap(BODIES.pod, [0, 0, 2], podGeoms(POD_BODY_R, POD_BODY_L, podColor, false)),
     mocap(BODIES.plug, [0, 0, 2.2], podGeoms(PLUG_BODY_R, PLUG_BODY_L, plugColor, true)),
     mocap(BODIES.other[0], [0, 0, 2.4], podGeoms(POD_BODY_R, POD_BODY_L, podColor, false)),

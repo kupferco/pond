@@ -62,7 +62,7 @@ def draw(tris, view, box, path, px=1100, floor=True):
 
 
 # framing: (centre x, y, z, half width, half height) per view
-FULL = {"iso": (0.25, 0.0, 0.78, 0.95, 0.95), "front": (0.25, 0.0, 0.78, 0.58, 0.88), "side": (0.0, 0.0, 0.78, 0.40, 0.88), "top": (0.25, 0.0, 0.0, 0.62, 0.50)}
+FULL = {"iso": (0.25, 0.0, 0.98, 1.25, 1.25), "front": (0.25, 0.0, 0.98, 0.9, 1.05), "side": (0.0, 0.0, 0.98, 0.9, 1.05), "top": (0.25, 0.0, 0.0, 0.8, 0.8)}
 HOLE = (0.25, 0.0, 0.84, 0.42, 0.33)   # front view round the collar, the cart's ring, the cup and the arm, step 3 and 4
 COLLAR = (0.04, 0.0, 0.82, 0.11, 0.09)   # front view right on the collar: seat, hole, plug holder
 TRAY = (0.28, 0.0, 0.5, 0.42, 0.33)   # front view round the seedling tray on the tank, the arm and the cup, step 1
@@ -75,7 +75,7 @@ def main():
     names = {"step0": "start", "step1": "step1-pick", "step2": "step2-drive", "step3": "step3-plug", "step4": "step4-seat"}
     for st in stages:
         tris = json.load(open(os.path.join(src, st["id"] + ".json")))
-        base = "transplant-seedling-" + names[st["id"]] + "-v3"
+        base = "transplant-seedling-" + names[st["id"]] + "-v4"
         for v, box in FULL.items():
             draw(tris, v, box, os.path.join(out, f"{base}-{v}.png"))
         close = TRAY if st["id"] in ("step0", "step1") else HOLE
@@ -90,7 +90,7 @@ def main():
             p = os.path.join(out, f"_f{i}_{k}.png")
             draw(tris, "front", box, p, px=640)
             imgs.append(Image.open(p).convert("P", palette=Image.ADAPTIVE, colors=64))
-        imgs[0].save(os.path.join(out, f"transplant-seedling-{names['step' + str(i)]}-v3-clip.gif"), save_all=True, append_images=imgs[1:], duration=250, loop=0, optimize=True)
+        imgs[0].save(os.path.join(out, f"transplant-seedling-{names['step' + str(i)]}-v4-clip.gif"), save_all=True, append_images=imgs[1:], duration=250, loop=0, optimize=True)
         for k in range(len(frames)):
             os.remove(os.path.join(out, f"_f{i}_{k}.png"))
 
