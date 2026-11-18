@@ -156,6 +156,23 @@ for a in INNER_ANGS:
         cb = _cyl(BORE_CUP_D / 2, CARRIER_R0 - 0.2 - 12.0 + 0.5, (1, 0, 0), (12.0, 0, z))
         body = body.cut(rot(cb, a))
 
+# Side-drain relief (#316): the four side holes of each cup (cup frame +/-y round the pipe, +/-z along it) open into slots cut through the lobe,
+# so no sleeve wall stands within DRAIN_SLOT_H / 2 of an outlet at any roll angle: +/-y slots run out through the lobe sides, the +z / -z
+# slots run to the sleeve end (outer cup) or to a cross slot at z = 0 (inner cup), which opens to both lobe sides.
+DRAIN_SLOT_H = 3.0               # slot height along the cup axis (hole 2 mm + 0.5 each side)
+DRAIN_SLOT_W = 3.0               # slot width
+for a in INNER_ANGS:
+    xc = CUP["centre_r"]
+    def _slot(x0, x1, y0, y1, z0, z1):
+        return cq.Workplane("XY").box(x1 - x0, y1 - y0, z1 - z0).translate(((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2))
+    hh, hw = DRAIN_SLOT_H / 2, DRAIN_SLOT_W / 2
+    for z in (ROW_Z, -ROW_Z):
+        body = body.cut(rot(_slot(xc - hh, xc + hh, -ARM_W_CUP / 2 - 5, ARM_W_CUP / 2 + 5, z - hw, z + hw), a))      # both side outlets, through the lobe
+        zend = math.copysign(SLEEVE_L / 2 + 1, z)
+        body = body.cut(rot(_slot(xc - hh, xc + hh, -hw, hw, min(z, zend), max(z, zend)), a))                      # outward along the pipe to the end face
+    body = body.cut(rot(_slot(xc - hh, xc + hh, -hw, hw, -ROW_Z, ROW_Z), a))                                       # inward outlets meet at z = 0
+    body = body.cut(rot(_slot(xc - hh, xc + hh, -ARM_W_CUP / 2 - 5, ARM_W_CUP / 2 + 5, -hw, hw), a))              # and leave through the lobe sides
+
 # Bracket gap: a double-ended funnel, as v4. Profile in the YZ plane, extruded outward along +X from x = 15 mm.
 X0 = 15.0
 H = SLEEVE_L / 2 + 1.0
