@@ -8,28 +8,32 @@ Use it to check the sequence and clearances, not forces. Geometry follows 3-unit
 pipes 14 cm apart at a handover, unit 3 swung clockwise about pipe E.
 
 Pipes (all vertical sides of the loops): A, B = unit 1; C, D = unit 2; E, F = unit 3.
-Cart: two hands 14 cm apart on a yellow base plate, arm folded. It always rides on the hand
-whose partner hangs OUTSIDE the loop, and the hands swap roles at each crossover.
+Cart (OpenPocket #283, the omni cart of docs/plans/cart-roll-redesign-plan.md): two hands 12 cm apart (cad/cart_dims.py PIPE_SPACING) on ONE rigid base, no hinges. Each hand is
+the three-lobe sleeve of cad/hand_sleeve.py v5: a thin ring (bore R20, outer R34.5) with a 38 mm omni wheel on the outer lobe (180 deg, drawn at its drive row and its roll row),
+two ball cups on the +/-60 deg lobes, and a jaw wedge that carries the +60 deg lobe and swings open 92 deg on a pin at the wedge's far edge. Hand 2 is the true mirror of hand 1.
+It always rides on the hand whose partner hangs OUTSIDE the loop, and the hands swap roles at each crossover.
 
-Swing-off rule (v2; hand shell opening widened to 122 deg): after a hand releases, the base
-swivels 90 deg on the riding pipe so the free hand sits in front of it (-y); the old pipe
-leaves through the open jaw. Before the next clamp the base swivels back and the new pipe
-enters through the jaw. This fixes v1's clashes (free hand still round B at unit 2's top
-corner; free hand and base sweeping through unit 3's top corner at E while rounding D).
-Clearance check on this path: 5 mm minimum as a pipe slides through the jaw; the only
-remaining near-miss is the riding hand passing the top-bar brackets (open design question).
+Roll rule (v3, replaces v2's hinge swing): after a hand releases, the WHOLE cart rolls SWING_DEG (90) on the riding pipe, on its roll wheel, so the free hand sits in front of the
+pipe plane (-y, the plate side) and its old pipe leaves through the open jaw. Before the next clamp the cart rolls back and the new pipe enters through the jaw. Found with the
+control-ui contact search (scripts/search-swing.ts): only the PLATE SIDE can clear, and only if the jaw wedge reaches at least 140 deg (the CAD draws it to 110 and then neither
+direction clears: the fixed part of the ring is still round the pipe after 3 degrees of roll). The wedge is drawn to JAW_A1_PROPOSED_DEG (150) here. Same as v2, the clearance of
+this path against the units is checked by eye and by the 5 mm figure below, not by contact: nothing collides in this sim.
 
 Sequence (seconds):
   0.0  ride hand 1 up B (unit 1)
-  3.0  hand 2 clamps C, 4.0 hand 1 releases B, 5.0 swing hand 1 off to the front
+  3.0  hand 2 clamps C, 4.0 hand 1 releases B, 5.0 roll the cart 90 deg, hand 1 off to the front
   6.2  up C, round unit 2's top corners, down D (free hand in front)
- 13.2  swing hand 1 back in onto E, 14.4 hand 1 clamps E, 15.4 hand 2 releases D
+ 13.2  roll back, hand 1 in onto E, 14.4 hand 1 clamps E, 15.4 hand 2 releases D
  16.4  up E sideways, round unit 3's top corner (cart still parallel to units 1-2)
  20.4  swivel 90 deg about the top bar into unit 3's plane
  22.4  along unit 3's top bar, round the far corner, down F; hold from 26.8
 """
 
 import math
+
+from constants import (
+    BALL_R, JAW_A1_PROPOSED_DEG, OMNI_R, PIPE_SPACING, SLEEVE_BORE_R, SLEEVE_OUT_R, SWING_DEG,
+)
 
 PARAMS = {
     "knot_s": (0.2, "control knot spacing, s (informational; fixed at import)"),
@@ -44,7 +48,7 @@ LOOP_OFF = 0.10            # loop in front of spine (-y)
 TANK = (0.70, 0.46, 0.30)
 Z_BOT = 0.30 + 0.12
 Z_TOP = Z_BOT + LOOP_H
-SEP = 0.14                 # pipe spacing at a handover = hand spacing
+SEP = PIPE_SPACING         # pipe spacing at a handover = hand spacing (the cart's two hands, 120 mm)
 PITCH = LOOP_W + SEP
 YL = -LOOP_OFF
 X_B, X_C, X_D = LOOP_W / 2, PITCH - LOOP_W / 2, PITCH + LOOP_W / 2
@@ -54,7 +58,7 @@ Y_F = YL - LOOP_W
 ZC = Z_BOT + LOOP_H / 2
 R = LOOP_R
 OPEN = 1.6
-SWING = math.radians(90)
+SWING = math.radians(SWING_DEG)
 UNITS = [(0.0, 0.0, 0.0), (PITCH, 0.0, 0.0), (U3[0], U3[1], -90.0)]
 KNOT = 0.2
 
@@ -89,13 +93,13 @@ PHASES = [
     (2.5, "up B", lambda u: {"rp": (X_B, YL, lerp(0.90, ZC, u))}),
     (1.0, "hand 2 clamps C", lambda u: {"j2": lerp(OPEN, 0, u)}),
     (1.0, "hand 1 releases B", lambda u: {"j1": lerp(0, OPEN, u), "ride": 2, "rp": (X_C, YL, ZC)}),
-    (1.2, "swing off B", lambda u: {"a5": SWING * u}),
+    (1.2, "roll off B", lambda u: {"a5": SWING * u}),
     (2.0, "up C", lambda u: {"rp": (X_C, YL, lerp(ZC, Z_TOP - R, u))}),
     (1.0, "corner C", lambda u: {"rp": (X_C + R - R * math.cos(D(90 * u)), YL, Z_TOP - R + R * math.sin(D(90 * u))), "a4": D(90 * u)}),
     (1.0, "top bar unit 2", lambda u: {"rp": (lerp(X_C + R, X_D - R, u), YL, Z_TOP)}),
     (1.0, "corner D", lambda u: {"rp": (X_D - R + R * math.sin(D(90 * u)), YL, Z_TOP - R + R * math.cos(D(90 * u))), "a4": D(90 + 90 * u)}),
     (2.0, "down D", lambda u: {"rp": (X_D, YL, lerp(Z_TOP - R, ZC, u))}),
-    (1.2, "swing onto E", lambda u: {"a5": SWING * (1 - u)}),
+    (1.2, "roll onto E", lambda u: {"a5": SWING * (1 - u)}),
     (1.0, "hand 1 clamps E", lambda u: {"j1": lerp(OPEN, 0, u)}),
     (1.0, "hand 2 releases D", lambda u: {"j2": lerp(0, OPEN, u), "ride": 1, "rp": (X_E, YL, ZC)}),
     (2.0, "up E sideways", lambda u: {"rp": (X_E, YL, lerp(ZC, Z_TOP - R, u))}),
@@ -132,7 +136,7 @@ def rot(s):
 def pose(t):
     """Root position (cart frame origin, = hand 1 when a5 = 0) and state.
 
-    The swing joint a5 turns everything about local z through hand 2 (x = SEP), which only
+    The roll joint a5 turns the whole cart about local z through hand 2's pipe (x = SEP), which only
     happens while riding hand 2, so hand 2 stays put and the root is rp - SEP * x_local.
     """
     s = state(t)
@@ -141,7 +145,7 @@ def pose(t):
     rp = s["rp"]
     root = rp if s["ride"] == 1 else tuple(rp[i] - SEP * xl[i] for i in range(3))
     if s["ride"] == 1:
-        assert abs(s["a5"]) < 1e-9, "swing only while riding hand 2"
+        assert abs(s["a5"]) < 1e-9, "roll only while riding hand 2"
     return root, s
 
 
@@ -153,7 +157,7 @@ def _joint_targets(t):
     r, s = pose(t)
     r0, _ = pose(0.0)
     return [r[0] - r0[0], r[1] - r0[1], r[2] - r0[2], s["a1"], s["a2"], s["a3"], s["a4"], s["a5"],
-            -s["j1"], OPEN - s["j2"]]
+            s["j1"], OPEN - s["j2"]]   # hand 1 (the B-type hand) opens CCW, hand 2 (the mirror) opens CW from its open start pose
 
 
 def _controls():
@@ -222,32 +226,58 @@ def _unit_xml(cx, cy, ang):
     return "\n    ".join(g)
 
 
-def _hand_xml(name, x0, color, jaw_color, jaw0_deg):
-    """One hand in the cart frame: pipe along local z, opening facing +y (spine side)."""
-    RR = 0.042
+def _hand_xml(name, x0, color, jaw_color, jaw0_deg, sg):
+    """One hand in the cart frame: pipe along local z at x = x0, the jaw wedge facing the other hand and +y (the spine side).
+
+    Geometry is the three-lobe sleeve of cad/hand_sleeve.py v5, drawn for hand 1 (sg = +1, wedge towards +x) and mirrored in x for hand 2 (sg = -1). Angles are CAD angles from +x
+    of hand 1. The jaw wedge is 20 deg (the C gap) to JAW_A1_PROPOSED_DEG, hinged on a pin at its far edge on the tube; opening turns it CCW for hand 1 and CW for hand 2.
+    """
+    RR = (SLEEVE_BORE_R + SLEEVE_OUT_R) / 2        # mid radius of the tube wall (20 to 34.5)
+    HALF_L = 0.062                                  # half the 124 mm sleeve
+    SEG = 18.0
+    A_JAW0, A_JAW1 = 20.0, JAW_A1_PROPOSED_DEG
+
+    def at(rad, deg, ox=0.0, oy=0.0):
+        a = math.radians(deg)
+        return (x0 + sg * rad * math.cos(a) - ox, rad * math.sin(a) - oy)
+
+    def seg(a, ox=0.0, oy=0.0, col=color):
+        px, py = at(RR, a, ox, oy)
+        eu = a if sg > 0 else 180.0 - a
+        return (f'<geom type="box" pos="{px:.4f} {py:.4f} 0" size="{(SLEEVE_OUT_R - SLEEVE_BORE_R) / 2:.5f} {RR * math.tan(math.radians(SEG / 2)):.5f} {HALF_L}" '
+                f'euler="0 0 {eu:.2f}" rgba="{col}"/>')
+
+    def ball(a, z, ox=0.0, oy=0.0):
+        px, py = at(0.016 + BALL_R, a, ox, oy)
+        return f'<geom type="sphere" pos="{px:.4f} {py:.4f} {z}" size="{BALL_R}" rgba="0.75 0.75 0.78 1"/>'
+
     g = []
-    # Fixed shell spans 122..348 deg (opening widened from 110 so a pipe can slide out
-    # through the open jaw during the swing; boxes are +/-13 deg wide).
-    for a in range(135, 336, 25):
-        r = math.radians(a)
-        g.append(f'<geom type="box" pos="{x0 + RR*math.cos(r):.4f} {RR*math.sin(r):.4f} 0" size="0.004 0.0095 0.02" '
-                 f'euler="0 0 {a}" rgba="{color}"/>')
-    for a in (270, 150):
-        r = math.radians(a)
-        for z in (-0.012, 0.012):
-            g.append(f'<geom type="sphere" pos="{x0 + 0.024*math.cos(r):.4f} {0.024*math.sin(r):.4f} {z}" size="0.008" rgba="0.1 0.1 0.1 1"/>')
-    hx, hy = RR * math.cos(math.radians(346)), RR * math.sin(math.radians(346))
-    jaw = []
-    for a in range(352, 418, 13):
-        r = math.radians(a)
-        jaw.append(f'<geom type="box" pos="{RR*math.cos(r) - hx:.4f} {RR*math.sin(r) - hy:.4f} 0" size="0.004 0.0075 0.02" '
-                   f'euler="0 0 {a}" rgba="{jaw_color}"/>')
-    r = math.radians(30)
-    for z in (-0.012, 0.012):
-        jaw.append(f'<geom type="sphere" pos="{0.024*math.cos(r) - hx:.4f} {0.024*math.sin(r) - hy:.4f} {z}" size="0.008" rgba="0.1 0.1 0.1 1"/>')
-    jaw.append('<geom type="box" pos="0.012 -0.02 0.034" size="0.012 0.02 0.016" rgba="0.15 0.15 0.15 1"/>')
+    a = A_JAW1 + SEG / 2
+    while a < 340.0 - SEG / 2 + 1e-6:                      # the fixed part of the tube: from the jaw's far edge round to the C gap
+        g.append(seg(a)); a += SEG
+    px, py = at(SLEEVE_OUT_R, A_JAW1)                      # the pin sits on the tube surface at the wedge's far edge
+    # outer lobe (180 deg): the drive wheel (top row) and the roll wheel (bottom row), 38 mm omni wheels drawn as spheres on their rows (+/-38 mm)
+    for z in (0.038, -0.038):
+        wx, wy = at(0.016 + OMNI_R, 180.0)
+        g.append(f'<geom type="sphere" pos="{wx:.4f} {wy:.4f} {z}" size="{OMNI_R}" rgba="0.12 0.12 0.12 1"/>')
+    g.append(f'<geom type="box" pos="{at(0.05, 180.0)[0]:.4f} 0 0" size="0.011 0.015 {HALF_L}" rgba="{color}"/>')   # the lobe
+    for z in (0.038, -0.038):
+        g.append(ball(-60.0, z))                           # the -60 deg ball cups are fixed
+    jaw = []   # the jaw's parts are placed relative to the pin
+    for k in range(int((A_JAW1 - A_JAW0) // SEG)):
+        aa = A_JAW0 + SEG / 2 + k * SEG
+        qx, qy = at(RR, aa)
+        eu = aa if sg > 0 else 180.0 - aa
+        jaw.append(f'<geom type="box" pos="{qx - px:.4f} {qy - py:.4f} 0" size="{(SLEEVE_OUT_R - SLEEVE_BORE_R) / 2:.5f} {RR * math.tan(math.radians(SEG / 2)):.5f} {HALF_L}" '
+                   f'euler="0 0 {eu:.2f}" rgba="{jaw_color}"/>')
+    for z in (0.038, -0.038):
+        bx, by = at(0.016 + BALL_R, 60.0)
+        jaw.append(f'<geom type="sphere" pos="{bx - px:.4f} {by - py:.4f} {z}" size="{BALL_R}" rgba="0.75 0.75 0.78 1"/>')   # the +60 deg ball cups ride the jaw
+    qx, qy = at(0.030, 60.0)
+    jaw.append(f'<geom type="box" pos="{qx - px:.4f} {qy - py:.4f} 0" size="0.011 0.014 {HALF_L}" rgba="{jaw_color}"/>')     # the +60 deg lobe
+    jaw.append(f'<geom type="cylinder" fromto="0 0 {-HALF_L - 0.002} 0 0 {HALF_L + 0.002}" size="0.002" rgba="0.8 0.8 0.82 1"/>')   # the hinge pin
     return ("\n".join(g) +
-            f'\n<body name="{name}_jaw" pos="{x0 + hx:.4f} {hy:.4f} 0" euler="0 0 {jaw0_deg:.2f}">'
+            f'\n<body name="{name}_jaw" pos="{px:.4f} {py:.4f} 0" euler="0 0 {jaw0_deg:.2f}">'
             f'<joint name="{name}_jaw" type="hinge" axis="0 0 1" armature="0.001" damping="0.09"/>'
             + "\n".join(jaw) + "</body>")
 
@@ -260,17 +290,18 @@ def build(**p) -> str:
     r0, _ = pose(0.0)
     ov_pos, ov_tgt = (3.1, -3.6, 3.0), (0.75, -0.35, 1.45)
     ch_pos = (0.75, -0.95, 0.35)
-    hands = (_hand_xml("hand1", 0.0, "0.2 0.45 0.85 1", "0.55 0.3 0.85 1", 0.0) + "\n" +
-             _hand_xml("hand2", SEP, "0.2 0.45 0.85 1", "0.55 0.3 0.85 1", -math.degrees(OPEN)))
+    hands = (_hand_xml("hand1", 0.0, "0.2 0.45 0.85 1", "0.55 0.3 0.85 1", 0.0, 1) + "\n" +
+             _hand_xml("hand2", SEP, "0.2 0.45 0.85 1", "0.55 0.3 0.85 1", -math.degrees(OPEN), -1))
+    # the rigid base on the sleeve pads (cad/cart_dims.py, omni_cart): plate 168 x 6 x 146 at y -56 .. -50, battery 70 x 50 x 70, arm base block, the arm folded up
     cart_extra = f"""
-          <geom type="box" pos="{SEP/2} -0.057 0" size="{SEP/2 + 0.02} 0.005 0.04" rgba="1 0.85 0.3 1"/>
-          <geom type="cylinder" fromto="0 -0.062 -0.04 0 -0.062 0.04" size="0.016" rgba="0.2 0.7 0.4 1"/>
-          <geom type="cylinder" fromto="{SEP} -0.062 -0.04 {SEP} -0.062 0.04" size="0.016" rgba="0.2 0.7 0.4 1"/>
-          <geom type="cylinder" fromto="{SEP/2} -0.062 0 {SEP/2} -0.085 0" size="0.026" rgba="0.95 0.4 0.1 1"/>
-          <geom type="capsule" fromto="{SEP/2} -0.085 0 {SEP/2} -0.10 0.06" size="0.012" rgba="0.95 0.4 0.1 1"/>
-          <geom type="capsule" fromto="{SEP/2} -0.10 0.06 {SEP/2} -0.115 0.22" size="0.012" rgba="0.95 0.4 0.1 1"/>
-          <geom type="capsule" fromto="{SEP/2} -0.115 0.22 {SEP/2} -0.125 0.06" size="0.012" rgba="0.95 0.4 0.1 1"/>
-          <geom type="box" pos="{SEP/2} -0.125 0.05" size="0.015 0.015 0.015" rgba="0.95 0.4 0.1 1"/>"""
+          <geom type="box" pos="{SEP/2} -0.053 0" size="0.084 0.003 0.073" rgba="1 0.85 0.3 1"/>
+          <geom type="box" pos="{SEP/2} -0.081 0" size="0.035 0.025 0.035" rgba="0.3 0.55 0.35 1"/>
+          <geom type="box" pos="{SEP/2} -0.116 0" size="0.035 0.010 0.035" rgba="0.9 0.65 0.2 1"/>
+          <geom type="cylinder" fromto="{SEP/2} -0.126 0 {SEP/2} -0.149 0" size="0.026" rgba="0.95 0.4 0.1 1"/>
+          <geom type="capsule" fromto="{SEP/2} -0.149 0 {SEP/2} -0.164 0.06" size="0.012" rgba="0.95 0.4 0.1 1"/>
+          <geom type="capsule" fromto="{SEP/2} -0.164 0.06 {SEP/2} -0.179 0.22" size="0.012" rgba="0.95 0.4 0.1 1"/>
+          <geom type="capsule" fromto="{SEP/2} -0.179 0.22 {SEP/2} -0.189 0.06" size="0.012" rgba="0.95 0.4 0.1 1"/>
+          <geom type="box" pos="{SEP/2} -0.189 0.05" size="0.015 0.015 0.015" rgba="0.95 0.4 0.1 1"/>"""
     acts = "\n    ".join(
         f'<intvelocity name="{n}" joint="{j}" kp="{kp}" actrange="-6.5 6.5"/>'
         for n, j, kp in (("x", "x", 2000), ("y", "y", 2000), ("z", "z", 2000), ("a1", "a1", 20), ("a2", "a2", 20),

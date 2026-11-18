@@ -47,5 +47,13 @@ plus `climb_m` (height gained) and `max_contacts`.
   surface/friction, spring preload and stiffness, masses, drive rpm and torque. Baseline
   results on 1 Nov 2026 (2 s runs): dry with 30 N preload climbs; wet (μ 0.3) slides at 30 N
   and holds at 60 N; +1 kg payload stalls the 0.3 N m drive. 15 N preload cannot hold 1 kg.
+  Omni cart (OpenPocket #283, `wheel="omni"`): the driven wheel is the 38 mm rubber-roller omni wheel (grip up the pipe, 2 % of it round the pipe, an explicit anisotropic contact pair),
+  the idlers are ball cups, the cart is the whole 3 kg. `wet_test()` lists the wet-pipe hold cases (drive locked by the worm: `drive_rpm` 0, `drive_torque_nm` 5). Results (3 s, 3 kg, vertical
+  pipe, checked in the control-ui MuJoCo build): wet (mu 0.3) slides at 20, 40, 60, 80 and 100 N preload and only just holds at 140 N (creeps 7 cm); dry (0.8) slides at 20, 30 and 40 N and holds
+  at 50 N. So the design preload of 20 N (40 N in tests) cannot hold the cart on the pipe by the drive wheel alone: plan risk 1 is real, grip needs 3 to 5 times the wheel's rating or another
+  hold (rubber on the pipe, a rubber-tyred wheel, then the latching brake: plan task 13). The anisotropy is right: with the two friction values swapped the same 140 N case slides.
+- `unit_change.py` — the cart crossing three units. Since #283 the cart is the omni cart: hands 12 cm apart on one rigid base, three-lobe sleeves with a jaw wedge, and the cart ROLLS 90 degrees
+  on the riding pipe (no hinge) to take the free hand off its pipe. The jaw wedge is drawn to 150 degrees: with the CAD's 110 no roll direction clears (control-ui `scripts/search-swing.ts`).
+  `bend_test.py` and `guide_test.py` still model the old 20 x 8 wheels (they read the old constants in `constants.py`, kept for them) and are not updated yet.
 
 Tests 2–5 (curve, handover, corner, arm reach) come later.
