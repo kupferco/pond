@@ -18,6 +18,7 @@
     {"title": "Drawings", "href": "drawings/", "note": "Every CAD drawing of the unit and robot, with versions."},
     {"title": "Sim", "href": "sim/", "note": "A physics simulation of the robot you can play with in the browser."},
     {"title": "Part list", "href": "part-list/", "note": "Everything needed to build it, and what's still to get."},
+    {"title": "Mission and business model", "href": "business-model/", "note": "Why Pond exists, where it fits, and how it could pay its way."},
     {"title": "Roadmap", "href": "roadmap/", "note": "What I'm working on now and what comes next."},
     {"title": "Decisions", "href": "decisions/", "note": "Why things are the way they are."},
     {"title": "History", "href": "history/", "note": "What was done, and when."}
