@@ -35,6 +35,8 @@ export const R_ARM_OMNI = 61, ARM_W_OMNI = 30.8;    // outer lobe (180 deg): whe
 export const R_ARM_CUP = 43.65, ARM_W_CUP = 28;     // the +/-60 deg lobes
 export const INNER_ANG = 60;                        // deg, the two ball-cup lobes either side of the C gap (+X for hand B)
 export const BALL_D = 11, CUP_R = 9, CUP_BACK = 30.65, BALL_CENTRE_R = R_PIPE + BALL_D / 2, FACE_R = R_PIPE + 1.5;
+export const JAW_A0 = 20, JAW_A1 = 110, JAW_OPEN_DEG = 92;   // hand_sleeve.py jaw: the ring sector 20..110 deg with the +60 deg lobe and its two ball cups swings open 92 deg on a pin at the 110 deg edge
+export const JAW_OPEN_RAD = (JAW_OPEN_DEG * Math.PI) / 180;
 export const GAP_HALF_DEG = 20;                     // the C gap in the tube ring: 18 mm wide at its narrow middle
 export const PAD = { x0: -24, x1: 0, y0: -50, y1: -22 };   // hand_sleeve.py pad (hand B: on the -X / -Y side)
 export const PLATE_T = 6, PLATE_Y1 = PAD.y0, PLATE_Y0 = PLATE_Y1 - PLATE_T;   // plate front face -56
@@ -106,10 +108,10 @@ export function rollBudget(loadNm = 2.9, o: { wheelR?: number; pipeR?: number; m
 const n3 = (x: number, y: number, z: number) => `${f(m(x))} ${f(m(y))} ${f(m(z))}`;
 
 /** Hand h's geoms and wheel bodies, relative to its own pipe axis. B-frame numbers are mirrored in x for hand C. */
-function handInner(h: Hand): string {
+function handInner(h: Hand, jawA1 = JAW_A1): string {
   const s = SG[h], clear = CONTACT_CLEAR_MM;
   const P = (x: number, y: number, z: number) => n3(s * x, y, z);                              // a B-frame point, mirrored for C
-  const g: string[] = [];
+  const g: string[] = [], jg: string[] = [];   // jg: what rides on the jaw (ring sector 20..110 deg, the +60 deg lobe, its two ball cups)
   const box = (name: string, x: number, y: number, z: number, hx: number, hy: number, hz: number, col: string, vis = CART_COL) =>
     g.push(`<geom ${name ? `name="${name}" ` : ''}type="box" pos="${P(x, y, z)}" size="${f(m(hx))} ${f(m(hy))} ${f(m(hz))}" ${col} ${vis}/>`);
   // Tube ring: bore R20, outer 34.5, open at the C gap (+X for B).
@@ -118,12 +120,12 @@ function handInner(h: Hand): string {
     const a = (i + 0.5) * seg, deg = (a * 180) / Math.PI, d = Math.min(deg, 360 - deg);
     if (d < GAP_HALF_DEG - 1) continue;                                                         // the gap (centre segments at 9 deg are skipped)
     const ux = Math.cos(a), uy = Math.sin(a);
-    g.push(`<geom name="sl${h}_${i}" type="box" pos="${P(rc * ux, rc * uy, 0)}" xyaxes="${f(s * ux)} ${f(uy)} 0 ${f(-uy)} ${f(s * ux)} 0" size="${f(m(TUBE_R_MIN - R_BORE) / 2)} ${f(m(rc) * Math.tan(seg / 2))} ${f(m(SLEEVE_L) / 2)}" ${SLEEVEC} ${CART_COL}/>`);
+    (deg > JAW_A0 && deg < jawA1 ? jg : g).push(`<geom name="sl${h}_${i}" type="box" pos="${P(rc * ux, rc * uy, 0)}" xyaxes="${f(s * ux)} ${f(uy)} 0 ${f(-uy)} ${f(s * ux)} 0" size="${f(m(TUBE_R_MIN - R_BORE) / 2)} ${f(m(rc) * Math.tan(seg / 2))} ${f(m(SLEEVE_L) / 2)}" ${SLEEVEC} ${CART_COL}/>`);
   }
   // Lobes: a radial bar at angle ang from r0 to r1, w wide, the full sleeve length. Outer lobe at 180 deg, ball-cup lobes at +/-60 deg.
   const lobe = (name: string, angDeg: number, r0: number, r1: number, w: number) => {
     const a = rad(angDeg), ux = Math.cos(a), uy = Math.sin(a), rm = (r0 + r1) / 2;
-    g.push(`<geom name="${name}" type="box" pos="${P(rm * ux, rm * uy, 0)}" xyaxes="${f(s * ux)} ${f(uy)} 0 ${f(-uy)} ${f(s * ux)} 0" size="${f(m(r1 - r0) / 2)} ${f(m(w) / 2)} ${f(m(SLEEVE_L) / 2)}" ${SLEEVEC} ${CART_COL}/>`);
+    (angDeg === INNER_ANG ? jg : g).push(`<geom name="${name}" type="box" pos="${P(rm * ux, rm * uy, 0)}" xyaxes="${f(s * ux)} ${f(uy)} 0 ${f(-uy)} ${f(s * ux)} 0" size="${f(m(r1 - r0) / 2)} ${f(m(w) / 2)} ${f(m(SLEEVE_L) / 2)}" ${SLEEVEC} ${CART_COL}/>`);
   };
   lobe(`lobe${h}o`, 180, R_BORE - 2, R_ARM_OMNI, ARM_W_OMNI);
   lobe(`lobe${h}p`, INNER_ANG, R_BORE - 2, R_ARM_CUP, ARM_W_CUP);
@@ -142,6 +144,7 @@ function handInner(h: Hand): string {
         <geom type="cylinder" fromto="${axis === 'y' ? P(wx, -half - 0.3, z) : P(wx, 0, z - half - 0.3)} ${axis === 'y' ? P(wx, half + 0.3, z) : P(wx, 0, z + half + 0.3)}" size="${f(m(13))}" ${HUBC} ${VISUAL}/>
       </body>`;
   };
+  const jbodies: string[] = [];
   const bodies: string[] = [wheelDisc(`drive${h}`, 'y', DRIVE_Z), wheelDisc(`rollwheel${h}`, 'z', ROLL_Z)];
   // Passive ball cups on the +/-60 deg lobes, rows +/-38: a printed cup (drawn, fixed) with a ball that spins freely on a ball joint.
   for (const sa of [1, -1]) {
@@ -149,8 +152,8 @@ function handInner(h: Hand): string {
     for (const z of [ROW_Z, -ROW_Z]) {
       const nm = `ball${h}${sa > 0 ? 'p' : 'm'}${z > 0 ? 'f' : 'b'}`;
       const rb = BALL_CENTRE_R + clear;
-      g.push(`<geom type="cylinder" fromto="${P(ux * (FACE_R + 1.5), uy * (FACE_R + 1.5), z)} ${P(ux * CUP_BACK, uy * CUP_BACK, z)}" size="${f(m(CUP_R))}" ${rgba([0.55, 0.6, 0.6])} ${VISUAL}/>`);
-      bodies.push(`<body name="${nm}" pos="${P(ux * rb, uy * rb, z)}"><joint name="${nm}" type="ball" pos="0 0 0"/>
+      (sa > 0 ? jg : g).push(`<geom type="cylinder" fromto="${P(ux * (FACE_R + 1.5), uy * (FACE_R + 1.5), z)} ${P(ux * CUP_BACK, uy * CUP_BACK, z)}" size="${f(m(CUP_R))}" ${rgba([0.55, 0.6, 0.6])} ${VISUAL}/>`);
+      (sa > 0 ? jbodies : bodies).push(`<body name="${nm}" pos="${P(ux * rb, uy * rb, z)}"><joint name="${nm}" type="ball" pos="0 0 0"/>
         <geom type="sphere" size="${f(m(BALL_D / 2))}" ${STEEL} friction="0.05 0.002 0.0001" ${CART_COL}/>
       </body>`);
     }
@@ -162,7 +165,13 @@ function handInner(h: Hand): string {
   const gz = -(SLEEVE_L / 2 + 1);
   box('', -(OMNI_AXLE_R + GB_L / 2 - MOTOR_R), 0, gz - GB_T / 2, GB_L / 2, MOTOR_R, GB_T / 2, MOTORC, VISUAL);
   g.push(`<geom type="cylinder" fromto="${P(-(OMNI_AXLE_R + GB_L - MOTOR_R), 0, gz - GB_T / 2)} ${P(-(OMNI_AXLE_R + GB_L - MOTOR_R + MOTOR_L), 0, gz - GB_T / 2)}" size="${f(m(MOTOR_R))}" ${MOTORC} ${VISUAL}/>`);
-  return `${g.join('\n      ')}\n      ${bodies.join('\n      ')}`;
+  // The jaw: a hinge about an axis along the pipe at the 110 deg edge of the tube (hand_sleeve.py), 0 = closed round the pipe, JAW_OPEN_RAD = released.
+  const pa = rad(jawA1), pivot = P(TUBE_R_MIN * Math.cos(pa), TUBE_R_MIN * Math.sin(pa), 0);
+  const jaw = `<body name="jaw${h}"><joint name="jaw${h}" type="hinge" pos="${pivot}" axis="0 0 ${s}" range="0 ${JAW_OPEN_DEG}" damping="0.05"/>
+      ${jg.join('\n      ')}
+      ${jbodies.join('\n      ')}
+    </body>`;
+  return `${g.join('\n      ')}\n      ${bodies.join('\n      ')}\n      ${jaw}`;
 }
 
 /** Plate, battery and arm base: the rigid base the sleeves carry, in the cart frame (x across, y out, z along the pipes). */
@@ -182,10 +191,10 @@ const INERTIAL = '<inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.00
  * rollB and rollC. Only the STATIC hand's joint turns; the other holds zero (the controller's interlock, as the old hinge). Everything below the
  * second joint is rigid: sleeves, wheels, plate, battery, arm base. Wrap it in a mocap body to place it in a scene.
  */
-export function omniCartBody(): string {
+export function omniCartBody(o: { jawA1?: number } = {}): string {
   const jnt = (n: string, x: number) => `<joint name="${n}" type="hinge" pos="${n3(x, 0, 0)}" axis="0 0 1" range="-6.4 6.4"/>`;
   const hand = (h: Hand) => `<body name="hand${h}" pos="${n3(PIPE_X[h], 0, 0)}">
-      ${handInner(h)}
+      ${handInner(h, o.jawA1)}
     </body>`;
   return `<body name="rollB">${INERTIAL}${jnt('rollB', PIPE_X.B)}
    <body name="rollC">${INERTIAL}${jnt('rollC', PIPE_X.C)}
@@ -202,6 +211,7 @@ export function omniCartBody(): string {
 export const WHEEL_JOINTS = ['driveB', 'rollwheelB', 'driveC', 'rollwheelC'] as const;
 export const ROLL_JOINTS = ['rollB', 'rollC'] as const;
 /** The actuators: the drive and roll-wheel motors of each sleeve (4 motors, as the part list: 2 drive, 2 roll) and a roll joint holder per pipe. */
+export const JAW_JOINTS = ['jawB', 'jawC'] as const;
 export const OMNI_ACTUATORS = ['driveB', 'driveC', 'rollmotorB', 'rollmotorC', 'rollB', 'rollC'] as const;
 export function omniActuators(): string {
   return `<actuator>
@@ -213,6 +223,9 @@ export function omniActuators(): string {
     <position name="rollC" joint="rollC" kp="20" ctrlrange="-6.4 6.4"/>
   </actuator>`;
 }
+
+/** Position actuators of the two jaws (the transfer scene adds them to omniActuators(); the cart scenes keep the jaws closed and need none). */
+export const jawActuatorsXml = () => JAW_JOINTS.map((j) => `<position name="${j}" joint="${j}" kp="2" ctrlrange="0 ${f(JAW_OPEN_RAD)}"/>`).join('\n    ');
 
 type Mdl = { jnt(name: string): { id: number }; jnt_qposadr: ArrayLike<number>; actuator(name: string): { id: number } };
 /**

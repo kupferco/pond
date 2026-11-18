@@ -50,7 +50,7 @@ export function cartPose(sCm: number, trim: BendTrim = NO_TRIM): { pos: [number,
   return { pos: [p.x - off[0], -off[1], p.z - off[2]], quat };
 }
 
-function matToQuat(R: number[][]): [number, number, number, number] {
+export function matToQuat(R: number[][]): [number, number, number, number] {
   const tr = R[0][0] + R[1][1] + R[2][2];
   let w: number, x: number, y: number, z: number;
   if (tr > 0) { const s = Math.sqrt(tr + 1) * 2; w = s / 4; x = (R[2][1] - R[1][2]) / s; y = (R[0][2] - R[2][0]) / s; z = (R[1][0] - R[0][1]) / s; }
@@ -93,7 +93,7 @@ export function placeOmniCart(model: Mj, data: Dt, sCm: number, rollRad: number,
 
 export type Owner = 'rider' | 'freehand' | 'base' | 'other';
 /** Which part of the cart a body belongs to: the riding hand B (sleeve, wheels, balls), the released hand C, or the rigid base (plate, battery, arm base). */
-export const ownerOf = (body: string): Owner => /^(handC|driveC|rollwheelC|ballC)/.test(body) ? 'freehand' : body === 'base' ? 'base' : /^(handB|driveB|rollwheelB|ballB)/.test(body) ? 'rider' : 'other';
+export const ownerOf = (body: string): Owner => /^(handC|driveC|rollwheelC|ballC|jawC)/.test(body) ? 'freehand' : body === 'base' ? 'base' : /^(handB|driveB|rollwheelB|ballB|jawB)/.test(body) ? 'rider' : 'other';
 type Cm = { ngeom: number; geom_bodyid: ArrayLike<number>; body(i: number): { name: string; delete?(): void } };
 type Cd = { ncon: number; contact: { get(i: number): { geom1: number; geom2: number; dist: number; delete?(): void } | undefined; delete?(): void } };
 /** Deepest penetration (m, negative; 0 = none) of each part of the cart against the track pipe. Call after mj_forward. */
