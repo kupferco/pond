@@ -152,7 +152,7 @@ Answer: Start minimal but with no hand checks: float switch for water level, a c
 ### Q2. Should sensing wait until the cart roll redesign (#265) has settled, so we don't add parts to a plate that is still changing?
 Context: The plate, battery, arm and pod cup are already tight, and option B or C would add a holder and a few extra arm moves.
 Assumed: Yes, wait; plan the cup holder only after the new sleeves are drawn.
-Answer: _open_
+Answer: Yes, wait for the cart redesign to settle before adding sensing parts to the cart.
 
 ### Q3. Can the tank have a small access hatch in the lid that the arm can reach, 6 to 8 cm across?
 Context: Option B and C both need the arm to get into the water from the track. The lid also has to keep out mosquitoes and light (the unit design says sealed, opaque, with mesh).
