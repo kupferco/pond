@@ -37,5 +37,15 @@ const viewer = readFileSync(join(dir, 'viewer.html'), 'utf8');
 if (!/model-viewer\s*\{[^}]*background:\s*#fff/.test(viewer)) problems.push('viewer.html: background is not white');
 if (!/shadow-intensity="[0-9.]*[1-9]/.test(viewer)) problems.push('viewer.html: ground shadow is off');
 
+if (!/id="back"/.test(viewer)) problems.push('viewer.html: no Back button');
+// One entry per part on the Drawings page: the card list is built by "part", so a part must not be spelled several ways.
+const home = JSON.parse(readFileSync(join(dir, '..', 'home.json'), 'utf8')) as { hero: { href: string } };
+const hm = /^drawings\/viewer\.html\?src=(renders\/[A-Za-z0-9._-]+\.glb)(&|$)/.exec(home.hero.href);
+if (!hm || !existsSync(join(dir, hm[1]))) problems.push(`home.json: hero does not open an existing GLB in the shared viewer (${home.hero.href})`);
+else if (hm[1] !== 'renders/complete-unit-v1.glb') problems.push(`home.json: hero should open the complete unit GLB (${hm[1]})`);
+if (data.renders[0]?.id !== 'complete-unit-v1') problems.push('renders.json: the complete unit must be the first card');
+const collar = new Set(data.renders.filter(r => /^pipe-collar-/.test(r.id)).map(r => (r as { part?: string }).part));
+if (collar.size !== 1) problems.push(`renders.json: pipe collar entries use ${collar.size} different part names, want 1`);
+
 if (problems.length) { console.error(problems.join('\n')); console.error(`drawings: ${problems.length} problem(s) in ${data.renders.length} drawings`); process.exit(1); }
 console.log(`drawings: ${data.renders.length} drawings, all open a GLB and have a line-drawing thumbnail`);

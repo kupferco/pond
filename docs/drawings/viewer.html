@@ -21,7 +21,7 @@
 </style></head>
 <body>
 <model-viewer id="mv" camera-controls auto-rotate environment-image="neutral" shadow-intensity="1.2" shadow-softness="1" exposure="1.1" touch-action="pan-y" interaction-prompt="none"></model-viewer>
-<div class="bar"><button id="back" type="button" aria-label="Back to the gallery">&#8592; Back</button><strong id="t">Pond render</strong><a id="dl" download>download GLB</a></div>
+<div class="bar"><button id="back" type="button" aria-label="Back">&#8592; Back</button><strong id="t">Pond render</strong><a id="dl" download>download GLB</a></div>
 <div class="hint">drag to orbit · scroll or pinch to zoom · Z is up in the part, shown as Y here</div>
 <script>
   const q = new URLSearchParams(location.search);
@@ -37,9 +37,9 @@
   document.title = title;
 
   // Back: one step back in history when we came from the gallery (so the phone's back gesture and this
-  // button do the same thing), otherwise straight to the gallery page, keeping the chosen category.
+  // button do the same thing), otherwise straight to the page we were opened from (the home page or the gallery), keeping the chosen category.
   const cat = (q.get('cat') || '').slice(0, 60);
-  const galleryUrl = 'index.html' + (cat && cat !== 'All' ? '#cat=' + encodeURIComponent(cat) : '');
+  const galleryUrl = q.get('from') === 'home' ? '../' : 'index.html' + (cat && cat !== 'All' ? '#cat=' + encodeURIComponent(cat) : '');
   let cameFromSite = false;
   try { cameFromSite = !!document.referrer && new URL(document.referrer).origin === location.origin; } catch (e) {}
   document.getElementById('back').addEventListener('click', () => {
