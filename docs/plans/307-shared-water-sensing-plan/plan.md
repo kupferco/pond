@@ -182,7 +182,7 @@ Answer: Check pH and EC once a day by default (adjustable, e.g. every two days);
 ### Q8. Do we want the robot to also do pH and EC calibration checks itself, or is a person doing it every month or two fine?
 Context: Robot checks need a buffer cup at the station and more arm poses; hand calibration costs a visit but is simple.
 Assumed: By hand at first, robot checks as a later idea.
-Answer: _open_
+Answer: By hand at first; robot self-calibration as a later idea.
 
 ### Q9. For sourcing, do we buy sensors on Mercado Livre first (faster, easier returns) rather than AliExpress (cheaper but slower and taxed)?
 Context: Import tax makes the AliExpress saving smaller than it looks, and bad probes need quick swaps.
