@@ -162,7 +162,7 @@ Answer: _open_
 ### Q4. Where should the home sensor station sit, and may it be a second small box with its own power?
 Context: It needs shade, clean water for rinsing, and a drain. A spot near the dock is easiest because the arm already goes there.
 Assumed: Next to the dock on the first unit, in a shaded box, powered from the base battery.
-Answer: _open_
+Answer: One shared water testing station on the first unit, next to the dock; the arm brings a water sample to it, so only one set of probes (pH, EC) is bought for all units. Keep cost minimal. Powered from the base battery.
 
 ### Q5. Where may the rinse and sample drain go: back into the base tank, or into a bucket or the ground?
 Context: Pouring used sample back into a tank is easy but could carry a little rinse water into it; a bucket needs emptying by a person.
