@@ -167,7 +167,7 @@ Answer: One shared water testing station on the first unit, next to the dock; th
 ### Q5. Where may the rinse and sample drain go: back into the base tank, or into a bucket or the ground?
 Context: Pouring used sample back into a tank is easy but could carry a little rinse water into it; a bucket needs emptying by a person.
 Assumed: A small bucket, emptied by hand at first.
-Answer: _open_
+Answer: Into the ground (small amounts of sample and rinse water drained to the soil).
 
 ### Q6. Is a good pH probe worth the money for the shared station (about GBP 40 to 130), instead of the cheap one?
 Context: One shared set makes the better probe affordable, and pH is the reading that goes wrong most quietly.
