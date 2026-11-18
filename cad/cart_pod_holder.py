@@ -1,4 +1,8 @@
 # cad/cart_pod_holder.py: seedling-pod holder on the cart plate (DRAFT v3, 17 Nov 2026, OpenPocket #229, #230).
+# v4 (Pond #280, plan task 265 part 6): fitted to the v5 omni sleeves. The plate is now 146 mm high (z -73..73, was about 112) and the sleeves, wheels and
+#   motors end at z = -88 (were -45), but they are BEHIND the plate (y > -50) and the cup is in FRONT of it (y < -56), so they cannot touch. The cup stays
+#   at z = -88; the old "motors on the plate" are gone (the four motors are in the sleeves); the hands in context() are the real sleeves, not boxes.
+#   check() now also prints the closest distance from the pod and the holder to the hands, arm base and battery.
 # v3: the cup is STRAIGHT again, axis square to the plate (90 degrees, no tilt): CUP_TILT = 0. WHY: the cart goes up pipe A and comes down
 #   pipe B, so it is upside down for part of the trip. The pod sits in the cup on the 24 x 2 O-ring (it squeezes the pod body, a friction fit)
 #   and must stay put upside down, which a straight cup does better than a tilted one; it also takes the cup out of the arm's way (the 45 degree
@@ -31,7 +35,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cart_dims as cd
 import pipe_collar as pc
 
-PLATE_Y0 = cd.PLATE_Y0                  # plate front face, -52
+PLATE_Y0 = cd.PLATE_Y0                  # plate front face, -56 (plate back face on the pads)
 CUP_X, CUP_Z = cd.ARM_X, -88.0
 CUP_D = 42.0
 CUP_L = 40.0                            # cup body length, from the pads' outer face to the mouth
@@ -95,21 +99,27 @@ def pod_in_holder():
     cap = ycyl(pc.CAP_D / 2, cap_in, cap_in - pc.CAP_T, CUP_X, CUP_Z)
     return _rot(body.union(cap))
 
+_CTX = {}
 def context():
+    if not _CTX:
+        _CTX.update(_build_context())
+    return _CTX
+
+def _build_context():
     """Plate and the things next to the holder, as boxes, for the render and for the clearance test."""
     items = {}
     items["plate"] = bx(cd.PLATE_X0, cd.PLATE_X1, cd.PLATE_Y0, cd.PLATE_Y1, -cd.PLATE_ZH, cd.PLATE_ZH)
     items["battery"] = bx(cd.BATT_X - cd.BATT[0] / 2, cd.BATT_X + cd.BATT[0] / 2, cd.PLATE_Y0 - cd.BATT[1], cd.PLATE_Y0,
                           cd.BATT_Z - cd.BATT[2] / 2, cd.BATT_Z + cd.BATT[2] / 2)
     items["arm_base"] = bx(cd.ARM_X - 35, cd.ARM_X + 35, cd.ARM_Y0 - 8, cd.ARM_Y0, -35, 35)
-    m = None
-    for sgn in (-1, 1):
-        mx = cd.MOTOR_XS[sgn]
-        c = bx(mx - cd.MOTOR_R, mx + cd.MOTOR_R, cd.PLATE_Y0 - 2 * cd.MOTOR_R, cd.PLATE_Y0, -cd.MOTOR_L / 2, cd.MOTOR_L / 2 + 20)
-        m = c if m is None else m.union(c)
-    items["motors"] = m
+    # the real v5 hands (sleeve, jaw, omni wheels, ball cups, motors), clamped, as placed on the cart (Pond #280; was boxes of the v4 sleeve)
+    import cart_sleeves as csl
     for sgn, nm in ((-1, "hand_B"), (1, "hand_C")):
-        items[nm] = bx(sgn * cd.HX - cd.SLEEVE_R, sgn * cd.HX + cd.SLEEVE_R, -43, 43, -45, 45)
+        h = None
+        for _n, (shp, _c) in csl.hand_parts().items():
+            s = csl.place_hand(shp, sgn)
+            h = s if h is None else h.union(s)
+        items[nm] = h
     return items
 
 def check():
@@ -122,6 +132,9 @@ def check():
     for k, v in context().items():
         i = pod.intersect(v)
         res["pod_vs_" + k] = i.val().Volume() if i.vals() else 0.0
+    for k in ("plate", "battery", "arm_base", "hand_B", "hand_C"):          # closest approach in mm (0 = touching)
+        res["pod_gap_" + k] = round(pod.val().distance(context()[k].val()), 1) if k not in ("plate",) else None
+        res["holder_gap_" + k] = None if k == "plate" else round(h.val().distance(context()[k].val()), 1)
     pb = pod.val().BoundingBox()
     res["pod_bbox"] = (pb.xmin, pb.xmax, pb.ymin, pb.ymax, pb.zmin, pb.zmax)
     res["oring_squeeze_mm"] = pc.POD_BODY_D / 2 - 12.0   # pod body radius minus the O-ring bore radius (12.0, as cut in oring()): >0 means the ring squeezes the pod
@@ -130,14 +143,14 @@ def check():
     res["bbox"] = (bb.xmin, bb.xmax, bb.ymin, bb.ymax, bb.zmin, bb.zmax)
     return res
 
-def scene(with_pod=False, show=("plate", "battery", "arm_base", "motors")):
+def scene(with_pod=False, show=("plate", "battery", "arm_base")):
     a = cq.Assembly()
     a.add(holder(), name="cart_pod_holder", color=cq.Color(0.25, 0.28, 0.3, 1))
     a.add(oring(), name="oring_24x2", color=cq.Color(0.1, 0.5, 0.2, 1))
     if with_pod:
         a.add(pod_in_holder(), name="seedling_pod", color=cq.Color(*pc.C_POD))
     cols = {"plate": (0.35, 0.35, 0.38, 0.6), "battery": (0.2, 0.45, 0.85, 0.6), "arm_base": (0.88, 0.88, 0.9, 0.6),
-            "motors": (0.85, 0.25, 0.25, 0.6), "hand_B": (0.3, 0.55, 0.85, 0.35), "hand_C": (0.3, 0.55, 0.85, 0.35)}
+            "hand_B": (0.3, 0.55, 0.85, 0.35), "hand_C": (0.3, 0.55, 0.85, 0.35)}
     for k, v in context().items():
         if k in show:                     # the hands are checked in check() but left out of the picture (they hide the plate)
             a.add(v, name=k, color=cq.Color(*cols[k]))

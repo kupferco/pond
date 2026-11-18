@@ -23,6 +23,16 @@ export function triangles(mj: MainModule, model: MjModel, data: MjData): Tri[] {
       quad([x, -y, -z], [x, y, -z], [x, y, z], [x, -y, z]); quad([-x, y, -z], [-x, -y, -z], [-x, -y, z], [-x, y, z]);
       quad([-x, y, -z], [x, y, -z], [x, y, z], [-x, y, z]); quad([x, -y, -z], [-x, -y, -z], [-x, -y, z], [x, -y, z]);
       quad([-x, -y, z], [x, -y, z], [x, y, z], [-x, y, z]); quad([-x, y, -z], [x, y, -z], [x, -y, -z], [-x, -y, -z]);
+    } else if (type === T.mjGEOM_SPHERE.value) {
+      const r = s[0], nu = 12, nv = 8;   // a UV sphere
+      const pt = (i: number, j: number) => { const th = (Math.PI * j) / nv, ph = (2 * Math.PI * i) / nu; return [r * Math.sin(th) * Math.cos(ph), r * Math.sin(th) * Math.sin(ph), r * Math.cos(th)]; };
+      for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) quad(pt(i, j), pt(i + 1, j), pt(i + 1, j + 1), pt(i, j + 1));
+    } else if (type === T.mjGEOM_CAPSULE.value) {
+      const n = 14, r = s[0], h = s[1];   // the cylinder part (end caps left out: capsules here are track segments with a shared end)
+      for (let k = 0; k < n; k++) {
+        const a0 = 2 * Math.PI * k / n, a1 = 2 * Math.PI * (k + 1) / n;
+        quad([r * Math.cos(a0), r * Math.sin(a0), -h], [r * Math.cos(a1), r * Math.sin(a1), -h], [r * Math.cos(a1), r * Math.sin(a1), h], [r * Math.cos(a0), r * Math.sin(a0), h]);
+      }
     } else if (type === T.mjGEOM_CYLINDER.value) {
       const n = 28, r = s[0], h = s[1];
       for (let k = 0; k < n; k++) {

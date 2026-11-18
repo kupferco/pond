@@ -62,7 +62,6 @@ import cadquery as cq
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hand_sleeve as hs          # reused via cart_assembly
 import cart_assembly as ca        # reused, not redrawn
-import cart_hinge as ch           # plate hinge and worm drive of each hand (Viber #97)
 
 # ---------------- Numbers ----------------
 L1, L2, L3 = 120.0, 130.0, 100.0        # ASSUMED: shoulder-elbow, elbow-wrist, wrist-gripper tip (350 total)
@@ -247,20 +246,17 @@ def xshift(shape, x):
     return shape.translate((x, 0, 0))
 
 PLATE_X0, PLATE_X1, PLATE_CY = ca.PLATE_X0, ca.PLATE_X1, ca.PLATE_CY
-plate, battery, motors = ca.plate, ca.battery, ca.motors    # the same parts as the whole-cart drawing
+plate, battery = ca.plate, ca.battery    # the same parts as the whole-cart drawing
 BATT_C = ca.BATT_X
 BATT, BATT_Y = ca.BATT, ca.BATT[1]
 
 cart = [("base_plate", plate, (0.35, 0.35, 0.38, 1)),
-        ("battery", battery, (0.2, 0.45, 0.85, 1)),
-        ("drive_motors", motors, (0.85, 0.25, 0.25, 1))]
+        ("battery", battery, (0.2, 0.45, 0.85, 1))]
 for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):
     cart.append(("track_%s" % tag, xshift(ca.cyl(hs.R_PIPE, PIPE_Z1 - PIPE_Z0, "z", (0, 0, (PIPE_Z0 + PIPE_Z1) / 2)), sgn * HX),
                  (0.75, 0.78, 0.8, 1)))
     for nm, shp, col in ca.clamp_hand_parts():     # clamp/jaw sleeve, clamped (cart_sleeves.py)
         cart.append(("hand_on_%s_%s" % (tag, nm), ca.csl.place_hand(shp, sgn), col))
-    for nm, shp, col in ch.hinge_parts(sgn):
-        cart.append(("hinge_%s_%s" % (tag, nm), shp, col))
 
 # ---------------- Waveshare board and bracket ----------------
 BOARD = (42.0, 33.0, 12.0)                       # ASSUMED: X (along plate), out from plate, Z (thin side)

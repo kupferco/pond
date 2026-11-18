@@ -43,8 +43,8 @@ export const podCapTop = (p: PodSpec): V3 => [p.x, p.y, TRAY_TOP + POD_BODY_L + 
 // --- the pod store (Pod grab: 6 rows 35 mm apart from x = 70 mm, channels sloping DOWN 12 degrees towards the pick line at the front, floor 205 mm at the pick line, one 34 mm pick hole in the lid over each row)
 export const STORE_ROWS = 6, ROW_PITCH = 0.035, ROW_X0 = 0.07 + ROW_PITCH / 2, SLOPE = 12 * Math.PI / 180, STORE_Z0 = 0.205, STORE_CAD_Y0 = -0.145, STORE_LEN = 0.33, RAIL_H = 0.0415;
 
-// --- cart: heights it can ride to on the straight part of a leg (below 0.63 m the sleeve touches the lower corner, above 1.67 m the upper one)
-export const CART_MIN = 0.63, CART_MAX = 1.67, CART_STEP = 0.005;
+// --- cart: heights it can ride to on the straight part of a leg (below 0.635 m the omni sleeve's -60 degree lobe touches the lower corner (0.63 m with the old hands), above 1.70 m the upper one; the table stops at 1.67 m as before)
+export const CART_MIN = 0.635, CART_MAX = 1.67, CART_STEP = 0.005;
 
 const DARK = rgba(0.3, 0.36, 0.45);
 const GREY = rgba(0.62, 0.66, 0.7);

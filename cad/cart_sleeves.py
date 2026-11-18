@@ -1,143 +1,84 @@
-# cad/cart_sleeves.py: the two SLEEVE (hand) systems of the Pond cart (DRAFT v4, 15 Nov 2026, Viber #109 / #97).
-# Drawing 3 of 5 planned cart drawings (whole cart, base, sleeve/hand systems, wheel pairs, arm on cart).
-# Reuses cad/hand_sleeve.py v4.1 (the sleeve body) and cad/cart_assembly.py (hand spacing, wheel helper);
-# neither is redrawn or changed. Not production geometry: a readable drawing of how the parts relate.
+# cad/cart_sleeves.py: the two SLEEVE (hand) systems of the Pond cart, v5: omni wheels, ball cups, roll wheel, no hinge
+# (OpenPocket #278, plan task 265 part 4, docs/plans/cart-roll-redesign-plan.md). The v4 hinge-cart file is cart_sleeves_v4.py.
 #
-# Import note: box/cyl and the plate now come from cart_geom.py (moved out of cart_assembly.py, which now imports this file).
-# v4 (Viber #109 follow-up): the hand now has its CLAMP / RELEASE JAW with actuator, in two states (clamped, released).
-# The sim (sim/unit_change.py, transfer scene of task 81) has a hand shell with a hinged jaw (joint "jaw1"/"jaw2", OPEN =
-# 1.6 rad = 92 deg, driven by a jaw motor box on the +Z end of the hand); it releases and clamps hand B and hand C with it.
-# The sim has no CAD definition of that jaw, so the jaw drawn here is ASSUMED (items 7, 10-12 below) and kept consistent
-# with the sim's motion: same hinge-type joint about a Z axis, same 92 deg opening, motor on the +Z end, the pipe leaves
-# through the opened side. The jaw is NOT new geometry: hand_sleeve.py's sleeve is split by a wedge cut into a fixed body and
-# a jaw (jaw = sleeve intersect wedge, fixed = sleeve minus wedge). Closed, the two parts together are exactly
-# hs.result (checked in __main__), so every decided number (90 mm, R34, six wheels, 18/30 mm gap, pad) is unchanged.
-# New scenes: `clamped` (both jaws closed), `released` (both open, hands still round the pipes), `released_off` (open
-# and hand C moved off its pipe along the exit direction).
+# What is drawn (all in the hand_sleeve.py frame, hand B on pipe B at x = -60, hand C its TRUE MIRROR on pipe C at x = +60, Pond #227):
+#   - the v5 three-lobe sleeve (hand_sleeve.py), split by the jaw wedge into a fixed body and a JAW, as in v4: the jaw carries the +60 deg
+#     lobe (one sprung ball-cup pair) and swings 92 deg about a pin on the tube, driven by an N20 micro motor on the +Z end;
+#   - the DRIVE omni wheel (top row) and the ROLL omni wheel (bottom row) on the 180 deg lobe, each with its worm motor (cart_omni.py);
+#   - a hall sensor board in a pocket in the sleeve wall at the base end (home_station.py, OpenPocket #286);
+#   - four passive ball cups on two sprung carriers (cart_wheel_pairs.py);
+#   - no hinge leaves, no worm wheel, no worm, no bracket: the plate is a plain rigid plate bolted to both pads (placeholder, task 5 draws it).
+# Scenes: clamped (both jaws closed), released (both open, hands still round the pipes), released_off (hand C open and moved off its
+# pipe), transfer (one hand STATIC, clamped; the other released, and the whole cart ROLLED about the static pipe's own centre line).
+# check() runs the 120 mm spacing interference check, the jaw check and the drain check.
 #
-# v3 (Viber #109, bringing the drawing up to date with Viber #97): each hand now carries its plate HINGE and the base
-# rotation worm drive, imported from cart_hinge.py v3 (sleeve leaf + knuckles, plate leaf, pin, brass worm wheel on the
-# hinge axis, worm, bracket, worm motor); the base plate comes from cart_assembly.py. Nothing is redrawn and no number
-# is duplicated: layout numbers are in cart_dims.py, hinge numbers in cart_hinge.py (cart_hinge.py wins on any conflict).
-# The old note "no 90 deg swivel yet" is gone: the swivel is the hinge drive. NEW scene `transfer`: one hand is the
-# STATIC hand (the one that is not moving during a transfer): its six wheels sit in their sleeve wheel pockets (sockets),
-# clamped on its pipe by the spring idlers, exactly as in the other views, drawn in blue so it can be told apart. Its
-# worm drive turns the plate round its hinge; the OTHER hand is released from its pipe and rides on the plate.
-# Which hand is static comes from cart_dims.torque_budget() (its "driving_hand": the worst-case hand for the hinge torque). Swing angle
-# is an illustration only (TRANSFER_ANGLE).
-#
-# v2 (follow-up): each hand (each set of wheels) clamps its OWN pipe. The two pipes run parallel, side by side
-# (as in cart_arm.py v2), not both hands on one pipe as in cart_assembly.py v1.
-#
-# Frame: the hand_sleeve.py frame. Track pipes run along Z, base pads face -Y, the C-gap with funnel faces +X.
-#
-# DECIDED (hand_sleeve.py v4.1, decisions 31 Oct, 1 Nov, 2 Nov):
-#   90 mm sleeve, outer R 34, two wheel rows 60 mm apart, six wheels per hand (driven wheel at 180 deg,
-#   spring idlers at +/-60 deg, 2.5 mm travel, 60 N preload each), double-ended funnel C-gap (18 mm narrow,
-#   30 mm mouth), worm-gear drive so a hand holds when stopped, M4 pad on -Y.
-#
-# ASSUMED (undecided; every one is marked "ASSUMED" below):
-#  1. Pipe OD 32 mm (also assumed in hand_sleeve.py), shown as a 330 mm stub.
-#  2. Pipe spacing 120 mm centre to centre (Viber #97; was 280, now from cart_dims.py), one hand per pipe (same assumed value as cart_arm.py v2; the
-#     real spacing between neighbouring units is not decided). Both hands at the same height along the pipes.
-#     Hinge and plate (v3): cart_hinge.py / cart_assembly.py as they are (hinge on the pad edge at -Y, plate 166 x 112 x 6).
-#     The plate's own motors, arm and battery are not drawn here (see cart_base.py, cart_arm.py).
-#  3. Drive layout: ONE worm shaft per hand, along the pipe, beside the sleeve on -X, meshing with a worm
-#     wheel on each driven axle (both 180 deg wheels, one per row). Worm wheel R 7 mm, worm R 3 mm, worm 80 mm
-#     long. The real ratio, tooth form and motor torque are not sized.
-#  4. Motor: 28 mm diameter x 55 mm worm-gear motor placeholder (same size as cart_assembly.py), on the
-#     outer end of each hand's worm shaft, with a 20 mm gearbox block. Real part not chosen.
-#  5. Axle pins: 3.2 mm pins through the wheels; the driven pins stick out 14 mm on +Y to carry the worm wheel.
-#     Bearings, circlips and the way the spring idlers are pushed (spring type, retainer) are not drawn.
-#  6. Gear housing: two 4 mm bearing blocks at the ends of the worm; how they attach to the sleeve is not drawn.
-#  7. Clamp: the spring idlers still carry the 60 N preload (arrows). The jaw (items 10-12) is what OPENS the C so the
-#     hand can leave the pipe: closed, the jaw holds the +60 deg idler pair on the pipe; open, that side is gone.
-#     (Replaces the v3 note "v4.1 has no jaw, no open/closed state".)
-#  8. Hand C is the TRUE MIRROR of hand B across the cart centre plane x = 0 (Pond #227; it used to be a copy): each C-gap
-#     faces the plate (B: +X, C: -X), pads, hinges and worm drives on the outer sides, drive on the +Z end of each hand.
-#  9. Exploded view offsets are for readability only.
-# 10. Jaw (ASSUMED): the wall from 0 deg (middle of the C-gap, +X) to +110 deg, with the +60 deg idler pair, is the jaw, 110 deg of
-#     the ring, ONE connected piece (a v4 cut at -30 deg left a loose 20 deg sliver beyond the gap: fixed). Hinge: steel
-#     pin, 4 mm, along Z, on the sleeve's outer surface at the 110 deg edge, with three knuckle barrels R 4.5 (jaw: the two
-#     ends, fixed body: the middle, each fused into its own half, relief notches in the other half), so each half stays
-#     attached to the pin in every state. Opening 92 deg = sim OPEN (1.6 rad),
-#     counter-clockwise seen from +Z. Open, the C is open from 0 deg round to 110 deg, the pipe leaves towards +40 deg
-#     (hand moves away towards -X,-Y, the front, as the sim's swing-off); clearance on that path is checked in __main__.
-# 11. Jaw actuator (ASSUMED): 16 mm dia x 30 mm worm-gear micro motor + 12 mm gearbox, on the +Z end, coaxial with the
-#     jaw hinge pin and keyed to it (direct drive of the pin). A worm gearbox self-locks, so the jaw stays shut with
-#     the motor off, like the hand drive. Torque, mounting bracket on the fixed body, limit switches and the position
-#     sensor are not designed.
-# 12. Sim difference, kept visible: the sim's shell is a simplified ring (fixed 135..335 deg, jaw 352..57 deg, a permanent gap
-#     between) with wheels at 150/270/30 deg; the CAD keeps the decided 180/+-60 deg wheels and 18 mm funnel gap. Only the
-#     motion (hinge joint, 92 deg, motor on +Z, release then swing off to the front) is matched, not the sim's shell shape.
+# ASSUMED (undecided, each also marked where used): 1. the jaw wedge 0..110 deg, hinge pin on the tube at 110 deg, 92 deg opening (sim
+# OPEN 1.6 rad), N20 micro motor on the +Z end (all as v4); 2. the plate placeholder 166 x 6 x 146 mm on the pad faces at y = -50;
+# 3. the transfer roll angle drawn (36 deg, roll_swing_estimate.py: about 35.5 deg to clear the free pipe); 4. the released hand drawn
+# 70 mm off its pipe; 5. static hand C (hand B released), as the first trip of roll_swing_estimate.py.
 import math
 import os
 import sys
 import cadquery as cq
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import hand_sleeve as hs        # reused, not redrawn
-import cart_hinge as ch         # plate hinge + worm rotation drive of each hand (Viber #97), reused
-import cart_geom as cg          # reused: box/cyl helpers and the base plate (moved out of cart_assembly.py, which imports this file)
+import cart_omni as co
+import hand_sleeve as hs
+import cart_wheel_pairs as cw
+import home_station as hst
+import home_station as hst
+from cart_dims import PIPE_SPACING
+from cart_dims import PIPE_STUB_L                  # 330: pipe stub length in the assemblies
 
-box, cyl = cg.box, cg.cyl
-from cart_dims import PIPE_SPACING, torque_budget, PIPE_STUB_L, MOTOR_R, MOTOR_L   # 120, ASSUMED in cart_dims.py: pipe-to-pipe
-HAND_X = PIPE_SPACING / 2                         # hands at x = -/+ 60, one per pipe
+HAND_X = PIPE_SPACING / 2                          # hands at x = -/+ 60, one per pipe
+
+
+def cyl(r, h, axis, c):
+    d = {"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}[axis]
+    start = cq.Vector(*[c[i] - d[i] * h / 2 for i in range(3)])
+    return cq.Workplane("XY").add(cq.Solid.makeCylinder(r, h, start, cq.Vector(*d)))
+
 
 def place_hand(shape, sgn):
     """Put a hand-frame shape (hand B as drawn: pad on -X, C-gap facing +X, towards the plate) on pipe sgn (-1 = B, +1 = C).
-    Hand C is the TRUE MIRROR of hand B across the cart centre plane x = 0 (Pond #227), not a copy: mirrored in X, then moved to its pipe."""
+    Hand C is the TRUE MIRROR of hand B across the cart centre plane x = 0 (Pond #227), not a copy."""
     return (shape.mirror("YZ") if sgn > 0 else shape).translate((sgn * HAND_X, 0, 0))
 
-# ---------------- Drive (all ASSUMED) ----------------
-AXLE_PIN_R = hs.AXLE_D / 2
-AXLE_Y0 = -(math.sqrt(hs.WALL_OUT_R**2 - hs.AXLE_R_POS**2) + hs.AXLE_OVERRUN)   # -24.9, flush with the holes
-DRIVEN_Y1 = 36.0                          # ASSUMED: driven pins run out to y = 36 for the worm wheel
-WORM_WHEEL_R, WORM_WHEEL_T = 7.0, 4.0     # ASSUMED
-WORM_WHEEL_Y = 32.0                       # ASSUMED: centre plane of the worm wheels (clear of the sleeve body)
-WORM_R, WORM_L = 3.0, 80.0                # ASSUMED
-WORM_X = -hs.AXLE_R_POS - WORM_WHEEL_R - WORM_R + 1.0    # ASSUMED: -35 mm, meshing with the worm wheel rim
-GEARBOX = (26.0, 2 * MOTOR_R, 20.0)       # ASSUMED
-BLOCK_T = 4.0                             # ASSUMED bearing blocks
-ARROW_L = 14.0                            # preload arrow length (drawing aid only)
 
-# ---------------- Jaw (ASSUMED, items 10-11): sleeve split by a wedge, hinge pin, actuator ----------------
-JAW_A0, JAW_A1 = 0.0, 110.0               # ASSUMED: jaw wall from the middle of the C-gap (0 deg) to +110 deg, one connected piece
+# ---------------- Jaw (ASSUMED, as v4): sleeve split by a wedge, hinge pin on the tube, actuator ----------------
+JAW_A0, JAW_A1 = 0.0, 110.0               # jaw wall from the middle of the C-gap (0 deg) to +110 deg, one connected piece
 JAW_OPEN = 92.0                           # deg, = sim OPEN 1.6 rad (sim/unit_change.py)
-JAW_WHEEL_ANG = 60.0                      # the idler pair carried by the jaw (rows at +-RING_Z)
-JAW_PIVOT_R = hs.WALL_OUT_R               # ASSUMED hinge pin radius: on the sleeve's outer surface at the 110 deg edge
+JAW_LOBE_ANG = 60.0                       # the sprung pair carried by the jaw
+JAW_PIVOT_R = hs.TUBE_R_MIN               # hinge pin on the tube's outer surface at the 110 deg edge
 JAW_PIVOT = (JAW_PIVOT_R * math.cos(math.radians(JAW_A1)), JAW_PIVOT_R * math.sin(math.radians(JAW_A1)))
 JAW_PIN_R = 2.0
-JAW_GB_R, JAW_GB_L = 8.0, 12.0            # ASSUMED worm gearbox
-JAW_MOTOR_R, JAW_MOTOR_L = 8.0, 30.0      # ASSUMED 16 x 30 mm micro motor
+JAW_GB_R, JAW_GB_L = 8.0, 12.0            # worm gearbox
+JAW_MOTOR_R, JAW_MOTOR_L = 8.0, 30.0      # 16 x 30 mm micro motor
 EXIT_DIR_DEG = 40.0                       # direction the pipe leaves through the open jaw (hand frame)
+LUG_R, LUG_FIXED_Z = 4.5, 14.0            # knuckle radius; fixed knuckle spans z = -14..+14
+LUG_RELIEF_R = LUG_R + 1.0
+
 
 def _wedge():
-    big = 120.0
-    pts = [(0, 0)] + [(big * math.cos(math.radians(a)), big * math.sin(math.radians(a)))
-                      for a in (JAW_A0, (JAW_A0 + JAW_A1) / 2, JAW_A1)]
+    big = 140.0
+    pts = [(0, 0)] + [(big * math.cos(math.radians(a)), big * math.sin(math.radians(a))) for a in (JAW_A0, (JAW_A0 + JAW_A1) / 2, JAW_A1)]
     return cq.Workplane("XY").polyline(pts).close().extrude(2 * hs.SLEEVE_L).translate((0, 0, -hs.SLEEVE_L))
 
-_W = _wedge()
-_FIXED0 = hs.result.cut(_W)               # sleeve minus the jaw wedge
-_JAW0 = hs.result.intersect(_W)           # sleeve inside the wedge (idler pockets, axle holes and funnel gap stay)
 
-# Hinge knuckles (ASSUMED): barrels of radius LUG_R round the pin, centred on the sleeve's outer surface at the 110 deg
-# edge, so each barrel is fused into its own half and neither half can float. Like a door hinge, the jaw owns the two
-# end knuckles and the fixed body the middle one, 1 mm clear between them; each half is relieved (notched) where the
-# other half's knuckle sits, so the jaw swings about the pin without touching anything.
-LUG_R = 4.5                                           # knuckle radius
-LUG_RELIEF_R = LUG_R + 1.0                            # notch radius in the other half
-LUG_FIXED_Z = 14.0                                    # fixed knuckle spans z = -14..+14
 def _barrel(r, z0, z1):
     return cyl(r, z1 - z0, "z", (JAW_PIVOT[0], JAW_PIVOT[1], (z0 + z1) / 2))
+
+
+_W = _wedge()
+_FIXED0 = hs.result.cut(_W)
+_JAW0 = hs.result.intersect(_W)
 _ZE = hs.SLEEVE_L / 2
-_ZJ = LUG_FIXED_Z + 1.0                               # jaw knuckles span |z| = 15..45
+_ZJ = LUG_FIXED_Z + 1.0                               # jaw knuckles span |z| = 15..62
 FIXED_LUG = _barrel(LUG_R, -LUG_FIXED_Z, LUG_FIXED_Z)
 JAW_LUGS = _barrel(LUG_R, _ZJ, _ZE).union(_barrel(LUG_R, -_ZE, -_ZJ))
-FIXED_BODY = (_FIXED0.cut(_barrel(LUG_RELIEF_R, _ZJ - 0.5, _ZE + 1)).cut(_barrel(LUG_RELIEF_R, -_ZE - 1, -_ZJ + 0.5))
-              .union(FIXED_LUG))
+FIXED_BODY = ((_FIXED0.cut(_barrel(LUG_RELIEF_R, _ZJ - 0.5, _ZE + 1)).cut(_barrel(LUG_RELIEF_R, -_ZE - 1, -_ZJ + 0.5)).union(FIXED_LUG)).cut(hst.pocket()))
 JAW_BODY = _JAW0.cut(_barrel(LUG_RELIEF_R, -LUG_FIXED_Z - 0.5, LUG_FIXED_Z + 0.5)).union(JAW_LUGS)
+
 
 def jaw_turn(shape, open_deg):
     """Swing a jaw-side shape about the hinge pin by open_deg (counter-clockwise from +Z = opening)."""
@@ -145,180 +86,87 @@ def jaw_turn(shape, open_deg):
         return shape
     return shape.rotate((JAW_PIVOT[0], JAW_PIVOT[1], 0), (JAW_PIVOT[0], JAW_PIVOT[1], 1), open_deg)
 
-def rot(shape, ang):
-    return shape.rotate((0, 0, 0), (0, 0, 1), ang)
-
-def wheel_stations():
-    """(row z, angle deg, driven?) for the six wheels of a hand, the two rows being ROW_SPACING apart."""
-    out = []
-    for z in (hs.RING_Z, -hs.RING_Z):
-        out.append((z, hs.OUTER_WHEEL_ANG, True))
-        for a in hs.INNER_WHEEL_ANGS:
-            out.append((z, a, False))
-    return out
 
 # ---------------- One hand: parts in the hand's own frame (centred at z = 0) ----------------
-JAW_TURNING = ("jaw", "jaw_wheels", "jaw_axle_pins", "jaw_preload_arrows")   # parts that swing with the jaw
+SLEEVE_COL, JAW_COL = (0.95, 0.75, 0.2, 1), (0.95, 0.5, 0.15, 1)
+
 
 def hand_parts(jaw_open=0.0):
-    """Dict name -> (shape, colour). Frame: sleeve centred on z = 0. Motor sits on the +Z end; the same hand is placed
-    on each pipe (see build_pair). jaw_open: jaw opening in degrees (0 = clamped, JAW_OPEN = released)."""
-    parts = {}
-    parts["sleeve"] = (FIXED_BODY, (0.95, 0.75, 0.2, 1))
-    parts["jaw"] = (JAW_BODY, (0.95, 0.5, 0.15, 1))
-    acc = {}
-    def add(key, shp):
-        acc[key] = shp if key not in acc else acc[key].union(shp)
-    for z, ang, driven in wheel_stations():
-        g = "jaw_" if ang == JAW_WHEEL_ANG else ""
-        w = rot(cyl(hs.WHEEL_R, hs.WHEEL_W, "y", (hs.AXLE_R_POS, 0, z)), ang)
-        y1 = DRIVEN_Y1 if driven else -AXLE_Y0
-        pin = rot(cq.Workplane("XY").add(cq.Solid.makeCylinder(
-            AXLE_PIN_R, y1 - AXLE_Y0, cq.Vector(hs.AXLE_R_POS, AXLE_Y0, z), cq.Vector(0, 1, 0))), ang)
-        add(g + "wheels", w)
-        add(g + "axle_pins", pin)
-        if driven:
-            add("worm_wheels", cyl(WORM_WHEEL_R, WORM_WHEEL_T, "y", (-hs.AXLE_R_POS, WORM_WHEEL_Y, z)))
-        else:
-            # spring preload arrow: from outside the wheel, pointing at the pipe axis (inward)
-            r0 = hs.AXLE_R_POS + hs.WHEEL_R + 4 + ARROW_L
-            a = cq.Workplane("XY").add(cq.Solid.makeCylinder(1.2, ARROW_L - 5, cq.Vector(r0, 0, z), cq.Vector(-1, 0, 0)))
-            a = a.union(cq.Workplane("XY").add(cq.Solid.makeCone(3.0, 0, 5, cq.Vector(r0 - ARROW_L + 5, 0, z), cq.Vector(-1, 0, 0))))
-            add(g + ("preload_arrows" if g else "spring_preload_arrows"), rot(a, ang))
-    parts["wheels"] = (acc["wheels"], (0.15, 0.15, 0.15, 1))
-    parts["axle_pins"] = (acc["axle_pins"], (0.8, 0.8, 0.82, 1))
-    parts["jaw_wheels"] = (acc["jaw_wheels"], (0.15, 0.15, 0.15, 1))
-    parts["jaw_axle_pins"] = (acc["jaw_axle_pins"], (0.8, 0.8, 0.82, 1))
-    parts["jaw_preload_arrows"] = (acc["jaw_preload_arrows"], (0.85, 0.1, 0.1, 1))
-    parts["spring_preload_arrows"] = (acc["spring_preload_arrows"], (0.85, 0.1, 0.1, 1))
-    # jaw hinge pin along Z, then the jaw actuator (gearbox + micro motor) on the +Z end, coaxial with the pin
+    """Dict name -> (shape, colour). Frame: sleeve centred on z = 0. Jaw-side parts (the jaw, the +60 deg ball-cup pair, the hinge lugs) turn with
+    the jaw. jaw_open: opening in degrees (0 = clamped, JAW_OPEN = released)."""
+    parts = {"sleeve": (FIXED_BODY, SLEEVE_COL), "jaw": (jaw_turn(JAW_BODY, jaw_open), JAW_COL)}
+    for n, (s, col) in cw.pair_parts().items():
+        parts[n] = (jaw_turn(s, jaw_open) if n.startswith("p60_") else s, col)
+    parts.update(hst.sensor_parts())      # hall sensor board in the sleeve wall (OpenPocket #286)
     pz0 = -hs.SLEEVE_L / 2 - 2
     pin_len = hs.SLEEVE_L + 4 + JAW_GB_L / 2
     parts["jaw_hinge_pin"] = (cyl(JAW_PIN_R, pin_len, "z", (JAW_PIVOT[0], JAW_PIVOT[1], pz0 + pin_len / 2)), (0.8, 0.8, 0.82, 1))
     zg = hs.SLEEVE_L / 2 + JAW_GB_L / 2
     parts["jaw_gearbox"] = (cyl(JAW_GB_R, JAW_GB_L, "z", (JAW_PIVOT[0], JAW_PIVOT[1], zg)), (0.1, 0.55, 0.3, 1))
-    parts["jaw_motor"] = (cyl(JAW_MOTOR_R, JAW_MOTOR_L, "z", (JAW_PIVOT[0], JAW_PIVOT[1], zg + JAW_GB_L / 2 + JAW_MOTOR_L / 2)),
-                          (0.1, 0.55, 0.3, 1))
-    for k in JAW_TURNING:
-        parts[k] = (jaw_turn(parts[k][0], jaw_open), parts[k][1])
-    parts["worm_wheels"] = (acc["worm_wheels"], (0.8, 0.5, 0.15, 1))
-    # worm along Z, bearing blocks at both ends, then gearbox + motor beyond the +Z end of the sleeve
-    worm = cyl(WORM_R, WORM_L, "z", (WORM_X, WORM_WHEEL_Y, 0))
-    parts["worm"] = (worm, (0.6, 0.6, 0.65, 1))
-    blocks = None
-    for z in (WORM_L / 2 - BLOCK_T / 2, -WORM_L / 2 + BLOCK_T / 2):
-        b = box(14, 14, BLOCK_T, (WORM_X, WORM_WHEEL_Y, z))
-        blocks = b if blocks is None else blocks.union(b)
-    parts["bearing_blocks"] = (blocks, (0.5, 0.5, 0.55, 1))
-    zg = WORM_L / 2 + GEARBOX[2] / 2
-    gearbox = box(GEARBOX[0], GEARBOX[1], GEARBOX[2], (WORM_X, WORM_WHEEL_Y, zg))
-    motor = cyl(MOTOR_R, MOTOR_L, "z", (WORM_X, WORM_WHEEL_Y, WORM_L / 2 + GEARBOX[2] + MOTOR_L / 2))
-    parts["gearbox"] = (gearbox, (0.85, 0.25, 0.25, 1))
-    parts["drive_motor"] = (motor, (0.85, 0.25, 0.25, 1))
+    parts["jaw_motor"] = (cyl(JAW_MOTOR_R, JAW_MOTOR_L, "z", (JAW_PIVOT[0], JAW_PIVOT[1], zg + JAW_GB_L / 2 + JAW_MOTOR_L / 2)), (0.1, 0.55, 0.3, 1))
     return parts
 
-# ---------------- Pair: one hand on each of two parallel pipes ----------------
-WHEEL_COL, STATIC_WHEEL_COL = (0.15, 0.15, 0.15, 1), (0.1, 0.35, 0.8, 1)
-TAGS = (("B", -1), ("C", 1))                      # (tag, sgn): pipe B at -x, pipe C at +x, as cart_assembly.py
 
-def build_pair(static=None, angle=0.0, with_plate=True, jaws=None, off=None, own=0.0):
-    """Both hands, each on its own pipe, each with its hinge and worm drive (cart_hinge.py) and the plate.
-    static: None (plain pair) or "B"/"C": that hand is the STATIC hand (wheels blue, clamped on its pipe) and the plate
-    swings by `angle` degrees on its hinge, carrying the other (released) hand; the pipes stay where they are.
-    own: degrees the released hand turns on its OWN hinge, on top of the plate swing (the sim's swing path turns it about 9 deg so
-    its sleeve clears the pipe; sleeve-side parts only). Sign fix, Pond #227: the plate swings to -Y (out from the pipes), as drawn in the sim."""
+# ---------------- Plate placeholder ----------------
+PLATE_T = 6.0
+PLATE_X1 = HAND_X + abs(hs.PAD_X0)                 # 84: plate ends at the outer pad edges (pad -24..0 on each hand's outer side)
+PLATE_HL = hs.SLEEVE_L / 2 + 11.0                  # half height: 11 mm beyond each sleeve end (as v4)
+PLATE_Y0 = hs.PAD_Y0                               # plate back face on the pad faces (y = -50), plate front at -56
+
+
+def plate():
+    p = cq.Workplane("XY").box(2 * PLATE_X1, PLATE_T, 2 * PLATE_HL).translate((0, PLATE_Y0 - PLATE_T / 2, 0))
+    for sgn in (-1, 1):
+        for z in (hs.PAD_HOLE_Z, -hs.PAD_HOLE_Z):
+            p = p.cut(cyl(hs.PAD_HOLE_D / 2, PLATE_T + 2, "y", (sgn * (HAND_X + hs.PAD_X0 / 2), PLATE_Y0 - PLATE_T / 2, z)))
+    return p
+
+
+# ---------------- Pair: one hand on each of two parallel pipes ----------------
+STATIC_WHEEL_COL = (0.1, 0.35, 0.8, 1)
+TAGS = (("B", -1), ("C", 1))                      # (tag, sgn): pipe B at -x, pipe C at +x
+
+
+def build_pair(static=None, roll=0.0, with_plate=True, jaws=None, off=None):
+    """Both hands, each on its own pipe, and the rigid plate.
+    static: None or "B"/"C": that hand is STATIC (rollers blue, clamped on its pipe); the whole cart (plate, both sleeves) is ROLLED by
+    `roll` degrees about that pipe's own centre line; the pipes stay where they are. roll > 0 turns the free hand towards the plate side
+    (-Y, "plate" in roll_swing_estimate.py), roll < 0 towards the spine side.
+    jaws: tag -> jaw opening in degrees. off: tag -> mm the hand is moved off its pipe along the exit direction (before the roll)."""
     a = cq.Assembly()
-    swing = static is not None and angle != 0.0
-    jaws = jaws or {}                      # tag -> jaw opening in deg (default 0 = clamped)
-    off_mm = off or {}                     # tag -> mm the hand is moved off its pipe along the exit direction (sleeve parts only)
+    jaws, off_mm = jaws or {}, off or {}
     sgn_s = dict(TAGS).get(static, 0)
-    # rotation about the static hinge axis, towards -Y (out from the pads), as the plate swings "like a door": a plate that lies on the -X
-    # side of hinge C turns counter-clockwise (+angle), one on the +X side of hinge B clockwise (-angle). (Before #227 the sign was the other
-    # way round and the plate swung into the pipes; only the picture, no number depended on it.)
-    ax_pt = (ch.hinge_x(sgn_s), 0, 0) if sgn_s else (0, 0, 0)
-    def moved(shape):
-        return shape.rotate(ax_pt, (ax_pt[0], 0, 1), sgn_s * angle) if swing else shape
-    def own_turn(shape, sgn):
-        """The released hand turning on its own hinge (before the plate carries it)."""
-        return shape.rotate((ch.hinge_x(sgn), 0, 0), (ch.hinge_x(sgn), 0, 1), sgn_s * own) if (swing and own) else shape
+    ax = (sgn_s * HAND_X, 0, 0)
+
+    def rolled(shape):
+        return shape.rotate(ax, (ax[0], 0, 1), sgn_s * roll) if (static and roll) else shape
     for tag, sgn in TAGS:
-        hx = sgn * HAND_X
-        a.add(cyl(hs.R_PIPE, PIPE_STUB_L, "z", (hx, 0, 0)), name="track_pipe_%s" % tag, color=cq.Color(0.75, 0.78, 0.8, 1))
-        is_static = static == tag
-        riding = swing and not is_static          # the released hand rides with the plate
-        role = "static" if is_static else ("released" if static else "hand")
+        a.add(cyl(hs.R_PIPE, PIPE_STUB_L, "z", (sgn * HAND_X, 0, 0)), name="track_pipe_%s" % tag, color=cq.Color(0.75, 0.78, 0.8, 1))
+        role = "static" if static == tag else ("released" if static else "hand")
         for name, (shp, col) in hand_parts(jaws.get(tag, 0.0)).items():
-            if is_static and name in ("wheels", "axle_pins", "jaw_wheels", "jaw_axle_pins"):
-                col = STATIC_WHEEL_COL if name.endswith("wheels") else col
-                name = "static_" + name
+            if static == tag and name.startswith(("drive_wheel_rollers", "roll_wheel_rollers")):
+                col = STATIC_WHEEL_COL
             d = off_mm.get(tag, 0.0)
-            shp = shp.translate((-d * math.cos(math.radians(EXIT_DIR_DEG)), -d * math.sin(math.radians(EXIT_DIR_DEG)), 0))   # exit path in hand B's frame
-            shp = place_hand(shp, sgn)                          # hand C is mirrored, so its exit path points to +X
-            a.add(moved(own_turn(shp, sgn)) if riding else shp, name="%s_%s_%s" % (role, tag, name), color=cq.Color(*col))
-        for nm, shp, col in ch.hinge_parts(sgn):
-            # on the plate side (turns with the plate when it swings) or on the sleeve side (stays with its sleeve)
-            on_plate = nm in ("plate_leaf_knuckle", "plate_leaf_screws", "worm", "worm_bracket", "bracket_screws", "worm_motor")
-            turns = riding or (swing and is_static and on_plate)
-            sleeve_side = nm in ("sleeve_leaf_knuckles", "sleeve_leaf_screws", "worm_wheel_hub")
-            a.add(moved(own_turn(shp, sgn) if (riding and sleeve_side) else shp) if turns else shp, name="hinge_%s_%s" % (tag, nm), color=cq.Color(*col))
+            shp = shp.translate((-d * math.cos(math.radians(EXIT_DIR_DEG)), -d * math.sin(math.radians(EXIT_DIR_DEG)), 0))
+            a.add(rolled(place_hand(shp, sgn)), name="%s_%s_%s" % (role, tag, name), color=cq.Color(*col))
     if with_plate:
-        a.add(moved(cg.plate) if swing else cg.plate, name="base_plate", color=cq.Color(0.35, 0.35, 0.38, 1))
+        a.add(rolled(plate()), name="base_plate", color=cq.Color(0.35, 0.35, 0.38, 1))
     return a
+
 
 OPEN_ALL = {"B": JAW_OPEN, "C": JAW_OPEN}
-RELEASE_OFF_MM = 70.0                             # ASSUMED: how far the released hand is drawn off its pipe
-
-TRANSFER_ANGLE = 45.0                             # ASSUMED illustration angle (deg) of the plate swing
-STATIC_HAND = torque_budget()["driving_hand"]     # the hand whose hinge drives the transfer (cart_dims.py)
-
-# ---------------- Exploded view of one hand ----------------
-EXPLODE = {                                  # ASSUMED offsets (mm), readability only
-    "sleeve": (0, 0, 0),
-    "wheels": (0, 0, 0),
-    "axle_pins": (0, 0, 0),
-    "worm_wheels": (0, 28, 0),
-    "worm": (-30, 40, 0),
-    "bearing_blocks": (-30, 40, 0),
-    "gearbox": (-30, 40, 30),
-    "drive_motor": (-30, 40, 60),
-    "spring_preload_arrows": (0, 0, 0),
-    "jaw_preload_arrows": (0, 0, 0),
-    "jaw_hinge_pin": (0, 0, 0),
-    "jaw_gearbox": (30, 20, 30),
-    "jaw_motor": (30, 20, 60),
-}
-def build_exploded():
-    """One hand pulled apart: sleeve at the centre; each wheel pulled radially out of its pocket along its own
-    axis direction and each axle pin drawn out along Y; drive parts stacked away on -X / +Y / +Z."""
-    a = cq.Assembly()
-    a.add(cyl(hs.R_PIPE, 200.0, "z", (0, 0, 0)), name="track_pipe", color=cq.Color(0.75, 0.78, 0.8, 1))
-    a.add(hs.result, name="sleeve", color=cq.Color(0.95, 0.75, 0.2, 1))    # sleeve + jaw together (= clamped)
-    for i, (z, ang, driven) in enumerate(wheel_stations()):
-        d = 38.0
-        dx, dy = d * math.cos(math.radians(ang)), d * math.sin(math.radians(ang))
-        w = rot(cyl(hs.WHEEL_R, hs.WHEEL_W, "y", (hs.AXLE_R_POS, 0, z)), ang).translate((dx, dy, 0))
-        a.add(w, name="wheel_%d" % i, color=cq.Color(0.15, 0.15, 0.15, 1))
-        y1 = DRIVEN_Y1 if driven else -AXLE_Y0
-        pin = cq.Workplane("XY").add(cq.Solid.makeCylinder(
-            AXLE_PIN_R, y1 - AXLE_Y0, cq.Vector(hs.AXLE_R_POS, AXLE_Y0, z), cq.Vector(0, 1, 0)))
-        pin = rot(pin, ang).translate((dx * 1.9, dy * 1.9, 0))
-        a.add(pin, name="axle_pin_%d" % i, color=cq.Color(0.8, 0.8, 0.82, 1))
-    for name, (shp, col) in hand_parts().items():
-        if name in ("sleeve", "jaw", "wheels", "axle_pins", "jaw_wheels", "jaw_axle_pins"):
-            continue
-        a.add(shp.translate(EXPLODE[name]), name=name, color=cq.Color(*col))
-    return a
+RELEASE_OFF_MM = 70.0                              # ASSUMED: how far the released hand is drawn off its pipe
+TRANSFER_ROLL = 36.0                               # ASSUMED illustration angle (deg), roll_swing_estimate.py: about 35.5 deg to clear the free pipe
+STATIC_HAND = "C"                                  # hand B is released, as the first trip of roll_swing_estimate.py
 
 pair = build_pair()
-_REL = "C" if STATIC_HAND == "B" else "B"        # the hand released in a transfer: its jaw is open
-transfer = build_pair(STATIC_HAND, TRANSFER_ANGLE, jaws={_REL: JAW_OPEN})
-clamped = build_pair()                           # both jaws closed on their pipes (same as `pair`)
-released = build_pair(jaws=OPEN_ALL)             # both jaws open, hands still round their pipes
-released_off = build_pair(jaws=OPEN_ALL, off={"C": RELEASE_OFF_MM})   # hand C open and moved off its pipe (hinge, plate stay)
-exploded = build_exploded()
+_REL = "B" if STATIC_HAND == "C" else "C"
+transfer = build_pair(STATIC_HAND, TRANSFER_ROLL, jaws={_REL: JAW_OPEN})
+clamped = build_pair()                             # both jaws closed on their pipes (same as `pair`)
+released = build_pair(jaws=OPEN_ALL)               # both jaws open, hands still round their pipes
+released_off = build_pair(jaws=OPEN_ALL, off={"C": RELEASE_OFF_MM})
 result = pair
 
-# Key dimensions (mm), reused by the render script for the drawing annotations.
 DIMS = {
     "pipe_spacing": PIPE_SPACING,
     "sleeve_length": hs.SLEEVE_L,
@@ -329,27 +177,133 @@ DIMS = {
     "gap_mouth": hs.FUNNEL_MOUTH_W,
 }
 
+
+# ---------------- Checks ----------------
+def _hand_solid(sgn, jaw_open=0.0):
+    parts = hand_parts(jaw_open)
+    shapes = []
+    for s, _ in parts.values():
+        shapes.extend(s.vals())
+    return cq.Compound.makeCompound([place_hand(cq.Workplane("XY").add(cq.Compound.makeCompound(shapes)), sgn).val()])
+
+
+def spacing_check():
+    """The 120 mm pipe spacing with the v5 sleeves (the old assertion PIPE_SPACING - SLEEVE_R - WHEEL_REACH >= 10 fails for a full R61 ring).
+    Returns dict: gap between the two hands at roll 0 (all parts), the free pipe's clearance to the swept circle of the static sleeve during
+    a roll, and the overlaps with the pipes."""
+    hb, hc = _hand_solid(-1), _hand_solid(1)
+    gap = hb.distance(hc)
+    swept, motor_pts = 0.0, []
+    for name, (s, _) in hand_parts().items():
+        motor = "motor" in name or "gearbox" in name or "shaft" in name
+        for v in s.vals():
+            vv, _t = v.tessellate(1.0, 0.5)
+            for p in vv:
+                if motor:
+                    motor_pts.append((p.x, p.y))
+                else:
+                    swept = max(swept, math.hypot(p.x, p.y))
+    # motors, gearboxes and shafts sit beyond the sleeve ends and reach further out: how far can the cart roll before one meets the free pipe?
+    first = 180.0
+    for x, y in motor_pts:
+        rho = math.hypot(x, y)
+        k = (rho ** 2 + PIPE_SPACING ** 2 - hs.R_PIPE ** 2) / (2 * PIPE_SPACING * rho) if rho > 0 else 2
+        if abs(k) >= 1:
+            continue
+        al, psi = math.degrees(math.acos(k)), math.degrees(math.atan2(y, x))
+        for th in (-al - psi, al - psi):              # edges of the colliding roll interval, wrapped to -180..180
+            th = (th + 180.0) % 360.0 - 180.0
+            first = min(first, abs(th))
+        lo, hi = (-al - psi + 180.0) % 360.0 - 180.0, (al - psi + 180.0) % 360.0 - 180.0
+        if lo > hi or lo <= 0 <= hi:                  # interval contains 0: already touching at roll 0
+            first = 0.0 if lo <= 0 <= hi and lo <= hi else first
+    free_pipe_clear = PIPE_SPACING - swept - hs.R_PIPE      # free pipe against the static sleeve's swept circle during a roll
+    pipe_c = cyl(hs.R_PIPE, PIPE_STUB_L, "z", (HAND_X, 0, 0))
+    pipe_b = cyl(hs.R_PIPE, PIPE_STUB_L, "z", (-HAND_X, 0, 0))
+    over = {}
+    for name, h, p in (("hand B vs pipe C", hb, pipe_c), ("hand C vs pipe B", hc, pipe_b)):
+        i = cq.Workplane("XY").add(h).intersect(p)
+        over[name] = sum(s.Volume() for s in i.solids().vals()) if i.solids().vals() else 0.0
+    sleeve_over = {}
+    for sgn, tag in ((-1, "B"), (1, "C")):
+        i = place_hand(FIXED_BODY.union(JAW_BODY), sgn).intersect(cyl(hs.R_PIPE, PIPE_STUB_L, "z", (sgn * HAND_X, 0, 0)))
+        sleeve_over["sleeve %s vs its own pipe" % tag] = sum(s.Volume() for s in i.solids().vals()) if i.solids().vals() else 0.0
+    return {"gap_between_hands": gap, "swept_radius": swept, "motor_roll_clear_deg": first, "free_pipe_clearance": free_pipe_clear, "overlaps": over, "sleeve_overlaps": sleeve_over}
+
+
 def check_jaw():
-    """Returns (closed == hs.result?, min clearance state): volume checks, run from __main__."""
+    """Returns (closed jaw + fixed body == hs.result?, collisions while the pipe leaves through the open jaw and while the jaw swings)."""
     same = abs(_FIXED0.union(_JAW0).val().Volume() - hs.result.val().Volume()) < 1.0
-    pipe = cyl(hs.R_PIPE, 200.0, "z", (0, 0, 0))
-    jaw_open = jaw_turn(JAW_BODY, JAW_OPEN)
+    pipe = cyl(hs.R_PIPE, 250.0, "z", (0, 0, 0))
+    jaw_parts = [(n, s) for n, (s, _) in hand_parts(JAW_OPEN).items() if n == "jaw" or n.startswith("p60_")]
+    fixed_parts = [(n, s) for n, (s, _) in hand_parts(JAW_OPEN).items() if n == "sleeve" or n.startswith(("m60_", "drive_wheel", "roll_wheel"))]
     hit = []
-    for s_mm in range(0, 71, 5):          # hand slides away from the pipe along -EXIT_DIR: pipe moves +EXIT_DIR in hand frame
+    for s_mm in range(0, 71, 5):
         p = pipe.translate((s_mm * math.cos(math.radians(EXIT_DIR_DEG)), s_mm * math.sin(math.radians(EXIT_DIR_DEG)), 0))
-        for nm, b in (("fixed", FIXED_BODY), ("jaw", jaw_open)):
-            if b.intersect(p).val().Volume() > 1e-3 if b.intersect(p).vals() else False:
+        for nm, b in jaw_parts[:1] + fixed_parts[:1]:
+            i = b.intersect(p)
+            if i.vals() and i.val().Volume() > 1e-3:
                 hit.append((s_mm, nm))
-    # the jaw (with its lugs) must swing from closed to open about the pin without cutting into the fixed body
+    fixed = FIXED_BODY
     for d in range(1, int(JAW_OPEN) + 1, 4):
-        if FIXED_BODY.intersect(jaw_turn(JAW_BODY, d)).vals() and FIXED_BODY.intersect(jaw_turn(JAW_BODY, d)).val().Volume() > 1.0:
+        i = fixed.intersect(jaw_turn(JAW_BODY, d))
+        if i.vals() and i.val().Volume() > 1.0:
             hit.append((d, "swing"))
     return same, hit
 
-if __name__ == "__main__":
+
+def check_drain():
+    """The drain hole of each of the four cups must open to the outside of the sleeve: the line from the cup back, radially outward through
+    the carrier and the cap, meets no sleeve material. Returns a dict (cup -> blocked volume in mm3, 0 = open)."""
+    res = {}
+    for a, tag in zip(hs.INNER_ANGS, ("p60", "m60")):
+        for z in (hs.ROW_Z, -hs.ROW_Z):
+            line = cq.Workplane("XY").add(cq.Solid.makeCylinder(co.DRAIN_D / 2, 200.0, cq.Vector(hs.CARRIER_R0 - 0.5, 0, z), cq.Vector(1, 0, 0)))
+            line = line.rotate((0, 0, 0), (0, 0, 1), a)
+            i = hs.result.intersect(line)
+            res["%s cup z=%+.0f" % (tag, z)] = i.val().Volume() if i.vals() else 0.0
+    return res
+
+
+def drain_table(step=30):
+    """Where water can leave a cup at each roll angle of the sleeve, for a pipe held HORIZONTAL with gravity along -Y (hand frame at roll 0).
+    The cup at lobe angle a sits at a + roll round the pipe. Its drain hole points outward, its open face (lip) inward.
+    'back hole': the cup is on the lower half, outward is down. 'lip gap': the cup is on the upper half, the face looks down and water leaves
+    through the 0.4 mm lip-to-ball gap. 'side': the cup is at the side; only the 0.15 mm film round the ball can stand. OPEN POINT Q10."""
+    rows = []
+    for roll in range(0, 360, step):
+        row = []
+        for a in hs.INNER_ANGS:
+            th = math.radians(a + roll)
+            down_out = -math.sin(th)                       # outward direction . gravity (gravity = -Y): > 0 outward is down
+            row.append("back hole" if down_out > 0.5 else "lip gap" if down_out < -0.5 else "side film")
+        rows.append((roll, row))
+    return rows
+
+
+def check():
+    sp = spacing_check()
+    ok_sp = sp["gap_between_hands"] >= 10.0 and sp["free_pipe_clearance"] >= 10.0 and all(v < 1e-3 for v in sp["overlaps"].values())
     same, hit = check_jaw()
-    print("closed jaw + fixed body == hs.result:", same)
-    print("pipe leaves through the open jaw with no collision:", not hit, hit)
-    for tag, obj in (("pair", pair), ("released", released), ("transfer (static hand %s)" % STATIC_HAND, transfer), ("exploded hand", exploded)):
+    dr = check_drain()
+    return {"spacing": sp, "spacing_ok": ok_sp, "jaw_same": same, "jaw_hits": hit, "drain": dr, "drain_ok": all(v < 1e-3 for v in dr.values())}
+
+
+if __name__ == "__main__":
+    r = check()
+    sp = r["spacing"]
+    print("spacing %.0f mm: gap between the two hands %.1f mm (need >= 10); swept radius of a sleeve with wheels %.1f mm, free pipe clears the swept "
+          "circle by %.1f mm during a roll (need >= 10); overlaps with the other pipe %s" % (PIPE_SPACING, sp["gap_between_hands"], sp["swept_radius"],
+                                                                                           sp["free_pipe_clearance"], sp["overlaps"]))
+    print("motors, gearboxes and shafts (beyond the sleeve ends) meet the free pipe only after a roll of %.0f deg (transfers need about 36)" % sp["motor_roll_clear_deg"])
+    print("sleeve vs its own pipe, overlap mm3:", sp["sleeve_overlaps"])
+    print("spacing check:", "OK" if r["spacing_ok"] else "FAILS")
+    print("closed jaw + fixed body == hs.result:", r["jaw_same"])
+    print("pipe leaves through the open jaw and the jaw swings with no collision:", not r["jaw_hits"], r["jaw_hits"])
+    print("drain holes open to the outside of the sleeve (blocked volume mm3):", r["drain"], "->", "OK" if r["drain_ok"] else "BLOCKED")
+    print("drain by roll angle (horizontal pipe), +60 / -60 deg lobe cups:")
+    for roll, row in drain_table():
+        print("  roll %3d: %s" % (roll, " / ".join(row)))
+    for tag, obj in (("pair", pair), ("released", released), ("transfer (static hand %s)" % STATIC_HAND, transfer)):
         bb = obj.toCompound().BoundingBox()
         print("cart_sleeves %s OK, bbox %.0f x %.0f x %.0f mm" % (tag, bb.xlen, bb.ylen, bb.zlen))

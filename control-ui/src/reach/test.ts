@@ -13,7 +13,7 @@ import { WRIST_TO_HAND } from '../arm/dims.ts';
 import { GRIP_TX, GRIP_TZ, JAW_CAP_DEG, XB, YC } from '../transplant/layout.ts';
 import { ikTool, toolOf, type Joints, type Tool } from '../transplant/task.ts';
 import { worstContact } from '../transplant/apply.ts';
-import { HOLES, PODS, podCapTop, seatCapTop, seatDir, type HoleSpec, type PodSpec } from './layout.ts';
+import { CART_MIN, HOLES, PODS, podCapTop, seatCapTop, seatDir, type HoleSpec, type PodSpec } from './layout.ts';
 import { dirToRef, refStation, stations, toRef, type Station } from './station.ts';
 
 type V3 = [number, number, number];
@@ -142,7 +142,7 @@ export function runReach(mujoco: MainModule, model: MjModel, data: MjData): Targ
   };
   for (const h of HOLES) { const d = seatDir(h); one(h.id, 'hole', holeLabel(h), seatCapTop(h), [-d[0], -d[1], -d[2]], d, `plug${h.n}`); }
   for (const p of PODS) one(p.id, 'pod', podLabel(p), podCapTop(p), [0, 0, -1], [0, 0, 1], `pod${p.n}`);
-  rig.pose(refStation(0.63), FOLD);
+  rig.pose(refStation(CART_MIN), FOLD);
   return out;
 }
 export const holeLabel = (h: HoleSpec) => `Hole ${h.n} (level ${h.level}, column ${h.col}, ${h.z.toFixed(3)} m)`;

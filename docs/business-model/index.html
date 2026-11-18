@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pond — Mission and business model</title>
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  .mission{font-size:24px;line-height:1.35;font-weight:600;color:var(--ink);margin:14px 0 12px}
+  @media (min-width:720px){.mission{font-size:32px}}
+  .story{font-size:18px;line-height:1.6;margin:10px 0 0}
+  .block p{line-height:1.6}
+  .cmp{display:grid;gap:12px;margin:16px 0}
+  .cmp .card.us{border-color:var(--green-bright);background:#f3fbf6}
+  .cmp h3{margin:0 0 6px}
+  .nums{margin:0;padding-left:18px;line-height:1.6}
+  .nums li{margin:6px 0}
+  .tbl{width:100%;border-collapse:collapse;margin:12px 0;font-size:15px}
+  .tbl th,.tbl td{padding:8px 6px;text-align:right;border-bottom:1px solid #e3e8e5}
+  .tbl th:first-child,.tbl td:first-child{text-align:left}
+  .tbl th{font-size:13px}
+  .tbl .grp td{text-align:left;font-weight:700;background:var(--green-soft);color:var(--green)}
+  .warn{display:inline-block;font-size:13px;font-weight:700;border-radius:999px;padding:4px 12px;background:var(--amber-soft);color:var(--amber);margin:0 0 12px}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:12px 0}
+  .steps li{counter-increment:s;position:relative;padding:0 0 14px 40px;line-height:1.55}
+  .steps li:before{content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--green-soft);color:var(--green);font-weight:700;text-align:center;line-height:28px}
+</style>
+</head>
+<body>
+<script src="../assets/fx.js" defer></script>
+<script src="../assets/site.js" data-root="../" data-page="business-model"></script>
+
+<header class="hero">
+  <div class="inner">
+    <span class="eyebrow">Our mission</span>
+    <p class="story">We have lost the know-how to grow our own food, and we have become fully dependent on supermarket chains. Yet growing food is easy to learn and easy to teach. Pond is a quiet, almost sneaky way to get people learning without stopping their day: just by watching the robot plant and tend, and harvesting by hand, you already start learning how it's done.</p>
+    <h1 class="mission">Pond's main mission is to empower people to learn how to grow their own food.</h1>
+    <p class="lead"><b>A note from me:</b> this is me thinking out loud, not a studied business plan. Pond is an open-source project, nowhere near going to market, and none of these numbers are promises.</p>
+    <p class="lead">Pond is a community and educational project first. It will always strongly support community projects, and it will never drop the community arm, however strong the commercial side becomes. If the commercial side grows, it will be in a position to invest in the community arm.</p>
+  </div>
+</header>
+
+<section class="block">
+  <div class="inner">
+    <p class="label">Where Pond fits</p>
+    <h2>Four ways to grow lettuce and greens</h2>
+    <div class="cmp">
+      <div class="card"><h3>1. Big mechanised farms</h3><p>Huge fields of a single crop, grown with machines. Very cheap per head, but far from the people who eat it.</p></div>
+      <div class="card"><h3>2. Small family farms near cities</h3><p>Fresh produce sold at farmers' markets. Lovely, but small and limited by land and labour.</p></div>
+      <div class="card"><h3>3. Indoor hydroponic vertical farms</h3><p>A big trend, but many famous companies (such as Infarm, AppHarvest and Bowery) closed or went bankrupt. Their energy and running costs were higher than what the crop earned.</p></div>
+      <div class="card us"><h3>4. Pond</h3><p>Outdoor, solar-powered, communal hydroponic units looked after by a small robot.</p></div>
+    </div>
+    <p>Pond avoids the main thing that sank vertical farms. It runs on sunlight and a solar panel, so energy is close to free.</p>
+    <p>Pond doesn't try to beat big farms on wholesale cost. It competes with the supermarket price, because it skips transport, middlemen and waste.</p>
+  </div>
+</section>
+
+<section class="block">
+  <div class="inner">
+    <p class="label">Rough economics</p>
+    <h2>The numbers, roughly</h2>
+    <span class="warn">Early guesses, not promises</span>
+    <p>Again, this is me thinking out loud. These are back-of-the-envelope figures from our current parts list and cart design (4 motors, omni wheels, arm, battery, solar panel, pipe and tanks). Nothing is for sale and none of it is a promise.</p>
+    <h3>What a unit might cost</h3>
+    <p>I split the cost in two: the <b>growing unit</b> (tanks, pipe and track, pods, solar share, pump) and the <b>robot cart</b> (4 motors, omni wheels, arm, battery, computer).</p>
+    <ul class="nums">
+      <li><b>Target</b> (bulk buying and production): growing unit about <b>$100–150</b>, robot cart about <b>$150–200</b>. That is $250–350 with one robot per unit. Assumed life <b>5 years</b>.</li>
+      <li><b>Pessimistic:</b> growing unit about <b>$250</b>, robot about <b>$250</b>, so $500 with one robot per unit. Assumed life <b>3 years</b>. Today we buy single parts at hobby prices, so a build now costs even more.</li>
+    </ul>
+    <h3>Sharing one robot</h3>
+    <p><b>An assumption to test:</b> one robot could look after several units joined by track, perhaps up to about 10. What we still need to find out: how the track joins the units, how fast the cart moves, and its battery and work time per unit.</p>
+    <p>Cost per head below uses the middle of each range, plus about 5 cents a head for seeds and nutrients. The reais are worked out from the current exchange rate, so they move a little from day to day.</p>
+    <table class="tbl">
+      <thead><tr><th>Units per robot</th><th>Cost per unit</th><th>Per head, São Paulo</th></tr></thead>
+      <tbody>
+        <tr class="grp"><td colspan="3">Target (5 year life)</td></tr>
+        <tr><td>1</td><td><span data-usd="300">$300 (R$1,650)</span></td><td><span data-usd="0.35">35¢ (R$1.92)</span></td></tr>
+        <tr><td>3</td><td><span data-usd="183">$183 (R$1,010)</span></td><td><span data-usd="0.23">23¢ (R$1.27)</span></td></tr>
+        <tr><td>10</td><td><span data-usd="143">$143 (R$790)</span></td><td><span data-usd="0.19">19¢ (R$1.04)</span></td></tr>
+        <tr class="grp"><td colspan="3">Pessimistic (3 year life)</td></tr>
+        <tr><td>1</td><td><span data-usd="500">$500 (R$2,750)</span></td><td><span data-usd="0.88">88¢ (R$4.84)</span></td></tr>
+        <tr><td>3</td><td><span data-usd="333">$333 (R$1,830)</span></td><td><span data-usd="0.61">61¢ (R$3.35)</span></td></tr>
+        <tr><td>10</td><td><span data-usd="275">$275 (R$1,510)</span></td><td><span data-usd="0.51">51¢ (R$2.81)</span></td></tr>
+      </tbody>
+    </table>
+    <p class="fx-note" style="font-size:13px;color:var(--muted);margin-top:8px">US$1 ≈ R$5.50, rate from a stored default</p>
+    <h3>How much lettuce, in São Paulo</h3>
+    <ul class="nums">
+      <li>About 25 plants per unit.</li>
+      <li>São Paulo has mild winters, so lettuce can grow all year. It grows slower in the cooler months and suffers in the hottest, wettest ones.</li>
+      <li>My <b>rough estimate</b> (not measured): about 8 harvests a year, so about <b>200 heads</b> per unit. We will only know once we grow it.</li>
+    </ul>
+    <p>Not yet counted: mailing the pods, and a person delivering and assembling each unit the first time.</p>
+  </div>
+</section>
+
+<section class="block">
+  <div class="inner">
+    <p class="label">Who it's for</p>
+    <h2>Households, schools and community projects</h2>
+    <p>Pond is for people growing their own food, not for people going into the lettuce business. So the useful question is what a unit is worth to a household or a community garden.</p>
+    <div class="card" style="margin-top:16px"><h3>An example in São Paulo</h3>
+      <p>Supermarket lettuce in São Paulo is roughly <span data-usd="0.55-1.10" data-first="brl">R$3–6 (about $0.55–1.10)</span> a head; this is my rough guess, to be checked against real shelf prices. At about 200 heads a year, a unit replaces roughly <b><span data-usd="110-220" data-first="brl">R$610–1,210 (about $110–220)</span></b> of shopping.</p>
+      <p style="margin-top:8px">A unit's yearly cost (hardware over its life plus seeds and nutrients) is about <b><span data-usd="40-70">$40–70 (R$220–390)</span></b> in the target case, lower with a shared robot, and about <b><span data-usd="175">$175 (R$960)</span></b> in the pessimistic case with one robot per unit. So the target case looks worthwhile for a household, while the pessimistic one only about breaks even. A subscription that covers upkeep would sit somewhere around that yearly cost. We have not set a price.</p>
+      <p class="fx-note" style="font-size:13px;color:var(--muted);margin-top:8px">US$1 ≈ R$5.50, rate from a stored default</p></div>
+    <p style="margin-top:16px">Some people might one day want several units to sell produce locally. That only makes sense if bulk pricing brings units well down and they last many years. It is not our focus.</p>
+  </div>
+</section>
+
+<section class="block">
+  <div class="inner">
+    <p class="label">Business model</p>
+    <h2>Two sides, one mission</h2>
+    <p>This is our current thinking, not a plan.</p>
+    <ol class="steps">
+      <li><b>Start with the community side.</b> Raise money from green funds, grants, councils and mayors to give free or subsidised units to community and educational projects, with workshops teaching people how to grow. The robot means people can learn without having to be fully committed.</li>
+      <li><b>In parallel, offer a subscription on the open market.</b> Each commercial unit must pay for its own maintenance, so the project never depends on commercial sales.</li>
+      <li><b>Let the commercial side prove itself.</b> If it shows it has legs, Pond can become a commercial project with a community arm. Either way, the mission and the community arm stay.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="block">
+  <div class="inner">
+    <p class="label">Open source</p>
+    <h2>Why buy if it's open source?</h2>
+    <p>This is my current thinking, nothing more. The plans stay free. People would pay so they don't have to build it themselves: sourcing the parts, printing, wiring, testing and installing. They would also pay for seed pods and nutrients by subscription, for support, repairs and software updates, and for the Pond name (the trademark).</p>
+    <p style="margin-top:8px">And if someone copies Pond to grow their own food, that still spreads the mission, which is fine by me.</p>
+  </div>
+</section>
+
+<section class="block">
+  <div class="inner">
+    <p class="label">Inspiration</p>
+    <h2>References and inspiration</h2>
+    <p>Projects that inspire Pond. More to be added.</p>
+    <div class="card" style="margin-top:16px"><h3>FarmBot (farm.bot)</h3>
+      <p>An open-source farming robot that plants and tends (seeding, watering, weeding) a soil raised bed; you build the bed, fill it with soil and harvest. Pond aims to be lighter to start: no soil, and a self-contained solar unit.</p></div>
+    <div class="card" style="margin-top:16px"><h3>Click &amp; Grow (clickandgrow.com)</h3>
+      <p>Indoor smart gardens, not open source. A reference for a fairly cheap garden plus a plant-pod subscription, which is close to Pond's supplies idea.</p></div>
+    <div class="card" style="margin-top:16px"><h3>MIT OpenAg "food computer"</h3>
+      <p>An open-source growing project that shut down. A reminder for Pond to stay honest and not overpromise.</p></div>
+    <div class="card" style="margin-top:16px"><h3>Future direction</h3>
+      <p>A future idea, not current work: the same Pond track and robot could one day run along raised beds too, moving from vertical to horizontal, so one robot looks after a whole garden.</p></div>
+  </div>
+</section>
+
+<footer class="site">Designed in London, being built in São Paulo, Brazil.</footer>
+</body>
+</html>

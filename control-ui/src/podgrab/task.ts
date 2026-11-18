@@ -17,7 +17,7 @@ import { MOTORS } from '../model.ts';
 import { solvePlanar, toolPoint, type Joints } from '../arm/kinematics.ts';
 import { gauss, rng } from '../arm/placement.ts';
 import {
-  CART_HOME_X, CART_SPEED, CLAW_ACT, CLAW_GRIP, CLAW_OPEN, PAN0, CART_X_MAX, CART_X_MIN, PIN_SPEED, PIPE_Y, PIPE_Z, POD_COUNT, POD_LEN, POD_R, armR, armU,
+  CART_HOME_X, CART_QUAT, CART_SPINE_ZONE, CART_SPEED, CART_Z, CLAW_ACT, CLAW_GRIP, CLAW_OPEN, PAN0, CART_X_MAX, CART_X_MIN, PIN_SPEED, PIPE_Y, POD_COUNT, POD_LEN, POD_R, armR, armU,
   POD_PITCH, ROW_PITCH, SEAT_SPEED, TOOL_X, STORE_CAP, STORE_N, STORE_PITCH_DEG, STORE_ROWS, STORE_Y0, STORE_START, TRANSIT_Z, TRAY_SLOTS, CELL_R,
   READY_POSE, podName, rowX, seatPos, STORE_Z0, TRAY_CX, TRAY_HX, TRAY_HY, TRAY_TOP, slopeS, slotLabel, startPos, STORE_QUAT, UPRIGHT_QUAT,
 } from './layout.ts';
@@ -56,6 +56,7 @@ export class PodWorld {
 
   reset() {
     this.sim.reset();
+    this.cartHit = { depth: 0, x: NaN, names: '', ticks: 0 };
     this.violation = ''; this.collarHits = 0; this.collarHit = ''; this.seen = null; this.heldSteps = [];
     this.cartX = CART_HOME_X; this.cartAt = CART_HOME_X;
     this.last = null;
@@ -114,6 +115,43 @@ export class PodWorld {
     this.cartAt += Math.abs(d) <= lim ? d : Math.sign(d) * lim;
     this.write();
     this.audit(h);
+    if (Math.abs(this.cartAt) < CART_SPINE_ZONE) { const h = this.scanCart(); if (h.depth < 0) { this.cartHit.ticks++; if (h.depth < this.cartHit.depth) this.cartHit = { ...h, x: this.cartAt, ticks: this.cartHit.ticks }; } }
+  }
+
+  // --- the cart against the unit (Pond #284). The rigid omni sleeves are bigger than the old hands and do not fit past the spine and its track bracket: this is a FINDING (docs/pod-grab-and-transplant-scenes.md), shown
+  // on the screen, not a failure of the job, so it is kept apart from `violation`. Only the zone around the spine is scanned (the contact scan is slow); wheels riding over the clamp ring are fine (1.5 mm proud, as in the Transfer scene).
+  /** Deepest penetration (m, negative) of the cart's parts into the spine or the track bracket seen so far, where, and which parts. */
+  cartHit = { depth: 0, x: NaN, names: '', ticks: 0 };
+  private cartGeoms: number[] | null = null;
+  private scanCart(): { depth: number; names: string; by: Record<string, number> } {
+    const m = this.sim.model, d = this.sim.data, mj = this.sim.mujoco;
+    if (!this.cartGeoms) {
+      const cb = m.body('cart'), ab = m.body('base'), cartId = cb.id, armId = ab.id; cb.delete(); ab.delete();
+      const under = (b: number, id: number) => { for (; b > 0; b = m.body_parentid[b]) if (b === id) return true; return false; };
+      this.cartGeoms = Array.from({ length: m.ngeom }, (_, g) => g).filter((g) => under(m.geom_bodyid[g], cartId) && !under(m.geom_bodyid[g], armId));
+      this.hitGeoms = ['spine_tube', 'track_bracket', 'bracket_rod'].map((n) => { const g = m.geom(n), id = g.id; g.delete(); return { id, name: n }; });
+    }
+    // The cart's parts do not collide with the unit in the physics (a 50 mm overlap would fling them about); the distance to the spine and the bracket is measured here instead.
+    let worst = 0, what = '';
+    const ft = new Float64Array(6), by: Record<string, number> = {};
+    for (const h of this.hitGeoms) {
+      by[h.name] = 0;
+      for (const g of this.cartGeoms) {
+        const dist = mj.mj_geomDistance(m, d, g, h.id, 0.002, ft);
+        if (dist < by[h.name]) by[h.name] = dist;
+        if (dist < worst) { worst = dist; what = h.name; }
+      }
+    }
+    return { depth: worst, names: what, by };
+  }
+  private hitGeoms: { id: number; name: string }[] = [];
+  /** Put the cart at x (m) and report its deepest penetration into the spine or the track bracket there (for tests and the write-up); the cart goes back to where it was. */
+  probeCart(x: number): { depth: number; names: string; by: Record<string, number> } {
+    this.sim.setMocap('cart', [x, PIPE_Y, CART_Z], CART_QUAT);
+    this.sim.mujoco.mj_forward(this.sim.model, this.sim.data);
+    const r = this.scanCart();
+    this.write(); this.sim.mujoco.mj_forward(this.sim.model, this.sim.data);
+    return r;
   }
 
   // --- integrity: pods are conserved. Each pod is in exactly one place its bookkeeping state allows, and moves only by the
@@ -196,7 +234,7 @@ export class PodWorld {
   }
 
   write() {
-    this.sim.setMocap('cart', [this.cartAt, PIPE_Y, PIPE_Z]);
+    this.sim.setMocap('cart', [this.cartAt, PIPE_Y, CART_Z], CART_QUAT);
   }
 
   /** Hand pose from the sim data (the body id is looked up once). */

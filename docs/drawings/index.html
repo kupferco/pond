@@ -13,7 +13,7 @@
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));gap:16px}
   .dcard{background:#fff;border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column;overflow-wrap:anywhere}
   .dcard a.view{display:block;text-decoration:none;color:inherit}
-  .dcard img{display:block;width:100%;aspect-ratio:4/3;object-fit:contain;background:var(--bg-soft)}
+  .dcard img{display:block;width:100%;aspect-ratio:4/3;object-fit:contain;background:#fff;border-bottom:1px solid var(--line)}
   .dcard .noimg{width:100%;aspect-ratio:4/3;background:var(--bg-soft);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
   .dcard .body{padding:14px 16px 16px}
   .dcard .date{font-size:13px;color:var(--muted);margin:2px 0 6px}
@@ -35,14 +35,14 @@
   <div class="inner wide">
     <p class="label">CAD</p>
     <h1>Drawings</h1>
-    <p class="updated">One card per part, showing its latest version. Tap a drawing to open it in 3D.</p>
+    <p class="updated">One card per part, showing its current version; older versions and other views are tucked under each card. Tap a drawing to open it in 3D.</p>
   </div>
 </header>
 <nav id="filters" aria-label="Filter by category"></nav>
 <main class="block gal"><div class="inner wide" id="gallery">Loading…</div></main>
 <footer class="site" id="foot"></footer>
 <script>
-const CATEGORIES=["Cart","Arm","Unit structure","Pod handling","Water","Power","Flat-pack and transport","Experiments"];
+const CATEGORIES=["Complete unit","Cart","Arm","Unit structure","Pod handling","Water","Power","Flat-pack and transport","Experiments"];
 let DATA=null,active="All";
 function chip(text,cls){const s=document.createElement('span');s.className='chip '+cls;s.textContent=text;return s;}
 function viewerUrl(r){
@@ -65,7 +65,7 @@ function thumbEl(r){
 function parts(){
   const by={};
   DATA.renders.forEach(r=>{const k=r.part||r.title;(by[k]=by[k]||[]).push(r);});
-  Object.values(by).forEach(l=>l.sort((a,b)=>(b.version||0)-(a.version||0)||(b.date>a.date?1:-1)));
+  Object.values(by).forEach(l=>l.sort((a,b)=>(b.version||0)-(a.version||0)||(b.primary?1:0)-(a.primary?1:0)||(b.date>a.date?1:-1)));
   return by;
 }
 function card(list){
@@ -84,7 +84,7 @@ function card(list){
   body.append(chips,t,d,c);a.appendChild(body);el.appendChild(a);
   if(list.length>1){
     const box=document.createElement('div');box.className='body';box.style.paddingTop='0';
-    const btn=document.createElement('button');btn.className='hist-btn';btn.textContent='History ('+(list.length-1)+' older)';
+    const btn=document.createElement('button');btn.className='hist-btn';btn.textContent='Older versions and other views ('+(list.length-1)+')';
     const hist=document.createElement('div');hist.className='hist';
     list.slice(1).forEach(o=>{
       const h=document.createElement('a');h.href=viewerUrl(o);

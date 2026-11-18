@@ -1,5 +1,6 @@
 # cad/cart_base.py: Pond cart BASE plate hung on a hinge at each hand (DRAFT v4, 15 Nov 2026, Viber #97 / #109).
 #
+# Pond #280: motor saddles and the plate-mounted motor drawing removed (motors are in the sleeves); the rest is as in #279.
 # v4 (Viber #109 follow-up, decided by Dani): the battery is now UNDER the arm: stack plate | battery | SO-101 arm base. The
 # battery shelf tongue above the arm is gone (the plate is a plain rectangle plus the two worm-bracket tongues). The four
 # M4 holes on the 50 mm square now mount the battery (housing); the arm base bolts to the battery's front face. The strap
@@ -48,9 +49,7 @@
 #     the real SO-101 base hole pattern is to confirm); the arm base bolts on the battery, 50 mm out from the plate.
 #  5. Battery 70 x 50 x 70 mm flat on the plate under the arm base: four corner stops.
 #     Real battery size and fixing not decided.
-#  6. Drive motors: one per hand, 28 x 55 mm, gearbox up, on the plate at x = -53 and +53 (between the hinge
-#     barrels and the arm), each in two saddles with M3 clamp holes. Real motor and clamp not decided. The
-#     transmission from motor to the driven wheels is not drawn (see cart_sleeves.py: worm shaft).
+#  6. (Pond #280) No motors on the plate: the drive and roll motors are in the sleeves (cart_omni.py), so the motor saddles are gone.
 #  7. Cable routing: the 12 V lead, motor leads and USB lead use 3 x 8 mm tie slots in the plate's top and bottom
 #     10 mm band; the servo bus leaves over the battery's top edge. Cable lengths and strain relief not designed.
 #  8. Cart height: plate centre at the arm shoulder level used by cart_arm.py (pipes end 70 below it).
@@ -64,11 +63,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hand_sleeve as hs
 import cart_assembly as ca
 import cart_arm as arm            # shared layout numbers; importing builds the arm drawing too
-import cart_hinge as ch
 
 # ---------------- Shared layout (imported) ----------------
 from cart_dims import (PIPE_SPACING, HX, PLATE_X0, PLATE_X1, PLATE_ZH, PLATE_T, PLATE_Y0, PLATE_Y1,
-                       ARM_X, ARM_Z, BATT, MOTOR_R, MOTOR_L, MOTOR_XS, ARM_BLOCK_HX, RIM, BATT_X, BATT_Z)
+                       ARM_X, ARM_Z, BATT, LEAD_SLOT_XS, ARM_BLOCK_HX, RIM, BATT_X, BATT_Z)
 PLATE_CY = ca.PLATE_CY
 BATT_C = BATT_X
 PIPE_Z0, PIPE_Z1 = arm.PIPE_Z0, arm.PIPE_Z1
@@ -78,8 +76,6 @@ box, cyl, fuse, xshift = arm.box, arm.cyl, arm.fuse, arm.xshift
 ARM_HOLE_SQ = 50.0        # ASSUMED: arm base M4 square
 ARM_HOLE_D = 4.3
 BATT_STOP_H, BATT_STOP_T = 18.0, 3.0  # corner stops: 18 out from the plate, 3 thick
-MOTOR_BAR_Z, MOTOR_BAR_W = 20.0, 8.0  # ASSUMED motor saddle bars at z = +/-20
-SADDLE_W = 28.0           # saddle width in X (= motor diameter)
 M3_D = 3.4
 TIE_SLOT = (8.0, 3.0)     # ASSUMED cable-tie slot: 8 along X, 3 along Z
 
@@ -91,27 +87,18 @@ def slot(w, l, x, z):                       # rectangular slot through the plate
     return box(w, PLATE_T + 2, l, (x, PLATE_CY, z))
 
 def build_plate():
-    p = ca.plate                            # solid plate + worm-bracket tongues + flange notches (cart_assembly.py)
+    p = ca.plate                            # plain rigid plate with the pad bolt holes (cart_geom.py)
     # ---- battery mount (centre; v4: the battery sits on the plate, the arm base on the battery) ----
     h = ARM_HOLE_SQ / 2
     for sx in (-1, 1):
         for sz in (-1, 1):
             p = p.cut(hole(ARM_HOLE_D, ARM_X + sx * h, ARM_Z + sz * h))
-    # ---- hinge: two M4 holes per hand for the plate-leaf screws (countersunk on the plate's front face) ----
-    for sgn in (-1, 1):
-        xh, d = ca.hinge_x(sgn), -sgn
-        for dz in (ch.PLATE_SCREW_DZ, -ch.PLATE_SCREW_DZ):
-            p = p.cut(hole(ARM_HOLE_D, xh + d * ch.PLATE_SCREW_DX, dz)).cut(ch.csk_cut(xh + d * ch.PLATE_SCREW_DX, PLATE_Y0, dz))
-    # ---- worm-bracket tongue: two M4 holes per hand ----
-    for ex, z in ch.tongue_holes():
-        p = p.cut(hole(ARM_HOLE_D, ex, z))
-    # ---- drive motors: saddle M3 clamp holes beside each motor are cut in saddles() ----
+    # ---- the pad bolts (two M4 per hand, hs.PAD_HOLE_Z) are already cut in cart_geom.py; no hinge screws, no tongue holes ----
     # ---- cable routing: tie slots in the top band (motor leads, USB) and bottom band (12 V lead) ----
     zr = PLATE_ZH - RIM / 2
     for x in (ARM_X - 10.0, ARM_X + 10.0):                                  # 12 V lead, bottom band
         p = p.cut(box(TIE_SLOT[0], PLATE_T + 2, TIE_SLOT[1], (x, PLATE_CY, -zr)))
-    for sgn in (-1, 1):                                                     # motor leads, top band, by each motor
-        mx = MOTOR_XS[sgn]
+    for mx in LEAD_SLOT_XS:                                                 # sleeve motor leads, top band, one pair above each hand's side
         p = p.cut(box(TIE_SLOT[0], PLATE_T + 2, TIE_SLOT[1], (mx - 8.0, PLATE_CY, zr - 4.0)))
         p = p.cut(box(TIE_SLOT[0], PLATE_T + 2, TIE_SLOT[1], (mx + 8.0, PLATE_CY, zr - 4.0)))
     return p
@@ -129,29 +116,14 @@ def corner_stops():
 batt_stops = corner_stops()
 battery = box(BATT[0], BATT[1], BATT[2], (BATT_C, PLATE_Y0 - BATT[1] / 2, BATT_Z))
 
-def saddles():
-    out = []
-    for sgn in (-1, 1):
-        mx = MOTOR_XS[sgn]
-        for sz in (-1, 1):
-            s = box(SADDLE_W, MOTOR_R, MOTOR_BAR_W, (mx, PLATE_Y0 - MOTOR_R / 2, sz * MOTOR_BAR_Z))
-            cradle = cyl(MOTOR_R, 2 * MOTOR_BAR_W, "z", (mx, PLATE_Y0 - MOTOR_R, sz * MOTOR_BAR_Z))
-            s = s.cut(cradle)
-            for dx in (-MOTOR_R + 1.5, MOTOR_R - 1.5):                      # M3 clamp holes beside the cradle
-                s = s.cut(cyl(M3_D / 2, MOTOR_R + 2, "y", (mx + dx, PLATE_Y0 - MOTOR_R / 2, sz * MOTOR_BAR_Z)))
-            out.append(s)
-    return fuse(out)
-motor_saddles = saddles()
-motors = arm.motors
 
 # cable runs (drawn as 4 mm round runs like cart_arm.py): 12 V board -> battery, motor leads to the top rim, USB
 def cable_runs():
     p12 = arm.polyline(arm.power_pts, 2.0)
     leads = []
-    for sgn in (-1, 1):
-        mx = MOTOR_XS[sgn]
+    for mx in LEAD_SLOT_XS:
         top = PLATE_ZH - RIM / 2
-        leads.append(arm.polyline([(mx - 8.0, PLATE_Y0 - 2.0, MOTOR_L / 2 + 10.0),
+        leads.append(arm.polyline([(mx - 8.0, PLATE_Y0 - 2.0, 40.0),
                                    (mx - 8.0, PLATE_Y0 - 2.0, top - 4.0)], 1.5))
     bus = arm.polyline([(ARM_X, PLATE_Y0 - 2.0, ARM_Z), (arm.board_c[0] + arm.BOARD[0] / 2, arm.board_c[1], arm.board_c[2])], 2.0)
     usb = arm.polyline(arm.usb_pts, 2.0)
@@ -163,9 +135,7 @@ def build(show_context=True):
     add = lambda o, n, c: assy.add(o, name=n, color=cq.Color(*c))
     add(plate, "base_plate", (0.35, 0.35, 0.38, 1))
     add(batt_stops, "battery_corner_stops", (0.35, 0.35, 0.38, 1))
-    add(motor_saddles, "motor_saddles", (0.35, 0.35, 0.38, 1))
     add(battery, "battery", (0.2, 0.45, 0.85, 1))
-    add(motors, "drive_motors", (0.85, 0.25, 0.25, 1))
     # arm base footprint on the plate (the arm itself is drawn in cart_arm.py)
     add(arm.to_cart(box(70, 70, 8, (0, 0, 4))), "arm_base_footprint", (0.88, 0.88, 0.9, 1))
     if show_context:
@@ -174,9 +144,6 @@ def build(show_context=True):
                 "track_%s" % tag, (0.75, 0.78, 0.8, 1))
             for nm, shp, col in ca.clamp_hand_parts():     # clamp/jaw sleeve, clamped (cart_sleeves.py)
                 add(ca.csl.place_hand(shp, sgn), "hand_on_%s_%s" % (tag, nm), col)
-    for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):      # the hinge and its worm drive are the point of v2/v3: always shown
-        for nm, shp, col in ch.hinge_parts(sgn):
-            add(shp, "hinge_%s_%s" % (tag, nm), col)
     add(arm.foam, "board_foam_pads", (0.8, 0.8, 0.8, 1))
     add(arm.board, "waveshare_board", (0.1, 0.5, 0.25, 1))
     p12, leads, bus, usb = cable_runs()
@@ -190,12 +157,12 @@ result = build()
 
 if __name__ == "__main__":
     import cart_dims as _cd
-    _t = _cd.torque_budget()
-    print("TORQUE BUDGET (ASSUMED masses), plate driven by hand %s's hinge, arm folded:" % _t["driving_hand"])
-    for n, m, r, tq in _t["rows"]:
+    _r = _cd.roll_budget()
+    print("ROLL BUDGET (ASSUMED masses), whole base rolled round the static pipe, arm folded (cart_dims.py roll_budget()):")
+    for n, m, r, tq in _r["rows"]:
         print("  %-36s %.2f kg at r %3.0f mm -> %.3f N m" % (n, m, r, tq))
-    print("  required %.2f N m, available %.2f N m (motor %.2f N m x ratio %d x eff %.2f), margin %.2f, 90 deg in %.1f s"
-          % (_t["required_Nm"], _t["available_Nm"], _cd.MOTOR_RATED_NM, _t["ratio"], _cd.WORM_EFF, _t["margin"], _t["t90_s"]))
+    print("  required %.2f N m, motor %.2f N m (margin %.2f), friction hold %.2f N m (margin %.2f), 180 deg in %.1f s"
+          % (_r["required_Nm"], _r["available_motor_Nm"], _r["margin_motor"], _r["hold_Nm"], _r["margin_hold"], _r["t180_s"]))
     bb = plate.val().BoundingBox()
     print("plate %.0f x %.0f x %.0f mm (X x Y x Z), pipes %.0f mm apart" % (bb.xlen, bb.ylen, bb.zlen, PIPE_SPACING))
     print("cart_base OK, bbox %.0f x %.0f x %.0f mm"

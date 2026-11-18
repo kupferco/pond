@@ -1,6 +1,6 @@
 // Shared site header for the Pond hub.
 // Usage, first thing inside <body>:
-//   <script src="ROOT/assets/site.js" data-root="ROOT/" data-page="home|drawings|roadmap|decisions|part-list|gallery|history"></script>
+//   <script src="ROOT/assets/site.js" data-root="ROOT/" data-page="home|business-model|drawings|roadmap|decisions|part-list|gallery|history"></script>
 // Page styles live in ROOT/assets/style.css (linked in each page's <head>).
 (function () {
   var me = document.currentScript;
@@ -9,6 +9,7 @@
   var links = [
     ['home', 'Home', ''],
     ['drawings', 'Drawings', 'drawings/'],
+    ['business-model', 'Mission and business model', 'business-model/'],
     ['roadmap', 'Roadmap', 'roadmap/'],
     ['decisions', 'Decisions', 'decisions/'],
     ['part-list', 'Part list', 'part-list/'],
