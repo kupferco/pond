@@ -4,6 +4,8 @@ Source content for the public page at `business-model/`. Early, optimistic estim
 
 ## Mission
 
+We have lost the know-how to grow our own food, and we have become fully dependent on supermarket chains. Yet growing food is easy to learn and easy to teach. Pond is a quiet, almost sneaky way to get people learning without stopping their day: just by watching the robot plant, tend and harvest, you already start learning how it's done.
+
 Pond's main mission is to empower people to learn how to grow their own food. Pond is a community and educational project first. It will always strongly support community projects and will never drop the community arm, however strong the commercial side becomes. If the commercial side grows, it will be in a position to invest in the community arm.
 
 ## Where Pond fits
