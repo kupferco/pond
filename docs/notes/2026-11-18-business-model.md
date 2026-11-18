@@ -69,4 +69,10 @@ Plans stay free. People pay to not build it themselves (sourcing, printing, wiri
 
 ## References and inspiration
 
-- FarmBot (farm.bot): open-source farming robot. Pond learns from its open design and from showing a robot can plant and tend (seeding, watering, weeding) while people harvest. Neither FarmBot nor Pond's robot harvests. No claims about their finances. More to add.
+- FarmBot (farm.bot): open-source farming robot. Pond learns from its open design and from showing a robot can plant and tend (seeding, watering, weeding) while people harvest. FarmBot works a soil raised bed that you build and fill; Pond aims to be lighter to start (no soil, self-contained solar unit). Neither FarmBot nor Pond's robot harvests. No claims about their finances. More to add.
+- Click & Grow (clickandgrow.com): indoor smart gardens, not open source. Reference for a fairly cheap garden plus a plant-pod subscription, close to Pond's supplies idea.
+- MIT OpenAg "food computer": open-source growing project that shut down. A reminder to stay honest and not overpromise.
+
+## Future direction
+
+Future idea, not current work: the same Pond track and robot could one day run along raised beds too, moving from vertical to horizontal, so one robot looks after a whole garden.
