@@ -187,7 +187,7 @@ Answer: By hand at first; robot self-calibration as a later idea.
 ### Q9. For sourcing, do we buy sensors on Mercado Livre first (faster, easier returns) rather than AliExpress (cheaper but slower and taxed)?
 Context: Import tax makes the AliExpress saving smaller than it looks, and bad probes need quick swaps.
 Assumed: Mercado Livre first, AliExpress for bulk later.
-Answer: _open_
+Answer: Yes, Mercado Livre first, AliExpress for bulk later.
 
 ## Suggested tasks
 
