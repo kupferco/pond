@@ -38,6 +38,8 @@ LIP_H = 0.8                      # ASSUMED: the dirt lip stands this far off the
 LIP_W = 2.2                      # ASSUMED lip ring width
 LIP_BORE_ADD = 0.2               # lip bore = seat opening + this
 DRAIN_D = 2.0                    # ASSUMED drain hole through the back of the cup
+SIDE_DRAIN_D = 2.0               # ASSUMED: four side holes, 90 deg apart round the cup axis, from the seat equator out through the wall (#316, owner Q6 option 2)
+SIDE_DRAIN_DIRS = ((0, 1, 0), (0, 0, 1), (0, -1, 0), (0, 0, -1))   # cup frame: +/-y (round the pipe) and +/-z (along the pipe)
 BALLS = {"stainless": (0.72, 0.74, 0.78, 1), "delrin": (0.93, 0.93, 0.9, 1)}   # AISI 304/316 (not chrome steel: it rusts) or acetal
 SPRING_TRAVEL = 2.5              # same as hand_sleeve v4: slot travel of a sprung station
 PIPE_BUMP = 1.5                  # joint rings stand this far proud of the tube (track_joint.py): the lip must clear them at rest
@@ -66,6 +68,8 @@ def ball_cup(ball_d=BALL_D, material="stainless"):
     body = body.cut(cq.Workplane("XY").add(cq.Solid.makeSphere(seat_r)))                       # the seat
     body = body.cut(cq.Workplane("YZ").workplane(offset=face_x - 4.0).circle(lip_in).extrude(4.05))  # lip bore, up to the face
     body = body.cut(cq.Workplane("YZ").circle(DRAIN_D / 2).extrude(back_x + 1.0))               # drain: seat back to the cup back, radial
+    for d in SIDE_DRAIN_DIRS:                         # side drains: seat equator (x = 0, the lowest point whenever the cup axis is level) out through the wall
+        body = body.cut(cq.Workplane("XY").add(cq.Solid.makeCylinder(SIDE_DRAIN_D / 2, cup_r + 1.0, cq.Vector(0, 0, 0), cq.Vector(*d))))
     ball = cq.Workplane("XY").add(cq.Solid.makeSphere(rb))
     # clearances (computed, asserted by hand_sleeve.py)
     lip_tip_x = -(c - (R_PIPE + FACE_GAP - LIP_H))    # x of the lip tip plane's lowest point
