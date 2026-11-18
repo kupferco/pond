@@ -117,7 +117,7 @@ Answer: 1 mm bottom run, 3 mm top run.
 ### Q3. What is the wall thickness of the 32 mm pipe you will use (1.8 waste grade, 3.0 pressure grade, other)?
 Context: the 3.0 mm wall is about 1.5 times stiffer, and the UK and Brazil pipes differ. It decides whether 300 or about 400 mm is the longest bottom-run span.
 Assumed: 1.8 mm (the weaker case), re-run when measured.
-Answer: _open_
+Answer: 1.8 mm (the weaker case), re-run when measured.
 
 ### Q4. May a support only touch the pipe through the sleeve's C-gap side (or hold it from behind), so the cart can pass it, or may the cart stop at a support?
 Context: the sleeve wraps the pipe, so a clamp round the pipe blocks the cart; the cart must work the whole bottom run.
