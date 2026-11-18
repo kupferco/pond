@@ -5,7 +5,7 @@
 - Date: 2026-11-18
 - Link: https://viber-f7sxvx63aq-nw.a.run.app/?task=307
 
-Status: PLAN ONLY. No app code, CAD or hardware changes. All prices are rough guesses from memory, not quotes: check them on the real shops before ordering.
+Status: PLAN ONLY; owner answers recorded; became tasks #329 to #332.  No app code, CAD or hardware changes. All prices are rough guesses from memory, not quotes: check them on the real shops before ordering.
 
 Other plans read: `docs/plans/cart-roll-redesign-plan.md` (#265, on `main`) and `docs/plans/295-pipe-sag-and-cup-drain/plan.md` (#295, on `origin/feat/pipe-sag-and-cup-drain`). No other plan files exist on `main` or any remote branch.
 Overlaps: (1) #265 puts roughly 3 kg on the cart and a ~20 Wh battery on it ([energy note](../../notes/2026-11-07-energy-budget.md) says the cart uses ~4 Wh a day), and its sleeves/plate are already crowded. Option B and C add mass and parts to that, so they must wait for the roll redesign to settle (Q2). (2) #295's sag numbers assume a 44 N design load; extra probe weight is small but not free (see section 5). (3) The energy note counts "sensors always on" at ~20 Wh a day for per-unit sensing; sharing would change that (section 6). Nothing contradicts them.
@@ -95,20 +95,22 @@ A cheap full set costs about **GBP 25 to 55 (R$ 130 to 300)**; a good set about 
 
 (The D figure includes the per-unit float and EC probe times ten and one shared pH pen.)
 
-## 4. Recommendation
+## 4. Recommendation (updated with the owner's answers)
 
-**Start with D for the prototype (1 to 2 units).** Float switch (continuous, per unit, wired to pump safety) plus a cheap EC/TDS and temperature probe, and pH by hand with a handheld pen or test kit once a week. It costs almost nothing, adds nothing to the cart, and gives us a log of how fast pH really drifts.
+The owner has answered all nine questions below. The result is a leaner version of option C, started from day one, with no hand pH checks:
 
-**Then move to C, not B, as the shared approach**, on this path:
-1. **Now:** D on the prototype. Keep a hand log of pH, EC and temperature.
-2. **Home-station bench rig:** put one good pH + EC + temperature set into a cup at the home station, a person pours a sample by hand each day. This tests the sensor, rinse and drain, and calibration, with no robot work.
-3. **Robot fetch, simple:** once the cart and the arm are working on the track, teach the arm to dip a cup and pour it into the station (section 7), in the simulator first.
-4. **Keep the float switch on every unit for good.** Sharing never replaces it.
-5. **B only as a fallback** if the tank is too far from the track for a cup (Q3), or if the station is too far from the unit (Q4).
+- **Per unit, always on:** a float switch for water level (pump safety) and a cheap EC probe. No pH probe per unit.
+- **One shared testing station on the first unit**, next to the dock, powered from the base battery. It holds **one good pH probe (about GBP 40, the cheaper end)** plus a cheap EC probe. No other pH probes are bought.
+- **Getting the sample:** no hatch in the tank. A small **peristaltic pump** draws water up a thin tube to a **sample point on top** of the unit. The **arm collects the sample from the top** and carries it to the station. The arm never reaches into the water.
+- **Drain:** used sample and rinse water go **to the ground**.
+- **How often:** **once a day** by default, adjustable (for example every two days). Water level stays always on.
+- **Calibration:** **by hand** for now. Robot self-calibration is a later idea.
+- **Sourcing:** **Mercado Livre first**, AliExpress for bulk later.
+- **Timing:** wait for the cart roll redesign (#265) to settle before adding parts to the cart.
 
-Why C over B: the probe stays in one clean, easy-to-calibrate place, and the cart stays light, which matches the weight and the crowded plate in #265. B is cheaper, but it needs a wet probe in the arm and a safe state for every interrupted trip.
+Option B (carrying probes) is dropped. Section 7 still lists the arm needs; the "dip into the tank" step is replaced by "pick up from the top sample point".
 
-If the weekly hand log shows pH hardly moves, we may never need C. That is a good outcome and costs us nothing.
+**Became tasks:** this plan became tasks **#329 to #332**. The older "Suggested tasks" list at the end is kept for history only and is replaced by those tasks.
 
 ## 5. Weight and power, plainly
 
@@ -189,7 +191,7 @@ Context: Import tax makes the AliExpress saving smaller than it looks, and bad p
 Assumed: Mercado Livre first, AliExpress for bulk later.
 Answer: Yes, Mercado Livre first, AliExpress for bulk later.
 
-## Suggested tasks
+## Suggested tasks (superseded by #329 to #332)
 
 1. Prototype sensing (option D): add a float switch for pump-safe water level, a cheap EC/temperature probe, and a weekly hand pH log sheet to the prototype.
 2. Update the energy budget: split the always-on sensor line into level (always) and pH/EC (switched on), with real part numbers.
