@@ -132,7 +132,7 @@ Answer: Yes, stay at 32 mm.
 ### Q6. Which drain option: 2 (back hole + 4 side holes), 3 (6 side holes), or 4 (open-frame cup)?
 Context: the back hole alone does not drain on the vertical legs at any roll angle, so side holes (or no pocket) are needed.
 Assumed: option 2, back hole + four 2 mm side holes at 90 degrees, outlets kept open by the sleeve at every roll angle.
-Answer: _open_
+Answer: Option 2: back hole + four 2 mm side holes at 90 degrees, outlets kept open by the sleeve at every roll angle.
 
 ### Q7. Is a small leftover crescent of water (about 2 mm deep, under 0.5 ml) acceptable in a cup, or must a cup empty fully?
 Context: full emptying needs more holes (option 3) or no pocket (option 4), which let more dirt in.
