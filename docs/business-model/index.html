@@ -27,6 +27,7 @@
 </style>
 </head>
 <body>
+<script src="../assets/fx.js" defer></script>
 <script src="../assets/site.js" data-root="../" data-page="business-model"></script>
 
 <header class="hero">
@@ -68,20 +69,21 @@
     </ul>
     <h3>Sharing one robot</h3>
     <p><b>An assumption to test:</b> one robot could look after several units joined by track, perhaps up to about 10. What we still need to find out: how the track joins the units, how fast the cart moves, and its battery and work time per unit.</p>
-    <p>Cost per head below uses the middle of each range, plus about 5 cents a head for seeds and nutrients. I use about R$5.50 to US$1, which is only a rough rate.</p>
+    <p>Cost per head below uses the middle of each range, plus about 5 cents a head for seeds and nutrients. The reais are worked out from the current exchange rate, so they move a little from day to day.</p>
     <table class="tbl">
       <thead><tr><th>Units per robot</th><th>Cost per unit</th><th>Per head, São Paulo</th></tr></thead>
       <tbody>
         <tr class="grp"><td colspan="3">Target (5 year life)</td></tr>
-        <tr><td>1</td><td>$300 (R$1,650)</td><td>35¢ (R$1.90)</td></tr>
-        <tr><td>3</td><td>$183 (R$1,000)</td><td>23¢ (R$1.30)</td></tr>
-        <tr><td>10</td><td>$143 (R$790)</td><td>19¢ (R$1.10)</td></tr>
+        <tr><td>1</td><td><span data-usd="300">$300 (R$1,650)</span></td><td><span data-usd="0.35">35¢ (R$1.92)</span></td></tr>
+        <tr><td>3</td><td><span data-usd="183">$183 (R$1,010)</span></td><td><span data-usd="0.23">23¢ (R$1.27)</span></td></tr>
+        <tr><td>10</td><td><span data-usd="143">$143 (R$790)</span></td><td><span data-usd="0.19">19¢ (R$1.04)</span></td></tr>
         <tr class="grp"><td colspan="3">Pessimistic (3 year life)</td></tr>
-        <tr><td>1</td><td>$500 (R$2,750)</td><td>88¢ (R$4.90)</td></tr>
-        <tr><td>3</td><td>$333 (R$1,830)</td><td>61¢ (R$3.40)</td></tr>
-        <tr><td>10</td><td>$275 (R$1,510)</td><td>51¢ (R$2.80)</td></tr>
+        <tr><td>1</td><td><span data-usd="500">$500 (R$2,750)</span></td><td><span data-usd="0.88">88¢ (R$4.84)</span></td></tr>
+        <tr><td>3</td><td><span data-usd="333">$333 (R$1,830)</span></td><td><span data-usd="0.61">61¢ (R$3.35)</span></td></tr>
+        <tr><td>10</td><td><span data-usd="275">$275 (R$1,510)</span></td><td><span data-usd="0.51">51¢ (R$2.81)</span></td></tr>
       </tbody>
     </table>
+    <p class="fx-note" style="font-size:13px;color:var(--muted);margin-top:8px">US$1 ≈ R$5.50, rate from a stored default</p>
     <h3>How much lettuce, in São Paulo</h3>
     <ul class="nums">
       <li>About 25 plants per unit.</li>
@@ -98,8 +100,9 @@
     <h2>Households, schools and community projects</h2>
     <p>Pond is for people growing their own food, not for people going into the lettuce business. So the useful question is what a unit is worth to a household or a community garden.</p>
     <div class="card" style="margin-top:16px"><h3>An example in São Paulo</h3>
-      <p>Supermarket lettuce in São Paulo is roughly R$3–6 a head (about $0.55–1.10); this is my rough guess, to be checked against real shelf prices. At about 200 heads a year, a unit replaces roughly <b>R$600–1,200</b> of shopping (about $110–220).</p>
-      <p style="margin-top:8px">A unit's yearly cost (hardware over its life plus seeds and nutrients) is about <b>$40–70</b> (R$220–385) in the target case, lower with a shared robot, and about <b>$175</b> (R$970) in the pessimistic case with one robot per unit. So the target case looks worthwhile for a household, while the pessimistic one only about breaks even. A subscription that covers upkeep would sit somewhere around that yearly cost. We have not set a price.</p></div>
+      <p>Supermarket lettuce in São Paulo is roughly <span data-usd="0.55-1.10" data-first="brl">R$3–6 (about $0.55–1.10)</span> a head; this is my rough guess, to be checked against real shelf prices. At about 200 heads a year, a unit replaces roughly <b><span data-usd="110-220" data-first="brl">R$610–1,210 (about $110–220)</span></b> of shopping.</p>
+      <p style="margin-top:8px">A unit's yearly cost (hardware over its life plus seeds and nutrients) is about <b><span data-usd="40-70">$40–70 (R$220–390)</span></b> in the target case, lower with a shared robot, and about <b><span data-usd="175">$175 (R$960)</span></b> in the pessimistic case with one robot per unit. So the target case looks worthwhile for a household, while the pessimistic one only about breaks even. A subscription that covers upkeep would sit somewhere around that yearly cost. We have not set a price.</p>
+      <p class="fx-note" style="font-size:13px;color:var(--muted);margin-top:8px">US$1 ≈ R$5.50, rate from a stored default</p></div>
     <p style="margin-top:16px">Some people might one day want several units to sell produce locally. That only makes sense if bulk pricing brings units well down and they last many years. It is not our focus.</p>
   </div>
 </section>
