@@ -18,7 +18,7 @@ import * as DIMS from '../src/cart/dims.ts';
 import * as OC from '../src/cart/omni.ts';
 import { BEND_TRIM_ROWS, NO_TRIM, bendTrim, omniTrackMjcf, placeOmniCart, trackContacts } from '../src/cart/omni-track.ts';
 import { RollMotion, ROLL_HOME_TOL_DEG, canRoll, driveLimit, pickRollDirection, sweep } from '../src/cart/roll.ts';
-import { POINT_CM, RING_CM, hall, runHoming } from '../src/cart/homing.ts';
+import { POINT_CM, POINT_WINDOW_DEG, RING_CM, RING_W_CM, hall, runHoming } from '../src/cart/homing.ts';
 import { LOAD_N, PIPES, maxCantileverMm, sagTable } from '../src/cart/track-sag.ts';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -630,6 +630,12 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     if (r.ok) { homed++; worstS = Math.max(worstS, Math.abs(r.sErr)); worstR = Math.max(worstR, Math.abs(r.rollErr)); }
   }
   check('homing from any start (leg, bend, run, rolled any way) finds the ring, then the point, and ends within 0.5 cm and 2 degrees', homed === 36 && worstS <= 0.5 && worstR <= 2, `${homed}/36, worst ${worstS.toFixed(2)} cm ${worstR.toFixed(1)} deg`);
+  // the CAD's home station (cad/home_station.py, OpenPocket #286) uses the same ring and point positions as the controller
+  {
+    const hsPy = readFileSync(new URL('../../cad/home_station.py', import.meta.url), 'utf8');
+    const n = (name: string) => parseFloat(hsPy.match(new RegExp(`^${name}\\s*=\\s*(-?[0-9.]+)`, 'm'))?.[1] ?? 'NaN');
+    check('CAD home station: ring at RING_CM, point at POINT_CM, tape 10 mm = RING_W_CM, 6 mm point magnet is wider than the sensor window (homing.ts)', n('RING_CM') === RING_CM && n('POINT_CM') === POINT_CM && n('RING_W') === RING_W_CM * 10 && (n('POINT_D') / 16) * 180 / Math.PI > 2 * POINT_WINDOW_DEG, `${n('RING_CM')} ${n('POINT_CM')} ${n('RING_W')}`);
+  }
   const lost = runHoming(2, 90);
   check('homing from just below the ring: hits the base end, turns round and finds the ring', lost.ok && lost.steps.some((x) => /turning round/.test(x)));
   // pipe sag (Q1, Q6)

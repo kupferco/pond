@@ -11,6 +11,9 @@
 #   cart-arm-working     whole cart, arm reaching a pick hole and a seedling cell (cart_arm.py)
 #   cart-base            the rigid base plate with battery stops, cables and the hands in context (cart_base.py)
 #   cart-pod-holder      the pod holder cup with a pod on the plate, hands and arm base around it (cart_pod_holder.py)
+#   home-station-ring    (OpenPocket #286) hand on the pipe with its hall sensor over the ring of magnet tape
+#   home-station-point   hand rolled to zero with its hall sensor over the point magnet
+#   home-station-rolled  hand rolled 90 deg: the sensor still sees the ring, the point magnet is out of reach
 #   assembly.glb         the whole cart (cart_assembly.py) for the 3D viewer
 import os
 import sys
@@ -41,6 +44,7 @@ def scenes():
     import cart_arm as arm
     import cart_base as cb
     import cart_pod_holder as ph
+    import home_station as hst
     hand = cq.Assembly()
     hand.add(cs.cyl(hs.R_PIPE, 250.0, "z", (0, 0, 0)), name="track_pipe", color=cq.Color(0.75, 0.78, 0.8, 1))
     for n, (s, col) in cs.hand_parts().items():
@@ -53,6 +57,9 @@ def scenes():
         "cart-arm-working": (arm.result, "Arm working on the cart"),
         "cart-base": (cb.result, "Rigid base plate on the sleeve pads, battery, cables"),
         "cart-pod-holder": (ph.scene(True, show=("plate", "battery", "arm_base")), "Pod holder with a pod, below the plate"),
+        "home-station-ring": (hst.scene("ring"), "Home station: hall sensor over the ring of magnet tape"),
+        "home-station-point": (hst.scene("point"), "Home station: hall sensor over the point magnet, roll 0"),
+        "home-station-rolled": (hst.scene("ring", 90.0), "Home station: hand rolled 90 deg, sensor still over the ring"),
         "cart-sleeves": (cs.clamped, "Cart: both hands clamped, rigid plate"),
         "cart-sleeves-transfer": (cs.transfer, "Cart rolled 36 deg about the static pipe, other hand released"),
         "cart-wheel-pairs": (cw.context, "Wheel pairs of both hands on pipes 120 mm apart"),

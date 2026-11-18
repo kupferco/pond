@@ -263,7 +263,7 @@
       "link": "https://www.amazon.co.uk/s?k=flexible+magnetic+tape+adhesive",
       "link_label": "Search on Amazon UK →",
       "for": "Track: home station near the base of the track",
-      "note": "A ring of tape all the way round the pipe means 'you are at home'; a single point magnet shortly after it marks zero (zero roll angle and zero position). The 10 x 3 mm N52 disc magnets already in this list can serve as the point magnets, plus a few more as optional checkpoints at corners and legs. Check the tape's polarity and strength against the sensor below.",
+      "note": "A ring of tape all the way round the pipe means 'you are at home'; a single point magnet shortly after it marks zero (zero roll angle and zero position). Point magnet: a 6 x 1.5 mm N52 disc (CAD: cad/home_station.py), NOT the 10 x 3 mm collar magnets: those stand 3 mm proud of the pipe and would touch the hall sensor (3.5 mm off the pipe) and the ball-cup lips. Buy a few more 6 x 1.5 mm discs for the optional checkpoints at corners and legs. Tape: 10 mm wide, 1 mm thick or thinner (CAD assumes 1 mm). Ring at 10 cm from the bottom of the leg, point 6 cm above it (placeholders until the track is built). Check the tape's polarity and strength against the sensor below.",
       "status": "to get",
       "group": "uk-carry",
       "weight_g": 30
@@ -278,7 +278,7 @@
       "link": "https://www.amazon.co.uk/s?k=hall+effect+sensor+module+3.3V",
       "link_label": "Search on Amazon UK →",
       "for": "Cart: reads the home ring and the zero magnet (one per hand, one spare)",
-      "note": "The controller counts wheel turns for roll angle and position and corrects drift at the home station. If the cart is lost it drives until it hits the ring, moves on to the point magnet and rolls until it finds it.",
+      "note": "The controller counts wheel turns for roll angle and position and corrects drift at the home station. If the cart is lost it drives until it hits the ring, moves on to the point magnet and rolls until it finds it. Fits a pocket in the sleeve wall at the base end (cad/home_station.py): the board is about 14 x 12 x 1.6 mm with the sensor chip on the pipe side, so a board that size or smaller with a through-hole or small SMD sensor; the chip must be able to sit 3.5 mm off the pipe. The real board is not chosen: check its size against the pocket before buying more than the two.",
       "status": "to get",
       "group": "uk-carry",
       "weight_g": 5

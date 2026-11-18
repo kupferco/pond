@@ -38,6 +38,14 @@ near the base of the track (positions are placeholders until the track is built)
 - Optional: point magnets at corners and legs as position checkpoints (`CHECKPOINTS_CM`, empty); an IMU (e.g. BNO055) for absolute roll on the
   horizontal sections. Not built.
 
+The CAD side (`cad/home_station.py`, OpenPocket #286): the ring of tape (10 mm wide, 1 mm thick) and the point magnet (6 x 1.5 mm disc, 21 degrees wide on the
+pipe, wider than the sensor's 6 degree window) are drawn on the pipe; each hand carries a hall sensor board in a pocket cut into its sleeve wall at the base end,
+between the omni lobe and the -60 degree cup lobe (hand C is the mirror). The chip face is 3.5 mm off the pipe (0.5 mm proud of the bore wall), so it clears the
+tape by 2.5 mm, the point magnet by 2 mm and a 1.5 mm joint ring by 2 mm. At roll 0 the sensor stands over the point magnet; at any roll it sees the ring.
+`python cad/home_station.py` prints the checks; the numbers (ring and point position, tape width, magnet size) are compared with `homing.ts` in the test.
+Open: the real sensor board and its range on the tape are not chosen, so the 3.5 mm gap is the thing to prove on the bench; the sensor sits near the end of
+the sleeve and the pipe swings away from it on the 150 mm bend (checked only by the existing bore flare, not by a sensor-specific bend check).
+
 With 3 % position slip and 5 % roll slip, homing from 36 start positions and rolls ends within 0.5 cm and 2 degrees (test).
 
 ## Pipe sag (Q1, Q6): `track-sag.ts`
