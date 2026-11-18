@@ -108,7 +108,7 @@ export function rollBudget(loadNm = 2.9, o: { wheelR?: number; pipeR?: number; m
 const n3 = (x: number, y: number, z: number) => `${f(m(x))} ${f(m(y))} ${f(m(z))}`;
 
 /** Hand h's geoms and wheel bodies, relative to its own pipe axis. B-frame numbers are mirrored in x for hand C. */
-function handInner(h: Hand, jawA1 = JAW_A1): string {
+function handInner(h: Hand, jawA1 = JAW_A1, jawOpen = 0): string {
   const s = SG[h], clear = CONTACT_CLEAR_MM;
   const P = (x: number, y: number, z: number) => n3(s * x, y, z);                              // a B-frame point, mirrored for C
   const g: string[] = [], jg: string[] = [];   // jg: what rides on the jaw (ring sector 20..110 deg, the +60 deg lobe, its two ball cups)
@@ -167,7 +167,12 @@ function handInner(h: Hand, jawA1 = JAW_A1): string {
   g.push(`<geom type="cylinder" fromto="${P(-(OMNI_AXLE_R + GB_L - MOTOR_R), 0, gz - GB_T / 2)} ${P(-(OMNI_AXLE_R + GB_L - MOTOR_R + MOTOR_L), 0, gz - GB_T / 2)}" size="${f(m(MOTOR_R))}" ${MOTORC} ${VISUAL}/>`);
   // The jaw: a hinge about an axis along the pipe at the 110 deg edge of the tube (hand_sleeve.py), 0 = closed round the pipe, JAW_OPEN_RAD = released.
   const pa = rad(jawA1), pivot = P(TUBE_R_MIN * Math.cos(pa), TUBE_R_MIN * Math.sin(pa), 0);
-  const jaw = `<body name="jaw${h}"><joint name="jaw${h}" type="hinge" pos="${pivot}" axis="0 0 ${s}" range="0 ${JAW_OPEN_DEG}" damping="0.05"/>
+  // jawOpen > 0 (rad): the jaw is built already swung open, with no joint (the static scenes: pod grab, transplant), by turning its body about the pivot.
+  const px = s * m(TUBE_R_MIN * Math.cos(pa)), py = m(TUBE_R_MIN * Math.sin(pa)), th = s * jawOpen, ct = Math.cos(th), st = Math.sin(th);
+  const jawHead = jawOpen > 0
+    ? `<body name="jaw${h}" pos="${f(px - (ct * px - st * py))} ${f(py - (st * px + ct * py))} 0" quat="${f(Math.cos(th / 2))} 0 0 ${f(Math.sin(th / 2))}">`
+    : `<body name="jaw${h}"><joint name="jaw${h}" type="hinge" pos="${pivot}" axis="0 0 ${s}" range="0 ${JAW_OPEN_DEG}" damping="0.05"/>`;
+  const jaw = `${jawHead}
       ${jg.join('\n      ')}
       ${jbodies.join('\n      ')}
     </body>`;
@@ -191,10 +196,10 @@ const INERTIAL = '<inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.00
  * rollB and rollC. Only the STATIC hand's joint turns; the other holds zero (the controller's interlock, as the old hinge). Everything below the
  * second joint is rigid: sleeves, wheels, plate, battery, arm base. Wrap it in a mocap body to place it in a scene.
  */
-export function omniCartBody(o: { jawA1?: number } = {}): string {
+export function omniCartBody(o: { jawA1?: number; jawOpen?: Partial<Record<Hand, number>> } = {}): string {
   const jnt = (n: string, x: number) => `<joint name="${n}" type="hinge" pos="${n3(x, 0, 0)}" axis="0 0 1" range="-6.4 6.4"/>`;
   const hand = (h: Hand) => `<body name="hand${h}" pos="${n3(PIPE_X[h], 0, 0)}">
-      ${handInner(h, o.jawA1)}
+      ${handInner(h, o.jawA1, o.jawOpen?.[h] ?? 0)}
     </body>`;
   return `<body name="rollB">${INERTIAL}${jnt('rollB', PIPE_X.B)}
    <body name="rollC">${INERTIAL}${jnt('rollC', PIPE_X.C)}

@@ -22,11 +22,11 @@ import { POINT_CM, RING_CM, hall, runHoming } from '../src/cart/homing.ts';
 import { LOAD_N, PIPES, maxCantileverMm, sagTable } from '../src/cart/track-sag.ts';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { BASE_BOTTOM, LID_Z, PIPE_Z, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
+import { ARM_Y, BASE_BOTTOM, CART_Z, LID_Z, PIPE_Y, PIPE_Z, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
 import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
 
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
-import { transplantMjcf, D_CUP, LID as LID_TOP, TRAY_CAP_TOP, CART_Z0, CART_Z1, CART_ZP, YC, XT, LEG, PSI, CUP_DROP, SEAT_CAP_TOP, PARK_CAP_TOP, ZH, ZP, P0, U_CAP, CAP_T, HOLDER_FLOOR_X, X_TOP, RECESS_T } from '../src/transplant/layout.ts';
+import { transplantMjcf, ARM_CY, CUP_ROOT, D_CUP, LID as LID_TOP, TRAY_CAP_TOP, CART_Z0, CART_Z1, CART_ZP, YC, XT, LEG, PSI, CUP_DROP, SEAT_CAP_TOP, PARK_CAP_TOP, ZH, ZP, P0, U_CAP, CAP_T, HOLDER_FLOOR_X, X_TOP, RECESS_T } from '../src/transplant/layout.ts';
 import { TransplantRun, STEPS, ikTool, toolOf } from '../src/transplant/task.ts';
 import { Binder, worstContact as podContact } from '../src/transplant/apply.ts';
 
@@ -330,11 +330,10 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     const bx = pg.data.xpos[3 * id] - pg.data.xpos[3 * pg.model.body('cart').id];
     // Rendered orientation: the base's up axis is the plate normal, and its underside lies in the plate's front face.
     {
-      const bid = pg.model.body('base').id, cid = pg.model.body('cart').id;
+      const bid = pg.model.body('base').id;
       const xm = pg.data.xmat, R = (b: number, i: number, j: number) => xm[9 * b + 3 * i + j];
       const up = [R(bid, 0, 2), R(bid, 1, 2), R(bid, 2, 2)];
-      let plate = -1;                                      // the cart plate: the biggest thin (6 mm along cart y) box on the cart
-      for (let g = 0; g < pg.model.ngeom; g++) if (pg.model.geom_bodyid[g] === cid && Math.abs(pg.model.geom_size[3 * g + 1] - 0.003) < 1e-9 && pg.model.geom_size[3 * g + 2] > 0.05) plate = g;
+      const pgeom = pg.model.geom('plate'), plate = pgeom.id; pgeom.delete();   // the cart plate (omni cart, 6 mm along cart y), in a body below the cart
       check('cart plate found', plate >= 0);
       const gm = pg.data.geom_xmat, n = [gm[9 * plate + 1], gm[9 * plate + 4], gm[9 * plate + 7]];   // plate thickness axis = its normal
       const dot = up[0] * n[0] + up[1] * n[1] + up[2] * n[2];
@@ -343,8 +342,8 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
       const c = [0, 1, 2].map((k) => pg.data.geom_xpos[3 * plate + k]);
       const under = [0, 1, 2].map((k) => pg.data.xpos[3 * bid + k] + BASE_BOTTOM * up[k]);
       const off = [0, 1, 2].map((k) => under[k] - c[k]);
-      const faceOff = Math.abs(off[0] * n[0] + off[1] * n[1] + off[2] * n[2]) - 0.003;   // distance of the base underside from the plate's far face along the normal
-      check('arm base underside is in contact with the plate face', Math.abs(faceOff) < 1e-6, String(faceOff));
+      const faceOff = Math.abs(off[0] * n[0] + off[1] * n[1] + off[2] * n[2]) - 0.003 - 0.05;   // distance of the base underside from the battery's front face (plate 6 mm + battery 50 mm) along the normal
+      check('arm base underside is flat on the battery face (cart_dims.py ARM_Y0, 106 mm out of the pipe plane)', Math.abs(faceOff) < 1e-6, String(faceOff));
       const inPlane = [off[0] - (off[0] * n[0] + off[1] * n[1] + off[2] * n[2]) * n[0], off[1] - (off[0] * n[0] + off[1] * n[1] + off[2] * n[2]) * n[1], off[2] - (off[0] * n[0] + off[1] * n[1] + off[2] * n[2]) * n[2]];
       check('arm base sits within the plate outline', Math.abs(inPlane[0]) < 0.056 - 0.0225 && Math.abs(inPlane[2]) < pg.model.geom_size[3 * plate + 2] - 0.0225, inPlane.join());
       check('only one arm base: the cart carries just the plate and the two wheel sets (no deck or pad)', !names.includes('DECK_') && !names.includes('deck'));
@@ -355,6 +354,24 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   }
   const pgCmd = new CommandLayer(pg, new RealDriver());
   const world = new PodWorld(pg);
+
+  // Pond #284: the omni cart on the bottom run, hand B on the pipe, hand C open above it, flat, no hinges.
+  {
+    pg.step();
+    const where = (n: string) => { const b = pg.model.body(n), id = b.id; b.delete(); return [0, 1, 2].map((k) => pg.data.xpos[3 * id + k]); };
+    const quat = (n: string) => { const b = pg.model.body(n), id = b.id; b.delete(); return [0, 1, 2, 3].map((k) => pg.model.body_quat[4 * id + k]); };
+    const hb = where('handB'), hc = where('handC');
+    check('pod grab: the cart rides the bottom pipe on hand B (its pipe axis is the track line) and hand C hangs 120 mm above it', Math.abs(hb[1] - PIPE_Y) < 1e-6 && Math.abs(hb[2] - PIPE_Z) < 1e-6 && Math.abs(hc[1] - PIPE_Y) < 1e-6 && Math.abs(hc[2] - PIPE_Z - 0.12) < 1e-6, `${hb} ${hc}`);
+    check('pod grab: the free hand (C) has its jaw open 92 degrees, the riding hand (B) is closed', Math.abs(2 * Math.asin(Math.abs(quat('jawC')[3])) * 180 / Math.PI - 92) < 0.1 && Math.abs(quat('jawB')[0] - 1) < 1e-9);
+    const nmz = podGrabMjcf();
+    check('pod grab: no hinge, worm, tongue or second hand below the pipe: the one plate carries the battery and the arm (cartbase), the arm base is the arm\'s own', !/hinge|worm|tongue/i.test(nmz.replace(/type="hinge"/g, '')) && nmz.includes('name="battery"') && nmz.includes('name="cartbase"') && !nmz.includes('name="armbase"'));
+    check('pod grab: the arm base is 106 mm out of the pipe plane (plate 6 + battery 50 on the 50 mm pads) and 60 mm above the pipe', Math.abs(PIPE_Y - ARM_Y - 0.0975) < 1e-9 && Math.abs(CART_Z - PIPE_Z - 0.06) < 1e-9);
+    // spine and bracket: the finding of the plan's section 7 (Q6). Clear everywhere but within 95 mm of the spine.
+    const xs = [-0.33, -0.2, -0.145, -0.1, 0.1, 0.105, 0.2, 0.28], depths = xs.map((x) => world.probeCart(x).depth);
+    check('pod grab: the cart is clear of the spine and the track bracket along the bottom run outside 10 cm of the spine, at the tray end, the store end and in between', depths.every((d) => d === 0), depths.join());
+    const inZone = [-0.09, -0.05, 0, 0.05, 0.09].map((x) => world.probeCart(x));
+    check('FINDING pod grab: the rigid sleeves hit the spine (53 mm deep at the cart centre) and the track bracket (10 mm) with the cart centre within 9 cm of the spine: the cart cannot cross between the tray and the store', inZone.every((r) => r.depth < -0.001) && inZone[2].depth < -0.03 && inZone.every((r) => r.by.track_bracket < 0 || r.by.spine_tube < 0) && inZone[2].by.track_bracket < -0.005 && inZone[2].by.spine_tube < -0.03, JSON.stringify(inZone));
+  }
 
   // Settled store: every pod rests on its channel, none above the roof or out of its row.
   for (let i = 0; i < 1500; i++) { pg.step(); }
@@ -461,6 +478,20 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   { const t = toolOf([0.036 * Math.cos(PSI), 0.036 * Math.sin(PSI), ZP - 0.03], [-Math.cos(PSI), -Math.sin(PSI), 0], CART_ZP); tr.pose.tool = { x: t.x, y: t.y, z: t.z, phi: t.phi }; }
   check('transplant: the pipe-wall test pose is in reach', bind.apply(tr.pose));
   check('transplant: a part pushed into the pipe is a contact', podContact(tm, td).depth < -0.002);
+  // Pond #284: the omni cart on the -y leg: hand C on the track, hand B beside it with its jaw open, no hinges.
+  {
+    const xml = transplantMjcf();
+    const jb = tm.body('jawB'), jc = tm.body('jawC'), qb = [0, 1, 2, 3].map((k) => tm.body_quat[4 * jb.id + k]), qc = [0, 1, 2, 3].map((k) => tm.body_quat[4 * jc.id + k]); jb.delete(); jc.delete();
+    check('transplant: the real omni cart (plate, battery, two three-lobe sleeves with omni wheels and ball cups), no hinge, worm or tongue, and the arm\'s own base (no armbase block)', xml.includes('name="lobeCo"') && xml.includes('name="battery"') && !xml.includes('name="armbase"') && !/worm|tongue/i.test(xml) && !xml.includes('name="hinge'));
+    check('transplant: the free hand (B) has its jaw open 92 degrees and the riding hand (C) is closed', Math.abs(2 * Math.asin(Math.abs(qb[3])) * 180 / Math.PI - 92) < 0.1 && Math.abs(qc[0] - 1) < 1e-9);
+    check('transplant: the arm base is on the battery front, 106 mm out of the pipe plane (plate face -56, battery 50) and the cup root 18 mm out of the plate face', Math.abs(ARM_CY + 0.106) < 1e-12 && Math.abs(CUP_ROOT[1] + 0.074) < 1e-12);
+    // lowest stop: the sleeve's -60 degree lobe touches the track corner just below 0.64 m
+    tr.reset();
+    const probe = (z: number) => { const p = tr.pose; const was = p.cartZ; p.cartZ = z; bind.apply(p); const d = podContact(tm, td); p.cartZ = was; return d; };
+    const lo = probe(CART_Z0), below = probe(CART_Z0 - 0.015);
+    check('transplant: the first stop (0.64 m) is the lowest the new sleeve can go on the straight leg: clear there, the lobe touches the track corner 15 mm lower', lo.depth === 0 && below.depth < 0 && /trackc/.test(below.names), `${lo.names} ${below.names}`);
+    bind.apply(tr.pose);
+  }
   check('transplant: pod holder is where the CAD puts it (not lowered) and the start is the seedling tray height', CUP_DROP === 0 && CART_Z0 < CART_Z1);
   check('transplant: pod holder is straight (90 degrees to the plate: cup axis horizontal) and the tray stands inside the tank, under the lid', D_CUP[2] === 0 && D_CUP[0] === -1 && TRAY_CAP_TOP[2] < LID_TOP);
   td.delete(); tm.delete();
@@ -476,7 +507,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const rm = mj.MjModel.from_xml_string(reachMjcf()), rd = new mj.MjData(rm), rig = new Rig(mj, rm, rd);
   check('reach: 24 holes (3 columns 120 degrees apart, 8 levels 130 mm apart, every other level turned 60) and 16 pods (4 x 4)', HOLES.length === 24 && PODS.length === 16 && new Set(HOLES.map((h) => h.z.toFixed(3))).size === 8 && Math.abs(HOLES[3].z - HOLES[0].z - 0.13) < 1e-9 && Math.abs(HOLES[3].cadDeg - HOLES[0].cadDeg - 60) < 1e-9);
   check('reach: every hole has its plug and every pod its body in the model', HOLES.every((h) => rm.body(`plug${h.n}`).id > 0 && rm.body(`collar${h.n}`).id > 0) && PODS.every((p) => rm.body(`pod${p.n}`).id > 0));
-  rig.pose(refStation(0.63), { A: 0, B: 0, C: 0, D: 0, E: 0 });
+  rig.pose(refStation(0.635), { A: 0, B: 0, C: 0, D: 0, E: 0 });
   check('reach: the folded arm at the lowest cart stop touches nothing (no contacts)', podContact(rm, rd).depth === 0, podContact(rm, rd).names);
   const res = runReach(mj, rm, rd), sm = summary(res);
   check('reach: every hole and pod has a colour, counts add up', res.length === 40 && sm.holes.green + sm.holes.amber + sm.holes.red === 24 && sm.pods.green + sm.pods.amber + sm.pods.red === 16);
@@ -499,7 +530,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     check('reach: rolling 180 degrees about leg A keeps the sleeve on leg A (leg axis x = 0.06, y = -0.29 is the mid point of the two cart origins); leg B is the mirror on y = +0.29', Math.abs((A0.pos[0] + A180.pos[0]) / 2 - 0.06) < 1e-9 && Math.abs((A0.pos[1] + A180.pos[1]) / 2 + 0.29) < 1e-9 && Math.abs((B0.pos[1] + B180.pos[1]) / 2 - 0.29) < 1e-9);
     const p: [number, number, number] = [0.1, -0.2, 0.5], q = toRef(A180, p);
     check('reach: a target seen from a rolled station and put back by the roll is where it was', Math.abs(q[0] - (2 * 0.06 - p[0])) < 1e-9 && Math.abs(q[1] - (2 * (-0.23 - 0.06) - p[1])) < 1e-9);
-    check('reach: stations cover both legs and both runs, 209 heights on a leg', stations('leg A', 0).length === 209 && stations('leg B', 180).length === 209 && stations('bottom run', 0).length > 20 && stations('top run', 180).length > 20); }
+    check('reach: stations cover both legs and both runs, 208 heights on a leg (0.635 to 1.67 m, the new sleeve cannot go to 0.63)', stations('leg A', 0).length === 208 && stations('leg B', 180).length === 208 && stations('bottom run', 0).length > 20 && stations('top run', 180).length > 20); }
   check('reach: hole cap-top points are on the 45 degree seat axes', HOLES.every((h) => { const p = seatCapTop(h); return Math.hypot(p[0], p[1]) > 0.05 && p[2] > h.z; }) && podCapTop(PODS[0])[2] < 0.304 && PODS.every((p) => p.x > 0 && p.y < 0));   // the tray is in the tank's front (+x) half, on the leg-A side
   const ps = checkPass(mj, rm, rd, [0, 180]);
   check('reach: the bracket / pipe pass check runs for the top and bottom run, as is and rolled', ps.length === 4 && ps.every((p) => p.steps > 10));

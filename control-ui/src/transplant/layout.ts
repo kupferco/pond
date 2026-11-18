@@ -7,16 +7,15 @@
 //  - collar: pod seat 26 mm bore on an axis 45 degrees UP from +x, through P0 = (RP - 1.5, 0, ZH); seat face at 23.7 mm along the axis, cap underside 21.7, the cap (34 x 8) stands 6 mm proud
 //  - plug holder: a straight (horizontal, +x) blind socket of the same shape, 44 mm BELOW the hole, floor at x = 40, seat face at x = 54
 //  - pod and plug: body 25 (plug 25.5) x 32 (plug 17), cap 34 x 8
-//  - cart: plate 6 mm, battery 70 x 50 x 70 under the arm base, arm base on the plate centre (x = -12 in the CART frame); the arm base stands 102 mm out from the plate; pod holder: a cup of 42 mm / bore 26 mm, 40 mm long, axis 45 degrees out of the plate AND up
+//  - cart (the omni cart, Pond #284): plate 6 mm on the sleeve pads (plate face at cart y -56), battery 70 x 50 x 70 under the arm base, arm base on the plate centre; the arm base underside is 106 mm out of the pipe plane (cart y -106); pod holder: a cup of 42 mm / bore 26 mm, 40 mm long, axis 45 degrees out of the plate AND up
 //  - track (cad/unit_v3_dimensioned.py, unit_v1_assembly.py): ONE loop, tube radius 16, corner radius 150, legs 580 mm apart (x = -/+290), bottom run at 450, top run at 1884, in the plane 60 mm in front of the pipe axis (LOOP_Y = -60);
 //    spine 33.7 x 2 tube on the pipe axis up to 1884, and two brackets (16 x 30 x 30) joining the top and the bottom run to it at x = 0; joint rings (6 mm, r 17.5) at four heights on each leg
-//  - the cart rides the track with ONE of its two hands (hand B, on the leg at y = +0.29 here); the other hand hangs open and is only used for transfers between pipes (Transfer scene)
+//  - the cart rides the track with ONE of its two hands (hand C, on the leg at y = -0.29 here); the other hand (B) hangs open beside it, its jaw open 92 degrees, and is only used for transfers between pipes (Transfer scene)
 // ASSUMED here (not in the repo): hole height ZH 0.80 m and the collar's azimuth round the pipe (PSI); the seedling tray (3 cells) inside the tank, 240 mm over its floor; the three heights the cart stops at (the arm reaches only inside its own plane,
 // which fixes them, see check below).
 import { armMjcf } from '../model.ts';
-import { cartInner } from '../cart/transfer-model.ts';
-import { CART_COL } from '../cart/model.ts';
-import * as D from '../cart/dims.ts';
+import { staticOmniCart, CART } from '../cart/omni-scene.ts';
+import { HX } from '../cart/omni.ts';
 
 /** Which leg of the track the cart rides: -1 = the leg at world y = -0.29. The seedling tray is in the tank's back corner on that same side (the arm works along its base axis, towards the back), so the pods are
  *  in the corner opposite to where they were (v5: +y leg, tray at +y). */
@@ -60,16 +59,16 @@ export const D_PARK: V3 = rz([1, 0, 0]);
 // --- the cart (CART frame of cad/cart_dims.py: x across the pipes, y out of the pipe plane, plate on -y, z up the pipes)
 export const XT = 0.06;                               // world x of the track plane: 60 mm in front of the pipe axis (unit_v3_dimensioned.py LOOP_Y = -60)
 export const LEG = 0.29;                              // the track's legs stand at world y = -/+ 0.29 (TX = 290)
-/** The cart rides the leg at SIDE * LEG with the hand on that side (hand B, cart x = -60 mm, on the +y leg; hand C, cart x = +60 mm, on the -y leg, see cart/dims.ts): the cart origin is 60 mm towards the pipe plane from it. */
-export const YC = SIDE * (LEG - D.HX / 1000);
+/** The cart rides the leg at SIDE * LEG with the hand on that side (hand B, cart x = -60 mm, on the +y leg; hand C, cart x = +60 mm, on the -y leg, see cart/omni.ts): the cart origin is 60 mm towards the pipe plane from it. */
+export const YC = SIDE * (LEG - HX / 1000);
 export const ARM_CX = 0;                              // arm base centre across the plate (cad/cart_dims.py ARM_X = 0)
-export const ARM_CY = mm(-102);                       // arm base underside (on the battery front)
+export const ARM_CY = mm(CART.battFaceY);             // arm base underside (on the battery front): cart y -106 (plate face -56, battery 50 thick; cad/cart_dims.py ARM_Y0)
 export const BASE_BOTTOM = 0.0085;                    // the arm model's base origin is 8.5 mm out from the base underside (model.ts)
 export const XB = XT + ARM_CY - BASE_BOTTOM;          // world x of the arm base origin; the base axis (z) points along -x
 /** World offset (from the cart origin on the arm plane at the pipe plane) of a CART frame point (cx, cy, cz). */
 export const cartToWorld = (cx: number, cy: number, cz: number): V3 => [cy, -(cx - ARM_CX), cz];
 // pod holder cup (cart_pod_holder.py v3): axis out of the plate (cart -y), square to it, no tilt
-export const CUP_ROOT: V3 = [ARM_CX, mm(-70), mm(-88)];
+export const CUP_ROOT: V3 = [ARM_CX, mm(CART.plateFaceY - 18), mm(-88)];   // cart_pod_holder.py: root 18 mm out from the plate face (-56), z -88
 export const CUP_DROP = 0;                        // the pod holder sits exactly where cad/cart_pod_holder.py puts it (v3: straight, 90 degrees to the plate)
 export const CUP_L = mm(40), CUP_R = mm(21);
 /** Direction out of the cup, in world coordinates (out of the plate = world -x; horizontal, 90 degrees to the plate). */
@@ -212,21 +211,20 @@ const podColor = rgba(0.85, 0.65, 0.3), plugColor = rgba(0.12, 0.12, 0.14);
 /** The cart and what it carries (cart frame -> world axes), as the text to put inside the cart body. */
 export function cartGeoms(): string[] {
   const out: string[] = [];
-  // The real cart (cad/cart_base.py, cart_hinge.py, hand_sleeve.py via cart/transfer-model.ts, exactly as in the Transfer scene): plate, battery, drive motors, hinges, worm drives and
-  // the two hands with their wheel pairs and jaws, on the plate frame (CAD x across = world -y, CAD y out of the pipe plane = world x, z up). The arm is the scene's own moving one.
-  // The plate-side parts are checked against the arm; hand B rides the track leg, hand C hangs open (track()).
-  const plateParts = cartInner(false, 'plate').replaceAll(CART_COL, OBST);
+  // The real omni cart (cad/cart_base.py, hand_sleeve.py v5, cart_omni.py via cart/omni-scene.ts, exactly as in the Transfer scene, Pond #284): plate, battery, the two three-lobe sleeves with their omni wheels,
+  // ball cups, motors and jaws, on the plate frame (CAD x across = world -y, CAD y out of the pipe plane = world x, z up). The arm is the scene's own moving one.
+  // The cart is checked against the arm and the track: hand C rides the track leg, hand B hangs beside it with its jaw open. No hinges, nothing swings: the base is rigid on both sleeves.
+  const cartParts = staticOmniCart({ free: 'B', col: OBST });
   out.push(`<body name="plate" xyaxes="0 -1 0 1 0 0"><joint name="plate_lock" type="hinge" axis="0 0 1" range="0 0"/>
-      ${plateParts}
-      ${cartInner(false, 'hands')}
+      ${cartParts}
     </body>`);
   // pod holder: the cup on a web from the plate's bottom edge, axis 45 degrees out and up
   const root = cupRoot();
   out.push(...tube(root, D_CUP, 0, CUP_L - RECESS_T - GAP, BORE_R, CUP_R, 16, `${OBST} ${STEEL}`, { name: 'cup' }));
   out.push(...tube(root, D_CUP, CUP_L - RECESS_T - GAP, CUP_L, RECESS_R, CUP_R, 16, `${OBST} ${STEEL}`, { name: 'cup_rim' }));
   out.push(`<geom type="cylinder" pos="${f(root[0] + D_CUP[0] * mm(2))} ${f(root[1])} ${f(root[2] + D_CUP[2] * mm(2))}" size="${CUP_R} 0.002" xyaxes="${(() => { const [e1, e2] = basis(D_CUP); return [...e1, ...e2].map(f).join(' '); })()}" ${OBST} ${STEEL}/>`);
-  const [wx, wy, wz] = cartToWorld(ARM_CX, mm(-52) - mm(9), mm(-56) - (CUP_DROP + mm(32)) / 2);
-  out.push(`<geom type="box" pos="${f(wx)} ${f(wy)} ${f(wz)}" size="${mm(5)} ${mm(28)} ${f((CUP_DROP + mm(32)) / 2 + mm(1))}" ${VIS} ${STEEL}/>`);
+  const [wx, wy, wz] = cartToWorld(ARM_CX, mm(CART.plateFaceY - 12), mm(-75) - CUP_DROP / 2);
+  out.push(`<geom type="box" pos="${f(wx)} ${f(wy)} ${f(wz)}" size="${mm(8)} ${mm(5)} ${f(mm(19) + CUP_DROP / 2)}" ${VIS} ${STEEL}/>`);
   return out;
 }
 
