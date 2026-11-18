@@ -21,22 +21,32 @@ Pond avoids the main thing that sank vertical farms: it runs on sunlight and a s
 
 ## Rough economics (early guesses, not promises)
 
-Framing: early, very high-level, preemptive thinking. Pond is open source and nowhere near going to market; nothing is for sale and none of these numbers are promises.
+Framing (Dani's voice): "This is me thinking out loud, not a studied business plan. Pond is an open-source project, nowhere near going to market, and none of these numbers are promises." Shown at the top of the page and again above the numbers.
 
 Unit cost, estimated from `docs/part-list/part-list.json` and the cart design (4 motors, omni wheels, arm, battery, solar, pipe, tanks):
 
-- Target: about $250-350 per unit including the cart, assuming bulk buying and production. Rough split: battery + solar + charger $120-150; arm servos + cart motors $70-90; Pi and electronics $60-80; printed parts, pipe, tanks $40-60. Assumed life 5 years.
-- Pessimistic: about $500 per unit, life 3 years. (Single parts at hobby prices today come to more than this.)
+Cost is split into the growing unit (tanks, pipe/track, pods, solar share, pump) and the robot cart (4 motors, omni wheels, arm, battery, computer):
+
+- Target (bulk): growing unit $100-150, robot $150-200 (so $250-350 with one robot per unit). Life 5 years.
+- Pessimistic: growing unit $250, robot $250 ($500 with one robot per unit). Life 3 years. (Single parts at hobby prices today come to more than this.)
+
+Robot sharing (assumption to test): one robot may service up to about 10 units joined by track. To find out: how track joins units, cart speed, battery and work time per unit.
+
+Cost per unit = unit + robot / n, using range midpoints (target 125 + 175/n; pessimistic 250 + 250/n). Per head adds 5 cents seeds and nutrients; 250 heads/yr in Rio, 100 in UK.
+
+| Units per robot | Cost per unit | Rio per head | UK per head |
+|---|---|---|---|
+| Target 1 | $300 | 29c | 65c |
+| Target 3 | $183 | 20c | 42c |
+| Target 10 | $143 | 16c | 34c |
+| Pessimistic 1 | $500 | 72c | $1.72 |
+| Pessimistic 3 | $333 | 49c | $1.16 |
+| Pessimistic 10 | $275 | 42c | 97c |
 
 Harvests (about 25 plants per unit):
 
 - Warm all year (e.g. Rio): about 10 harvests, about 250 heads a year.
 - Temperate outdoors (e.g. UK): maybe 4 harvests, about 100 heads a year.
-
-Cost per head (hardware over lifetime + about 5 cents seeds and nutrients):
-
-- Target: Rio about 25-35 cents; UK about 55-75 cents.
-- Pessimistic: Rio about 70-75 cents; UK about $1.70 (too dear).
 
 Not yet counted: mailing pods, and a person delivering and assembling each unit the first time.
 
@@ -45,7 +55,7 @@ Not yet counted: mailing pods, and a person delivering and assembling each unit 
 Households, schools and community projects growing their own food, not people going into the lettuce business.
 
 - Supermarket lettuce in Rio (e.g. Prezunic) is roughly R$4-10 (about $0.75-2) a head. At about 250 heads a year a unit replaces about R$1,000-2,500 (about $190-500).
-- Yearly cost of a unit: about $60-85 (target), about $180 (pessimistic). A subscription covering upkeep would sit around that; no price set.
+- Yearly cost of a unit: about $60-85 (target, one robot per unit; less when shared), about $180 (pessimistic). A subscription covering upkeep would sit around that; no price set.
 - Some people might one day want several units to sell produce locally. That only makes sense if bulk pricing brings units well down and they last many years. Not the focus.
 
 ## Business model (dual; current thinking, not a plan)

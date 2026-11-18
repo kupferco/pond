@@ -15,6 +15,11 @@
   .cmp h3{margin:0 0 6px}
   .nums{margin:0;padding-left:18px;line-height:1.6}
   .nums li{margin:6px 0}
+  .tbl{width:100%;border-collapse:collapse;margin:12px 0;font-size:15px}
+  .tbl th,.tbl td{padding:8px 6px;text-align:right;border-bottom:1px solid #e3e8e5}
+  .tbl th:first-child,.tbl td:first-child{text-align:left}
+  .tbl th{font-size:13px}
+  .tbl .grp td{text-align:left;font-weight:700;background:var(--green-soft);color:var(--green)}
   .warn{display:inline-block;font-size:13px;font-weight:700;border-radius:999px;padding:4px 12px;background:var(--amber-soft);color:var(--amber);margin:0 0 12px}
   .steps{counter-reset:s;list-style:none;padding:0;margin:12px 0}
   .steps li{counter-increment:s;position:relative;padding:0 0 14px 40px;line-height:1.55}
@@ -29,7 +34,7 @@
     <span class="eyebrow">Our mission</span>
     <p class="story">We have lost the know-how to grow our own food, and we have become fully dependent on supermarket chains. Yet growing food is easy to learn and easy to teach. Pond is a quiet, almost sneaky way to get people learning without stopping their day: just by watching the robot plant, tend and harvest, you already start learning how it's done.</p>
     <h1 class="mission">Pond's main mission is to empower people to learn how to grow their own food.</h1>
-    <p class="lead"><b>A note on where we are:</b> this page is early, very high-level, preemptive thinking. Pond is an open-source project nowhere near going to market. Nothing is for sale, and none of the numbers below are promises.</p>
+    <p class="lead"><b>A note from me:</b> this is me thinking out loud, not a studied business plan. Pond is an open-source project, nowhere near going to market, and none of these numbers are promises.</p>
     <p class="lead">Pond is a community and educational project first. It will always strongly support community projects, and it will never drop the community arm, however strong the commercial side becomes. If the commercial side grows, it will be in a position to invest in the community arm.</p>
   </div>
 </header>
@@ -54,26 +59,36 @@
     <p class="label">Rough economics</p>
     <h2>The numbers, roughly</h2>
     <span class="warn">Early guesses, not promises</span>
-    <p>These are back-of-the-envelope figures from our current parts list and cart design (4 motors, omni wheels, arm, battery, solar panel, pipe and tanks). Pond is nowhere near going to market, nothing is for sale, and none of this is a promise.</p>
+    <p>Again, this is me thinking out loud. These are back-of-the-envelope figures from our current parts list and cart design (4 motors, omni wheels, arm, battery, solar panel, pipe and tanks). Nothing is for sale and none of it is a promise.</p>
     <h3>What a unit might cost</h3>
+    <p>I split the cost in two: the <b>growing unit</b> (tanks, pipe and track, pods, solar share, pump) and the <b>robot cart</b> (4 motors, omni wheels, arm, battery, computer).</p>
     <ul class="nums">
-      <li><b>Target:</b> about <b>$250–350</b> per unit including the robot cart, if parts are bought in bulk and made in production runs. The big items are the battery, solar panel and charger (about $120–150), the arm servos and cart motors (about $70–90), the small computer and electronics (about $60–80) and the printed parts, pipe and tanks (about $40–60). We assume it lasts <b>5 years</b>.</li>
-      <li><b>Pessimistic:</b> about <b>$500</b> per unit, lasting <b>3 years</b>. Today we buy single parts at hobby prices, so a build now costs even more than this.</li>
+      <li><b>Target</b> (bulk buying and production): growing unit about <b>$100–150</b>, robot cart about <b>$150–200</b>. That is $250–350 with one robot per unit. Assumed life <b>5 years</b>.</li>
+      <li><b>Pessimistic:</b> growing unit about <b>$250</b>, robot about <b>$250</b>, so $500 with one robot per unit. Assumed life <b>3 years</b>. Today we buy single parts at hobby prices, so a build now costs even more.</li>
     </ul>
+    <h3>Sharing one robot</h3>
+    <p><b>An assumption to test:</b> one robot could look after several units joined by track, perhaps up to about 10. What we still need to find out: how the track joins the units, how fast the cart moves, and its battery and work time per unit.</p>
+    <p>Cost per head below uses the middle of each range, plus about 5 cents a head for seeds and nutrients.</p>
+    <table class="tbl">
+      <thead><tr><th>Units per robot</th><th>Cost per unit</th><th>Rio, per head</th><th>UK, per head</th></tr></thead>
+      <tbody>
+        <tr class="grp"><td colspan="4">Target (5 year life)</td></tr>
+        <tr><td>1</td><td>$300</td><td>29¢</td><td>65¢</td></tr>
+        <tr><td>3</td><td>$183</td><td>20¢</td><td>42¢</td></tr>
+        <tr><td>10</td><td>$143</td><td>16¢</td><td>34¢</td></tr>
+        <tr class="grp"><td colspan="4">Pessimistic (3 year life)</td></tr>
+        <tr><td>1</td><td>$500</td><td>72¢</td><td>$1.72</td></tr>
+        <tr><td>3</td><td>$333</td><td>49¢</td><td>$1.16</td></tr>
+        <tr><td>10</td><td>$275</td><td>42¢</td><td>97¢</td></tr>
+      </tbody>
+    </table>
     <h3>How much lettuce, and where</h3>
     <ul class="nums">
       <li>About 25 plants per unit.</li>
       <li><b>Somewhere warm all year (for example Rio):</b> about 10 harvests a year, so about <b>250 heads</b>.</li>
       <li><b>Outdoors in a temperate climate (for example the UK):</b> maybe 4 harvests in the growing season, so about <b>100 heads</b>.</li>
     </ul>
-    <h3>Cost per head</h3>
-    <p>Hardware spread over its lifetime, plus about 5 cents a head for seeds and nutrients.</p>
-    <ul class="nums">
-      <li><b>Target, Rio:</b> $50–70 a year of hardware, so about <b>25–35 cents a head</b>.</li>
-      <li><b>Target, UK:</b> about <b>55–75 cents a head</b>.</li>
-      <li><b>Pessimistic, Rio:</b> about $167 a year, so about <b>70–75 cents a head</b>.</li>
-      <li><b>Pessimistic, UK:</b> about <b>$1.70 a head</b>, which is too dear. Pond would only make sense in a cool climate if the target case comes true.</li>
-    </ul>
+    <p>In a cool climate the pessimistic case is too dear. Pond only works there if the target case, ideally with a shared robot, comes true.</p>
     <p>Not yet counted: mailing the pods, and a person delivering and assembling each unit the first time.</p>
   </div>
 </section>
@@ -85,7 +100,7 @@
     <p>Pond is for people growing their own food, not for people going into the lettuce business. So the useful question is what a unit is worth to a household or a community garden.</p>
     <div class="card" style="margin-top:16px"><h3>An example in Rio</h3>
       <p>Supermarket lettuce (for example at Prezunic) is roughly R$4–10 a head, about $0.75–2. At about 250 heads a year, a unit replaces roughly <b>R$1,000–2,500</b> of shopping (about $190–500).</p>
-      <p style="margin-top:8px">A unit's yearly cost is about <b>$60–85</b> in the target case (hardware over 5 years plus seeds and nutrients) and about <b>$180</b> in the pessimistic case. A subscription that covers upkeep would sit somewhere around that yearly cost. We have not set a price.</p></div>
+      <p style="margin-top:8px">A unit's yearly cost is about <b>$60–85</b> in the target case with one robot per unit (hardware over 5 years plus seeds and nutrients), less if a robot is shared, and about <b>$180</b> in the pessimistic case. A subscription that covers upkeep would sit somewhere around that yearly cost. We have not set a price.</p></div>
     <p style="margin-top:16px">Some people might one day want several units to sell produce locally. That only makes sense if bulk pricing brings units well down and they last many years. It is not our focus.</p>
   </div>
 </section>
