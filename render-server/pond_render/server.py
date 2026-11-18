@@ -107,17 +107,17 @@ def _viewer_page(src: str, title: str) -> str:
 <title>{t}</title>
 <script type="module" src="{MODEL_VIEWER_JS}"></script>
 <style>
-  html, body {{ margin: 0; height: 100%; background: #1d1f24; color: #e6e6e6; font: 14px/1.4 system-ui, sans-serif; }}
-  model-viewer {{ width: 100%; height: 100%; background: #1d1f24; --poster-color: #1d1f24; }}
+  html, body {{ margin: 0; height: 100%; background: #fff; color: #1d1f24; font: 14px/1.4 system-ui, sans-serif; }}
+  model-viewer {{ width: 100%; height: 100%; background: #fff; --poster-color: #fff; }}
   .bar {{ position: fixed; top: 0; left: 0; right: 0; padding: 10px 14px; display: flex; gap: 12px;
-         align-items: center; background: rgba(0,0,0,.35); pointer-events: none; }}
-  .bar a, .bar span {{ pointer-events: auto; color: #e6e6e6; }}
+         align-items: center; background: rgba(255,255,255,.85); pointer-events: none; }}
+  .bar a, .bar span {{ pointer-events: auto; color: #1d1f24; }}
   .bar strong {{ font-weight: 600; }}
   .hint {{ position: fixed; bottom: 10px; left: 0; right: 0; text-align: center; opacity: .6; font-size: 12px; }}
 </style></head>
 <body>
-<model-viewer src="{escape(src, quote=True)}" alt="{t}" camera-controls auto-rotate shadow-intensity="1"
-  exposure="1" touch-action="pan-y" interaction-prompt="none"></model-viewer>
+<model-viewer src="{escape(src, quote=True)}" alt="{t}" camera-controls auto-rotate environment-image="neutral" shadow-intensity="1.2" shadow-softness="1"
+  exposure="1.1" touch-action="pan-y" interaction-prompt="none"></model-viewer>
 <div class="bar"><strong>{t}</strong><span>·</span><a href="{escape(src, quote=True)}" download>download GLB</a></div>
 <div class="hint">drag to orbit · scroll or pinch to zoom · Z is up in the part, shown as Y here</div>
 </body></html>"""
