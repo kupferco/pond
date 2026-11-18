@@ -38,7 +38,7 @@ export const podGrabScene: Scene = {
         <dt>Cart</dt><dd id="g-cart"></dd>
         <dt>State</dt><dd id="g-state">Idle</dd>
       </dl>
-      <p class="hint">A close-up of the bottom of a Pond unit, in its real layout. The cart rides the bottom track pipe above the tank; the SO-101 arm is bolted flat on the front face of its plate (its base axis is the plate normal, so it hangs and works down the plate; it is the only base) and reaches down into the tank through the silicone pick holes in the lid with a two-finger claw. The thick grey pillar in the middle is the unit spine; the trays hang off it on flat brackets and stand clear of it. Right: the pod store, ${STORE_ROWS} rows under the lid, sloped so the pods slide to the pick hole at the front (the little roof keeps the second pod in place while the first is lifted out). Each row has an end gate at the back so pods cannot fall out; the store is loaded from the back of the unit, which needs about half a metre of clear floor there (amber patch). The cart never turns round. Left: the seedling tray, flat, ${TRAY_COLS} × ${TRAY_SLOTS / TRAY_COLS} silicone collars, rows A to D from the front.</p>
+      <p class="hint">A close-up of the bottom of a Pond unit, in its real layout. The omni cart rides the bottom track pipe above the tank on its lower hand (its other hand hangs open above the pipe); the SO-101 arm is bolted on the front face of the cart's battery (its base axis is the plate normal, so it hangs and works down the plate; it is the only base) and reaches down into the tank through the silicone pick holes in the lid with a two-finger claw. The thick grey pillar in the middle is the unit spine; the trays hang off it on flat brackets and stand clear of it. Right: the pod store, ${STORE_ROWS} rows under the lid, sloped so the pods slide to the pick hole at the front (the little roof keeps the second pod in place while the first is lifted out). Each row has an end gate at the back so pods cannot fall out; the store is loaded from the back of the unit, which needs about half a metre of clear floor there (amber patch). The cart never turns round and stays flat (no roll on the runs). The sleeves are bigger than the old hands and do not fit past the spine and its track bracket (about 10 cm either side of the spine): the Cart line says so when that happens. Left: the seedling tray, flat, ${TRAY_COLS} × ${TRAY_SLOTS / TRAY_COLS} silicone collars, rows A to D from the front.</p>
     </section>
     <p id="g-msg" class="msg"></p>
 
@@ -102,7 +102,8 @@ export const podGrabScene: Scene = {
     const showCounts = () => {
       $('g-tray').textContent = String(world.trayCount);
       $('g-store').textContent = Array.from({ length: STORE_ROWS }, (_, r) => `${r + 1}: ${world.rowCount(r)}`).join('  ·  ') + '  pods per row';
-      $('g-cart').textContent = `${(world.cartX * 100).toFixed(1)} cm along the pipe`;
+      const hit = world.cartHit;
+      $('g-cart').textContent = `${(world.cartX * 100).toFixed(1)} cm along the pipe` + (hit.ticks > 0 ? `; the sleeves touch the ${hit.names === 'spine_tube' ? 'spine' : 'track bracket'} (${(-hit.depth * 1000).toFixed(0)} mm into it at ${(hit.x * 100).toFixed(1)} cm)` : '');
       $('g-cartnow').textContent = (world.cartX * 100).toFixed(1);
     };
     showCounts();
