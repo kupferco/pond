@@ -157,7 +157,7 @@ Answer: Yes, wait for the cart redesign to settle before adding sensing parts to
 ### Q3. Can the tank have a small access hatch in the lid that the arm can reach, 6 to 8 cm across?
 Context: Option B and C both need the arm to get into the water from the track. The lid also has to keep out mosquitoes and light (the unit design says sealed, opaque, with mesh).
 Assumed: Yes, a small hatch with a flap or mesh-covered slot.
-Answer: _open_
+Answer: No arm hatch. Use a small peristaltic pump and a thin tube from the tank to the shared testing station to draw the water sample; the arm doesn't carry samples.
 
 ### Q4. Where should the home sensor station sit, and may it be a second small box with its own power?
 Context: It needs shade, clean water for rinsing, and a drain. A spot near the dock is easiest because the arm already goes there.
