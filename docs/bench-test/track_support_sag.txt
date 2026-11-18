@@ -1,0 +1,37 @@
+32 x 1.8 mm PVC-U, I = 19539 mm4, load 44 N (3 kg x 9.81 x 1.5), worst load place found by sweeping
+M8 rod stub 34 mm free: 1.34 kN/mm
+
+Check, no supports, centre clamped / far end pinned (worst place, plan table used midspan so is up to 3 % lower):
+  L 300 new  0.20  creep  0.60  hot+creep  1.00
+  L 400 new  0.47  creep  1.42  hot+creep  2.36
+
+BOTTOM run, L = 300 mm (owner), limit 1 mm. Support just before the curve starts.
+  support at x      new / creep / hot+creep (mm), worst load place (creep)
+  120 mm          0.08 /  0.20 /  0.31   at x = 214  ok (creep)
+  125.0 mm        0.08 /  0.19 /  0.30   at x = 216  ok (creep)
+  130 mm          0.07 /  0.17 /  0.27   at x = 218  ok (creep)
+  200 mm          0.06 /  0.14 /  0.22   at x = 114  ok (creep)
+  260 mm          0.11 /  0.28 /  0.44   at x = 144  ok (creep)
+  none (before)   0.20 /  0.60 /  1.00   at x = 176  ok (creep)
+  CAD: the straight part is 140 mm and the support is at x = 125 mm (15 mm before the curve); with the span between
+  support and bend taken as a straight pinned-pinned beam, which is pessimistic for a bend.
+
+TOP run, L = 400 mm (owner), limit 3 mm. Brace from the centre collar to the middle of the span (x = 200; in the CAD the block is at x = 125).
+  brace 369 mm long at 58 deg, 13.0 kN/mm; with the stub 1.21 kN/mm
+  columns: new / creep / hot+creep (mm); end = bend on the leg's axial spring, bottom locked
+  no brace, pinned end (before)   0.47 /  1.42 /  2.36   at x = 234 ok (creep)
+  no brace, leg spring end        0.50 /  1.49 /  2.48   at x = 240 ok (creep)
+  brace at 200, pinned end        0.10 /  0.28 /  0.45   at x = 304 ok (creep)
+  brace at 200, leg spring end    0.13 /  0.36 /  0.60   at x = 326 ok (creep)
+  Leg spring (creep): 116 N/mm, the leg shortens by 0.38 mm under 44 N if the cart's whole weight reached it
+
+Same, CAD span (centre to leg 290 mm top, brace at 125, the CAD), creep:
+  no brace  0.61 mm, brace  0.34 mm
+
+Support strength check (creep case, worst place):
+  bottom: sag 0.19 mm under 44 N
+  top brace axial load at most 52 N if the support took the whole 44 N; M8 buckling load 1269 N (factor 24)
+  M8 stub bending stress at 44 N: 56 MPa (steel 4.6 yields at 240)
+
+RESULT bottom run under 1 mm (new, creep and hot) with the supports: True
+RESULT top run under 3 mm (new, creep and hot) with the braces: True
