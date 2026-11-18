@@ -5,8 +5,8 @@
 # rolls to home (roll 0) so that its C-gap faces the rod, the same software interlock as for the joint rods.
 #  - BOTTOM run: one support each side, left and right, just before the curve starts (x = +-125, the straight part ends at 140).
 #    A post on a small base plate on top of the tank lid. With the centre bracket the bottom run is held at three points.
-#  - TOP run: a diagonal M8 brace from the centre collar (where the top triangle legs meet, z 1547.5) to a block at the middle
-#    of each half span (x = +-125), the block hangs on the same rod stub.
+#  - TOP run: no diagonal rods (removed after owner review). A short vertical hanger from the grey crossbar (top_bar, under the
+#    solar panel) straight down to a block on the same rod stub, at x = +-125. The orange top triangle legs stay as they were.
 # Numbers: docs/bench-test/track_support_sag.py (output in track_support_sag.txt). The unit's track loop is a solid
 # cylinder in the unit scripts; here each support gets a local bore for its nut plate (the loop is a 32 x 1.8 pipe in reality).
 import math, os, runpy
@@ -89,18 +89,10 @@ for sx in SX:
 add(many(posts), "bottom_support_posts", (0.95, 0.6, 0.2, 1))
 add(many(bases), "bottom_support_base_plates", (0.55, 0.57, 0.6, 1))
 
-# top: block on the rod stub, brace to the centre collar
-RC = unit["RC"]
-blocks = []; braces = []; lugs = []
+# top: a short vertical hanger from the grey crossbar (top_bar, under the solar panel) straight down to the rod stub into the pipe.
+# No diagonals: the orange legs of the top triangle (collar to the crossbar ends) are the only braces.
+hangers = []
 for sx in SX:
-    blocks.append(box(POST_W, POST_D, 20, sx * SUP_X, yc, ZT - 10))
-    ax = 10.0
-    p0 = cq.Vector(sx * ax, -math.sqrt(RC**2 - ax**2), ZC2 + 10)         # lug on the collar, front side (clear of the legs at y = 0)
-    p1 = cq.Vector(sx * SUP_X, yc, ZT - 10)
-    d = p1 - p0
-    braces.append(cq.Workplane("XY").add(cq.Solid.makeCylinder(4.0, d.Length, p0, d.normalized())))
-    lugs.append(box(18, 12, 16, p0.x, p0.y + 3, p0.z - 8))
-add(many(blocks), "top_brace_blocks", (0.95, 0.6, 0.2, 1))
-add(many(braces), "top_braces_m8", (0.3, 0.3, 0.3, 1))
-add(many(lugs), "top_brace_lugs_on_collar", (0.55, 0.57, 0.6, 1))
+    hangers.append(box(POST_W, POST_D, unit["ZBAR"] - (ZT - 10), sx * SUP_X, yc, ZT - 10))
+add(many(hangers), "top_hangers_from_crossbar", (0.95, 0.6, 0.2, 1))
 result = assy

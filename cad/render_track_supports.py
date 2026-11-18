@@ -18,6 +18,7 @@ def cropped(cx, cy, cz, hx, hy, hz):
     """Parts of the assembly inside a box (so a close-up shows only the support and what it sits on)."""
     cut = cq.Workplane("XY").box(2 * hx, 2 * hy, 2 * hz).translate((cx, cy, cz))
     parts = []
+    sub = cq.Assembly()
     for ch in assy.children:
         try:
             s = ch.obj.intersect(cut)
@@ -26,7 +27,8 @@ def cropped(cx, cy, cz, hx, hy, hz):
         except Exception:
             continue
         parts.extend(rl.tris(v, ch.color.toTuple() if ch.color else (0.7, 0.7, 0.7, 1)) for v in s.vals())
-    return parts
+        sub.add(s, name=ch.name, color=ch.color)
+    return parts, sub
 
 def write(parts, name):
     for v, el, az in VIEWS:
@@ -36,8 +38,11 @@ def write(parts, name):
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     write(rl.collect(assy), "track-supports-assembly")
-    write(cropped(SUP_X, LOOP_Y / 2, (ZB + 304) / 2, 110, 60, 100), "track-supports-bottom")
-    write(cropped(SUP_X / 2, LOOP_Y / 2, (ZT + ZC2) / 2, 110, 60, 200), "track-supports-top")
+    for name, box_ in (("track-supports-bottom", (SUP_X, LOOP_Y / 2, (ZB + 304) / 2, 110, 60, 100)),
+                       ("track-supports-top", (SUP_X, LOOP_Y / 2, ZT - 40, 110, 60, 110))):
+        parts, sub = cropped(*box_)
+        write(parts, name)
+        sub.export(os.path.join(OUT, name + ".glb"))
     assy.export(os.path.join(OUT, "track-supports-assembly.glb"))
     assy.export(os.path.join(OUT, "assembly.glb"))
     print("wrote GLBs")

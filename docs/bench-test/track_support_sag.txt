@@ -16,22 +16,22 @@ BOTTOM run, L = 300 mm (owner), limit 1 mm. Support just before the curve starts
   CAD: the straight part is 140 mm and the support is at x = 125 mm (15 mm before the curve); with the span between
   support and bend taken as a straight pinned-pinned beam, which is pessimistic for a bend.
 
-TOP run, L = 400 mm (owner), limit 3 mm. Brace from the centre collar to the middle of the span (x = 200; in the CAD the block is at x = 125).
-  brace 369 mm long at 58 deg, 13.0 kN/mm; with the stub 1.21 kN/mm
+TOP run, L = 400 mm (owner), limit 3 mm. Vertical hanger from the crossbar at the middle of the span (x = 200).
+  crossbar 0.8 kN/mm at x = 200 from the end; with the stub 0.52 kN/mm
   columns: new / creep / hot+creep (mm); end = bend on the leg's axial spring, bottom locked
-  no brace, pinned end (before)   0.47 /  1.42 /  2.36   at x = 234 ok (creep)
-  no brace, leg spring end        0.50 /  1.49 /  2.48   at x = 240 ok (creep)
-  brace at 200, pinned end        0.10 /  0.28 /  0.45   at x = 304 ok (creep)
-  brace at 200, leg spring end    0.13 /  0.36 /  0.60   at x = 326 ok (creep)
+  no hanger, pinned end (before)   0.47 /  1.42 /  2.36   at x = 234 ok (creep)
+  no hanger, leg spring end        0.50 /  1.49 /  2.48   at x = 240 ok (creep)
+  hanger at 200, pinned end        0.13 /  0.30 /  0.48   at x = 300 ok (creep)
+  hanger at 200, leg spring end    0.15 /  0.38 /  0.61   at x = 320 ok (creep)
   Leg spring (creep): 116 N/mm, the leg shortens by 0.38 mm under 44 N if the cart's whole weight reached it
 
-Same, CAD span (centre to leg 290 mm top, brace at 125, the CAD), creep:
-  no brace  0.61 mm, brace  0.34 mm
+Same, CAD span (centre to leg 290 mm top, hanger at 125, the CAD), creep:
+  no hanger  0.61 mm, hanger new / creep / hot+creep  0.12 /  0.35 /  0.57 mm
 
 Support strength check (creep case, worst place):
   bottom: sag 0.19 mm under 44 N
-  top brace axial load at most 52 N if the support took the whole 44 N; M8 buckling load 1269 N (factor 24)
+  top hanger: vertical load at most 44 N if the support took the whole 44 N, in tension / compression in a short block
   M8 stub bending stress at 44 N: 56 MPa (steel 4.6 yields at 240)
 
 RESULT bottom run under 1 mm (new, creep and hot) with the supports: True
-RESULT top run under 3 mm (new, creep and hot) with the braces: True
+RESULT top run under 3 mm (new, creep and hot) with the hangers: True
