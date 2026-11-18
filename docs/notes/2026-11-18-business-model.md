@@ -32,7 +32,7 @@ Cost is split into the growing unit (tanks, pipe/track, pods, solar share, pump)
 
 Robot sharing (assumption to test): one robot may service up to about 10 units joined by track. To find out: how track joins units, cart speed, battery and work time per unit.
 
-Cost per unit = unit + robot / n, using range midpoints (target 125 + 175/n; pessimistic 250 + 250/n). Per head adds 5 cents seeds and nutrients; 200 heads/yr in São Paulo. Exchange rate about R$5.50 = US$1 (rough).
+Cost per unit = unit + robot / n, using range midpoints (target 125 + 175/n; pessimistic 250 + 250/n). Per head adds 5 cents seeds and nutrients; 200 heads/yr in São Paulo. Amounts are stored once, in US dollars (`data-usd` in `business-model/index.html`), and the reais are converted live in the browser (`assets/fx.js`) from the current USD to BRL rate (api.frankfurter.app, cached in localStorage for a day). If the fetch fails or the device is offline, it falls back to a default of R$5.50 = US$1, which is also what the HTML shows with JavaScript off. The reais figures in the tables below are at that default rate and move with the real rate on the page.
 
 | Units per robot | Cost per unit | São Paulo per head |
 |---|---|---|
