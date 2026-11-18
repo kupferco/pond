@@ -172,7 +172,7 @@ Answer: Into the ground (small amounts of sample and rinse water drained to the 
 ### Q6. Is a good pH probe worth the money for the shared station (about GBP 40 to 130), instead of the cheap one?
 Context: One shared set makes the better probe affordable, and pH is the reading that goes wrong most quietly.
 Assumed: Yes, buy one good probe for the station, cheap ones for the prototype hand checks.
-Answer: _open_
+Answer: Yes, one good pH probe for the shared station, at the cheaper end (around GBP 40). No other pH probes needed since there are no hand checks.
 
 ### Q7. Is it acceptable that pH and EC are only checked once or twice a day, not all the time?
 Context: This is what makes sharing possible. Water level stays always-on per unit. A sudden pH swing between visits would not be seen until the next one.
