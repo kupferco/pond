@@ -44,12 +44,19 @@ jobs:
       - name: Preview channel (pull requests)
         id: preview
         if: github.event_name == 'pull_request' && steps.creds.outputs.available == 'true'
+        # Firebase allows only a limited number of preview channels per site. When that quota is full the deploy
+        # fails with HTTP 429 through no fault of the code, so warn instead of failing the checks.
+        continue-on-error: true
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POND_CONTROL }}
           projectId: pond-grow
           entryPoint: control-ui
+          expires: 2d
+      - name: Warn when the preview could not be published
+        if: github.event_name == 'pull_request' && steps.preview.outcome == 'failure'
+        run: echo "::warning::The Firebase preview was not published (most likely the preview channel quota is full: delete old channels with 'npx firebase-tools hosting:channel:list --project pond-grow' and 'hosting:channel:delete <id>')."
       - name: Tell Viber the preview is ready
         if: github.event_name == 'pull_request' && steps.preview.outcome == 'success'
         env:
