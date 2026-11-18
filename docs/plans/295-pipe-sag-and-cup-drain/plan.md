@@ -112,7 +112,7 @@ Answer: _open_
 ### Q2. Are 1 mm of sag on the bottom run and 3 mm on the top run the right limits?
 Context: these set which L is fine (Q1); the limit is how far the wheels' spring carriers can follow the pipe.
 Assumed: 1 mm bottom run, 3 mm top run.
-Answer: _open_
+Answer: 1 mm bottom run, 3 mm top run.
 
 ### Q3. What is the wall thickness of the 32 mm pipe you will use (1.8 waste grade, 3.0 pressure grade, other)?
 Context: the 3.0 mm wall is about 1.5 times stiffer, and the UK and Brazil pipes differ. It decides whether 300 or about 400 mm is the longest bottom-run span.
