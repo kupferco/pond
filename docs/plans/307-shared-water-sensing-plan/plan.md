@@ -147,7 +147,7 @@ The arm is a small SO-101 style arm with a gripper, today designed for pods. Nee
 ### Q1. Do we start the first prototype with the minimal option (float switch, cheap EC probe, pH checked by hand weekly)?
 Context: It costs almost nothing and tells us how fast pH really drifts, which decides how often the robot has to visit later.
 Assumed: Yes, start with D on the prototype units.
-Answer: _open_
+Answer: Start minimal but with no hand checks: float switch for water level, a cheap EC probe, and pH measured automatically with one good probe at the home station (no weekly hand pH checks).
 
 ### Q2. Should sensing wait until the cart roll redesign (#265) has settled, so we don't add parts to a plate that is still changing?
 Context: The plate, battery, arm and pod cup are already tight, and option B or C would add a holder and a few extra arm moves.
