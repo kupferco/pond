@@ -5,6 +5,7 @@
 #   - the v5 three-lobe sleeve (hand_sleeve.py), split by the jaw wedge into a fixed body and a JAW, as in v4: the jaw carries the +60 deg
 #     lobe (one sprung ball-cup pair) and swings 92 deg about a pin on the tube, driven by an N20 micro motor on the +Z end;
 #   - the DRIVE omni wheel (top row) and the ROLL omni wheel (bottom row) on the 180 deg lobe, each with its worm motor (cart_omni.py);
+#   - a hall sensor board in a pocket in the sleeve wall at the base end (home_station.py, OpenPocket #286);
 #   - four passive ball cups on two sprung carriers (cart_wheel_pairs.py);
 #   - no hinge leaves, no worm wheel, no worm, no bracket: the plate is a plain rigid plate bolted to both pads (placeholder, task 5 draws it).
 # Scenes: clamped (both jaws closed), released (both open, hands still round the pipes), released_off (hand C open and moved off its
@@ -24,6 +25,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cart_omni as co
 import hand_sleeve as hs
 import cart_wheel_pairs as cw
+import home_station as hst
+import home_station as hst
 from cart_dims import PIPE_SPACING
 from cart_dims import PIPE_STUB_L                  # 330: pipe stub length in the assemblies
 
@@ -73,7 +76,7 @@ _ZE = hs.SLEEVE_L / 2
 _ZJ = LUG_FIXED_Z + 1.0                               # jaw knuckles span |z| = 15..62
 FIXED_LUG = _barrel(LUG_R, -LUG_FIXED_Z, LUG_FIXED_Z)
 JAW_LUGS = _barrel(LUG_R, _ZJ, _ZE).union(_barrel(LUG_R, -_ZE, -_ZJ))
-FIXED_BODY = (_FIXED0.cut(_barrel(LUG_RELIEF_R, _ZJ - 0.5, _ZE + 1)).cut(_barrel(LUG_RELIEF_R, -_ZE - 1, -_ZJ + 0.5)).union(FIXED_LUG))
+FIXED_BODY = ((_FIXED0.cut(_barrel(LUG_RELIEF_R, _ZJ - 0.5, _ZE + 1)).cut(_barrel(LUG_RELIEF_R, -_ZE - 1, -_ZJ + 0.5)).union(FIXED_LUG)).cut(hst.pocket()))
 JAW_BODY = _JAW0.cut(_barrel(LUG_RELIEF_R, -LUG_FIXED_Z - 0.5, LUG_FIXED_Z + 0.5)).union(JAW_LUGS)
 
 
@@ -94,6 +97,7 @@ def hand_parts(jaw_open=0.0):
     parts = {"sleeve": (FIXED_BODY, SLEEVE_COL), "jaw": (jaw_turn(JAW_BODY, jaw_open), JAW_COL)}
     for n, (s, col) in cw.pair_parts().items():
         parts[n] = (jaw_turn(s, jaw_open) if n.startswith("p60_") else s, col)
+    parts.update(hst.sensor_parts())      # hall sensor board in the sleeve wall (OpenPocket #286)
     pz0 = -hs.SLEEVE_L / 2 - 2
     pin_len = hs.SLEEVE_L + 4 + JAW_GB_L / 2
     parts["jaw_hinge_pin"] = (cyl(JAW_PIN_R, pin_len, "z", (JAW_PIVOT[0], JAW_PIVOT[1], pz0 + pin_len / 2)), (0.8, 0.8, 0.82, 1))
