@@ -107,7 +107,7 @@ Pass: less than about 0.5 ml left after 30 s at every angle. If the crescent is 
 ### Q1. What is the real span L between the centre bracket and the corner (or nearest support) on the bottom run, and on the top run?
 Context: it is not in the repo, and sag grows with L cubed (300 mm is 0.56 mm after creep for 32 x 1.8, 500 mm is 2.6 mm).
 Assumed: 300 mm on the bottom run, 400 mm on the top run, with the bend acting as a pinned end.
-Answer: _open_
+Answer: 300 mm on the bottom run, 400 mm on the top run, with the bend acting as a pinned end (before the new supports from Q4).
 
 ### Q2. Are 1 mm of sag on the bottom run and 3 mm on the top run the right limits?
 Context: these set which L is fine (Q1); the limit is how far the wheels' spring carriers can follow the pipe.
