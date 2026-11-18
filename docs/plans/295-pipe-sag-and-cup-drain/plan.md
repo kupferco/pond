@@ -122,7 +122,7 @@ Answer: _open_
 ### Q4. May a support only touch the pipe through the sleeve's C-gap side (or hold it from behind), so the cart can pass it, or may the cart stop at a support?
 Context: the sleeve wraps the pipe, so a clamp round the pipe blocks the cart; the cart must work the whole bottom run.
 Assumed: supports pass through the C-gap side only, and the cart rolls to home (roll 0) to pass them, with a software interlock like the track-joint rod.
-Answer: _open_
+Answer: Add supports using the same rod system as the existing track-joint rod (supports come in through the sleeve's C-gap side; the cart rolls to home to pass them, with the same software interlock). Bottom run: one support on each side, left and right, just before the curve starts (not on the bend), fixed via small brackets on top of the tank, so the bottom run is held at three points (these plus the centre bracket). Top run: also add support, a brace from the centre collar (where the braces meet) to the middle of each top span. Calculate the remaining sag on the top with the bottom locked, and size the supports so both runs stay under the limits.
 
 ### Q5. Stay at 32 mm, not move to a standard 25 mm pipe?
 Context: 25 x 2.3 only just passes with supports every 250 mm (bottom) and needs smaller sleeves, wheels and joints.
