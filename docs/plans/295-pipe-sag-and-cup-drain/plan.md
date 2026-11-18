@@ -127,7 +127,7 @@ Answer: Add supports using the same rod system as the existing track-joint rod (
 ### Q5. Stay at 32 mm, not move to a standard 25 mm pipe?
 Context: 25 x 2.3 only just passes with supports every 250 mm (bottom) and needs smaller sleeves, wheels and joints.
 Assumed: yes, stay at 32 mm.
-Answer: _open_
+Answer: Yes, stay at 32 mm.
 
 ### Q6. Which drain option: 2 (back hole + 4 side holes), 3 (6 side holes), or 4 (open-frame cup)?
 Context: the back hole alone does not drain on the vertical legs at any roll angle, so side holes (or no pocket) are needed.
