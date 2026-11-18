@@ -177,7 +177,7 @@ Answer: _open_
 ### Q7. Is it acceptable that pH and EC are only checked once or twice a day, not all the time?
 Context: This is what makes sharing possible. Water level stays always-on per unit. A sudden pH swing between visits would not be seen until the next one.
 Assumed: Yes, one or two checks a day is enough, with water level always on.
-Answer: _open_
+Answer: Check pH and EC once a day by default (adjustable, e.g. every two days); water level always on.
 
 ### Q8. Do we want the robot to also do pH and EC calibration checks itself, or is a person doing it every month or two fine?
 Context: Robot checks need a buffer cup at the station and more arm poses; hand calibration costs a visit but is simple.
