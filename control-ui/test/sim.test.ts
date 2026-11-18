@@ -534,6 +534,18 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('reach: hole cap-top points are on the 45 degree seat axes', HOLES.every((h) => { const p = seatCapTop(h); return Math.hypot(p[0], p[1]) > 0.05 && p[2] > h.z; }) && podCapTop(PODS[0])[2] < 0.304 && PODS.every((p) => p.x > 0 && p.y < 0));   // the tray is in the tank's front (+x) half, on the leg-A side
   const ps = checkPass(mj, rm, rd, [0, 180]);
   check('reach: the bracket / pipe pass check runs for the top and bottom run, as is and rolled', ps.length === 4 && ps.every((p) => p.steps > 10));
+  // OpenPocket #313: the cart turned 90 degrees (roll 270 = 180 + 90 ccw from above) on leg A, the 15-degree sweep, the ghost neighbour
+  const { GHOST_DY, setGhostCollide } = await import('../src/reach/layout.ts');
+  const { SWEEP_ANGLES, TURN_90, classifier, clashes, runSweep } = await import('../src/reach/sweep.ts');
+  const side = classifier(rm);
+  setGhostCollide(rm, true); rig.place([0.2, -GHOST_DY, 1.0], [1, 0, 0, 0], { A: 0, B: 0, C: 0, D: 0, E: 0 }, 0);
+  check('reach sweep: the ghost neighbour on the left is an obstacle when switched on (cart put into it touches it) and none when off', clashes(rm, rd, side).some((c) => c.scene === 'neighbour unit') && (setGhostCollide(rm, false), rig.place([0.2, -GHOST_DY, 1.0], [1, 0, 0, 0], { A: 0, B: 0, C: 0, D: 0, E: 0 }, 0), !clashes(rm, rd, side).some((c) => c.scene === 'neighbour unit')));
+  const sw = await runSweep(mj, rm, rd, [0, 180, TURN_90, 255]);
+  const t90 = sw.targets.find((t) => t.id === 'H24')!;
+  check('reach sweep: 24 angles in 15 degree steps, the 90 degree turn is 270', SWEEP_ANGLES.length === 24 && SWEEP_ANGLES[1] === 15 && TURN_90 === 270);
+  check('reach sweep: as before, nothing is reached with the cart as it is or rolled 180; turned 90 ccw (270) some holes are, no pod', sw.counts[0].holes === 0 && sw.counts[1].holes === 0 && sw.counts[2].holes > 0 && sw.counts[2].pods === 0, JSON.stringify(sw.counts));
+  check('reach sweep: every pose that passes touches nothing (all obstacles, neighbour included)', sw.poseClashes === 0 && t90.cell90.withNeighbour.ok);
+  check('reach sweep: every part has a colour and the best angle is one that reaches it', sw.targets.length === 40 && sw.targets.every((t) => (t.best === null) === (t.colour90 === 'red') && (!t.best || t.best.own.ok)));
   rd.delete(); rm.delete();
 }
 
