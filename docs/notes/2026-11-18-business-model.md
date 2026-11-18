@@ -32,21 +32,20 @@ Cost is split into the growing unit (tanks, pipe/track, pods, solar share, pump)
 
 Robot sharing (assumption to test): one robot may service up to about 10 units joined by track. To find out: how track joins units, cart speed, battery and work time per unit.
 
-Cost per unit = unit + robot / n, using range midpoints (target 125 + 175/n; pessimistic 250 + 250/n). Per head adds 5 cents seeds and nutrients; 250 heads/yr in Rio, 100 in UK.
+Cost per unit = unit + robot / n, using range midpoints (target 125 + 175/n; pessimistic 250 + 250/n). Per head adds 5 cents seeds and nutrients; 200 heads/yr in São Paulo. Exchange rate about R$5.50 = US$1 (rough).
 
-| Units per robot | Cost per unit | Rio per head | UK per head |
-|---|---|---|---|
-| Target 1 | $300 | 29c | 65c |
-| Target 3 | $183 | 20c | 42c |
-| Target 10 | $143 | 16c | 34c |
-| Pessimistic 1 | $500 | 72c | $1.72 |
-| Pessimistic 3 | $333 | 49c | $1.16 |
-| Pessimistic 10 | $275 | 42c | 97c |
+| Units per robot | Cost per unit | São Paulo per head |
+|---|---|---|
+| Target 1 | $300 (R$1,650) | 35c (R$1.90) |
+| Target 3 | $183 (R$1,000) | 23c (R$1.30) |
+| Target 10 | $143 (R$790) | 19c (R$1.10) |
+| Pessimistic 1 | $500 (R$2,750) | 88c (R$4.90) |
+| Pessimistic 3 | $333 (R$1,830) | 61c (R$3.40) |
+| Pessimistic 10 | $275 (R$1,510) | 51c (R$2.80) |
 
-Harvests (about 25 plants per unit):
+Location: Pond will be built in Brazil, starting in São Paulo. No UK comparison.
 
-- Warm all year (e.g. Rio): about 10 harvests, about 250 heads a year.
-- Temperate outdoors (e.g. UK): maybe 4 harvests, about 100 heads a year.
+Harvests (about 25 plants per unit): São Paulo has mild winters so lettuce grows all year (slower in the cool months, stressed in the hottest and wettest). Rough estimate, not measured: about 8 harvests, about 200 heads a year.
 
 Not yet counted: mailing pods, and a person delivering and assembling each unit the first time.
 
@@ -54,8 +53,8 @@ Not yet counted: mailing pods, and a person delivering and assembling each unit 
 
 Households, schools and community projects growing their own food, not people going into the lettuce business.
 
-- Supermarket lettuce in Rio (e.g. Prezunic) is roughly R$4-10 (about $0.75-2) a head. At about 250 heads a year a unit replaces about R$1,000-2,500 (about $190-500).
-- Yearly cost of a unit: about $60-85 (target, one robot per unit; less when shared), about $180 (pessimistic). A subscription covering upkeep would sit around that; no price set.
+- Supermarket lettuce in São Paulo is roughly R$3-6 (about $0.55-1.10) a head (rough guess, to check against shelf prices). At about 200 heads a year a unit replaces about R$600-1,200 (about $110-220).
+- Yearly cost of a unit: about $40-70 (R$220-385) target (lower when the robot is shared), about $175 (R$970) pessimistic with one robot per unit. Target looks worthwhile for a household; pessimistic roughly breaks even. A subscription covering upkeep would sit around that; no price set.
 - Some people might one day want several units to sell produce locally. That only makes sense if bulk pricing brings units well down and they last many years. Not the focus.
 
 ## Business model (dual; current thinking, not a plan)
