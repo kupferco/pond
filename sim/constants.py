@@ -36,3 +36,22 @@ SPRING_K = 2000.0  # N/m
 SPRING_TRAVEL = 2.5 * MM  # radial slot travel (matches cad SPRING_TRAVEL)
 
 GRAVITY = 9.81
+
+
+# ---- Omni cart (OpenPocket #283, docs/plans/cart-roll-redesign-plan.md): 38 mm rubber-roller omni wheels, printed ball cups, whole cart 3 kg ----
+# The old wheel numbers above stay for bend_test.py and guide_test.py (they still model the hinge-era 20 x 8 wheels); pipe_climb.py and unit_change.py use these.
+OMNI_R = 19 * MM  # driven omni wheel radius (cad/cart_omni.py OMNI_D = 38)
+OMNI_W = 18.8 * MM  # double-row omni wheel width (cad/cart_omni.py OMNI_W)
+OMNI_CROSS = 0.02  # friction across the roller axis as a fraction of the grip along the rolling direction (cart/omni.ts omniContact)
+OMNI_CART_MASS = 3.0  # kg, the whole cart with arm and battery (plan section 3)
+OMNI_RATING_N = 20.0  # a 38 mm omni wheel is rated 2 kg (about 20 N)
+OMNI_PRELOAD_N = 20.0  # design preload on the driven wheel (owner answer Q4); bench tests go to 40 N, never the 60 N of the old wheels
+OMNI_PRELOAD_TEST_N = 40.0
+BALL_R = 5.5 * MM  # 11 mm ball (cad/cart_omni.py BALL_D)
+BALL_FRICTION = 0.05  # a printed cup with a steel or Delrin ball: rolls both ways, grips almost nothing
+JAW_A1_DEG = 110.0  # the jaw wedge as drawn (cad/cart_sleeves.py JAW_A1); the transfer needs at least 140 (control-ui/scripts/search-swing.ts), 150 proposed
+JAW_A1_PROPOSED_DEG = 150.0
+SWING_DEG = 90.0  # roll of the whole cart about the riding pipe in a transfer (control-ui TRANSFER_ROLL_DEG), plate side
+PIPE_SPACING = 120 * MM  # the two hands (cad/cart_dims.py PIPE_SPACING)
+SLEEVE_BORE_R = 20 * MM  # hand_sleeve.py R_BORE
+SLEEVE_OUT_R = 34.5 * MM  # hand_sleeve.py TUBE_R_MIN
