@@ -62,3 +62,11 @@ Households, schools and community projects growing their own food, not people go
 - Start with the community side: green funds, grants, councils and mayors fund free or subsidised units for community and educational projects, with workshops. The robot lets people learn without being fully committed.
 - In parallel, offer a subscription on the open market; each commercial unit must pay for its own maintenance, so the project never depends on commercial sales.
 - Let the commercial side prove itself. If it has legs, Pond can become a commercial project with a community arm; the mission and community arm stay either way.
+
+## Why buy if it's open source? (current thinking)
+
+Plans stay free. People pay to not build it themselves (sourcing, printing, wiring, testing, installing), for seed pods and nutrients by subscription, for support, repairs and software updates, and for the Pond name (trademark). If someone copies Pond to grow food, that still spreads the mission.
+
+## References and inspiration
+
+- FarmBot (farm.bot): open-source farming robot. Pond learns from its open design and from showing a robot can tend plants. No claims about their finances. More to add.
