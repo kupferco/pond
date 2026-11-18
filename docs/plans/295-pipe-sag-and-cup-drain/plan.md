@@ -137,4 +137,4 @@ Answer: Option 2: back hole + four 2 mm side holes at 90 degrees, outlets kept o
 ### Q7. Is a small leftover crescent of water (about 2 mm deep, under 0.5 ml) acceptable in a cup, or must a cup empty fully?
 Context: full emptying needs more holes (option 3) or no pocket (option 4), which let more dirt in.
 Assumed: a small crescent is fine, it dries out.
-Answer: _open_
+Answer: A small crescent is fine, it dries out.
