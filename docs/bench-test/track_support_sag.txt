@@ -1,0 +1,37 @@
+32 x 1.8 mm PVC-U, I = 19539 mm4, load 44 N (3 kg x 9.81 x 1.5), worst load place found by sweeping
+M8 rod stub 34 mm free: 1.34 kN/mm
+
+Check, no supports, centre clamped / far end pinned (worst place, plan table used midspan so is up to 3 % lower):
+  L 300 new  0.20  creep  0.60  hot+creep  1.00
+  L 400 new  0.47  creep  1.42  hot+creep  2.36
+
+BOTTOM run, L = 300 mm (owner), limit 1 mm. Support just before the curve starts.
+  support at x      new / creep / hot+creep (mm), worst load place (creep)
+  120 mm          0.08 /  0.20 /  0.31   at x = 214  ok (creep)
+  125.0 mm        0.08 /  0.19 /  0.30   at x = 216  ok (creep)
+  130 mm          0.07 /  0.17 /  0.27   at x = 218  ok (creep)
+  200 mm          0.06 /  0.14 /  0.22   at x = 114  ok (creep)
+  260 mm          0.11 /  0.28 /  0.44   at x = 144  ok (creep)
+  none (before)   0.20 /  0.60 /  1.00   at x = 176  ok (creep)
+  CAD: the straight part is 140 mm and the support is at x = 125 mm (15 mm before the curve); with the span between
+  support and bend taken as a straight pinned-pinned beam, which is pessimistic for a bend.
+
+TOP run, L = 400 mm (owner), limit 3 mm. Vertical hanger from the crossbar at the middle of the span (x = 200).
+  crossbar 0.8 kN/mm at x = 200 from the end; with the stub 0.52 kN/mm
+  columns: new / creep / hot+creep (mm); end = bend on the leg's axial spring, bottom locked
+  no hanger, pinned end (before)   0.47 /  1.42 /  2.36   at x = 234 ok (creep)
+  no hanger, leg spring end        0.50 /  1.49 /  2.48   at x = 240 ok (creep)
+  hanger at 200, pinned end        0.13 /  0.30 /  0.48   at x = 300 ok (creep)
+  hanger at 200, leg spring end    0.15 /  0.38 /  0.61   at x = 320 ok (creep)
+  Leg spring (creep): 116 N/mm, the leg shortens by 0.38 mm under 44 N if the cart's whole weight reached it
+
+Same, CAD span (centre to leg 290 mm top, hanger at 125, the CAD), creep:
+  no hanger  0.61 mm, hanger new / creep / hot+creep  0.12 /  0.35 /  0.57 mm
+
+Support strength check (creep case, worst place):
+  bottom: sag 0.19 mm under 44 N
+  top hanger: vertical load at most 44 N if the support took the whole 44 N, in tension / compression in a short block
+  M8 stub bending stress at 44 N: 56 MPa (steel 4.6 yields at 240)
+
+RESULT bottom run under 1 mm (new, creep and hot) with the supports: True
+RESULT top run under 3 mm (new, creep and hot) with the hangers: True
