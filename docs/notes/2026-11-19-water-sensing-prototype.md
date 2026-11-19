@@ -81,6 +81,35 @@ Rough total per unit: option 2a about R$ 85 to 200, option 2b about R$ 140 to 34
 
 Effect on the budget: option 2b adds about 2 Wh a day for 10 units on top of the ~48 Wh in the [energy budget](2026-11-07-energy-budget.md), inside the 20% losses margin. Panel and battery stay as they are. The valve runs from the tap's pressure, not from a pump, so no extra pump power.
 
+## Water supply, refill and drain (owner decisions, follow-up)
+
+These add to the two top-up options above and, where they differ, win.
+
+**Every unit has both:** a mechanical toilet-style float valve (does the refill) and a digital float switch (alert, and pump safety). The solenoid in option 2b is therefore optional on top of that.
+
+**Low-water notification is on by default.** It can be switched off for units with a hose connected, since the float valve refills them.
+
+**With a hose:**
+- Units are daisy-chained on one supply line with a T fitting and one float valve per unit, plus a manual shut-off tap on each branch.
+- Top-up goes straight into the nutrient tank, with the outlet above the water line so water cannot flow back into the supply (air gap against backflow).
+- Then the daily EC check doses concentrate to correct the dilution.
+- Optional carbon filter on the line for chlorine. Reverse osmosis is not needed for São Paulo water.
+
+**Without a hose:**
+- A big clean-water tank, filled by bucket and kept low (less weight, less algae), with one small pump with a pressure switch feeding the supply line to the float valves.
+- Rough parts (Mercado Livre first, R$, not quotes): pressure-switch water pump 12 V, "bomba diafragma 12V pressostato" 80 to 200; water tank 100 to 200 L, "caixa d'água" or drum 100 to 300; T fittings, branch taps and hose 40 to 90.
+
+**Seedlings:** a small separate clean-water tank.
+
+**Drain:** a drain tap on every unit, for a full water change every 2 to 4 weeks (for example at harvest). Rough part: "registro esfera 1/2" with bulkhead fitting, R$ 15 to 35.
+
+**Rough parts for the carbon filter:** "filtro de carvão ativado para água 10 pol" with housing, R$ 40 to 120.
+
+## Left open for the owner
+
+- Is the clean-water storage tank needed at all when a hose is connected? The float valves can feed straight from the tap, but the tank would give water when the tap is off.
+- Nutrient dosing method: peristaltic pumps or gravity (drip from a bottle through a valve). Not decided.
+
 ## Energy budget, updated
 
 The old line "Sensors + controller (always on) ~20 Wh" is split. Estimates, to check against real parts.
