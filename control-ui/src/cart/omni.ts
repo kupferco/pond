@@ -38,12 +38,13 @@ export const BALL_D = 11, CUP_R = 9, CUP_BACK = 30.65, BALL_CENTRE_R = R_PIPE + 
 export const JAW_A0 = 20, JAW_A1 = 110, JAW_OPEN_DEG = 92;   // hand_sleeve.py jaw: the ring sector 20..110 deg with the +60 deg lobe and its two ball cups swings open 92 deg on a pin at the 110 deg edge
 export const JAW_OPEN_RAD = (JAW_OPEN_DEG * Math.PI) / 180;
 export const GAP_HALF_DEG = 20;                     // the C gap in the tube ring: 18 mm wide at its narrow middle
-export const PAD = { x0: -24, x1: 0, y0: -50, y1: -22 };   // hand_sleeve.py pad (hand B: on the -X / -Y side)
+export const PAD = { x0: -20, x1: 0, y0: -50, y1: -22 };   // hand_sleeve.py pad (hand B: on the -X / -Y side)
 export const PLATE_T = 6, PLATE_Y1 = PAD.y0, PLATE_Y0 = PLATE_Y1 - PLATE_T;   // plate front face -56
-export const PLATE_X0 = -HX + PAD.x0, PLATE_X1 = HX - PAD.x0;                  // -84 .. +84
+export const PLATE_X0 = -HX + PAD.x0, PLATE_X1 = HX - PAD.x0;                  // -80 .. +80 (pad -20 since #312: the plate-side motors need the room)
 export const PLATE_ZH = (SLEEVE_L + 22) / 2;        // 73
 export const ARM_BASE_W = 70, BATT = [70, 50, 70] as const, ARM_BASE_T = 20;   // arm base 70 x 70 footprint (ARM_BASE_T ASSUMED)
 export const MOTOR_R = 14, MOTOR_L = 55, GB_L = 30, GB_T = 22;                // worm motor placeholder (cart_omni.py)
+export const DRIVE_MOTOR_FACE_Y = 29.5, ROLL_MOTOR_GAP_Z = 3;           // layout B standoffs (hand_sleeve.py DRIVE_MOTOR_WALL_Y + 1, ROLL_MOTOR_WALL_Z)
 export const MOTOR_RPM = 60, MOTOR_RATED_NM = 0.30;
 export const WHEEL_RATING_N = 20, MU_WET = 0.3;
 export const PRELOAD_N = 20;
@@ -158,13 +159,16 @@ function handInner(h: Hand, jawA1 = JAW_A1, jawOpen = 0): string {
       </body>`);
     }
   }
-  // Motors (visual): drive motor on the plate side of the lobe beside the drive wheel, roll motor below the sleeve end under the roll wheel, bodies radially outward.
-  const gbY = -(ARM_W_OMNI / 2 + 1);
-  box('', -(OMNI_AXLE_R + GB_L / 2 - MOTOR_R), gbY - GB_T / 2, DRIVE_Z, GB_L / 2, GB_T / 2, MOTOR_R, MOTORC, VISUAL);
-  g.push(`<geom type="cylinder" fromto="${P(-(OMNI_AXLE_R + GB_L - MOTOR_R), gbY - GB_T / 2, DRIVE_Z)} ${P(-(OMNI_AXLE_R + GB_L - MOTOR_R + MOTOR_L), gbY - GB_T / 2, DRIVE_Z)}" size="${f(m(MOTOR_R))}" ${MOTORC} ${VISUAL}/>`);
-  const gz = -(SLEEVE_L / 2 + 1);
-  box('', -(OMNI_AXLE_R + GB_L / 2 - MOTOR_R), 0, gz - GB_T / 2, GB_L / 2, MOTOR_R, GB_T / 2, MOTORC, VISUAL);
-  g.push(`<geom type="cylinder" fromto="${P(-(OMNI_AXLE_R + GB_L - MOTOR_R), 0, gz - GB_T / 2)} ${P(-(OMNI_AXLE_R + GB_L - MOTOR_R + MOTOR_L), 0, gz - GB_T / 2)}" size="${f(m(MOTOR_R))}" ${MOTORC} ${VISUAL}/>`);
+  // Motors (visual), layout B (OpenPocket #312, cad/cart_omni.py): both on the PLATE side (-Y) of the outer lobe, nothing on the plant side, nothing out sideways.
+  // Drive motor: gearbox on the -Y side of the lobe, its face DRIVE_MOTOR_FACE_Y off the pipe axis, body along the pipe pointing to the sleeve middle (z = 0).
+  // Roll motor: below the sleeve end, body pointing -Y towards the plate.
+  const mx = -OMNI_AXLE_R, dgy = -(DRIVE_MOTOR_FACE_Y + GB_T / 2);
+  const gbOff = GB_L / 2 - MOTOR_R, bodyStart = GB_L - MOTOR_R;      // gearbox centre and body start, along the motor axis, from the shaft
+  box('', mx, dgy, DRIVE_Z - gbOff, MOTOR_R, GB_T / 2, GB_L / 2, MOTORC, VISUAL);                // gearbox z 22..52
+  g.push(`<geom type="cylinder" fromto="${P(mx, dgy, DRIVE_Z - bodyStart)} ${P(mx, dgy, DRIVE_Z - bodyStart - MOTOR_L)}" size="${f(m(MOTOR_R))}" ${MOTORC} ${VISUAL}/>`);
+  const gz = -(SLEEVE_L / 2 + ROLL_MOTOR_GAP_Z + 1) - GB_T / 2;
+  box('', mx, -gbOff, gz, MOTOR_R, GB_L / 2, GB_T / 2, MOTORC, VISUAL);
+  g.push(`<geom type="cylinder" fromto="${P(mx, -bodyStart, gz)} ${P(mx, -bodyStart - MOTOR_L, gz)}" size="${f(m(MOTOR_R))}" ${MOTORC} ${VISUAL}/>`);
   // The jaw: a hinge about an axis along the pipe at the 110 deg edge of the tube (hand_sleeve.py), 0 = closed round the pipe, JAW_OPEN_RAD = released.
   const pa = rad(jawA1), pivot = P(TUBE_R_MIN * Math.cos(pa), TUBE_R_MIN * Math.sin(pa), 0);
   // jawOpen > 0 (rad): the jaw is built already swung open, with no joint (the static scenes: pod grab, transplant), by turning its body about the pivot.

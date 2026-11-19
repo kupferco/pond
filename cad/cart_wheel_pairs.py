@@ -77,8 +77,8 @@ def driven_parts():
     for k, (s, col) in co.omni_parts().items():
         out["drive_wheel_" + k] = (co.place_drive(s, hs.DRIVE_Z, hs.OUTER_ANG), col)
         out["roll_wheel_" + k] = (co.place_roll(s, hs.ROLL_Z, hs.OUTER_ANG), col)
-    out.update(co.drive_motor_parts(hs.DRIVE_Z, hs.ARM_W_OMNI / 2, hs.OUTER_ANG))
-    out.update(co.roll_motor_parts(hs.ROLL_Z, -hs.SLEEVE_L / 2, hs.OUTER_ANG))
+    out.update(co.drive_motor_parts(hs.DRIVE_Z, hs.DRIVE_MOTOR_WALL_Y, hs.OUTER_ANG))
+    out.update(co.roll_motor_parts(hs.ROLL_Z, -hs.SLEEVE_L / 2 - hs.ROLL_MOTOR_WALL_Z, hs.OUTER_ANG))
     return out
 
 

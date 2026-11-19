@@ -20,9 +20,29 @@ SPINE_X_LEG, SPINE_X_BEND_END = 290.0, 140.0   # static pipe to the spine axis: 
 ARM_TOP = cd.PLATE_Y0 - cd.BATT[1] - 110.0     # folded arm reaches about 110 mm above the battery (ASSUMED envelope)
 SLEEVE_HALF_L = 62.5                       # sleeve about 125 long (plan section 4)
 STEP = 0.25
+# OpenPocket #312: the sleeve motors (cart_omni.py), as boxes in the section, hand B frame (x outer side negative, y plate side negative), mirrored for hand C.
+# "none" = the #277 estimate (no motors), "today" = motors beside the outer lobe on the spine side, "B" = layout B, both motors on the plate side.
+# Section of each motor over its whole length along the pipe (the free pipe is long, so any z counts).
+MOTOR_BOXES = {
+    "none": {},
+    "today": {"drive motor": (-106.0, -21.0, 13.4, 41.4), "roll motor": (-106.0, -21.0, -14.0, 14.0)},
+    "B": {"drive motor": (-49.0, -21.0, -54.5, -26.5), "roll motor": (-49.0, -21.0, -71.0, 14.0)},
+}
+MOTOR_LAYOUT = "B"
 
 
-def boxes(static_sgn):
+def motor_boxes(static_sgn):
+    """The four sleeve motors as boxes in the static pipe frame (see MOTOR_BOXES): each hand's two, hand C mirrored in x."""
+    cx = -static_sgn * cd.HX
+    out = {}
+    for hand_x, sgn in ((-cd.HX, 1), (cd.HX, -1)):
+        for name, (x0, x1, y0, y1) in MOTOR_BOXES[MOTOR_LAYOUT].items():
+            xs = sorted((cx + hand_x + sgn * x0, cx + hand_x + sgn * x1))
+            out["%s %s" % (name, "B" if sgn > 0 else "C")] = (xs[0], xs[1], y0, y1)
+    return out
+
+
+def boxes(static_sgn, motors=True):
     """Cart boxes (x0, x1, y0, y1) in the static pipe frame. static_sgn = +1: static hand on pipe C (x=+60), free hand B on -x."""
     cx = -static_sgn * cd.HX                  # cart centre line, relative to the static pipe
     def b(x0, x1, y0, y1):
@@ -30,7 +50,8 @@ def boxes(static_sgn):
         return (xs[0], xs[1], min(y0, y1), max(y0, y1))
     return {"plate": b(cd.PLATE_X0, cd.PLATE_X1, cd.PLATE_Y0, cd.PLATE_Y0 + cd.PLATE_T),
             "battery": b(cd.BATT_X - cd.BATT[0] / 2, cd.BATT_X + cd.BATT[0] / 2, cd.PLATE_Y0, cd.PLATE_Y0 - cd.BATT[1]),
-            "arm": b(-cd.ARM_BASE_W / 2, cd.ARM_BASE_W / 2, cd.PLATE_Y0 - cd.BATT[1], ARM_TOP)}
+            "arm": b(-cd.ARM_BASE_W / 2, cd.ARM_BASE_W / 2, cd.PLATE_Y0 - cd.BATT[1], ARM_TOP),
+            **(motor_boxes(static_sgn) if motors else {})}
 
 
 def rot(x, y, deg):
@@ -60,7 +81,9 @@ def phi_of(static_sgn, direction, theta):
 def sweep(static_sgn, direction, spine_x, diverge):
     """Roll from 0 in `direction` until the free hand is off its pipe, stopping at the first contact.
     Returns (roll deg needed to be off the pipe, first contact text or None, roll deg of the contact)."""
-    bx = boxes(static_sgn)
+    # motors are tested on the straight leg only: this 2D estimate cannot say how a bend pipe meets a motor that stands beyond the sleeve end (z = -63 .. -91 or +52),
+    # and every layout (today's too) meets it at 0 deg there; the sleeve's own flared bore handles the bend (hand_sleeve.py)
+    bx = boxes(static_sgn, motors=not diverge)
     hit = hit_deg = off = None
     for k in range(int(180 / STEP) + 1):
         th = k * STEP
