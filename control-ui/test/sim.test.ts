@@ -20,6 +20,7 @@ import { BEND_TRIM_ROWS, NO_TRIM, bendTrim, omniTrackMjcf, placeOmniCart, trackC
 import { RollMotion, ROLL_HOME_TOL_DEG, canRoll, driveLimit, pickRollDirection, sweep } from '../src/cart/roll.ts';
 import { POINT_CM, POINT_WINDOW_DEG, RING_CM, RING_W_CM, hall, runHoming } from '../src/cart/homing.ts';
 import { LOAD_N, PIPES, maxCantileverMm, sagTable } from '../src/cart/track-sag.ts';
+import * as TS from '../src/cart/track-supports.ts';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { ARM_Y, BASE_BOTTOM, CART_Z, LID_Z, PIPE_Y, PIPE_Z, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
@@ -657,6 +658,11 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('sag: 25 mm PVC is NOT stiff enough (creep sag at the end of the straight run over 4 mm, limit 2 mm)', !row('25 mm PVC (1.5', 140).ok && row('25 mm PVC (1.5', 140).creepMm > 4);
   check('sag: 32 mm with the 3 mm wall holds the end of the straight run (creep sag under 2 mm), the 1.8 mm wall is marginal; the corner end needs a support either way', row('32 mm PVC (3.0', 140).ok && !row('32 mm PVC (1.8', 140).ok && !row('32 mm PVC (3.0', 290).ok);
   check('sag: longest unsupported run from a support, long term, is about 138 mm for 32 x 1.8 and about 101 mm for 25 x 1.5 at the cart load', maxCantileverMm(PIPES[0]) > 130 && maxCantileverMm(PIPES[0]) < 145 && maxCantileverMm(PIPES[2]) > 95 && maxCantileverMm(PIPES[2]) < 105 && LOAD_N > 40, `${maxCantileverMm(PIPES[0]).toFixed(0)} / ${maxCantileverMm(PIPES[2]).toFixed(0)} mm`);
+  // track supports (OpenPocket #315): sag with the supports, same numbers as docs/bench-test/track_support_sag.py
+  const bNo = TS.bottomSag(TS.E_HOT, false), bYes = TS.bottomSag(TS.E_HOT), tNo = TS.topSag(TS.E_HOT, false), tYes = TS.topSag(TS.E_HOT);
+  check('supports: bottom run 32 x 1.8, L 300, support at 125: creep sag about 0.19 mm, hot and crept under 1 mm; without it a hot day is at the 1 mm limit', Math.abs(TS.bottomSag() - 0.19) < 0.02 && bYes < TS.BOTTOM_LIMIT_MM && bNo > 0.95, `${TS.bottomSag().toFixed(2)} / ${bYes.toFixed(2)} / ${bNo.toFixed(2)} mm`);
+  check('supports: top run L 400 with the brace and the bend on the leg spring: creep about 0.36 mm, hot and crept under 3 mm and below the unbraced run', Math.abs(TS.topSag() - 0.36) < 0.03 && tYes < TS.TOP_LIMIT_MM && tYes < tNo / 3, `${TS.topSag().toFixed(2)} / ${tYes.toFixed(2)} / ${tNo.toFixed(2)} mm`);
+  check('supports: the cart passes a support only at roll 0 (within the home tolerance), and the supports are only on runs where the roll is held at 0', TS.passesSupport(0) && TS.passesSupport(2.5) && !TS.passesSupport(10) && !TS.passesSupport(180) && TS.SUPPORTS_ONLY_WHERE_FLAT);
 }
 
 // --- Python sims on the omni cart (OpenPocket #283, plan task 265 part 9): sim/unit_change.py and the wet-pipe test of sim/pipe_climb.py, built by python3 and run in this MuJoCo ---
