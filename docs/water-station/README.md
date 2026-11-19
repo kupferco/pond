@@ -112,3 +112,10 @@ Run `python cad/water_station_position.py`.
 - **Station at the FRONT** (box back face just outside the sleeve radius, y -113 to -215): clashes with the sampler coil (392 mm3) and parking socket (1152 mm3), the cart plate (1045 mm3), the unit's seedling tray (legs 9600 mm3) and the tank (drain tube), and overhangs the lid edge by 15 mm. The cart's roll sleeve, plate and sampler sit in the same strip, so it cannot go there without redrawing the sampler, the tray and the box height.
 - **Chosen: back.** The rule was back if the arm reaches comfortably and nothing clashes, else front. Back fails "comfortable" (88 percent of reach, gripper tilted), front fails on nine clashes and the overhang. Back is the one that builds; the reach is the open problem: arm poses are a later part of the plan, and the nozzle is on a recoil tube.
 - Not caused by the station, still open from #315: with the cart at the dock the M8 rod and lock nuts of the support at x = 125 overlap the cart's right-hand jaw (731 + 273 mm3). The cart rolls to home to pass a support, as the track-supports note says.
+
+## Assembly: the one track pipe (follow-up 19 Nov 2026, evening)
+
+- The assembly (`cad/water_assembly.py`) draws ONE track pipe: pipe C of main's `cart_assembly.py`, at the unit's track position and height (axis check in `check()`: offset 0.0 mm). The #315 supports are placed on it and the cart is main's cart, not redrawn.
+- Pipe B and the clamp that grips it are left out (pipe B is the neighbouring unit's track), so no clamp hangs in the air.
+- `check()` now prints: clamp C to pipe (no overlap; the sleeve body keeps main's 4 mm clearance, wheels run 0.3 to 0.95 mm off the pipe, ball cups touch), rods and lock nuts touching the pipe, and that only one pipe and no pipe-B clamp parts are in the scene.
+- OPEN: main's clamp C-gap faces the plate, the #315 rods leave the track on the spine side. At the dock (cart z = 0) the closed jaw overlaps the rod (about 730 mm3) and the lock nut. Turning the unit 90 deg about the track clears all of it, but puts the unit on the other side of the cart, so it is not applied. Owner to decide.
