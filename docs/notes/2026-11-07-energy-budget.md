@@ -42,6 +42,7 @@ Biggest levers: pump duty cycle, and never running a computer like a Pi 4 all da
 
 ## Open
 
+- Garden without a hose: the supply pump with pressure switch adds about 1 Wh a day (estimate).
 - Optional auto top-up from a tap with a solenoid valve adds about 0.2 Wh a day per unit (details in the water sensing note).
 - Sensor parts picked, see the water sensing note (19 Nov). Prices still to check.
 - Pick real parts (pump, controller, camera board) and replace the estimates.

@@ -89,17 +89,15 @@ These add to the two top-up options above and, where they differ, win.
 
 **Low-water notification is on by default.** It can be switched off for units with a hose connected, since the float valve refills them.
 
-**With a hose:**
-- Units are daisy-chained on one supply line with a T fitting and one float valve per unit, plus a manual shut-off tap on each branch.
-- Top-up goes straight into the nutrient tank, with the outlet above the water line so water cannot flow back into the supply (air gap against backflow).
-- Then the daily EC check doses concentrate to correct the dilution.
-- Optional carbon filter on the line for chlorine. Reverse osmosis is not needed for São Paulo water.
+**One shared supply line** runs along all units, with a T per unit for its float valve and a manual shut-off tap. Top-up water goes straight into the nutrient tank, with the outlet above the water line so it cannot flow back (air gap). The daily EC check then doses concentrate to correct the dilution. The unit does not care where the line's water comes from:
 
-**Without a hose:**
-- A big clean-water tank, filled by bucket and kept low (less weight, less algae), with one small pump with a pressure switch feeding the supply line to the float valves.
-- Rough parts (Mercado Livre first, R$, not quotes): pressure-switch water pump 12 V, "bomba diafragma 12V pressostato" 80 to 200; water tank 100 to 200 L, "caixa d'água" or drum 100 to 300; T fittings, branch taps and hose 40 to 90.
+**(a) Garden with a hose:** the hose feeds the line directly. No storage tank needed. Optional carbon filter for chlorine; reverse osmosis is not needed for São Paulo water.
 
-**Seedlings:** a small separate clean-water tank.
+**(b) Garden without a hose:** one external big clean-water tank, kept low next to the first unit (less weight, less algae), filled by bucket (optionally also rainwater), sized for about three weeks of use. One small pump with a pressure switch pressurises the line like a hose would. The tank has its own float to warn when low and to stop that pump running dry.
+- Rough parts (Mercado Livre first, R$, not quotes): pressure-switch water pump 12 V, "bomba diafragma 12V pressostato" 80 to 200; tank, size to the number of units (for example 10 units at about 3 L a day each is roughly 600 L for three weeks, so check real use first), "caixa d'água" or drum 100 to 300 for 100 to 200 L, more for larger; T fittings, branch taps and hose 40 to 90.
+- Energy: the pump runs only when the line drops in pressure, a few minutes a day, about 1 Wh a day (estimate).
+
+**Seedlings:** one nursery tray at the first unit by the dock, fed by one extra T and a small float valve on the same line.
 
 **Drain:** a drain tap on every unit, for a full water change every 2 to 4 weeks (for example at harvest). Rough part: "registro esfera 1/2" with bulkhead fitting, R$ 15 to 35.
 
@@ -107,7 +105,6 @@ These add to the two top-up options above and, where they differ, win.
 
 ## Left open for the owner
 
-- Is the clean-water storage tank needed at all when a hose is connected? The float valves can feed straight from the tap, but the tank would give water when the tap is off.
 - Nutrient dosing method: peristaltic pumps or gravity (drip from a bottle through a valve). Not decided.
 
 ## Energy budget, updated
