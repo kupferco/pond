@@ -124,8 +124,62 @@ What gets worse as the tank shrinks:
 
 **Reuse the drained water:** the old nutrient water still has nutrients, so water the garden or beds with it (it can go to the soil drain already planned). Dilute it with plain water if EC is high, and do not use it on edible leaves of other crops that you eat raw if it could carry disease from a sick unit; if a unit had root rot or algae, throw that water away. Keep it off acid-loving plants if pH is far from neutral.
 
+## Plumbing connections and draining (owner decisions, follow-up)
+
+Docs only. Units join with standard click-on garden hose quick-connectors (the common "engate rápido" type sold everywhere in Brazil), so adding a unit takes no tools.
+
+### Connections
+
+Each unit has four quick-connectors, two at the top and two at the bottom:
+
+| Line | Where | Connectors |
+|---|---|---|
+| Clean supply | top | one inlet, one outlet (the line passes through; the unit's float valve T is fed from it) |
+| Shared drain | bottom | one inlet, one outlet (the line passes through; the unit's drain tap empties onto it) |
+
+- Short pieces of flexible garden hose (for example 30 to 50 cm, cut to the gap between units) join the outlet of one unit to the inlet of the next. To add a unit: click in two short hoses (one supply, one drain). To remove one: click them out and join the two neighbours with the same hoses.
+- The last supply outlet gets a click-on cap (or a shut-off tap). The first supply inlet takes the hose or the pressure pump from the supply options above.
+- Colour the supply hoses and connectors differently from the drain ones (for example blue and black) so they cannot be swapped.
+- The drain runs downhill: keep the hoses sloping toward the outlet and without sags, or water sits in them. Because the units stand on a level floor, raise the first unit's drain connector slightly or use the hose slope between units; check on the prototype.
+
+### Drain
+
+- Each unit has its own drain tap (see Drain above) onto the shared drain line. A tap per unit lets one unit be drained at a time, which is what a water change at harvest needs.
+- The shared drain line ends at **one outlet with a hose connector**, so one hose carries everything away.
+- Open the tap slowly (a hose full of water at once makes puddles and splashes). Only one unit at a time.
+
+### Where to send the drained water
+
+In order of preference:
+
+1. **Onto beds or pots in the garden.** The water is nutrient-rich, so it works as fertiliser. See the reuse notes in the tank size section (dilute if EC is high, not on raw-eaten leaves if a unit was sick, throw it away if there was root rot or algae).
+2. **A sewer floor drain (ralo) on concrete.** Fine for the sewage drain. Check that the ralo goes to the sewer, not to the rainwater drain.
+3. **Buckets**, then carry to the garden. Slow, but needs no hose run.
+
+Avoid:
+- **Storm or rainwater-only drains** (bueiro, calha, ralo de águas pluviais). In Brazil the rule is that nutrient-rich water must not go there, because it goes to streams untreated and feeds algae. Check the local rule (municipal / Sabesp rules) before choosing a drain.
+- Letting it run onto bare ground in one spot. Drain slowly, or move the hose end, so it soaks in and does not pool or run into the street.
+
+### Parts and rough prices (R$, not quotes, Mercado Livre first)
+
+| Part | Part to search for | Qty | Rough price (R$) | Notes |
+|---|---|---|---|---|
+| Quick-connector, tap side (female, 1/2 in) | "engate rápido mangueira 1/2 fêmea" | 2 per unit, supply | 8 to 20 each | Common garden-hose type. Buy a set with both ends. |
+| Quick-connector, hose side (male) | "engate rápido mangueira 1/2 macho" | 2 per unit, supply | 8 to 20 each | |
+| Same pair for the drain | same as above | 2 per unit, drain | 8 to 20 each | Use a different colour. |
+| Bulkhead (through-wall) fitting | "adaptador soldável com flange" or "união com flange 1/2" | 4 per unit | 15 to 40 each | Where the connector goes through the unit wall. At the bottom keep the seal below nothing that can drip on electronics. |
+| Short flexible garden hose, 1/2 in | "mangueira jardim 1/2 flexível" | 2 pieces of 30 to 50 cm per unit | 5 to 15 per piece | Cut from a 5 to 10 m roll (R$ 40 to 90). |
+| Drain tap | "registro esfera 1/2" with bulkhead fitting | 1 per unit | 15 to 35 | Already counted in the Drain section. |
+| End connector and hose for the drain outlet | "engate rápido macho" plus "mangueira 1/2 jardim", 3 to 5 m | 1 per line | 40 to 90 | Once per line, not per unit. |
+| Supply end cap | "tampão engate rápido" | 1 per line | 5 to 15 | |
+| Hose clamps | "abraçadeira 1/2" | a few | 10 to 20 | |
+
+Rough extra per unit for the connections (four connector pairs, bulkheads, two short hoses): about **R$ 150 to 380**, depending on how many of the four are full pairs and brand. The drain tap is already counted. Once per line: about R$ 50 to 105.
+The cheapest hardware-store set is enough; check that the thread of the connectors matches the bulkhead, and that the connectors are rated for water (not air-only).
+
 ## Left open for the owner
 
+- Whether the drain line has a floor slope or the first unit's connector is raised (check on the prototype).
 - Nutrient dosing method: peristaltic pumps or gravity (drip from a bottle through a valve). Not decided.
 
 ## Energy budget, updated
@@ -145,6 +199,8 @@ Effect on the total in the [7 Nov budget](2026-11-07-energy-budget.md): about 60
 The probes are switched on only for the daily test. Powering the pH probe board off between tests does not dry the probe: the probe sits in its storage solution.
 
 ## How to check
+
+- Connections: click two units together with short hoses, run supply and drain, and check nothing leaks and the drain line slopes to its outlet.
 
 - Top-up: if option 2 is used, hold the valve open and check the overflow pipe carries the flow to the soil, and that the max fill time stops the valve.
 
