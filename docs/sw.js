@@ -2,7 +2,7 @@
 // Tries the network first so the app shows the latest version, but waits at most 1.5 s:
 // if the network is slower than that, it shows the saved copy and updates it in the background.
 // Offline, it always uses the saved copy.
-const CACHE = 'pond-v15';
+const CACHE = 'pond-v16';
 const WAIT_MS = 1500;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
@@ -18,6 +18,8 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   // The sim control page needs cross-origin isolation and big WASM files: never touch it.
   if (new URL(req.url).pathname.includes('/sim/')) return;
+  // 3D models are 10 MB+: let the browser fetch them directly (no copying into the cache, no timeout race).
+  if (/\.glb$/i.test(new URL(req.url).pathname)) return;
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
     const network = fetch(req, { cache: 'no-store' }).then(res => {

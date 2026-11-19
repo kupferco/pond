@@ -35,6 +35,11 @@
     'html.pm-lock,html.pm-lock body{overflow:hidden!important}';
   document.head.appendChild(css);
 
+  // One model at a time: three 11 MB files downloading and decoding together is more than a phone can take.
+  var qBusy = false, qList = [];
+  function queue(job) { qList.push(job); next(); }
+  function next() { if (qBusy || !qList.length) return; qBusy = true; qList.shift()(function () { qBusy = false; next(); }); }
+
   function make(m) {
     var fig = document.createElement('figure'); fig.className = 'pm'; fig.id = 'model-' + m.id;
     var stage = document.createElement('div'); stage.className = 'pm-stage';
@@ -73,25 +78,43 @@
     var t = document.createElement('strong'); t.textContent = m.title; cap.appendChild(t);
     if (m.caption) cap.appendChild(document.createTextNode(m.caption));
     fig.append(stage, cap);
-    var started = false;
-    function start() {
-      if (started) return; started = true;
-      loadLib().then(function () {
-        var mv = document.createElement('model-viewer');
-        mv.setAttribute('src', root + m.glb); mv.setAttribute('alt', m.title);
-        mv.setAttribute('camera-controls', ''); mv.setAttribute('auto-rotate', '');
-        mv.setAttribute('environment-image', 'neutral'); mv.setAttribute('shadow-intensity', '1.2');
-        mv.setAttribute('shadow-softness', '1'); mv.setAttribute('exposure', '1.1');
-        mv.setAttribute('touch-action', full ? 'none' : 'pan-y'); mv.setAttribute('interaction-prompt', 'none');
-        var c = m.camera || {};
-        if (c.orbit) mv.setAttribute('camera-orbit', c.orbit);
-        if (c.target) mv.setAttribute('camera-target', c.target);
-        if (c.fov) mv.setAttribute('field-of-view', c.fov);
-        mv.addEventListener('load', function () { note.remove(); var i = stage.querySelector('img'); if (i) i.remove(); });
-        mv.addEventListener('error', function () { note.textContent = '3D model could not load'; });
-        stage.appendChild(mv);
-      }).catch(function () { note.textContent = '3D viewer could not load'; });
+    var started = false, retry = null;
+    function fail(msg) {
+      var old = stage.querySelector('model-viewer'); if (old) old.remove();
+      note.textContent = msg + ' '; note.style.display = '';
+      if (!retry) { retry = document.createElement('button'); retry.type = 'button'; retry.textContent = 'Try again';
+        retry.style.cssText = 'margin-left:6px;border:0;border-radius:999px;background:#1d1f24;color:#fff;font:600 13px system-ui,sans-serif;padding:6px 12px;min-height:32px;cursor:pointer';
+        retry.addEventListener('click', function () { retry.remove(); load(); }); }
+      note.appendChild(retry);
     }
+    function load() {
+      note.style.display = ''; note.textContent = 'Loading 3D…';
+      queue(function (done) {
+        var finished = false, timer;
+        function end() { if (finished) return false; finished = true; clearTimeout(timer); done(); return true; }
+        loadLib().then(function () {
+          var mv = document.createElement('model-viewer');
+          mv.setAttribute('src', root + m.glb); mv.setAttribute('alt', m.title);
+          mv.setAttribute('camera-controls', ''); mv.setAttribute('auto-rotate', '');
+          mv.setAttribute('environment-image', 'neutral'); mv.setAttribute('shadow-intensity', '1.2');
+          mv.setAttribute('shadow-softness', '1'); mv.setAttribute('exposure', '1.1');
+          mv.setAttribute('touch-action', full ? 'none' : 'pan-y'); mv.setAttribute('interaction-prompt', 'none');
+          var c = m.camera || {};
+          if (c.orbit) mv.setAttribute('camera-orbit', c.orbit);
+          if (c.target) mv.setAttribute('camera-target', c.target);
+          if (c.fov) mv.setAttribute('field-of-view', c.fov);
+          mv.addEventListener('progress', function (e) {
+            var t = e.detail && e.detail.totalProgress;
+            if (t > 0 && t < 1) { clearTimeout(timer); timer = setTimeout(function () { if (end()) fail('3D model is taking too long.'); }, 45000); note.textContent = 'Loading 3D… ' + Math.round(t * 100) + '%'; }
+          });
+          mv.addEventListener('load', function () { if (!end()) return; note.style.display = 'none'; var i = stage.querySelector('img'); if (i) i.remove(); });
+          mv.addEventListener('error', function () { if (end()) fail('3D model could not load.'); });
+          timer = setTimeout(function () { if (end()) fail('3D model is taking too long.'); }, 60000);
+          stage.appendChild(mv);
+        }).catch(function () { if (end()) fail('3D viewer could not load.'); });
+      });
+    }
+    function start() { if (started) return; started = true; load(); }
     if ('IntersectionObserver' in window) {
       var io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { io.disconnect(); start(); } }, { rootMargin: '200px' });
       io.observe(fig);
