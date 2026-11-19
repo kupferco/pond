@@ -9,6 +9,7 @@
   var links = [
     ['home', 'Home', ''],
     ['drawings', 'Drawings', 'drawings/'],
+    ['models', '3D models', 'models/'],
     ['business-model', 'Mission and business model', 'business-model/'],
     ['roadmap', 'Roadmap', 'roadmap/'],
     ['decisions', 'Decisions', 'decisions/'],

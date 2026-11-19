@@ -1,0 +1,88 @@
+// Shared 3D model viewer for the Pond site, driven by docs/models/models.json.
+// Put <div data-models data-page="home"></div> on a page (optionally data-section="Cart" or data-id="cart-base-v2");
+// every matching manifest entry is rendered as a viewer. Add a model = add one entry to models.json.
+// Style: white background, soft ground shadow, orbit controls (same as drawings/viewer.html).
+// Each viewer loads only when it scrolls near the screen; the viewer library itself loads once, on first need.
+(function () {
+  var me = document.currentScript;
+  var root = (me.getAttribute('data-root') || me.src.replace(/assets\/pond-models\.js.*$/, ''));
+  var LIB = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js';
+  var libP = null;
+  function loadLib() {
+    if (!libP) libP = customElements.get('model-viewer') ? Promise.resolve() : new Promise(function (ok, bad) {
+      var s = document.createElement('script'); s.type = 'module'; s.src = LIB; s.onload = ok; s.onerror = bad; document.head.appendChild(s);
+    });
+    return libP;
+  }
+  var css = document.createElement('style');
+  css.textContent =
+    '.pm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr));gap:16px;margin:0 0 28px}' +
+    '.pm{margin:0;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:14px;overflow:hidden}' +
+    '.pm-stage{position:relative;aspect-ratio:4/3;background:#fff;display:flex;align-items:center;justify-content:center}' +
+    '.pm-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}' +
+    '.pm-stage model-viewer{position:absolute;inset:0;width:100%;height:100%;background:#fff;--poster-color:#fff}' +
+    '.pm-note{position:relative;font:600 13px system-ui,sans-serif;color:#555;background:rgba(255,255,255,.85);padding:6px 12px;border-radius:999px}' +
+    '.pm figcaption{padding:12px 16px 14px;font:14px/1.45 system-ui,sans-serif;color:#1d1f24}' +
+    '.pm figcaption strong{display:block;font-size:15px}' +
+    '.pm-h{margin:8px 0 12px}';
+  document.head.appendChild(css);
+
+  function make(m) {
+    var fig = document.createElement('figure'); fig.className = 'pm'; fig.id = 'model-' + m.id;
+    var stage = document.createElement('div'); stage.className = 'pm-stage';
+    if (m.poster) { var p = document.createElement('img'); p.src = root + m.poster; p.alt = ''; p.loading = 'lazy'; stage.appendChild(p); }
+    var note = document.createElement('span'); note.className = 'pm-note'; note.textContent = 'Loading 3D…'; stage.appendChild(note);
+    var cap = document.createElement('figcaption');
+    var t = document.createElement('strong'); t.textContent = m.title; cap.appendChild(t);
+    if (m.caption) cap.appendChild(document.createTextNode(m.caption));
+    fig.append(stage, cap);
+    var started = false;
+    function start() {
+      if (started) return; started = true;
+      loadLib().then(function () {
+        var mv = document.createElement('model-viewer');
+        mv.setAttribute('src', root + m.glb); mv.setAttribute('alt', m.title);
+        mv.setAttribute('camera-controls', ''); mv.setAttribute('auto-rotate', '');
+        mv.setAttribute('environment-image', 'neutral'); mv.setAttribute('shadow-intensity', '1.2');
+        mv.setAttribute('shadow-softness', '1'); mv.setAttribute('exposure', '1.1');
+        mv.setAttribute('touch-action', 'pan-y'); mv.setAttribute('interaction-prompt', 'none');
+        var c = m.camera || {};
+        if (c.orbit) mv.setAttribute('camera-orbit', c.orbit);
+        if (c.target) mv.setAttribute('camera-target', c.target);
+        if (c.fov) mv.setAttribute('field-of-view', c.fov);
+        mv.addEventListener('load', function () { note.remove(); var i = stage.querySelector('img'); if (i) i.remove(); });
+        mv.addEventListener('error', function () { note.textContent = '3D model could not load'; });
+        stage.appendChild(mv);
+      }).catch(function () { note.textContent = '3D viewer could not load'; });
+    }
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { io.disconnect(); start(); } }, { rootMargin: '200px' });
+      io.observe(fig);
+    } else start();
+    return fig;
+  }
+
+  function mount(host, models) {
+    var page = host.getAttribute('data-page'), sec = host.getAttribute('data-section'), id = host.getAttribute('data-id');
+    var list = models.filter(function (m) { return (!page || m.page === page || (page === 'models')) && (!sec || m.section === sec) && (!id || m.id === id); });
+    var bySec = host.hasAttribute('data-group'), cur = null, grid = null;
+    list.forEach(function (m) {
+      if (bySec && m.section !== cur) {
+        cur = m.section; var h = document.createElement('h2'); h.className = 'pm-h'; h.textContent = cur; host.appendChild(h);
+        grid = document.createElement('div'); grid.className = 'pm-grid'; host.appendChild(grid);
+      } else if (!grid) { grid = document.createElement('div'); grid.className = 'pm-grid'; host.appendChild(grid); }
+      grid.appendChild(make(m));
+    });
+    if (!list.length) host.textContent = 'No models listed yet.';
+  }
+
+  fetch(root + 'models/models.json').then(function (r) { return r.json(); }).then(function (d) {
+    var models = d.models.slice().sort(function (a, b) { return (a.section || '') < (b.section || '') ? -1 : (a.section || '') > (b.section || '') ? 1 : 0; });
+    // keep manifest order inside a section, but keep sections together
+    var order = []; d.models.forEach(function (m) { if (order.indexOf(m.section) < 0) order.push(m.section); });
+    models = []; order.forEach(function (s) { d.models.forEach(function (m) { if (m.section === s) models.push(m); }); });
+    document.querySelectorAll('[data-models]').forEach(function (h) { mount(h, models); });
+  }).catch(function () {
+    document.querySelectorAll('[data-models]').forEach(function (h) { h.textContent = 'Could not load models.json.'; });
+  });
+})();
