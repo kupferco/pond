@@ -103,6 +103,27 @@ These add to the two top-up options above and, where they differ, win.
 
 **Rough parts for the carbon filter:** "filtro de carvão ativado para água 10 pol" with housing, R$ 40 to 120.
 
+## Nutrient tank size (owner goal: water-efficient)
+
+Docs only, estimates. The tank is fully drained every 2 to 4 weeks (see Drain above), so every litre of volume is a litre thrown away each change. Keep it as small as is safe. Stability is not a reason to keep it big: units are held down with sandbags or bolts to the floor, so size the tank for the plants only.
+
+**Today:** about 70 x 40 cm footprint, 30 cm deep, water about 15 cm deep (the rest is the pod store above the water). 70 x 40 x 15 cm is about **42 L**, a little less once the pipe bases and pump take space. For 24 plants that is about 1.75 L per plant, so it is already inside the 1 to 2 L per plant starting range.
+
+| Size for a 24-plant unit | Per plant | Good | Bad |
+|---|---|---|---|
+| 25 L | about 1 L | Least water per change | pH and EC swing fastest (a plant drinking a little moves the EC a lot), most dosing, warms quickest in a São Paulo summer (less oxygen, algae), a day or two without top-up can leave the pump dry |
+| 35 to 42 L (today) | 1.5 to 1.75 L | Slower swings, fewer doses, more buffer if top-up fails | Still small enough to warm in summer |
+| 50 L | about 2 L | Most stable | More water per change, more to warm, and a bigger footprint than the pod store needs |
+
+What gets worse as the tank shrinks:
+- **pH and EC swings:** less volume means each dose or each day of uptake changes the reading more, so the daily station test must be reliable and dosing in smaller, more frequent steps.
+- **Heat:** warm water holds less oxygen and grows algae. A small tank follows the air temperature. Shade, a light-coloured and opaque lid and tank (no light in the water), and keeping the pump flow lively help more than extra volume does.
+- **Running dry:** the float switch protects the pump, and the supply line with the float valve refills it, so this matters much less than it would with hand top-up only. Without a hose (case b) it still depends on the clean-water tank.
+
+**Recommendation (to check on a prototype):** keep the current depth and use about **30 to 35 L** working volume for 24 plants (about 1.25 to 1.5 L per plant), for example a water depth of 12 cm instead of 15, or the same tank with a filled-in corner. Do not go to 25 L until the prototype shows pH and EC stay steady on the daily test through a summer week. Start at today's 42 L for the first prototype (nothing to change), log pH, EC and water temperature, and cut the depth only if the readings are calm. This saves about 7 to 12 L per change, so roughly 90 to 150 L a year per unit at a change every 4 weeks (13 changes); more at a change every 2 weeks.
+
+**Reuse the drained water:** the old nutrient water still has nutrients, so water the garden or beds with it (it can go to the soil drain already planned). Dilute it with plain water if EC is high, and do not use it on edible leaves of other crops that you eat raw if it could carry disease from a sick unit; if a unit had root rot or algae, throw that water away. Keep it off acid-loving plants if pH is far from neutral.
+
 ## Left open for the owner
 
 - Nutrient dosing method: peristaltic pumps or gravity (drip from a bottle through a valve). Not decided.
