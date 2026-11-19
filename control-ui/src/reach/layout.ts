@@ -131,10 +131,26 @@ function tank(): string[] {
   return out;
 }
 
+/** A possible neighbouring unit on the LEFT (seen from the track side, the side the cart's leg A is on: world -y): the same tank, growing pipe and track with spine, one tank length (0.7 m) and a 50 mm gap away. A ghost: drawn
+ *  see-through and with its collisions OFF; the sweep (sweep.ts) switches them on to see whether the cart or the arm would reach into it. */
+export const GHOST_DY = TANK_L + 0.05;
+function ghostUnit(): string {
+  const geoms = [...tank(), ...tube([0, 0, LID], [0, 0, 1], 0, PIPE_TOP - LID, PIPE_RP - PIPE_WALL, PIPE_RP, 48, OBST, { name: 'pipe' }), ...track()];
+  const ghost = rgba(0.45, 0.6, 0.85, 0.22);
+  const g = geoms.join('\n').replace(/ name="/g, ' name="gh_').split(OBST).join(VIS).replace(/rgba="[^"]*"/g, ghost.trim());
+  return `<body name="ghost" pos="0 ${f(-GHOST_DY)} 0">\n${g}\n</body>`;
+}
+/** Switches the collisions of the ghost neighbour on or off. */
+export function setGhostCollide(model: import('@mujoco/mujoco').MjModel, on: boolean) {
+  const id = model.body('ghost').id;
+  model.body_contype[id] = on ? 1 : 0; model.body_conaffinity[id] = on ? 3 : 0;   // the broad phase skips a body by these (the OR of its geoms, worked out when the model is built)
+  for (let g = 0; g < model.ngeom; g++) if (model.geom_bodyid[g] === id) { model.geom_contype[g] = on ? 1 : 0; model.geom_conaffinity[g] = on ? 3 : 0; }
+}
+
 /** MJCF of the reach test scene. Every plug (body plug<n>) and pod (body pod<n>) is a static collidable part; the reach test switches the target's own geoms off while it is gripped. */
 export function reachMjcf(): string {
   const pods = PODS.map((p) => `<body name="pod${p.n}" pos="${podCapTop(p).map(f).join(' ')}" quat="0 1 0 0">${partGeoms(POD_BODY_R, POD_BODY_L, POD_COLOR, OBST, false)}</body>`);
-  const world = [`<geom name="floor" type="plane" size="1.6 1.2 0.01" pos="0 0 0" ${OBST} ${rgba(0.84, 0.88, 0.92)}/>`, ...pipeAndCollars(), ...track(), ...pods].join('\n    ');
+  const world = [`<geom name="floor" type="plane" size="1.6 1.2 0.01" pos="0 0 0" ${OBST} ${rgba(0.84, 0.88, 0.92)}/>`, ...pipeAndCollars(), ...track(), ...pods, ghostUnit()].join('\n    ');
   const base = `pos="${f(-mm(102) - 0.0085)} 0 0" xyaxes="0 0 -1 0 -1 0"`;
   const open = `<body name="cart" mocap="true" pos="${XT} ${YC} ${CART_MIN}">
       ${cartGeoms().join('\n      ')}`;
