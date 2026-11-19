@@ -253,32 +253,54 @@ def check_jaw():
 
 
 def check_drain():
-    """The drain hole of each of the four cups must open to the outside of the sleeve: the line from the cup back, radially outward through
-    the carrier and the cap, meets no sleeve material. Returns a dict (cup -> blocked volume in mm3, 0 = open)."""
+    """The five drain holes of each of the four cups (back hole radially outward, four side holes at 90 deg: +/-y round the pipe, +/-z along it)
+    must open to the outside of the sleeve: the line from the hole, outward through the lobe, carrier and cap, meets no sleeve material.
+    Returns a dict (cup, hole -> blocked volume in mm3, 0 = open). Side holes are tested with a cylinder of the hole's size, DRAIN_SLOT_H wide
+    in x at most, from the cup wall (9.4 mm out, past the 9.3 mm cup bore radius) 9.6 mm further, which is past the lobe side (14 mm) and out of the tube wall (R27 at the slot ends); beyond that the water falls free."""
     res = {}
+    xc = co.ball_cup(co.BALL_D)["centre_r"]
     for a, tag in zip(hs.INNER_ANGS, ("p60", "m60")):
         for z in (hs.ROW_Z, -hs.ROW_Z):
-            line = cq.Workplane("XY").add(cq.Solid.makeCylinder(co.DRAIN_D / 2, 200.0, cq.Vector(hs.CARRIER_R0 - 0.5, 0, z), cq.Vector(1, 0, 0)))
-            line = line.rotate((0, 0, 0), (0, 0, 1), a)
-            i = hs.result.intersect(line)
-            res["%s cup z=%+.0f" % (tag, z)] = i.val().Volume() if i.vals() else 0.0
+            lines = {"back": (hs.CARRIER_R0 - 0.5, 0, z, (1, 0, 0))}
+            for nm, d in zip(("+y", "+z", "-y", "-z"), co.SIDE_DRAIN_DIRS):
+                lines["side " + nm] = (xc, 0, z, d)
+            for nm, (x, y, zz, d) in lines.items():
+                line = cq.Workplane("XY").add(cq.Solid.makeCylinder(co.DRAIN_D / 2, 200.0, cq.Vector(x, y, zz), cq.Vector(*d)))
+                if nm.startswith("side"):      # start at the cup wall, not inside the cup: the cup body itself is not sleeve material
+                    line = cq.Workplane("XY").add(cq.Solid.makeCylinder(co.DRAIN_D / 2, 9.6, cq.Vector(x + d[0] * 9.4, y + d[1] * 9.4, zz + d[2] * 9.4), cq.Vector(*d)))
+                line = line.rotate((0, 0, 0), (0, 0, 1), a)
+                i = hs.result.intersect(line)
+                res["%s cup z=%+.0f %s" % (tag, z, nm)] = i.val().Volume() if i.vals() else 0.0
     return res
 
 
-def drain_table(step=30):
-    """Where water can leave a cup at each roll angle of the sleeve, for a pipe held HORIZONTAL with gravity along -Y (hand frame at roll 0).
-    The cup at lobe angle a sits at a + roll round the pipe. Its drain hole points outward, its open face (lip) inward.
-    'back hole': the cup is on the lower half, outward is down. 'lip gap': the cup is on the upper half, the face looks down and water leaves
-    through the 0.4 mm lip-to-ball gap. 'side': the cup is at the side; only the 0.15 mm film round the ball can stand. OPEN POINT Q10."""
+def drain_angles(step=15):
+    """Water level in each cup at every roll angle, for a pipe HORIZONTAL (gravity -Y) and for a pipe VERTICAL (gravity along the pipe, both signs).
+    The cup at lobe angle a sits at a + roll round the pipe, its axis (x, back hole) pointing radially outward. The holes are on the cup axis
+    (+x) and on +/-y, +/-z (cup frame). Water collects at the lowest point of the seat, the direction of gravity g in the cup frame; the leftover
+    crescent is R (1 - cos w), w = angle from g to the nearest hole. Returns (roll, worst angle deg, crescent mm, ml) for a pipe horizontal
+    (the worst of the two cup lobes), plus the same for the vertical case. If the cup axis points down (g . x < 0, the cup is on top and the
+    seat mouth faces down) the water leaves through the mouth, past the ball, and the row is marked 'mouth'."""
+    R = co.ball_cup(co.BALL_D)["seat_r"]
+    holes = [(1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)]
+    def worst(g):
+        gn = math.sqrt(sum(c * c for c in g))
+        return min(math.degrees(math.acos(max(-1.0, min(1.0, sum(a * b for a, b in zip(g, h)) / gn)))) for h in holes)
     rows = []
     for roll in range(0, 360, step):
-        row = []
+        w, mouth = 0.0, False
         for a in hs.INNER_ANGS:
             th = math.radians(a + roll)
-            down_out = -math.sin(th)                       # outward direction . gravity (gravity = -Y): > 0 outward is down
-            row.append("back hole" if down_out > 0.5 else "lip gap" if down_out < -0.5 else "side film")
-        rows.append((roll, row))
-    return rows
+            g = (-math.sin(th), -math.cos(th), 0.0)      # gravity (0, -1, 0) in the cup frame (x radial, y tangential, z along the pipe)
+            if g[0] < -0.5:
+                mouth = True
+            else:
+                w = max(w, worst(g))
+        # crescent: spherical cap of height h = R (1 - cos w); volume pi h^2 (3R - h) / 3
+        h = R * (1 - math.cos(math.radians(w)))
+        rows.append((roll, w, h, math.pi * h * h * (3 * R - h) / 3000.0, mouth))
+    vert = max(worst(g) for g in ((0, 0, 1), (0, 0, -1)))
+    return rows, vert
 
 
 def check():
@@ -301,9 +323,11 @@ if __name__ == "__main__":
     print("closed jaw + fixed body == hs.result:", r["jaw_same"])
     print("pipe leaves through the open jaw and the jaw swings with no collision:", not r["jaw_hits"], r["jaw_hits"])
     print("drain holes open to the outside of the sleeve (blocked volume mm3):", r["drain"], "->", "OK" if r["drain_ok"] else "BLOCKED")
-    print("drain by roll angle (horizontal pipe), +60 / -60 deg lobe cups:")
-    for roll, row in drain_table():
-        print("  roll %3d: %s" % (roll, " / ".join(row)))
+    rows, vert = drain_angles()
+    print("drain, horizontal pipe, worst cup lobe per roll (water at seat bottom vs nearest of back hole + 4 side holes):")
+    for roll, w, h, ml, mouth in rows:
+        print("  roll %3d: worst %4.1f deg from a hole, crescent %.1f mm / %.2f ml%s" % (roll, w, h, ml, "  (the other lobe's cup faces down: drains past the ball)" if mouth else ""))
+    print("drain, vertical pipe (gravity along the pipe): %.0f deg from a hole at every roll" % vert)
     for tag, obj in (("pair", pair), ("released", released), ("transfer (static hand %s)" % STATIC_HAND, transfer)):
         bb = obj.toCompound().BoundingBox()
         print("cart_sleeves %s OK, bbox %.0f x %.0f x %.0f mm" % (tag, bb.xlen, bb.ylen, bb.zlen))
