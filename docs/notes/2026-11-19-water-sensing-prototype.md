@@ -30,6 +30,57 @@ Prices are rough guesses from memory, **not quotes**. Part numbers are the model
 
 Per unit (float, sample pump, tube): about R$ 60 to 125. The station (pH, EC, temperature, ADC, rinse pump, calibration) is bought once: about R$ 360 to 640 plus calibration.
 
+## Water top-up: two options per unit
+
+Evaporation and plant use lower the water. The float switch always stops the main pump before it runs dry. What happens next is the owner's choice per unit.
+
+### Option 1 (default): notify only, a person tops up
+
+- The float switch cuts the main pump by itself (wired in series with the pump supply, see Parts). The controller reads the same switch and raises an alarm: "unit N low on water".
+- A person pours water in. Nothing extra to buy, no power, nothing that can flood.
+
+### Option 2 (optional): automatic top-up from a tap
+
+For people who can connect a garden hose from a tap to the unit. Two ways, pick one:
+
+**2a. Mechanical float valve (toilet-style), no electronics.** A small float (fill) valve sits in the tank, fed by the hose. It opens when the water drops and closes when it is back at the set level. Cheapest and most robust; uses no power. Its level is fixed by the float arm, so set it a little above the pump-safe float switch level. Drawback: if the valve seat fails (dirt in the tap water), it keeps filling, so add the overflow guard below.
+
+**2b. Electric (solenoid) valve, opened by the unit controller.** The controller opens a normally-closed 12 V solenoid valve when the float switch says low, and closes it when full. This needs a second float switch (the "full" level) or a two-level float, so the valve closes without waiting for a timer. Lets the controller log every top-up, which is useful for spotting leaks.
+
+**Safety against a stuck valve or a stuck float (both options):**
+
+- Max fill time (2b): the controller closes the valve after a fixed time per event (for example 3 minutes, set from the tank volume and the flow of the tap), raises an alarm and does not reopen until a person resets it. Also a daily cap on total fill time.
+- The valve is normally closed: if power or the controller fails, it shuts.
+- Overflow guard (both): an overflow pipe (stand pipe) in the tank, sized larger than the fill hose flow, leading to the soil. If the valve sticks open, the extra water leaves through the overflow, not over the lid or the electronics.
+- A hand shut-off tap (hose ball valve) on the hose, closed when away for long.
+- Electronics and valve outlet above the overflow level and kept dry (not under the lid mesh).
+
+**Top-up water dilutes the nutrients.** Fresh tap water lowers EC, and may shift pH. The daily EC check at the station matters more with auto top-up on: if EC falls below the target, the dosing pumps (or a person) add nutrient. Keep top-up small and frequent rather than large.
+
+### Parts and rough prices for option 2 (R$, not quotes)
+
+| Part | For | Part to search for | Rough price (R$) | Notes |
+|---|---|---|---|---|
+| Float valve, toilet-style | 2a | "torneira de boia" / "válvula de boia 1/2 pol" (plastic, hose thread) | 15 to 40 | No power. Needs a hose fitting. |
+| Solenoid valve, 12 V DC, normally closed | 2b | "válvula solenoide 12V 1/2 pol NF" (plastic, the common 1/2 inch water type) | 40 to 90 | Needs a minimum water pressure (typically 0.02 to 0.8 MPa); check the label against the tap. |
+| Second float switch ("full" level) | 2b | Same vertical mini float switch as the low level | 10 to 25 | |
+| MOSFET or relay module, 12 V | 2b | "módulo relé 5V 1 canal" or logic-level MOSFET board | 10 to 25 | Switches the valve from the controller. Add a flyback diode on the coil if the module has none. |
+| Garden hose, 1/2 inch, 3 to 5 m, tap connector and hose clamps | both | "mangueira 1/2 jardim", "conector torneira", "abraçadeira" | 40 to 90 | Length depends on the tap. |
+| Hand shut-off (hose ball valve) | both | "registro esfera 1/2" with hose fitting | 15 to 30 | |
+| Overflow pipe + fitting | both | Small PVC pipe and bulkhead ("adaptador soldável com flange") | 15 to 40 | Drains to soil. |
+| Strainer / mesh filter at the valve inlet | 2b | "filtro de tela para registro" | 10 to 20 | Stops grit sticking the valve open. |
+
+Rough total per unit: option 2a about R$ 85 to 200, option 2b about R$ 140 to 340 (the hose, shut-off and overflow are shared by both). Option 1 costs nothing extra.
+
+### Energy for the solenoid
+
+- A small 12 V solenoid valve draws about 4 to 6 W while open, and nothing when closed (normally closed, so it needs power to open, not to stay shut).
+- Example: 5 L of top-up a day at a tap flow of about 3 L/min means about 2 minutes open, 5 W x 2 min = **~0.2 Wh a day per unit** (about 2 Wh for 10 units). Even with the 3 minute cap on every event, a few events a day stay under about 1 Wh per unit.
+- Mechanical float valve (2a): 0 Wh.
+- The controller and the float switches stay on the always-on line (the second float switch also draws nothing).
+
+Effect on the budget: option 2b adds about 2 Wh a day for 10 units on top of the ~48 Wh in the [energy budget](2026-11-07-energy-budget.md), inside the 20% losses margin. Panel and battery stay as they are. The valve runs from the tap's pressure, not from a pump, so no extra pump power.
+
 ## Energy budget, updated
 
 The old line "Sensors + controller (always on) ~20 Wh" is split. Estimates, to check against real parts.
@@ -47,6 +98,8 @@ Effect on the total in the [7 Nov budget](2026-11-07-energy-budget.md): about 60
 The probes are switched on only for the daily test. Powering the pH probe board off between tests does not dry the probe: the probe sits in its storage solution.
 
 ## How to check
+
+- Top-up: if option 2 is used, hold the valve open and check the overflow pipe carries the flow to the soil, and that the max fill time stops the valve.
 
 - Read the table against the shops: confirm each part exists on Mercado Livre and replace the guessed price with the real one.
 - Check that the float switch is wired in series with the pump supply, not only read by the controller.
