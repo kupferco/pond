@@ -44,13 +44,18 @@ BEND_CLEAR = 1.5                 # ASSUMED bore clearance beyond the sagitta
 OMNI_WALL = 5.0                  # ASSUMED lobe wall beside an omni wheel
 ARM_W_OMNI = co.OMNI_W + 2 * POCKET_CLEAR + 2 * OMNI_WALL      # 30.8: width of the 180 deg lobe
 SHAFT_HOLE_D = co.SHAFT_D + 0.6  # shaft clearance hole
+# Layout B motor standoffs (#312). The plate-side gearbox (28 mm wide, x -49..-21) must clear the tube (R34.5): its inner corner at x = -21 needs
+# y >= 28, so the drive gearbox face stands 29.5 off the pipe axis (ASSUMED: a 14 mm longer output shaft or a printed spacer, the real gearmotor's own bearing carries it).
+# The roll motor (body 28 across, axis 11 mm past its gearbox face) stands 3 mm further below the sleeve end so its top clears the end face.
+DRIVE_MOTOR_WALL_Y = 28.5        # + the 1 mm gap in cart_omni.drive_motor_parts = gearbox face at y = -29.5
+ROLL_MOTOR_WALL_Z = 3.0          # roll gearbox face at z = -(SLEEVE_L / 2 + 3 + 1)
 OUTER_ANG = 180.0                # lobe with both driven omni wheels
 INNER_ANGS = (60.0, -60.0)       # lobes with the sprung ball-cup pairs, towards the spine
 DRIVE_Z, ROLL_Z = ROW_Z, -ROW_Z  # drive wheel in the top row, roll wheel in the bottom row
 OPENING_W = 18.0                 # width of the C gap at its narrow middle (+X); passes the M8 nut
 FUNNEL_MOUTH_W = 30.0            # width of the gap at each end
 FUNNEL_L = 14.0                  # axial length of each flare
-PAD_X0, PAD_X1 = -24.0, 0.0      # base mounting pad extent in X
+PAD_X0, PAD_X1 = -20.0, 0.0      # base mounting pad extent in X (v5.1, #312: -24 -> -20 so the plate-side motors (x -49..-21) clear the pad)
 PAD_Y0, PAD_Y1 = -50.0, -22.0    # pad extent in Y (front = -Y); v4 was -40..-21
 PAD_HOLE_D = 4.3                 # M4 clearance holes for the plate
 PAD_HOLE_Z = 40.0                # +/- Z spacing of the pad holes from centre (v4: 15, the sleeve is now 124 long)
@@ -141,7 +146,7 @@ body = body.cut(bore)
 
 # drive wheel pocket (wheel on its edge, axle along Y) and shaft holes
 pk = cq.Workplane("XY").box(R_ARM_OMNI + 2 - 12, co.OMNI_W + 2 * POCKET_CLEAR, POCKET_H).translate(((R_ARM_OMNI + 2 + 12) / 2, 0, DRIVE_Z))
-sh = _cyl(SHAFT_HOLE_D / 2, ARM_W_OMNI, (0, 1, 0), (co.OMNI_AXLE_R, -ARM_W_OMNI / 2 + 2.5, DRIVE_Z))   # +Y through, -Y blind (2.5 skin)
+sh = _cyl(SHAFT_HOLE_D / 2, ARM_W_OMNI, (0, 1, 0), (co.OMNI_AXLE_R, -ARM_W_OMNI / 2 - 2.5, DRIVE_Z))   # layout B (#312): -Y through (the motor is on the plate side), +Y blind (2.5 skin)
 body = body.cut(rot(pk, OUTER_ANG)).cut(rot(sh, OUTER_ANG))
 # roll wheel pocket (wheel flat, axle along Z)
 rp = _cyl(co.OMNI_R + POCKET_CLEAR, co.OMNI_W + 2 * POCKET_CLEAR, (0, 0, 1), (co.OMNI_AXLE_R, 0, ROLL_Z - co.OMNI_W / 2 - POCKET_CLEAR))

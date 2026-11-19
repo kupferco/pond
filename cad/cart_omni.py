@@ -141,24 +141,79 @@ def place_roll(shape, z, ang=180.0, centre_r=OMNI_AXLE_R):
     return _spin(shape.translate((centre_r, 0, z)), ang)
 
 
-def drive_motor_parts(z, wall_y, ang=180.0, centre_r=OMNI_AXLE_R, shaft_to=-12.0):
-    """Motor, gearbox and shaft of the drive wheel, on the +Y side of the wall face at y = wall_y (+ 1 mm gap). Dict name -> (shape, colour)."""
+LAYOUT = "B"                     # OpenPocket #312, owner's decision: layout B. "today" keeps the old sideways motors for the before/after picture
+# Layout B (docs/plans/cart-motors-inward-plan.md section 6): both motors on the PLATE side (-Y) of the outer lobe, nothing on the +Y (plant)
+# side and nothing pointing out sideways (-X). Final hand frame, wheels at x = -35 (angle 180):
+#   drive motor: gearbox on the -Y side of the lobe wall (y -16.4 .. -38.4), body along the PIPE pointing inward, towards the sleeve middle (z = 0);
+#   roll motor:  below the sleeve end (as before), body pointing -Y, towards the plate, under the plate's lower edge.
+# Linear maps motor frame -> hand frame (all right-handed, det +1): drive from the top row (X, Y, Z) = (y, -z, -x); roll (X, Y, Z) = (-y, -x, -z).
+_M_DRIVE_TOP = [[0, 1, 0, 0], [0, 0, -1, 0], [-1, 0, 0, 0]]
+_M_DRIVE_BOTTOM = [[0, -1, 0, 0], [0, 0, -1, 0], [1, 0, 0, 0]]
+_M_ROLL = [[0, -1, 0, 0], [-1, 0, 0, 0], [0, 0, -1, 0]]
+
+
+def _rot_seq(rows):
+    """Sequence of quarter turns (axis, deg) about the origin whose product is the linear map `rows` (3 rows, orthonormal, det +1)."""
+    import itertools
+    import numpy as np
+    target = np.array([r[:3] for r in rows], dtype=float)
+    def mat(ax, deg):
+        c, sn = round(math.cos(math.radians(deg))), round(math.sin(math.radians(deg)))
+        return {"x": np.array([[1, 0, 0], [0, c, -sn], [0, sn, c]]), "y": np.array([[c, 0, sn], [0, 1, 0], [-sn, 0, c]]),
+                "z": np.array([[c, -sn, 0], [sn, c, 0], [0, 0, 1]])}[ax]
+    steps = [(a, d) for a in "xyz" for d in (90, -90, 180)]
+    for n in range(0, 4):
+        for seq in itertools.product(steps, repeat=n):
+            m = np.eye(3)
+            for ax, deg in seq:
+                m = mat(ax, deg) @ m          # applied in order
+            if np.allclose(m, target):
+                return seq
+    raise ValueError("no quarter-turn sequence")
+
+
+def _map(shape, rows, at, ang):
+    """Apply the linear map `rows` (motor frame -> final hand frame at ang 180) to a motor-frame shape, move it to `at`, spin by ang - 180 about Z."""
+    s = shape
+    for ax, deg in _rot_seq(rows):
+        s = s.rotate((0, 0, 0), {"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}[ax], deg)
+    return _spin(s.translate(at), ang - 180.0)
+
+
+def drive_motor_parts(z, wall_y, ang=180.0, centre_r=OMNI_AXLE_R, shaft_to=-12.0, layout=None):
+    """Motor, gearbox and shaft of the drive wheel at the wall face y = wall_y (+ 1 mm gap). Dict name -> (shape, colour).
+    Layout B: on the -Y (plate) side, body along the pipe towards z = 0. 'today': +Y side, body radially outward."""
+    layout = layout or LAYOUT
     out = {}
+    if layout == "today":
+        for k, (s, col) in motor().items():
+            out["drive_" + k] = (_spin(s.rotate((0, 0, 0), (1, 0, 0), -90).translate((centre_r, wall_y + 1.0, z)), ang), col)
+        out["drive_shaft"] = (_spin(_shaft(wall_y + 1.0 - shaft_to).rotate((0, 0, 0), (1, 0, 0), -90).translate((centre_r, wall_y + 1.0, z)), ang),
+                              (0.8, 0.8, 0.82, 1))
+        return out
+    rows = _M_DRIVE_TOP if z > 0 else _M_DRIVE_BOTTOM
+    at = (-centre_r, -(wall_y + 1.0), z)
     for k, (s, col) in motor().items():
-        out["drive_" + k] = (_spin(s.rotate((0, 0, 0), (1, 0, 0), -90).translate((centre_r, wall_y + 1.0, z)), ang), col)
-    out["drive_shaft"] = (_spin(_shaft(wall_y + 1.0 - shaft_to).rotate((0, 0, 0), (1, 0, 0), -90).translate((centre_r, wall_y + 1.0, z)), ang),
-                          (0.8, 0.8, 0.82, 1))
+        out["drive_" + k] = (_map(s, rows, at, ang), col)
+    out["drive_shaft"] = (_map(_shaft(wall_y + 1.0 - shaft_to), rows, at, ang), (0.8, 0.8, 0.82, 1))     # from the gearbox face +Y into the wheel, 12 mm past its middle
     return out
 
 
-def roll_motor_parts(z, wall_z, ang=180.0, centre_r=OMNI_AXLE_R, shaft_to=None):
-    """Motor, gearbox and shaft of the roll wheel, on the -Z side below the end face at z = wall_z (negative; + 1 mm gap)."""
+def roll_motor_parts(z, wall_z, ang=180.0, centre_r=OMNI_AXLE_R, shaft_to=None, layout=None):
+    """Motor, gearbox and shaft of the roll wheel, on the -Z side below the end face at z = wall_z (negative; + 1 mm gap).
+    Layout B: body pointing -Y (towards the plate). 'today': body radially outward."""
+    layout = layout or LAYOUT
     out = {}
     top = (z + OMNI_W / 2 + 3.0) if shaft_to is None else shaft_to
     for k, (s, col) in motor().items():
-        out["roll_" + k] = (_spin(s.rotate((0, 0, 0), (1, 0, 0), 180).translate((centre_r, 0, wall_z - 1.0)), ang), col)
-    out["roll_shaft"] = (_spin(_shaft(top - (wall_z - 1.0)).rotate((0, 0, 0), (1, 0, 0), 180).translate((centre_r, 0, wall_z - 1.0)), ang),
-                         (0.8, 0.8, 0.82, 1))
+        if layout == "today":
+            out["roll_" + k] = (_spin(s.rotate((0, 0, 0), (1, 0, 0), 180).translate((centre_r, 0, wall_z - 1.0)), ang), col)
+        else:
+            out["roll_" + k] = (_map(s, _M_ROLL, (-centre_r, 0, wall_z - 1.0), ang), col)
+    if layout == "today":
+        out["roll_shaft"] = (_spin(_shaft(top - (wall_z - 1.0)).rotate((0, 0, 0), (1, 0, 0), 180).translate((centre_r, 0, wall_z - 1.0)), ang), (0.8, 0.8, 0.82, 1))
+    else:
+        out["roll_shaft"] = (_map(_shaft(top - (wall_z - 1.0)), _M_ROLL, (-centre_r, 0, wall_z - 1.0), ang), (0.8, 0.8, 0.82, 1))
     return out
 
 

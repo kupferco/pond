@@ -1,6 +1,6 @@
 # Cart redesign: motors inward, clear of lettuce (OpenPocket #312)
 
-Status: PLAN ONLY. Nothing in the sim, the CAD or the drawings is changed. Waiting for the owner to answer section 6 and pick a layout.
+Status: OWNER PICKED LAYOUT B (2026-11-19). Section 6 now holds the answers; the CAD, sim and drawings are updated for layout B (section 7). Sections 1 to 5 are the original plan and are left as written.
 Picture: `docs/plans/img/cart-motors-layouts.svg` (cross-section looking down the pipe: today, layout A, layout B; red = motor, green dashed = sleeve silhouette).
 Numbers come from `cad/cart_omni.py`, `cad/hand_sleeve.py`, `cad/cart_dims.py` (roll_budget) and the #277 finding. Anything not in the repo is marked ASSUMED.
 
@@ -48,14 +48,34 @@ Drive along a vertical pipe has the same friction issue (the cart's 30 N weight 
 
 **Layout A** now, with C kept as a later upgrade. Reasons: nothing leaves the sleeve silhouette towards the plants; the only cost is length, which can be checked in CAD before committing; the printed parts stay simple. B is only worth it if the bend check fails and the plants are known to grow on the spine side only.
 
-## 6. Questions for the owner (answer before anything is built)
+## 6. Owner's answers and what was built (layout B)
 
-1. Plants: which way do heads grow relative to the track, and how big do they get (I assumed 200 mm wide, 150 mm out)? Does the cart ever have to pass mature heads, or only seedlings and gaps?
-2. Is a longer cart acceptable (about 218 mm instead of 124 on the pipe)? It affects the bend, the lowest stop at 0.64 m, and the spine bracket.
-3. Roll hold: may I plan a separate latch or brake for the roll (needed whatever the motors do), or do you prefer rubber on the pipe?
-4. Do you know the real motor weight and size you will buy (I assumed 28 x 55 mm worm gearmotor, 0.2 kg)?
-5. Layout A, B or C (or "A first, C later")?
+Decision: **layout B**. Both motors of each hand go on the plate (arm) side, tucked under the plate and pointing inward, so nothing points out towards the plants. The cart stays its current length (sleeve 124 mm, pad and plate length unchanged).
 
-## 7. After the pick (not started)
+| # | Question | Answer |
+|---|---|---|
+| 1 | Plants and head size | ASSUMPTION kept: mature head 200 mm across, 150 mm out of its cup. Not confirmed with real plants. With layout B no motor, bolt or cable is on the plant side of the lobe any more; the wheels (R54) and sleeve (R61) are unchanged, so a mature head still reaches the track tube (section 2). |
+| 2 | Longer cart | Not needed. Layout B keeps the 124 mm sleeve and the 146 mm plate. |
+| 3 | Roll hold | Separate later fix. The roll brake (latch, brake or rubber) is NOT part of this change; motor position cannot fix the roll-hold problem (section 4). |
+| 4 | Motor size | ASSUMPTION kept: 28 mm x 55 mm worm gearmotor, 0.2 kg each (gearbox 30 x 28 x 22 mm). Real motor still to be bought and measured. |
+| 5 | Layout | B. |
 
-Edit `cart_omni.py` motor placement, `hand_sleeve.py` (cradle, lobe), then the sim (`control-ui/src/cart/omni.ts`) and the drawings; re-run `check()` in `cart_assembly.py`, the reach and swing checks; render iso, front, top, side and the GLB.
+How layout B is built (hand frame: pipe along Z, plate on -Y, outer lobe on -X, wheels 35 mm off the pipe axis):
+- **Drive motor:** gearbox on the plate side of the outer lobe (y -29.5 to -51.5), its body lying along the pipe and pointing inward, towards the sleeve middle (z 22 down to -33). Nothing on the plant (+Y) side, nothing sticking out sideways.
+- **Roll motor:** below the sleeve end as before (3 mm lower than before), body pointing towards the plate (-Y), so it sits under the plate's lower edge.
+- Widest point of a hand from the pipe axis on the plant side: 61 mm (the sleeve), was 114 mm. Sideways (-X): 61 mm, was 106 mm.
+- Two new numbers needed to make it fit, both ASSUMED: (a) the drive gearbox stands 29.5 mm off the pipe axis so its corner clears the sleeve tube (R34.5), so the output shaft is about 14 mm longer or has a printed spacer; (b) the mounting pad is 20 mm wide instead of 24 so the motors clear it; the plate is 160 mm wide instead of 168 (the arm base needs 86). Both need a bench check.
+
+**Spine-side roll check** (`cad/roll_swing_estimate.py`, now with the motors as boxes; roll about the static pipe, free hand released, straight leg):
+- Rolling towards the spine, the first thing the free pipe meets is still the plate, at **15.0 degrees**, the same as before. The motors alone never touch the free pipe in either roll direction up to the 35.5 degrees the free hand needs to get off its pipe (today's motors did not either). So the motors under the plate do **not** make the clash worse.
+- On the bend the clash is at **13.0 degrees** (12.2 before). The 0.8 degree gain comes only from the narrower plate (pad 24 to 20 mm), not from the motors.
+- The 3D check in `cad/cart_sleeves.py` (motors against the free pipe, any roll) agrees: the motors never meet the free pipe in a full turn (before: 151 degrees), and the other checks there (spacing, jaw swing, drain) still pass.
+- Rolling towards the plate: clears with no contact, as before.
+- The 15 degree clash is still far below the 35.5 degrees needed: the plate, battery and arm still block a release by rolling towards the spine (finding #277 stands). Rolling towards the plate works.
+- Limit of this estimate: it is a 2D section. On a bend, motors that stand beyond the sleeve ends (the roll motor, today's and layout B's alike) meet a pipe that curves away, so the bend is not modelled for motors; it needs the 3D check later.
+
+Still open (not part of this task): roll brake; real motor dimensions; real head size; the shaft support for the 14 mm longer drive shaft.
+
+## 7. What changed
+
+`cad/cart_omni.py` (motor placement, `LAYOUT`), `cad/hand_sleeve.py` (pad 20 mm, shaft hole through the plate side, standoffs), `cad/cart_wheel_pairs.py`, `cad/roll_swing_estimate.py` (motor boxes), `control-ui/src/cart/omni.ts` (sim motors), then renders in `cad/renders/` (`cart-motors-before-after.png` shows before and after, plus the usual iso, front, top and side of every changed part and `assembly.glb`). `cad/render_motor_layouts.py` makes the before/after picture.
