@@ -2,6 +2,7 @@ name: Control UI hosting
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, closed]
     paths: ['control-ui/**', 'docs/**', '.github/workflows/control-ui.yml']
   push:
     branches: [main]
@@ -15,7 +16,7 @@ permissions:
 jobs:
   deploy:
     # Fork PRs get no secrets, so skip them.
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'push' || (github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -44,12 +45,19 @@ jobs:
       - name: Preview channel (pull requests)
         id: preview
         if: github.event_name == 'pull_request' && steps.creds.outputs.available == 'true'
+        # The preview is nice to have. If the channel quota is reached (HTTP 429), warn instead of failing the PR.
+        continue-on-error: true
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POND_CONTROL }}
           projectId: pond-grow
           entryPoint: control-ui
+          # Safety net: channels delete themselves if the cleanup job below ever misses one.
+          expires: 7d
+      - name: Warn if the preview failed
+        if: github.event_name == 'pull_request' && steps.preview.outcome == 'failure'
+        run: echo "::warning::The Firebase preview channel could not be deployed (often the channel quota, HTTP 429). The build and tests passed; delete old channels in the Firebase console."
       - name: Tell Viber the preview is ready
         if: github.event_name == 'pull_request' && steps.preview.outcome == 'success'
         env:
@@ -88,3 +96,28 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json" \
             npx --yes firebase-tools@latest deploy --only firestore:rules,storage --project pond-grow --non-interactive \
             || echo "::warning::Could not deploy Firestore/Storage rules. Is Firestore and Storage enabled in the console, and does the service account have Firebase Rules Admin?"
+
+  cleanup-preview:
+    # Delete this PR's preview channel when the PR is closed, merged or not.
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete preview channel
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POND_CONTROL }}
+          CHANNEL: pr${{ github.event.pull_request.number }}
+        run: |
+          if [ -z "$SA" ]; then
+            echo "::warning::FIREBASE_SERVICE_ACCOUNT_POND_CONTROL is not set, so the preview channel was not deleted."
+            exit 0
+          fi
+          printf '%s' "$SA" > "$RUNNER_TEMP/firebase-sa.json"
+          if out=$(GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json" \
+              npx --yes firebase-tools@latest hosting:channel:delete "$CHANNEL" --project pond-grow --force --non-interactive 2>&1); then
+            echo "$out"
+          elif echo "$out" | grep -qiE 'not found|404'; then
+            echo "Channel $CHANNEL does not exist, nothing to delete."
+          else
+            echo "$out"
+            echo "::warning::Could not delete preview channel $CHANNEL. It will expire on its own."
+          fi
