@@ -39,7 +39,7 @@ def track_support_parts():
     return out
 
 
-def unit_parts(door_on=True, cutaway=False, lid_only=False):
+def unit_parts(door_on=True, cutaway=False, lid_only=False, dy=None):
     """name -> (shape in the cart frame, colour): lid corner, station, unit socket."""
     p = {}
     for n, (s, c) in ws.context_parts().items():
@@ -49,7 +49,7 @@ def unit_parts(door_on=True, cutaway=False, lid_only=False):
             p[n] = (to_cart(s), c)
     for n, (s, c) in track_support_parts().items():
         p[n] = (to_cart(s), c)
-    for n, (s, c) in ws.station_parts(door_on, cutaway).items():
+    for n, (s, c) in ws.station_parts(door_on, cutaway, dy=dy).items():
         p[n] = (to_cart(s), c)
     for n, (s, c) in ws.unit_socket().items():
         p[n] = (to_cart(s), c)
@@ -72,9 +72,9 @@ def scene(kind="full", door_on=True, cutaway=False, lid_only=False):
     return a
 
 
-def check():
+def check(dy=None):
     out = {}
-    up = unit_parts(True, False)
+    up = unit_parts(True, False, dy=dy)
     st = {n: v for n, v in up.items() if n.startswith("ws_") or n.startswith("unit_")}
     ctx = {n: v for n, v in up.items() if n not in st}
     out["dock_x_unit_maps_to_cart_z_mm"] = 0.0

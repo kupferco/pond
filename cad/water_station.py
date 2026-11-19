@@ -42,12 +42,14 @@ PROBES = {                       # name: (y, radius, tip x, body length, colour)
     "temp_probe": (-12.0, 3.0, 112.0, 60.0, (0.72, 0.72, 0.75, 1)),
 }
 BOSS_X0, BOSS_X1, BOSS_Y, BOSS_Z0, BOSS_Z1 = 118.0, 134.0, 22.0, 346.0, 370.0     # flat boss on the cup wall that carries the three grommets
-OFF_Y = 40.0                     # v2: the whole station is moved 40 mm inboard (+y, away from the track): the cart's omni sleeve is R 61 round the 16 mm track pipe, so the
-                                 # box front (was y -36, 24 mm from the track axis) hit it. Now the front is at y +4, 64 mm from the track axis (3 mm clear of R 61). Found by water_assembly.py.
+OFF_Y = 50.0                     # v2: the whole station is moved 40 mm inboard (+y, away from the track): the cart's omni sleeve is R 61 round the 16 mm track pipe, so the
+                                 # box front (was y -36, 24 mm from the track axis) hit it. Now the front is at y +14, 74 mm from the track axis (13 mm clear of R 61). Found by water_assembly.py.
+                                 # 19 Nov follow-up: 40 -> 50. Main's #315 bottom support post (x 115..135, y -10..6) and its base plate (x 103..147, y -20..16) clashed with the box and the front legs at 40;
+                                 # at 50 the box front is 8 mm clear of the post and the front legs (y 22) 6 mm clear of the base plate. Found by water_station_position.py.
 SOCKET_Z_TOP = 462.0             # top of the nozzle socket on the roof (the old funnel rim was 468)
 SOCKET_RI, SOCKET_RO = 6.0, 11.0  # nozzle 10 mm OD (water_sampler.NOZZLE_R 5 + 0.5 clearance... socket bore 6 mm radius)
 SAMPLE_ML = 70.0                 # ASSUMED sample size metered by pump turns (owner: about 50 to 100 ml)
-UNIT_SOCKET = (20.0, -48.0)      # the unit's own passive socket on the lid (x, y): 80 mm from the dock centre, clear of the pipe (y +-17), lid bar (y +-10), seedling storage (x >= 70) and the station box (x >= 60)
+UNIT_SOCKET = (20.0, -105.0)     # the unit's own passive socket on the lid (x, y): 80 mm from the dock centre, 45 mm OUTBOARD of the track axis (y -60), so its 20 mm mouth radius leaves the track's footprint 8 mm clear (it used to sit at y -48, right under the track); clear of the pipe (y +-17), lid bar (y +-10), seedling storage (x >= 70) and the station box (x >= 60)
 DRAIN_Y_OUT = 215.0              # the drain tube leaves over the back lid edge (lid edge y = 200)
 DRAIN_Z_RUN = 324.0              # the drain tube runs between lid bar top (319) and the floor (330)
 
@@ -159,7 +161,7 @@ def door():
 
 LEG = 20.0                       # v3: four printed 20 x 20 legs carry the box from the lid up to its floor (no gap, no floating); the drain tube runs between them
 LEG_XS = (60.0, 240.0)           # leg x0 (leg is LEG wide); the drain tube is at x = 100, so it passes between the legs
-LEG_YS = (-28.0, 30.0)           # station-local y0; after OFF_Y the front legs stand at y 12..32, clear of the lid bar (y +-10)
+LEG_YS = (-28.0, 30.0)           # station-local y0; after OFF_Y the front legs stand at y 22..42, clear of the lid bar (y +-10)
 
 
 def legs():
