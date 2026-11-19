@@ -19,9 +19,25 @@ CART = (0.0, -0.2, 0.0, 0.45, 0.45)         # from above on the cart on leg A an
 CART_FRONT = (0.0, 0.0, 0.85, 0.55, 0.45)
 
 
+# the roll sweep round (OpenPocket #313): the ghost neighbour stands 0.75 m to the left (-y), so the pictures are framed on both units
+GHOST = {"iso": (0.0, -0.35, 0.98, 1.45, 1.45), "front": (0.0, 0.0, 0.98, 0.75, 1.05), "side": (0.0, -0.35, 0.98, 0.9, 1.05), "top": (0.0, -0.35, 0.0, 0.55, 0.8)}
+
+
+def sweep_main(src, out):
+    R.FLOOR = (-0.7, 0.8, -1.3, 0.6)
+    for stage, name in (("turn90", "reach-test-turn90-v1"), ("turn90-example", "reach-test-turn90-example-v1")):
+        tris = json.load(open(os.path.join(src, stage + ".json")))
+        for v, box in GHOST.items():
+            R.draw(tris, v, box, os.path.join(out, f"{name}-{v}.png"))
+        if stage == "turn90-example":
+            R.draw(tris, "hole", (0.0, 0.0, 1.05, 0.4, 0.4), os.path.join(out, f"{name}-closeup.png"))
+
+
 def main():
     src, out = sys.argv[1], sys.argv[2]
     os.makedirs(out, exist_ok=True)
+    if len(sys.argv) > 3 and sys.argv[3] == "sweep":
+        return sweep_main(src, out)
     for stage, name in (("result", "reach-test-result-v3"), ("example", "reach-test-example-v3"), ("cart-asis", "reach-test-cart-asis-v3"), ("cart-rolled", "reach-test-cart-rolled-v3")):
         tris = json.load(open(os.path.join(src, stage + ".json")))
         if stage == "result":
