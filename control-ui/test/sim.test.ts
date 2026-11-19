@@ -211,7 +211,8 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   // scene is still the old hinge scene until the scene part of the plan (docs/plans/cart-roll-redesign-plan.md section 10), so only the
   // numbers that still exist in cart_dims.py are compared, and the hinge-era numbers in cart/dims.ts are frozen legacy values.
   const bad = [...same(['PLATE_T', 'ARM_BASE_W', 'PART_GAP', 'END_GAP'], cd, DIMS as any),
-    ...same(['PAD_X0', 'PAD_X1'], hs, { PAD_X0: DIMS.PAD_X0, PAD_X1: DIMS.PAD_X1 })];
+    // PAD_X0 is the hinge-era -24 in cart/dims.ts (frozen legacy: its hinge axes and plate -83..83 are derived from it); the CAD pad is -20 since #312 (layout B motors)
+    ...same(['PAD_X1'], hs, { PAD_X1: DIMS.PAD_X1 })];
   check('plate and pad numbers in cart/dims.ts that still exist in the CAD equal the CAD files', bad.length === 0, bad.join(','));
   check('derived layout (mirrored hands): hinge axes at -90 and +90, plate -83..+83 (166 wide), arm at 0, motors at +-53', DIMS.hingeX(2) === -90 && DIMS.hingeX(1) === 90 && DIMS.PLATE_X0 === -83 && DIMS.PLATE_X1 === 83 && DIMS.ARM_X === 0 && DIMS.MOTOR_B_X === -53 && DIMS.MOTOR_C_X === 53 && DIMS.PLATE_Y0 === -52);
   check('the scene has only two pipes, B and C: no pipe D anywhere', Object.keys(DIMS.PIPE_X).join() === 'B,C' && !/pipeD/.test(transferMjcf()));
@@ -562,7 +563,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     ['ROW_Z', hs, OC.ROW_Z], ['TUBE_R_MIN', hs, OC.TUBE_R_MIN], ['END_WALL', hs, OC.END_WALL], ['PAD_X0', hs, OC.PAD.x0], ['PAD_X1', hs, OC.PAD.x1], ['PAD_Y0', hs, OC.PAD.y0], ['PAD_Y1', hs, OC.PAD.y1],
     ['PIPE_D', co, 2 * OC.R_PIPE], ['BALL_D', co, OC.BALL_D], ['GB_T', co, OC.GB_T], ['GB_L', co, OC.GB_L]].filter(([n, src, v]) => num(src as string, n as string) !== v).map((x) => x[0]);
   check('omni cart numbers in cart/omni.ts equal cad/cart_dims.py, hand_sleeve.py and cart_omni.py', bad.length === 0, bad.join(','));
-  check('derived: sleeve 124 long, outer lobe 61, plate -84..84 and -56..-50, wheel reach 54', OC.SLEEVE_L === 2 * OC.ROW_Z + 2 * OC.OMNI_R + 2 + 2 * OC.END_WALL && OC.R_ARM_OMNI === OC.OMNI_REACH + 3 + OC.END_WALL && OC.PLATE_X0 === -84 && OC.PLATE_X1 === 84 && OC.PLATE_Y0 === -56 && OC.OMNI_REACH === 54);
+  check('derived: sleeve 124 long, outer lobe 61, plate -80..80 and -56..-50, wheel reach 54', OC.SLEEVE_L === 2 * OC.ROW_Z + 2 * OC.OMNI_R + 2 + 2 * OC.END_WALL && OC.R_ARM_OMNI === OC.OMNI_REACH + 3 + OC.END_WALL && OC.PLATE_X0 === -80 && OC.PLATE_X1 === 80 && OC.PLATE_Y0 === -56 && OC.OMNI_REACH === 54);
 
   const om = mj.MjModel.from_xml_string(OC.omniCartMjcf()), od = new mj.MjData(om);
   const gid = (n: string) => om.geom(n).id;

@@ -72,7 +72,7 @@ if __name__ == "__main__":
     sc = scenes()
     if not want or "assembly.glb" in want:
         import cart_assembly as ca
-        ca.result.export(os.path.join(R, "assembly.glb"))
+        ca.result.export(os.path.join(R, "assembly.glb"), tolerance=0.5, angularTolerance=0.3)   # coarser mesh: 11 MB instead of 50 MB (#316)
         print("GLB done", flush=True)
     for name, (assy, title) in sc.items():
         if not want or name in want:

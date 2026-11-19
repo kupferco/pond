@@ -5,6 +5,7 @@ export const PIPE_SPACING = 120;                 // cart_dims.py PIPE_SPACING: p
 export const HX = PIPE_SPACING / 2;
 export const PIPE_R = 16;                        // hand_sleeve.py R_PIPE
 export const SLEEVE_R = 34, SLEEVE_L = 90;       // hand_sleeve.py WALL_OUT_R, SLEEVE_L
+// PAD_X0 = -24 is the hinge-era value (frozen legacy, the CAD pad is -20 since #312)
 export const PAD_X0 = -24, PAD_X1 = 0, PAD_Y0 = -40, PAD_Y1 = -21;
 export const HINGE_R = 5, HINGE_LEAF_T = 3, PLATE_T = 6, HINGE_CLEAR = 2;
 export const HINGE_OFF_B = PAD_X0 - 6;           // -30: hand B's hinge axis, relative to its pipe
