@@ -16,7 +16,7 @@
   }
   var css = document.createElement('style');
   css.textContent =
-    '.pm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr));gap:16px;margin:0 0 28px}' +
+    '.pm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(480px,100%),1fr));gap:16px;margin:0 0 28px}' +
     '.pm{margin:0;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:14px;overflow:hidden}' +
     '.pm-stage{position:relative;aspect-ratio:4/3;background:#fff;display:flex;align-items:center;justify-content:center}' +
     '.pm-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}' +
@@ -24,7 +24,15 @@
     '.pm-note{position:relative;font:600 13px system-ui,sans-serif;color:#555;background:rgba(255,255,255,.85);padding:6px 12px;border-radius:999px}' +
     '.pm figcaption{padding:12px 16px 14px;font:14px/1.45 system-ui,sans-serif;color:#1d1f24}' +
     '.pm figcaption strong{display:block;font-size:15px}' +
-    '.pm-h{margin:8px 0 12px}';
+    '.pm-h{margin:8px 0 12px}' +
+    '@media(min-width:900px){.pm-stage{aspect-ratio:auto;height:min(62vh,560px);min-height:400px}}' +
+    '.pm-fs{position:absolute;top:10px;right:10px;z-index:3;display:flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border:1px solid rgba(0,0,0,.18);border-radius:999px;background:rgba(255,255,255,.92);color:#1d1f24;font:600 14px system-ui,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}' +
+    '.pm-fs:hover{background:#fff}' +
+    '.pm-stage.pm-full{position:fixed;inset:0;z-index:2147483000;width:100vw;height:100vh;height:100dvh;min-height:0;aspect-ratio:auto;background:#fff}' +
+    '.pm-stage.pm-full .pm-fs{top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));min-height:44px;padding:0 18px;background:#1d1f24;color:#fff;border-color:#1d1f24}' +
+    '.pm-title{display:none;position:absolute;top:max(12px,env(safe-area-inset-top));left:max(14px,env(safe-area-inset-left));z-index:3;max-width:60%;font:600 15px system-ui,sans-serif;color:#1d1f24;background:rgba(255,255,255,.85);padding:8px 12px;border-radius:999px}' +
+    '.pm-stage.pm-full .pm-title{display:block}' +
+    'html.pm-lock,html.pm-lock body{overflow:hidden!important}';
   document.head.appendChild(css);
 
   function make(m) {
@@ -32,6 +40,35 @@
     var stage = document.createElement('div'); stage.className = 'pm-stage';
     if (m.poster) { var p = document.createElement('img'); p.src = root + m.poster; p.alt = ''; p.loading = 'lazy'; stage.appendChild(p); }
     var note = document.createElement('span'); note.className = 'pm-note'; note.textContent = 'Loading 3D…'; stage.appendChild(note);
+    var ttl = document.createElement('span'); ttl.className = 'pm-title'; ttl.textContent = m.title; stage.appendChild(ttl);
+    var fs = document.createElement('button'); fs.type = 'button'; fs.className = 'pm-fs';
+    fs.setAttribute('aria-label', 'Full screen: ' + m.title); fs.textContent = '⛶ Full screen'; stage.appendChild(fs);
+    var full = false;
+    function setFull(on) {
+      if (on === full) return; full = on;
+      stage.classList.toggle('pm-full', on); document.documentElement.classList.toggle('pm-lock', on);
+      fs.textContent = on ? '✕ Close' : '⛶ Full screen';
+      fs.setAttribute('aria-label', (on ? 'Exit full screen: ' : 'Full screen: ') + m.title);
+      var mv = stage.querySelector('model-viewer');
+      if (mv) mv.setAttribute('touch-action', on ? 'none' : 'pan-y');
+      if (on) { fs.focus({ preventScroll: true }); document.addEventListener('keydown', onKey); }
+      else document.removeEventListener('keydown', onKey);
+    }
+    function onKey(e) { if (e.key === 'Escape') exit(); }
+    function exit() {
+      if (document.fullscreenElement === stage || document.webkitFullscreenElement === stage) {
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      }
+      setFull(false);
+    }
+    fs.addEventListener('click', function () {
+      if (full) { exit(); return; }
+      setFull(true); // the overlay always applies, so iOS Safari (no element fullscreen) works too
+      var req = stage.requestFullscreen || stage.webkitRequestFullscreen;
+      if (req) { try { var r = req.call(stage); if (r && r.catch) r.catch(function () {}); } catch (e) {} }
+    });
+    function onFsChange() { var el = document.fullscreenElement || document.webkitFullscreenElement; if (full && !el && stage.dataset.pmReal) { delete stage.dataset.pmReal; setFull(false); } else if (el === stage) stage.dataset.pmReal = '1'; }
+    document.addEventListener('fullscreenchange', onFsChange); document.addEventListener('webkitfullscreenchange', onFsChange);
     var cap = document.createElement('figcaption');
     var t = document.createElement('strong'); t.textContent = m.title; cap.appendChild(t);
     if (m.caption) cap.appendChild(document.createTextNode(m.caption));
@@ -45,7 +82,7 @@
         mv.setAttribute('camera-controls', ''); mv.setAttribute('auto-rotate', '');
         mv.setAttribute('environment-image', 'neutral'); mv.setAttribute('shadow-intensity', '1.2');
         mv.setAttribute('shadow-softness', '1'); mv.setAttribute('exposure', '1.1');
-        mv.setAttribute('touch-action', 'pan-y'); mv.setAttribute('interaction-prompt', 'none');
+        mv.setAttribute('touch-action', full ? 'none' : 'pan-y'); mv.setAttribute('interaction-prompt', 'none');
         var c = m.camera || {};
         if (c.orbit) mv.setAttribute('camera-orbit', c.orbit);
         if (c.target) mv.setAttribute('camera-target', c.target);
