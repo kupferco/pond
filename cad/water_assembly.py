@@ -24,6 +24,21 @@ def to_cart(shape):
     return shape.rotate((0, 0, 0), (0, 1, 0), MOVE["rot"]).translate(MOVE["shift"])
 
 
+def track_support_parts():
+    """Main's #315 track supports on the bottom run (nut plate, M8 rod, lock nut, post, base plate) inside the station window, UNIT frame.
+    The unit's track loop itself is NOT taken: the cart's pipe stub is the one and only track pipe in this assembly."""
+    import runpy
+    ts = runpy.run_path(os.path.join(HERE, "track_supports.py"))
+    out = {}
+    for ch in ts["result"].children:
+        if not (ch.name.startswith("support_") or ch.name.startswith("bottom_support")):
+            continue
+        t = ch.obj.intersect(ws.WIN)
+        if t.solids().vals():
+            out[ch.name] = (t, ch.color.toTuple())
+    return out
+
+
 def unit_parts(door_on=True, cutaway=False, lid_only=False):
     """name -> (shape in the cart frame, colour): lid corner, station, unit socket."""
     p = {}
@@ -32,6 +47,8 @@ def unit_parts(door_on=True, cutaway=False, lid_only=False):
             if n == "tank" and lid_only:                                   # pictures only: the tank is left out (seen from the cart it is a wall that hides the station)
                 continue
             p[n] = (to_cart(s), c)
+    for n, (s, c) in track_support_parts().items():
+        p[n] = (to_cart(s), c)
     for n, (s, c) in ws.station_parts(door_on, cutaway).items():
         p[n] = (to_cart(s), c)
     for n, (s, c) in ws.unit_socket().items():
@@ -42,7 +59,10 @@ def unit_parts(door_on=True, cutaway=False, lid_only=False):
 def scene(kind="full", door_on=True, cutaway=False, lid_only=False):
     """kind: 'full' (cart + sampler + unit corner + station), 'cart' (cart + sampler only)."""
     a = cq.Assembly()
-    for ch in ca.result.children:                      # flat copy of the cart's parts (a nested assembly would not render in render_local.collect)
+    for ch in ca.result.children:                      # ONE track pipe only (#330 follow-up): pipe C is the unit's track; pipe B belongs to the neighbouring unit, which is not drawn
+        if ch.name == "track_pipe_B":
+            continue
+        # flat copy of the cart's parts (a nested assembly would not render in render_local.collect)
         a.add(ch.obj, name="cart_" + ch.name, loc=ch.loc, color=ch.color)
     for n, (s, c) in wsa.parts().items():
         a.add(s, name=n, color=cq.Color(*c))
