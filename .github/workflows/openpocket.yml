@@ -524,7 +524,9 @@ jobs:
           if [ -n "$EXEC_FILE" ] && [ -f "$EXEC_FILE" ]; then
             SESSION_USAGE="$(jq -c --arg kind session '[.. | objects | select(.type? == "result")] | last | select(. != null) | {kind:$kind, inputTokens:.usage.input_tokens, outputTokens:.usage.output_tokens, cacheReadTokens:.usage.cache_read_input_tokens, cacheWriteTokens:.usage.cache_creation_input_tokens, costUsd:.total_cost_usd, durationMs:.duration_ms, apiMs:.duration_api_ms, turns:.num_turns, model:((.modelUsage // {}) | keys | first)}' "$EXEC_FILE" 2>/dev/null || true)"
           fi
-          USAGE="$(printf '%s\n%s\n' "$SESSION_USAGE" "$AI_USAGE" | jq -cs '.' 2>/dev/null || echo '[]')"
+          USAGE="$(printf '%s
+%s
+' "$SESSION_USAGE" "$AI_USAGE" | jq -cs '.' 2>/dev/null || echo '[]')"
           jq -n \
             --argjson usage "$USAGE" \
             --arg repo "${{ github.repository }}" --arg branch "$BRANCH" \
