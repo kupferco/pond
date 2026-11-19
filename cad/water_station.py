@@ -18,6 +18,8 @@ import sys
 import cadquery as cq
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import water_connector as wc
 
 # ---------------- unit numbers (mirror complete_unit.py) ----------------
 TW, TD, TH = 700.0, 400.0, 300.0
@@ -46,10 +48,10 @@ OFF_Y = 50.0                     # v2: the whole station is moved 40 mm inboard 
                                  # box front (was y -36, 24 mm from the track axis) hit it. Now the front is at y +14, 74 mm from the track axis (13 mm clear of R 61). Found by water_assembly.py.
                                  # 19 Nov follow-up: 40 -> 50. Main's #315 bottom support post (x 115..135, y -10..6) and its base plate (x 103..147, y -20..16) clashed with the box and the front legs at 40;
                                  # at 50 the box front is 8 mm clear of the post and the front legs (y 22) 6 mm clear of the base plate. Found by water_station_position.py.
-SOCKET_Z_TOP = 462.0             # top of the nozzle socket on the roof (the old funnel rim was 468)
-SOCKET_RI, SOCKET_RO = 6.0, 11.0  # nozzle 10 mm OD (water_sampler.NOZZLE_R 5 + 0.5 clearance... socket bore 6 mm radius)
+SOCKET_Z_TOP = BOX["z1"]         # 19 Nov follow-up: the female socket is FLUSH with the top of the roof (443). It used to be a raised funnel up to 462. See water_connector.py
 SAMPLE_ML = 70.0                 # ASSUMED sample size metered by pump turns (owner: about 50 to 100 ml)
 UNIT_SOCKET = (20.0, -105.0)     # the unit's own passive socket on the lid (x, y): 80 mm from the dock centre, 45 mm OUTBOARD of the track axis (y -60), so its 20 mm mouth radius leaves the track's footprint 8 mm clear (it used to sit at y -48, right under the track); clear of the pipe (y +-17), lid bar (y +-10), seedling storage (x >= 70) and the station box (x >= 60)
+UNIT_INSERT_D = 8.0              # depth of the round insert let into the lid
 DRAIN_Y_OUT = 215.0              # the drain tube leaves over the back lid edge (lid edge y = 200)
 DRAIN_Z_RUN = 324.0              # the drain tube runs between lid bar top (319) and the floor (330)
 
@@ -181,24 +183,20 @@ def roof():
 
 
 def socket():
-    """Nozzle socket on the roof, right above the test cup: a tube from the cup cover up through the roof with a flared mouth so the arm can find it.
-    The nozzle (10 mm OD, water_sampler.py) plugs in 24 mm deep and drips into the cup. Printed, one piece."""
+    """Female socket FLUSH with the roof top (z 443): a plug in the roof hole from the cup cover up to the roof top, a plain round hole through it with a slight recess at the top,
+    right above the cup. Nothing sticks up. The cart's male nozzle (water_connector.py) pushes straight in from above, friction holds it, the sample drips into the cup."""
     z0 = CUP_Z0 + CUP_H + 3
-    neck = tube(13.0, SOCKET_RI + 1.0, (CX, CY, z0), (CX, CY, SOCKET_Z_TOP - 12))
-    mouth = cq.Workplane("XY").add(cq.Solid.makeCone(13.0, 20.0, 12.0, cq.Vector(CX, CY, SOCKET_Z_TOP - 12), cq.Vector(0, 0, 1)))
-    mouth = mouth.cut(cq.Workplane("XY").add(cq.Solid.makeCone(SOCKET_RI + 1.0, 18.0, 12.0 + 1e-3, cq.Vector(CX, CY, SOCKET_Z_TOP - 12), cq.Vector(0, 0, 1))))
-    return neck.union(mouth)
+    plug = cyl(13.0, (CX, CY, z0), (CX, CY, SOCKET_Z_TOP))
+    return plug.cut(wc.female_cut(CX, CY, SOCKET_Z_TOP, +1).union(wc._cyl(wc.HOLE_R, z0 - 1, SOCKET_Z_TOP, CX, CY)))
 
 
 def unit_socket():
-    """The unit's own passive socket: a printed cup on the tank lid with a 6 mm dip tube down to 8 mm over the tank floor. No pump, no power.
-    The nozzle plugs in from above, the cart pump draws the sample up through the dip tube. A little dripping is accepted. (Frame: the unit frame.)"""
+    """The unit's own passive female socket, FLUSH with the top of the tank lid (z 304): a round insert let into the lid (the lid is cut for it in context_parts), a plain hole with a slight
+    recess, and a 6 mm dip tube down to 8 mm over the tank floor. No pump, no power. The nozzle pushes straight in from above, the cart pump draws the sample up through the dip tube.
+    A little dripping is accepted. (Frame: the unit frame.)"""
     x, y = UNIT_SOCKET
-    top = LID + 40.0
-    body = tube(13.0, 6.0, (x, y, LID), (x, y, top - 12)).union(
-        cq.Workplane("XY").add(cq.Solid.makeCone(13.0, 20.0, 12.0, cq.Vector(x, y, top - 12), cq.Vector(0, 0, 1))).cut(
-            cq.Workplane("XY").add(cq.Solid.makeCone(6.0, 18.0, 12.0 + 1e-3, cq.Vector(x, y, top - 12), cq.Vector(0, 0, 1)))))
-    dip = tube(3.0, 2.0, (x, y, 8.0), (x, y, LID + 2.0))
+    body = cyl(13.0, (x, y, LID - UNIT_INSERT_D), (x, y, LID)).cut(wc.female_cut(x, y, LID, +1).union(wc._cyl(wc.HOLE_R, LID - UNIT_INSERT_D - 1, LID, x, y)))
+    dip = tube(3.0, 2.0, (x, y, 8.0), (x, y, LID - UNIT_INSERT_D - 8.0))      # stops 8 mm under the insert: that 8 mm of open bore takes the end of the spigot
     return {"unit_socket": (body, COL["sock"]), "unit_dip_tube": (dip, COL["dip"])}
 
 
@@ -257,7 +255,7 @@ WIN = box(-60, 340, -150, 270, -10, 560)
 def context_parts():
     """Lid corner of the first unit around the station: tank and lid, growing pipe, lid bar, back strut, tray stand-in, braces, track bottom run, dock plates, the ground."""
     p = {}
-    p["tank"] = (box(-TW / 2, TW / 2, -TD / 2, TD / 2, 0, TH + 4), COL["tank"])
+    p["tank"] = (box(-TW / 2, TW / 2, -TD / 2, TD / 2, 0, TH + 4).cut(cyl(13.0, (UNIT_SOCKET[0], UNIT_SOCKET[1], LID - UNIT_INSERT_D), (UNIT_SOCKET[0], UNIT_SOCKET[1], LID + 1))).cut(cyl(3.0, (UNIT_SOCKET[0], UNIT_SOCKET[1], 8.0), (UNIT_SOCKET[0], UNIT_SOCKET[1], LID))), COL["tank"])    # pocket in the lid for the flush socket insert
     p["growing_pipe"] = (cyl(GP / 2, (0, 0, LID), (0, 0, 700)), (0.9, 0.9, 0.9, 1))
     p["lid_bar"] = (box(-340, 340, -10, 10, LID, BAR_Z), COL["frame"])
     p["lid_back_strut"] = (box(-15, 15, 0, 190, LID, LID + 5), COL["frame"])
@@ -316,8 +314,8 @@ def bench():
     a.add(box(CX - 36, CX - 30, -40, -34, 330, 440), name="bench_socket_post", color=cq.Color(*COL["board"]))
     a.add(box(CX - 36, CX + 6, -40, -34, 436, 440), name="bench_socket_arm", color=cq.Color(*COL["board"]))
     # hand-held syringe with the nozzle tip plugged into the socket (bench only; on the unit it is the cart tube)
-    a.add(cyl(5.5, (CX, CY, SOCKET_Z_TOP - 28), (CX, CY, SOCKET_Z_TOP + 20)), name="bench_syringe_tip", color=cq.Color(0.9, 0.9, 0.5, 1))
-    a.add(cyl(16.0, (CX, CY, SOCKET_Z_TOP + 20), (CX, CY, SOCKET_Z_TOP + 130)), name="bench_syringe_barrel", color=cq.Color(0.9, 0.9, 0.5, 0.6))
+    a.add(wc.male(CX, CY, SOCKET_Z_TOP, -1), name="bench_syringe_nozzle", color=cq.Color(0.9, 0.9, 0.5, 1))
+    a.add(cyl(16.0, (CX, CY, SOCKET_Z_TOP + wc.COLLAR_L), (CX, CY, SOCKET_Z_TOP + wc.COLLAR_L + 110)), name="bench_syringe_barrel", color=cq.Color(0.9, 0.9, 0.5, 0.6))
     # the drain goes to a bucket (bench only; on the unit it goes to the soil)
     bucket = cyl(110.0, (CX, DRAIN_Y_OUT - 120, 0), (CX, DRAIN_Y_OUT - 120, 260)).cut(cyl(106.0, (CX, DRAIN_Y_OUT - 120, 4), (CX, DRAIN_Y_OUT - 120, 261)))
     a.add(bucket, name="bench_bucket", color=cq.Color(0.2, 0.45, 0.2, 1))
@@ -353,6 +351,25 @@ def check():
     out["socket_distance_from_track_axis_mm"] = CY + OFF_Y - TRACK_Y
     out["roof_top_below_track_top_mm"] = (TRACK_Z + TRACK_R) - (b["z1"])
     out["socket_top_above_track_axis_mm"] = SOCKET_Z_TOP - TRACK_Z
+    # 19 Nov follow-up: FLUSH female sockets, nothing sticking up, and the male nozzle plugs in without touching the walls
+    sb = sp["ws_socket"][0].val().BoundingBox()
+    rb = sp["ws_roof"][0].val().BoundingBox()
+    out["station_socket_top_minus_roof_top_mm (0 = flush)"] = round(sb.zmax - rb.zmax, 6)
+    us = unit_socket()
+    ub = us["unit_socket"][0].val().BoundingBox()
+    lidb = ctx["tank"][0].val().BoundingBox()
+    out["unit_socket_top_minus_lid_top_mm (0 = flush)"] = round(ub.zmax - lidb.zmax, 6)
+    out["highest_thing_over_roof_top_mm (socket neighbourhood, 0 = nothing sticks up)"] = round(max(0.0, sb.zmax - rb.zmax), 6)
+    nz = wc.male(CX, CY + OFF_Y, SOCKET_Z_TOP, -1)
+    out["nozzle_in_station_socket_clash_mm3 (0 = fits)"] = round(sum(inter(nz, sp[n][0]) for n in ("ws_socket", "ws_roof", "ws_cup_cover", "ws_cup")), 4)
+    nb = nz.val().BoundingBox()
+    out["nozzle_spigot_depth_in_station_socket_mm"] = round(SOCKET_Z_TOP - nb.zmin, 3)
+    out["nozzle_tip_over_cup_cover_mm (drips into the cup)"] = round(nb.zmin - (CUP_Z0 + CUP_H + 3), 3)
+    nu = wc.male(UNIT_SOCKET[0], UNIT_SOCKET[1], LID, -1)
+    out["nozzle_in_unit_socket_clash_mm3 (0 = fits)"] = round(inter(nu, us["unit_socket"][0]) + inter(nu, ctx["tank"][0]), 4)
+    out["connector_spigot_od_mm"] = 2 * wc.SPIGOT_R
+    out["connector_hole_od_mm"] = 2 * wc.HOLE_R
+    out["connector_collar_od_mm"] = 2 * wc.COLLAR_R
     out["socket_x_from_dock_centre_mm"] = CX - DOCK_X
     us = unit_socket()
     out["unit_socket_x_from_dock_centre_mm"] = UNIT_SOCKET[0] - DOCK_X

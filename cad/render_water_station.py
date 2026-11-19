@@ -52,10 +52,10 @@ if __name__ == "__main__":
     wa.scene("full", door_on=True, cutaway=False).export(os.path.join(R, "assembly.glb"), tolerance=0.5, angularTolerance=0.3)    # coarse mesh like the cart-only GLB (#316)
     upright_in_unit_frame(os.path.join(R, "assembly.glb"))
     print("wrote assembly.glb (upright in the unit frame)", flush=True)
-    jobs = (("water-station", ws.scene("unit"), VIEWS, "Water testing station on the unit (door off, cup cut open): nozzle socket above the cup"),
-            ("water-station-closeup", ws.scene("close"), VIEWS, "Water testing station: cup, 3 probes, standpipe, nozzle socket, drain (door off, cup cut open)"),
+    jobs = (("water-station", ws.scene("unit"), VIEWS, "Water testing station on the unit (door off, cup cut open): flush nozzle socket in the roof above the cup"),
+            ("water-station-closeup", ws.scene("close"), VIEWS, "Water testing station: cup, 3 probes, standpipe, flush nozzle socket, drain (door off, cup cut open)"),
             ("water-station-bench", ws.scene("bench"), VIEWS, "Bench rig: same cup, probes and socket on a board, hand syringe, drain to a bucket"),
-            ("cart-water-sampler", wa.scene("cart"), CART_VIEWS, "Cart with the water sampler: pump, PU recoil coil, nozzle parked in its socket"),
+            ("cart-water-sampler", wa.scene("cart"), CART_VIEWS, "Cart with the water sampler: pump, PU recoil coil, male nozzle parked in the flush socket under the block"),
             ("water-assembly", wa.scene("full", door_on=False, cutaway=True, lid_only=True), CART_VIEWS, "Cart with sampler at the dock beside the water testing station (door off, cup cut open; tank not drawn)"))
     for name, sc, views, title in jobs:
         parts = rl.collect(sc)

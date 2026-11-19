@@ -15,10 +15,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from cart_dims import PLATE_Y0, PLATE_X0, PLATE_X1, PLATE_ZH, BATT, BATT_X, ARM_BASE_W, ARM_Y0  # noqa: E402
 from cart_geom import box, cyl  # noqa: E402
+import water_connector as wc  # noqa: E402
 
 TUBE_OD, TUBE_ID = 8.0, 6.0            # PU recoil tube
 SIL_OD = 9.0                           # silicone section through the pump head (6 ID)
-NOZZLE_R = 5.5                         # 11 mm OD brass-free printed nozzle, plugs 24 mm into a socket (bore radius 7 in water_station.py / 6+1 on the unit)
 COIL_R = 26.0                          # mean coil radius
 COIL_PITCH = 8.0
 COIL_TURNS = 14
@@ -27,7 +27,7 @@ COIL_Y = PLATE_Y0 - (COIL_R + TUBE_OD / 2 + 1.0)    # axis out from the plate so
 COIL_Z0 = -58.0                         # starts above the pipe C roll motor (z -91..-63 at x 81..109) so the coil, which overhangs the plate edge, clears it
 PUMP_X, PUMP_Z = -62.0, -28.0          # pump axis along Y, on the pipe B side strip of the plate
 PUMP_R, PUMP_L = 17.0, 40.0
-PARK_Z0, PARK_Z1 = 62.0, 88.0          # parking socket sleeve (axis Z, open to +Z), z range
+PARK_Z0, PARK_Z1 = 73.0, 89.0          # parking block (bolts to the plate top edge, z 73..89): its flat BOTTOM face at z 73 carries the flush female socket, looking down (-Z)
 SAMPLE_TUBE_M = COIL_TURNS * 2 * math.pi * COIL_R / 1000.0 + 0.3     # coil plus tails, metres
 COL = dict(pump=(0.92, 0.5, 0.15, 1), sil=(0.85, 0.85, 0.9, 0.9), pu=(0.2, 0.75, 0.85, 1), nozzle=(0.95, 0.95, 0.4, 1), park=(0.95, 0.95, 0.95, 1))
 
@@ -66,19 +66,21 @@ def coil():
 
 
 def nozzle_and_tail():
+    """Tube tail straight up from the coil end to the male nozzle (19 Nov follow-up: thin 4.4 mm spigot on a ringed collar, water_connector.py, like the Omron cuff connector).
+    The nozzle is shown PARKED: spigot pushed straight up into the flush hole in the bottom face of the parking block (z 73), collar hanging below it."""
     ex = COIL_X + COIL_R
     z_end = COIL_Z0 + COIL_PITCH * COIL_TURNS
-    tail = hose(TUBE_OD / 2, [(ex, COIL_Y, z_end), (ex, COIL_Y, PARK_Z0 + 4)])
-    nozzle = cyl(NOZZLE_R, PARK_Z1 - PARK_Z0 - 2, "z", (ex, COIL_Y, (PARK_Z0 + 4 + PARK_Z1) / 2 + 5))
+    nozzle = wc.male(ex, COIL_Y, PARK_Z0, +1)
+    tail = hose(TUBE_OD / 2, [(ex, COIL_Y, z_end), (ex, COIL_Y, PARK_Z0 - wc.COLLAR_L + 2.0)])      # tube goes 2 mm into the collar's base
     return tail, nozzle
 
 
 def parking_socket():
-    """Sleeve on a bracket on the plate's top edge (bracket 24 x 36 x 16, bolts to the plate), open upwards; the nozzle rests in it, the arm lifts it out."""
+    """Block 24 x 36 x 16 on the plate's top edge (bolts to the plate, z 73..89, x ex +-12, y -56..-92) with a plain round hole with a slight recess FLUSH with its bottom face.
+    Nothing sticks out of the face. The nozzle is pushed straight up into it and pulled straight down out of it by the arm; friction holds it."""
     ex = COIL_X + COIL_R
-    sleeve = cyl(13.0, PARK_Z1 - PARK_Z0, "z", (ex, COIL_Y, (PARK_Z0 + PARK_Z1) / 2)).cut(cyl(NOZZLE_R + 1.0, PARK_Z1 - PARK_Z0 + 2, "z", (ex, COIL_Y, (PARK_Z0 + PARK_Z1) / 2)))
-    bracket = box(24.0, 36.0, 16.0, (ex, PLATE_Y0 - 16.0, PARK_Z0 + 8.0))     # x ex +-12, y -56..-92, z 62..78 (plate top is 73)
-    return sleeve.union(bracket.cut(cyl(NOZZLE_R + 1.0, 40, "z", (ex, COIL_Y, PARK_Z0 + 8))))
+    bracket = box(24.0, 36.0, PARK_Z1 - PARK_Z0, (ex, PLATE_Y0 - 16.0, (PARK_Z0 + PARK_Z1) / 2))
+    return bracket.cut(wc.female_cut(ex, COIL_Y, PARK_Z0, -1))
 
 
 def parts():
@@ -114,6 +116,13 @@ def check():
     out["pump_x_range_mm"] = (bb["sampler_pump"].xmin, bb["sampler_pump"].xmax)
     out["pump_inside_plate_x"] = bb["sampler_pump"].xmin >= PLATE_X0 and bb["sampler_pump"].xmax <= PLATE_X1
     out["parking_socket_top_over_plate_top_mm"] = PARK_Z1 - PLATE_ZH
+    pk = pp["sampler_parking_socket"][0].val().BoundingBox()
+    nb_ = pp["sampler_nozzle"][0].val().BoundingBox()
+    out["parking_socket_face_z_mm (flush: the block bottom face)"] = pk.zmin
+    out["parking_socket_sticks_out_below_face_mm (0 = flush)"] = round(PARK_Z0 - pk.zmin, 6)
+    out["parked_spigot_depth_in_hole_mm"] = round(nb_.zmax - PARK_Z0, 3)
+    out["parked_nozzle_vs_block_clash_mm3 (0 = fits)"] = round(inter(pp["sampler_nozzle"][0], pp["sampler_parking_socket"][0]), 4)
+    out["nozzle_collar_bottom_over_coil_top_mm"] = round((PARK_Z0 - wc.COLLAR_L) - (COIL_Z0 + COIL_PITCH * COIL_TURNS + TUBE_OD / 2), 3)
     # against everything else on the cart (the arm included)
     clash = {}
     for n, (s, c) in pp.items():
@@ -132,8 +141,7 @@ def check():
                     hand_hits["%s vs hand_%s_%s" % (n, side, nm)] = round(v, 2)
     out["sampler_vs_cart_clashes_mm3"] = clash
     out["sampler_vs_hands_clashes_mm3"] = hand_hits
-    ok = {("sampler_silicone_link", "sampler_pump"), ("sampler_silicone_link", "sampler_pu_coil"), ("sampler_pu_tail", "sampler_pu_coil"), ("sampler_pu_tail", "sampler_nozzle"),
-          ("sampler_nozzle", "sampler_parking_socket"), ("sampler_pu_tail", "sampler_parking_socket")}
+    ok = {("sampler_silicone_link", "sampler_pump"), ("sampler_silicone_link", "sampler_pu_coil"), ("sampler_pu_tail", "sampler_pu_coil"), ("sampler_pu_tail", "sampler_nozzle")}   # nozzle vs parking block is NOT allowed: the spigot fits the flush hole with clearance
     names = list(pp)
     internal = {}
     for i, n in enumerate(names):
