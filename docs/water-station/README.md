@@ -96,3 +96,8 @@ The reach of the arm (lift the nozzle from its parking socket, to the unit socke
 - Cart sampler parts (pump head size, 6 mm bore tube, the coil overhanging the plate by 17 mm) are ASSUMED; this adds parts to the cart plate that #265 had said should wait to settle, but the owner asked for it explicitly. Check that against the final plate.
 - Dock position (x = 100) and the real boards and probes: dimensions here are generic.
 - The sample point on the tank is now just the socket and dip tube; the 8 mm dip tube end clearance and the lid sealing (mosquitoes) around the socket are not designed.
+
+## Follow-up: box on legs, and the blue rectangle
+
+- The station box used to hover 26 mm over the lid. It now stands on four printed 20 x 20 mm legs (`legs()` in `cad/water_station.py`) from the lid (z 304) to the box floor (z 330). `check()` reports `box_floor_gap_to_support_mm` = 0 (and asserts it), the legs clear the lid bar and the drain tube.
+- The big blue rectangle in front of the station is the unit's **seedling storage tray** (`seedling_storage` in `context_parts()`, 240 x 110 x 16 mm on the lid). It belongs to the unit, is not a leftover, and is now labelled in the station and assembly renders.

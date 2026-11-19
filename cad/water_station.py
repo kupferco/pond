@@ -157,6 +157,21 @@ def door():
     return box(b["x0"] + WALL, b["x1"] - WALL, b["y0"], b["y0"] + WALL, b["z0"] + WALL, b["z1"] - 4)
 
 
+LEG = 20.0                       # v3: four printed 20 x 20 legs carry the box from the lid up to its floor (no gap, no floating); the drain tube runs between them
+LEG_XS = (60.0, 240.0)           # leg x0 (leg is LEG wide); the drain tube is at x = 100, so it passes between the legs
+LEG_YS = (-28.0, 30.0)           # station-local y0; after OFF_Y the front legs stand at y 12..32, clear of the lid bar (y +-10)
+
+
+def legs():
+    """Four printed legs from the tank lid (z 304) to the box floor underside (z 330). Union of 4 boxes; they touch the lid and the floor (face contact)."""
+    out = None
+    for x0 in LEG_XS:
+        for y0 in LEG_YS:
+            b = box(x0, x0 + LEG, y0, y0 + LEG, LID, BOX["z0"])
+            out = b if out is None else out.union(b)
+    return out
+
+
 def roof():
     b = BOX
     r = box(b["x0"] - 8, b["x1"] + 8, b["y0"], b["y1"] + 8, b["z1"] - 3, b["z1"])         # sun shade: 8 mm overhang left, right and back; none to the front (track line is 8 mm away)
@@ -210,6 +225,7 @@ def station_parts(door_on=False, cutaway=True, dy=None):
     if door_on:
         p["ws_door"] = (door(), COL["shell"])
     p["ws_roof"] = (roof(), COL["roof"])
+    p["ws_legs"] = (legs(), COL["frame"])
     c, cv, w = cup(), cup_cover(), heel_water()
     gr = grommets()
     if cutaway:
@@ -287,7 +303,7 @@ def bench():
     a = cq.Assembly()
     sp = station_parts(door_on=False, cutaway=True, dy=0.0)
     for n, (s, c) in sp.items():
-        if n in ("ws_shell", "ws_roof", "ws_door"):
+        if n in ("ws_shell", "ws_roof", "ws_door", "ws_legs"):
             continue
         a.add(s, name="bench_" + n[3:], color=cq.Color(*c))
     a.add(box(40, 400, -80, 150, 318, 330), name="bench_ply_board", color=cq.Color(*COL["board"]))
@@ -343,6 +359,15 @@ def check():
     out["unit_socket_clashes_mm3"] = {m: round(inter(us["unit_socket"][0], o), 2) for m, (o, _) in ctx.items() if m != "ground" and inter(us["unit_socket"][0], o) > 1e-3}
     out["unit_socket_vs_station_mm3"] = round(sum(inter(us["unit_socket"][0], s_[0]) for s_ in sp.values()), 2)
     out["box_floor_over_lid_bar_mm"] = b["z0"] - BAR_Z
+    # v3: the box must sit on something. Legs stand on the lid (z = LID) and carry the floor (z = box z0): no gap at either end.
+    lg = sp["ws_legs"][0].val().BoundingBox()
+    out["legs_bottom_minus_lid_top_mm"] = lg.zmin - LID
+    out["legs_top_minus_box_floor_mm"] = lg.zmax - b["z0"]
+    out["box_floor_gap_to_support_mm"] = max(abs(lg.zmin - LID), abs(lg.zmax - b["z0"]))
+    out["legs_footprint_inside_box_footprint"] = (lg.xmin >= b["x0"] and lg.xmax <= b["x1"] and lg.ymin >= b["y0"] + OFF_Y and lg.ymax <= b["y1"] + OFF_Y)
+    out["legs_vs_drain_tube_mm3"] = round(inter(sp["ws_legs"][0], sp["ws_drain_tube"][0]), 3)
+    out["legs_vs_lid_bar_mm3"] = round(inter(sp["ws_legs"][0], ctx["lid_bar"][0]), 3)
+    assert out["box_floor_gap_to_support_mm"] < 1e-6, "box is floating"
     out["drain_tube_run_over_lid_bar_mm"] = (DRAIN_Z_RUN - 3.0) - BAR_Z
     out["drain_tube_outside_tank_mm"] = DRAIN_Y_OUT + OFF_Y - TD / 2
     out["drain_tube_length_mm"] = (CUP_Z0 - 3.0 - DRAIN_Z_RUN) + (DRAIN_Y_OUT - CY) + (DRAIN_Z_RUN - 5.0)   # on the unit the cup axis and the drain are both moved OFF_Y, so the run is unchanged

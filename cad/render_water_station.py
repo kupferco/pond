@@ -16,6 +16,7 @@ import render_local as rl
 import water_station as ws
 import water_assembly as wa
 
+TRAY_NOTE = "Blue flat box on the lid = the unit's seedling storage tray (existing part of the unit, not part of the station). Box stands on 4 legs on the lid."
 R = os.path.join(HERE, "renders")
 VIEWS = (("iso", 28, -50), ("front", 0, -90), ("top", 90, -90), ("side", 0, 0))
 CART_VIEWS = (("iso", 28, -55), ("front", 0, -90), ("top", 90, -90), ("side", 0, 0))
@@ -33,7 +34,7 @@ if __name__ == "__main__":
     for name, sc, views, title in jobs:
         parts = rl.collect(sc)
         for v, el, az in views:
-            rl.draw(parts, el, az, os.path.join(R, "%s-%s.png" % (name, v)), "%s (%s)" % (title, v))
+            rl.draw(parts, el, az, os.path.join(R, "%s-%s.png" % (name, v)), "%s (%s)" % (title, v), note=TRAY_NOTE if name in ("water-station", "water-assembly") else None)
             print("wrote", name, v, flush=True)
     rl.draw(rl.collect(ws.scene("unit", door_on=True, cutaway=False)), 28, -50, os.path.join(R, "water-station-closed-iso.png"),
-            "Water testing station, door on (as built)")
+            "Water testing station, door on (as built)", note=TRAY_NOTE)
