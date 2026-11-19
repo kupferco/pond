@@ -11,7 +11,7 @@ export const CART = {
   plateFaceY: PLATE_Y0,                        // -56: front face of the plate
   plateBackY: PLATE_Y1,                        // -50: on the sleeve pads
   battFaceY: PLATE_Y0 - BATT[1],               // -106: front face of the battery, where the arm base is bolted (cart_dims.py ARM_Y0)
-  plateX: [PLATE_X0, PLATE_X1] as const,       // -84 .. 84
+  plateX: [PLATE_X0, PLATE_X1] as const,       // -80 .. 80
   plateZH: PLATE_ZH,                           // 73: the plate is 146 mm along the pipes
   plateT: PLATE_T,
   armBaseW: ARM_BASE_W,
