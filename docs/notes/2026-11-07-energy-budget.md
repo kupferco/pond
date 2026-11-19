@@ -7,18 +7,19 @@ Working note, not a decision. Rough numbers with stated assumptions; to be check
 - Water pump: small 12 V DC pump, about 5 W, runs 15 min every hour (6 h/day), lifts water about 1.6 m.
 - Cart patrols 6 times a day; one loop is about 4 m at about 5 cm/s, so about 80 s per loop.
 - Camera and compute wake only for patrols (duty-cycled), not on all day.
-- Sensors (pH, EC, temperature, level) and the controller stay on all the time.
+- Only the controller and the float switch (water level) stay on all the time. pH, EC and temperature are read at one shared station, switched on for one daily test (see [water sensing note](2026-11-19-water-sensing-prototype.md)).
 
 ## Daily budget
 
 | Load | Estimate per day |
 |---|---|
 | Water pump | ~30 Wh |
-| Sensors + controller (always on) | ~20 Wh |
+| Controller + float switch (always on) | ~7 Wh |
+| Sample pumps + station daily test (switched on) | ~1 Wh |
 | Camera + compute (patrols only) | ~3 Wh |
 | Cart drive + arm | ~4 Wh (climbing 1.4 m costs almost nothing; motor losses dominate) |
 | Dosing pumps (2 peristaltic) | <1 Wh |
-| **Total** | **~60 Wh, ~70 Wh with ~20% losses** |
+| **Total** | **~48 Wh, ~58 with ~20% losses** (was ~60 and ~70 before the sensing split) |
 
 Biggest levers: pump duty cycle, and never running a computer like a Pi 4 all day (that alone would add ~85 Wh/day).
 
@@ -41,6 +42,7 @@ Biggest levers: pump duty cycle, and never running a computer like a Pi 4 all da
 
 ## Open
 
+- Sensor parts picked, see the water sensing note (19 Nov). Prices still to check.
 - Pick real parts (pump, controller, camera board) and replace the estimates.
 - ~~Draw the charging dock on the unit.~~ Done: charging dock v1 (7 Nov).
 - ~~Resize the roof to a single panel.~~ Done: one 30 W panel (7 Nov).
