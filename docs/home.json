@@ -15,6 +15,7 @@
   "statusLink": {"text": "Full roadmap", "href": "roadmap/"},
   "explore": [
     {"title": "Gallery", "href": "gallery/", "note": "Images and videos documenting Pond.", "optional": true},
+    {"title": "3D models", "href": "models/", "note": "Turn the parts around in 3D."},
     {"title": "Drawings", "href": "drawings/", "note": "Every CAD drawing of the unit and robot, with versions."},
     {"title": "Sim", "href": "sim/", "note": "A physics simulation of the robot you can play with in the browser."},
     {"title": "Part list", "href": "part-list/", "note": "Everything needed to build it, and what's still to get."},

@@ -1,0 +1,62 @@
+{
+ "_help": "One entry per 3D model shown on the site. Add an entry here and it appears: no code. Fields: id (unique), title, glb (path from docs/), caption (optional), page (home or models: where it is embedded), section (heading on the models page), poster (optional image shown until the model loads), camera (optional: orbit like '35deg 70deg auto', target, fov).",
+ "models": [
+  {
+   "id": "complete-unit-v1",
+   "title": "Complete unit",
+   "glb": "drawings/renders/complete-unit-v1.glb",
+   "caption": "Simplified: tank, growing pipe, frame, solar panel, track, cart, seedling tray and storage.",
+   "page": "home",
+   "section": "Complete unit",
+   "poster": "drawings/renders/complete-unit-v1-line.png",
+   "camera": {
+    "orbit": "35deg 70deg auto"
+   }
+  },
+  {
+   "id": "cart-assembly-v4",
+   "title": "Cart assembly",
+   "glb": "drawings/renders/cart-assembly-v4.glb",
+   "caption": "The climbing cart with its motors, plates and arm mount.",
+   "page": "models",
+   "section": "Cart",
+   "poster": "drawings/renders/cart-assembly-v4-line.png"
+  },
+  {
+   "id": "cart-arm-v3",
+   "title": "Cart arm",
+   "glb": "drawings/renders/cart-arm-v3.glb",
+   "caption": "The small arm that picks and plants pods.",
+   "page": "models",
+   "section": "Cart",
+   "poster": "drawings/renders/cart-arm-v3-line.png"
+  },
+  {
+   "id": "cart-base-v2",
+   "title": "Cart base",
+   "glb": "drawings/renders/cart-base-v2.glb",
+   "caption": "The base plate the wheels and motors attach to.",
+   "page": "models",
+   "section": "Cart",
+   "poster": "drawings/renders/cart-base-v2-line.png"
+  },
+  {
+   "id": "pipe-collar-with-pod-v1",
+   "title": "Pipe collar with a pod",
+   "glb": "drawings/renders/pipe-collar-with-pod-v1.glb",
+   "caption": "A pod seated in its collar on the growing pipe.",
+   "page": "models",
+   "section": "Growing pipe",
+   "poster": "drawings/renders/pipe-collar-with-pod-v1-line.png"
+  },
+  {
+   "id": "charging-dock-v1",
+   "title": "Charging dock",
+   "glb": "drawings/renders/charging-dock-v1.glb",
+   "caption": "Where the cart recharges on the bottom run of the track.",
+   "page": "models",
+   "section": "Power",
+   "poster": "drawings/renders/charging-dock-v1-line.png"
+  }
+ ]
+}
