@@ -41,30 +41,6 @@ jobs:
             echo "available=false" >> "$GITHUB_OUTPUT"
             echo "::warning::FIREBASE_SERVICE_ACCOUNT_POND_CONTROL is not set, so the Firebase deploy is skipped. See 'Fix on the computer' in docs/notes/2026-11-10-control-ui-spike.md."
           fi
-      - name: Free up preview channels (pull requests)
-        # Firebase Hosting caps the number of channels per site (error 429 "channel quota reached"). Remove the
-        # channels of pull requests that are no longer open so a new preview can always be created.
-        if: github.event_name == 'pull_request' && steps.creds.outputs.available == 'true'
-        continue-on-error: true
-        env:
-          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_POND_CONTROL }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          printf '%s' "$SA" > "$RUNNER_TEMP/firebase-sa.json"
-          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
-          FB="npx --yes firebase-tools@latest"
-          $FB hosting:channel:list --site pond-grow --project pond-grow --json > "$RUNNER_TEMP/channels.json"
-          jq -r '.result.channels[]?.name | split("/") | last | select(. != "live")' "$RUNNER_TEMP/channels.json" |
-          while read -r id; do
-            n=$(printf '%s' "$id" | sed -nE 's/^pr([0-9]+)-.*/\1/p')
-            [ -n "$n" ] || continue
-            state=$(gh pr view "$n" --repo "${{ github.repository }}" --json state -q .state 2>/dev/null || echo UNKNOWN)
-            if [ "$state" = "CLOSED" ] || [ "$state" = "MERGED" ]; then
-              echo "Deleting channel $id (PR #$n is $state)"
-              $FB hosting:channel:delete "$id" --site pond-grow --project pond-grow --force --non-interactive || true
-            fi
-          done
-          rm -f "$RUNNER_TEMP/firebase-sa.json"
       - name: Preview channel (pull requests)
         id: preview
         if: github.event_name == 'pull_request' && steps.creds.outputs.available == 'true'
