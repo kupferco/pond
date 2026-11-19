@@ -8,6 +8,7 @@ import { HOLES, reachMjcf } from '../reach/layout.ts';
 import { ANGLE_TOL, Rig, RESULT_RGB, colourParts, runReach, summary, type Attempt, type Colour, type Target } from '../reach/test.ts';
 import { checkPass } from '../reach/pass.ts';
 import { stations, type Station } from '../reach/station.ts';
+import { SWEEP_ANGLES, TURN_90, TURN_90_FROM_ZERO, runSweep, type RollCell, type Sweep, type SweepTarget } from '../reach/sweep.ts';
 
 /** The cart as shown at load and when the arm is folded: rolled 180° about leg A's own axis, at 1.0 m. */
 const ROLLED_HOME = stations('leg A', 180).find((s) => Math.abs(s.at - 1.0) < 1e-6)!;
@@ -45,6 +46,8 @@ export const reachScene: Scene = {
     const results = runReach(mujoco, model, data);
     const passes = checkPass(mujoco, model, data, [0, 90, 180, 270]);
     const sum = summary(results);
+    status.textContent = 'Turning the cart in 15° steps on leg A…';
+    const sweep: Sweep = await runSweep(mujoco, model, data, SWEEP_ANGLES, async (d, n) => { status.textContent = `Turning the cart in 15° steps on leg A… ${d} of ${n}`; await new Promise((r) => setTimeout(r, 0)); });
     colourParts(model, results);
     const rig = new Rig(mujoco, model, data);
     const viewer = new Viewer(view, { mujoco, model, data }, { ...VIEWS.overview, maxDist: 6, far: 30 });
@@ -58,6 +61,12 @@ export const reachScene: Scene = {
     const fullRows = (k: 'hole' | 'pod') => results.filter((t) => t.kind === k).map((t) => { const b = best(t); return `<tr><td>${dot(t.colour)} ${t.id}</td><td>${b ? `${t.colour === 'green' ? 'as is' : 'rolled 180°'}: ${b.station!.label}, ${b.margin!.toFixed(0)}° joint margin` : `${t.direct.reason} ${t.direct.detail} / rolled 180°: ${t.rolled.reason} ${t.rolled.detail}`}</td></tr>`; }).join('');
     const near = (k: 'holes' | 'pods') => results.filter((t) => t.kind === (k === 'holes' ? 'hole' : 'pod') && t.colour === 'red' && (t.direct.looseErr !== undefined || t.rolled.looseErr !== undefined));
     const passRows = passes.map((p) => `<tr><td>${p.run}</td><td>${p.roll}°</td><td>${p.bracket ? `touches (${(-p.bracketWorst * 1000).toFixed(0)} mm)` : 'clear'}</td><td>${p.pipe ? 'touches' : 'clear'}</td></tr>`).join('');
+    const chip90 = (t: SweepTarget) => `<button data-s="${t.id}" title="${t.label}: ${COLOUR[t.colour90].word}" style="min-width:42px;padding:6px 4px;border:2px solid ${COLOUR[t.colour90].css};border-radius:8px;background:${COLOUR[t.colour90].css}33">${t.id}</button>`;
+    const cnt = (k: 'hole' | 'pod', c: Colour) => sweep.targets.filter((t) => t.kind === k && t.colour90 === c).length;
+    const mk = (k: 'hole' | 'pod') => ({ position: 0, green: cnt(k, 'green'), amber: cnt(k, 'amber'), red: cnt(k, 'red'), total: sweep.targets.filter((t) => t.kind === k).length });
+    const sum90 = { holes: mk('hole'), pods: mk('pod') };
+    const mc = sweep.counts.find((c) => c.roll === sweep.mostRoll)!, c270 = sweep.counts.find((c) => c.roll === TURN_90)!, c90 = sweep.counts.find((c) => c.roll === TURN_90_FROM_ZERO)!;
+    const sweepText = `"90° counterclockwise seen from above, from the 180° roll the cart is shown in" is a roll of ${TURN_90}° about leg A (a roll of ${TURN_90_FROM_ZERO}° from the cart as it is is tried too). At ${TURN_90}° the arm reaches ${c270.holes} of 24 holes and ${c270.pods} of 16 pods; at ${TURN_90_FROM_ZERO}° ${c90.holes} holes and ${c90.pods} pods. The angle that reaches the most is ${sweep.mostRoll}°: ${mc.holesClear} holes and ${mc.podsClear} pods, with the neighbour unit present. ${sweep.targets.filter((t) => t.kind === 'pod').every((t) => !t.best) ? 'No pod can be reached from leg A at any angle (the tray is too low and too far from the leg).' : ''} Green: reached with the cart turned ${TURN_90}°; amber: reached at some other angle (see the table); red: at no angle. The cart stays on leg A, 5 mm height steps, as in the test above.`;
     const row = (n: string, s: typeof sum.holes) => `<tr><td>${n}</td><td>${dot('green')} ${s.green}</td><td>${dot('amber')} ${s.amber}</td><td>${dot('red')} ${s.red}</td><td>${s.total}</td></tr>`;
 
     panel.innerHTML = `
@@ -88,6 +97,25 @@ export const reachScene: Scene = {
       <button class="big grow" data-view="pipe">Pipe</button>
       <button class="big grow" data-view="tray">Seedling tray</button>
     </div>
+    <h2>Cart turned 90° counterclockwise (roll ${TURN_90}°), and a sweep every 15°</h2>
+    <p class="hint">${sweepText}</p>
+    <table><thead><tr><th></th><th>Green: at ${TURN_90}°</th><th>Amber: only at another angle</th><th>Red: at no angle</th><th>Total</th></tr></thead><tbody>${row('Holes', sum90.holes)}${row('Pods', sum90.pods)}</tbody></table>
+    <p class="hint">Holes, coloured for the turned cart (tap one to see the arm):</p>
+    <div class="row wrap" id="s-holes">${sweep.targets.filter((t) => t.kind === 'hole').map(chip90).join('')}</div>
+    <p class="hint">Pods:</p>
+    <div class="row wrap" id="s-pods">${sweep.targets.filter((t) => t.kind === 'pod').map(chip90).join('')}</div>
+    <div class="row">
+      <button class="big grow" id="s-turn">Show turned ${TURN_90}°</button>
+      <button class="big grow" id="s-best">Show best angle</button>
+    </div>
+    <details class="card"><summary>Reach at every roll angle (15° steps)</summary>
+      <table class="runs"><thead><tr><th>Roll</th><th>Holes</th><th>Pods</th><th>Holes, neighbour present</th><th>Pods, neighbour present</th></tr></thead><tbody>${sweep.counts.map((c) => `<tr><td>${c.roll}°${c.roll === sweep.mostRoll ? ' (most)' : ''}${c.roll === TURN_90 ? ' (turned 90° ccw)' : ''}</td><td>${c.holes}</td><td>${c.pods}</td><td>${c.holesClear}</td><td>${c.podsClear}</td></tr>`).join('')}</tbody></table>
+    </details>
+    <details class="card"><summary>Best roll angle for every hole and pod</summary><table class="runs"><thead><tr><th>Part</th><th>Turned ${TURN_90}°</th><th>Best angle</th><th>All angles that reach it</th></tr></thead><tbody>${sweep.targets.map((t) => `<tr><td>${dot(t.colour90)} ${t.id}</td><td>${t.cell90.withNeighbour.ok ? `reaches, ${t.cell90.own.margin!.toFixed(0)}° joint margin` : t.cell90.own.ok ? `reaches, but ${t.cell90.withNeighbour.detail}` : `${t.cell90.own.reason}: ${t.cell90.own.detail}`}</td><td>${t.best ? `${t.best.roll}° (${t.best.own.margin!.toFixed(0)}° margin, ${t.best.own.station!.at.toFixed(2)} m)` : 'none'}</td><td>${t.cells.filter((c) => c.own.ok).map((c) => c.roll + '°').join(', ') || '-'}</td></tr>`).join('')}</tbody></table></details>
+    <details class="card"><summary>Clashes while the cart is driven up and down leg A, arm folded (every height, every roll)</summary>
+      <table class="runs"><thead><tr><th>Roll</th><th>Touches</th></tr></thead><tbody>${sweep.travel.map((t) => `<tr><td>${t.roll}°</td><td>${t.touches.length ? `${t.touches.join(', ')} (worst: ${t.where}, ${(-t.worst * 1000).toFixed(0)} mm)` : 'nothing'}</td></tr>`).join('')}</tbody></table>
+      <p class="hint">Cart body, motors, open clamp and arm against: this unit's other leg and the track, the spine and brackets, the growing pipe and its collars, pods and plugs, the tank with lid and tray, and the ghost neighbour on the left (a copy of the unit, 50 mm from this tank, drawn see-through). ${sweep.poseClashes === 0 ? 'Every grip pose and waiting pose that passes was checked again with all of these switched on: none touches anything.' : `${sweep.poseClashes} passing poses touch something.`}</p>
+    </details>
     <details class="card"><summary>Best result for every hole</summary><table class="runs"><tbody>${fullRows('hole')}</tbody></table></details>
     <details class="card"><summary>Best result for every pod</summary><table class="runs"><tbody>${fullRows('pod')}</tbody></table></details>
     <details class="card"><summary>Why each red part is red</summary>
@@ -102,16 +130,22 @@ export const reachScene: Scene = {
     </details>
     <details class="card">
       <summary>About this scene</summary>
+      <p class="hint">The see-through copy of the unit on the left (world −y, the side of leg A, 50 mm from this tank) is a ghost neighbour: it is drawn only, and switched on as an obstacle in the roll sweep.</p>
       <p class="hint">The unit, track, cart (one sleeve on the −y leg), straight 90° pod holder and tank are those of the Transplant scene. The 24 holes are the unit's own planting-site rule (cad/unit_v1_assembly.py): three columns 120° apart round the growing pipe, every other level turned 60°, 130 mm between levels, the lowest at ${HOLES[0].z.toFixed(3)} m, eight levels (the rule gives nine with today's pipe top; the ninth, at 1.694 m, is left out to make 24). Each has its collar, seat, plug holder and plug (cad/pipe_collar.py). The 16 pods stand in a 4 × 4 tray (45 mm between columns, 38 mm between rows) flat on two rails in the front half of the tank, under the lid, and are reached through 16 pick holes (34 mm, silicone collar) in the lid, exactly as in the Pod grab scene; the sloping pod store with its 6 pick holes is there too, and the central pipe is the spine.</p>
       <p class="hint">The test tries the cart at every height of the straight part of both legs (leg A, the one it stands on, and leg B; ${0.635} to ${1.67} m, 5 mm steps) and along the straight part of the bottom and top run (5 mm steps), as is and rolled 180° about the pipe's own axis (the arm then stands on the other side of the pipe, pointing the other way); the best station is kept for each part. Other roll angles (30° steps) are tried too and listed under the red parts, but do not change the colour. A height passes when the arm can put the hand on the cap with the hand within ${ANGLE_TOL}° of the part's axis, also at a waiting point 60 mm out along the axis, inside all joint limits, with no contact of arm, cart or the part itself against anything. The SO-101 can point its hand only along a plane through its base axis, which is why the cart height matters.</p>
     </details>
     <p id="r-msg" class="hint"></p>
 `;
     const $ = <T extends HTMLElement>(id: string) => panel.querySelector<T>('#' + id)!;
-    let sel: Target | null = null, showRolled = false;
+    let sel: Target | null = null, showRolled = false, selS: { t: SweepTarget; c: RollCell } | null = null;
     const show = () => {
       let text = 'Nothing picked: arm folded', cart = '', pose: { st: Station; z: number; j: Attempt["joints"] } = { st: ROLLED_HOME, z: 1.0, j: { A: 0, B: 0, C: 0, D: 0, E: 0 } };
-      if (sel) {
+      if (selS) {
+        const { t, c } = selS, a = c.own;
+        text = `${t.label}: ${COLOUR[t.colour90].word}, cart rolled ${c.roll}°`;
+        if (a.ok) { pose = { st: a.station!, z: a.station!.at, j: a.joints }; cart = a.station!.label; $('r-text').textContent = `${t.label} with the cart rolled ${c.roll}°: reachable, cart ${a.station!.label}, ${a.margin!.toFixed(0)}° from the nearest joint limit${c.withNeighbour.ok ? '' : ', but the neighbour unit would be touched'}.`; }
+        else { cart = 'arm folded, ' + ROLLED_HOME.label; $('r-text').textContent = `${t.label} with the cart rolled ${c.roll}°: ${describe(a)}.`; }
+      } else if (sel) {
         const a = showRolled ? sel.rolled : sel.direct;
         text = `${sel.label}: ${COLOUR[sel.colour].word}`;
         if (a.ok) { pose = { st: a.station!, z: a.station!.at, j: a.joints }; cart = a.station!.label;
@@ -122,15 +156,24 @@ export const reachScene: Scene = {
       const { depth, names } = worstContact(model, data);
       $('r-now').textContent = text; $('r-cart').textContent = cart || `${ROLLED_HOME.label}`;
       const hit = $('r-hit'); hit.textContent = depth < 0 ? `FAIL: ${names} touched (${(-depth * 1000).toFixed(1)} mm)` : 'none (arm, cart and the part against pipe, collars, other plugs and pods, tank, track)'; hit.style.color = depth < 0 ? '#c0392b' : '';
+      ($('s-turn') as HTMLButtonElement).disabled = !selS; ($('s-best') as HTMLButtonElement).disabled = !selS || !selS.t.best;
       ($('r-direct') as HTMLButtonElement).disabled = !sel || !sel.direct.ok; ($('r-rolled') as HTMLButtonElement).disabled = !sel || !sel.rolled.ok;
     };
     panel.querySelectorAll<HTMLButtonElement>('[data-t]').forEach((b) => b.addEventListener('click', () => {
-      sel = results.find((t) => t.id === b.dataset.t)!; showRolled = !sel.direct.ok && sel.rolled.ok; show();
+      selS = null; sel = results.find((t) => t.id === b.dataset.t)!; showRolled = !sel.direct.ok && sel.rolled.ok; show();
       if (sel.kind === 'pod') viewer.setView(VIEWS.tray); else viewer.setView({ ...VIEWS.pipe, target: [0, 0, sel.z] });
     }));
-    $('r-direct').addEventListener('click', () => { showRolled = false; show(); });
-    $('r-rolled').addEventListener('click', () => { showRolled = true; show(); });
-    $('r-fold').addEventListener('click', () => { sel = null; showRolled = false; show(); });
+    let selT: SweepTarget | null = null;
+    panel.querySelectorAll<HTMLButtonElement>('[data-s]').forEach((b) => b.addEventListener('click', () => {
+      selT = sweep.targets.find((t) => t.id === b.dataset.s)!; sel = null; selS = { t: selT, c: selT.cell90.own.ok ? selT.cell90 : selT.best ?? selT.cell90 }; show();
+      const z = selT.kind === 'hole' ? HOLES[Number(selT.id.slice(1)) - 1].z : 0.3;
+      if (selT.kind === 'pod') viewer.setView(VIEWS.tray); else viewer.setView({ ...VIEWS.pipe, target: [0, 0, z] });
+    }));
+    $('s-turn').addEventListener('click', () => { if (selT) { selS = { t: selT, c: selT.cell90 }; show(); } });
+    $('s-best').addEventListener('click', () => { if (selT?.best) { selS = { t: selT, c: selT.best }; show(); } });
+    $('r-direct').addEventListener('click', () => { selS = null; showRolled = false; show(); });
+    $('r-rolled').addEventListener('click', () => { selS = null; showRolled = true; show(); });
+    $('r-fold').addEventListener('click', () => { sel = null; selS = null; showRolled = false; show(); });
     panel.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((b) => b.addEventListener('click', () => viewer.setView(VIEWS[b.dataset.view!])));
     show();
     void RESULT_RGB;

@@ -86,7 +86,7 @@ export class Rig {
 const FOLD: Joints = { A: 0, B: 0, C: 0, D: 0, E: 0 };
 
 /** Switches the collisions of every geom of the bodies of the target on or off (they are gripped: the hand is meant to touch them). */
-function setTargetCollide(model: MjModel, bodies: string[], on: boolean, saved: Map<number, [number, number]>) {
+export function setTargetCollide(model: MjModel, bodies: string[], on: boolean, saved: Map<number, [number, number]>) {
   for (const b of bodies) {
     const id = model.body(b).id;
     for (let g = 0; g < model.ngeom; g++) if (model.geom_bodyid[g] === id) {
