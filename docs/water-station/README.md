@@ -1,40 +1,54 @@
 # Shared water testing station (OpenPocket #330, part 2 of 4 of plan 307)
 
-One station on the first unit, on the tank lid next to the dock. The arm brings a water sample and pours it into a funnel on the station's roof. One good pH probe and one cheap EC probe (plus a small temperature probe) are bought once and serve every unit. Used sample and rinse water drain to the ground. Powered from the base battery. The water level float switch stays on every unit, always on, and is not part of this station.
+One station on the first unit, on the tank lid next to the dock. The cart brings a water sample in a tube and the arm plugs the tube's nozzle into a socket on the station roof. One good pH probe and one cheap EC probe (plus a small temperature probe) are bought once and serve every unit. Used sample drains to the ground. Powered from the base battery. The water level float switch stays on every unit, always on, and is not part of this station.
 
-Drawn in `cad/water_station.py` (numbers, parts and the check), pictures by `cad/render_water_station.py`. Pictures: `cad/renders/water-station-*.png` (on the unit), `water-station-closeup-*.png` (station alone), `water-station-closed-iso.png` (door on), `water-station-bench-*.png` (bench rig). 3D model: `cad/renders/water-station.glb` (also `assembly.glb`, which the viewer opens). In the pictures the front door is off and the front of the sample cup is cut away, so you can see inside.
+**Redesign of 19 Nov 2026 (owner):** no rinse bottle, no rinse pump, no funnel, and no per-unit pump. ONE peristaltic pump on the cart, a coiled recoil tube with a nozzle, a passive socket on every unit.
+
+Drawn in `cad/water_station.py` (station and unit socket, numbers and check), `cad/water_sampler.py` (the cart's pump, tube, nozzle, parking socket, and check) and `cad/water_assembly.py` (both in one drawing with the whole cart, and check). Pictures by `cad/render_water_station.py`:
+- `cad/renders/water-assembly-*.png`: the whole cart (layout B from #312) with the sampler, at the dock beside the station;
+- `cad/renders/cart-water-sampler-*.png`: the cart with the pump, coil, nozzle and parking socket;
+- `cad/renders/water-station-*.png` (on the unit), `water-station-closeup-*.png` (station alone), `water-station-closed-iso.png` (door on), `water-station-bench-*.png` (bench rig).
+
+3D models: `cad/renders/assembly.glb` is the FULL assembly (cart + sampler + the unit's lid corner + station; the viewer opens it) and `cad/renders/water-station.glb` is the station on the unit only. In the pictures the front door is off and the front of the sample cup is cut away, so you can see inside.
+
+## How the sampling works
+
+1. **Collect.** The arm takes the nozzle out of its parking socket on the cart, plugs it into the unit's socket on the tank lid (a short dip tube runs to 8 mm over the tank floor; no pump, no power on the unit; a little dripping is accepted). The cart pump draws the sample up into the tube. The tube itself holds it: about 70 ml (a 6 mm bore tube about 2.6 m long, ASSUMED; owner asked for 50 to 100 ml), metered by counting pump turns (ml per turn to be measured on the bench). The arm parks the nozzle on the cart for the trip; the coil pulls itself back in.
+2. **Test (at the station).** The arm plugs the nozzle into the socket above the test cup. The pump runs in reverse: the first part of the sample flushes the previous sample out of the cup over the standpipe, the rest stays in the cup (the pH glass stays wet) until the next test.
+3. **Read** pH, EC and temperature after 60 s and send the numbers up. Nothing else to do: no rinse, the leftover in the cup is the storage.
 
 ## What is in it
 
-- **Box on the tank lid**, 200 x 94 x 113 mm, standing on the lid bar, shaded by a roof plate. A removable front door (printed, or cut from sheet).
-- **Funnel** through the roof, right under the dock position (x = 100 on the track, the same as the dock centre, assumed). Its rim is 18 mm over the track axis and 60 mm inboard of the track line, so the arm only tips the cup over it from where it already parks.
+- **Cart sampler** (`cad/water_sampler.py`): a mini peristaltic pump (ASSUMED, rotor 34 x 40 mm, takes 6 mm ID silicone) on the pipe B side of the plate, a short silicone link under the battery column, a PU recoil tube (8 mm OD, 6 mm ID, food-safe) coiled about 52 mm mean diameter, 14 turns, 8 mm pitch, 120 mm long retracted, and a nozzle that parks in a sleeve on a bracket on the plate's top edge. The coil hangs 17 mm past the plate edge on pipe C's side (the roll motor is below it and clears); it is 2 mm from the battery. Checked: nothing clashes with the plate, battery, arm, pipes or either hand.
+- **Unit socket** (on every unit): a printed cup 40 mm tall on the lid with a flared mouth and a 6 mm dip tube. It sits 80 mm from the dock centre, clear of the pipe, lid bar and seedling storage. Cost: a few GBP of printing and tube.
+- **Station box on the tank lid**, 200 x 94 x 113 mm, standing on the lid bar, shaded by a roof plate. A removable front door (printed, or cut from sheet). **Moved 40 mm inboard in this round**: the cart's omni sleeve is 61 mm in radius round the track pipe, and the old box front was only 24 mm from the pipe axis, so the cart could not have parked or passed beside it. Now the front is 64 mm from the track axis (3 mm clear of the sleeve radius).
+- **Nozzle socket** through the roof, right above the cup (unit x = 100, the dock centre, assumed). Flared mouth so the arm can find it. Its mouth is 100 mm from the track axis.
 - **Sample cup**, round, about 190 ml, with three grommets on a flat boss for the probes (all three lie flat, tips under the water).
 - **pH probe** (the one good probe, about GBP 40), **EC probe** (cheap), **DS18B20 temperature probe** (EC and pH both need the temperature).
-- **Standpipe** in the cup floor: the cup drains down to it and no further, so a "heel" of about 37 mm (about 90 ml) of water always stays round the probe tips. The pH glass never dries out. Pull the standpipe out by hand to empty the cup (calibration, cleaning).
-- **Rinse**: a 2 L bottle on the lid behind the box, a small peristaltic pump in the box, a nozzle tube over the cup rim. Two flushes of about 50 ml a day, so 2 L lasts about 16 days. Use clean water (rain or distilled is best; tap water is acceptable at first, ASSUMED).
+- **Standpipe** in the cup floor: the cup drains down to it and no further, so a "heel" of about 37 mm (about 91 ml) of water always stays round the probe tips. The pH glass never dries out. Pull the standpipe out by hand to empty the cup (calibration, cleaning).
 - **Drain**: 6 mm silicone tube out of the cup floor, over the back edge of the lid and down to the soil (about 550 mm, over the lid bar with 2 mm to spare). Nothing drains into the tank.
-- **Electronics** (ASSUMED parts, nothing is bought): an ESP32 board, a pH amplifier board, an EC board, a 12 V to 5 V converter, standing on the back wall. 12 V comes from the base battery.
+- **Electronics** (ASSUMED parts, nothing is bought): an ESP32 board, a pH amplifier board, an EC board, a 12 V to 5 V converter, standing on the back wall. 12 V comes from the base battery. The cart pump is driven from the cart's own battery and board (not designed here).
 
 ## The daily test (default, adjustable)
 
 Default is once a day; the interval is one number (1 day, or 2 days and so on). Water level is always on and not part of this.
 
-1. Arm fetches a sample from the tank sample point (a later part of the plan) and pours it into the funnel.
-2. Wait 60 s for the pH reading to settle. Read pH, EC and temperature. Send the numbers up.
-3. Rinse twice (pump about 50 ml each, then let it drain down to the heel).
-4. Leave the probes sitting in the heel. Nothing else to do.
+1. Arm collects a sample from the unit's socket (the pump draws about 70 ml into the tube) and parks the nozzle for the drive to the station.
+2. Arm plugs the nozzle into the station socket. Pump in reverse: the sample flows into the cup, the first part pushes the old heel out over the standpipe, the rest stays.
+3. Wait 60 s for the pH reading to settle. Read pH, EC and temperature. Send the numbers up.
+4. Arm parks the nozzle on the cart. The probes stay in the cup's water until the next test.
 
-The first pour after a rinse is the one that counts: pour 100 ml, let it overflow the standpipe, then read from the second 100 ml.
+**Open point, carry-over.** With a 70 ml sample and a 91 ml heel, a perfectly mixed cup would still hold about 46 percent old sample (check() prints it). Real mixing is better or worse; the bench test below measures it. If it is too much, shrink the heel (a lower standpipe is limited by the probe depth: the probes need 15 mm of water over them) or take 100 ml (about 33 percent), or run the first 30 ml in and out once (a second flush).
 
-## Bench rig (build this first, no robot, no unit)
+## Bench rig (build this first, no robot, no unit, no cart)
 
-The same cup, standpipe, probes, boards, pump and bottle on a 450 x 300 mm plywood board, no box. A person pours 100 ml of water from a jug into the funnel each day instead of the arm; the drain tube runs into a bucket. See `water-station-bench-*.png`. What to check on it:
+The same cup, standpipe, probes, boards and socket on a 450 x 300 mm plywood board, no box. A person plugs a 100 ml syringe (nozzle tip) into the socket and pushes the sample in by hand each day instead of the pump; the drain tube runs into a bucket. See `water-station-bench-*.png`. The cart pump and recoil tube are tested on their own bench: pump, 2.6 m of tube, a measuring jug (turns per 10 ml, stretched and retracted, how much the coil drips). What to check:
 
-- the pH reading settles in under 60 s and repeats within 0.05 pH when the same sample is poured twice;
-- the probe tips stay under the heel after a drain and after a week of daily rinses;
-- the rinse leaves no carry-over: pour pH 7 buffer, read, rinse, pour tap water, read; the second reading must not drift towards 7;
-- the drain does not siphon the heel away or overflow the cup at the pour rate (100 ml in 5 s);
-- the pump moves about 50 ml in 10 s (change the run time to suit).
+- the pH reading settles in under 60 s and repeats within 0.05 pH when the same sample is pushed in twice;
+- the probe tips stay under the heel after a drain and after a week of daily tests;
+- carry-over: push in pH 7 buffer, read, then push in tap water, read; the second reading must not stay near 7 (it should be within 0.1 pH of the tap water on a second push);
+- the drain does not siphon the heel away or overflow the cup at the pump rate;
+- the pump moves the right ml per turn both ways, and the coil does not drain by itself when the nozzle is lifted (a little dripping is accepted).
 
 ## Calibration by hand (every month or two, robot self-calibration is a later idea)
 
@@ -54,18 +68,31 @@ You need: pH 4 and pH 7 buffer sachets, EC 1413 uS/cm standard, three small clea
 | Good pH probe + amp board, cheaper end | about 40 | about 250 |
 | Cheap EC probe + board | 8 to 20 | 30 to 80 |
 | DS18B20 waterproof | 2 to 4 | 12 to 25 |
-| Mini peristaltic pump | 4 to 10 | 25 to 60 |
 | ESP32, 12 V to 5 V converter | 6 to 12 | 40 to 70 |
-| Bottle, silicone tube, grommets, printing | 5 to 10 | 25 to 50 |
+| Silicone drain tube, grommets, printing (box, cup, socket) | 4 to 8 | 20 to 40 |
 | pH 4 + 7 sachets, EC 1413 (a year) | 10 to 20 | 50 to 120 |
-| **Whole station** | **about 75 to 155** | **about 430 to 650** |
+| **Station** (was 75 to 155 with bottle and pump) | **about 70 to 105** | **about 400 to 585** |
+| Cart: ONE mini peristaltic pump (once, on the cart) | 4 to 10 | 25 to 60 |
+| Cart: 2.6 m PU recoil tube 8 x 6 mm, food-safe, plus 0.3 m silicone for the pump head | 5 to 12 | 30 to 70 |
+| Cart: printed nozzle and parking socket | 1 to 2 | 5 to 10 |
+| Each further unit: printed lid socket, 6 mm dip tube | 1 to 3 | 5 to 15 |
+| **Whole system for 1 unit** | **about 80 to 130** | **about 465 to 730** |
+| **Each extra unit** | **about 1 to 3** | **about 5 to 15** |
 
-## Checks (python cad/water_station.py)
+The rinse bottle (2 L) and rinse pump (GBP 4 to 10) are gone; the one pump on the cart serves all units and does the flush.
 
-Nothing in the station touches the unit or itself (apart from the intended joins); funnel and box stay clear of the track; the standpipe leaves 37 mm of heel; every probe sits 15 mm or more under the heel surface and 10 mm or more over the cup floor; probes are 3 mm or more apart; the drain tube clears the lid bar and leaves the tank 15 mm to the side. The reach of the arm to the funnel is NOT checked here: that is the arm poses part of the plan.
+## Checks
+
+`python cad/water_station.py`, `python cad/water_sampler.py` and `python cad/water_assembly.py` (CadQuery needed).
+- Station: nothing in it touches the unit or itself (apart from the intended joins); the box front is 3 mm clear of the cart sleeve radius (61) round the track; the standpipe leaves 37 mm of heel; every probe sits 15 mm or more under the heel surface and 10 mm or more over the cup floor; probes are 3 mm or more apart; the drain tube clears the lid bar and leaves the tank 55 mm to the back; the unit socket touches nothing; check() also prints the sample volume against the heel and the old-sample percentage.
+- Sampler: tube length and volume (about 73 ml), coil clear of the battery (2 mm), arm, plate, pipes and both hands, nothing overlaps inside it.
+- Assembly: the station and unit socket clash with none of the cart, sampler, hands, plate, battery or arm when the cart is at the dock.
+The reach of the arm (lift the nozzle from its parking socket, to the unit socket, to the station socket) is NOT checked: that is the arm poses part of the plan. The cart-to-unit frame move in `water_assembly.py` is a drawing aid.
 
 ## Left open
 
-- The sample point on the tank (small peristaltic pump and thin tube, no hatch) and the cup the arm carries are other parts of the plan; they wait for the cart redesign (#265) to settle before anything is added to the cart.
-- Dock position (x = 100) and arm reach to the funnel; both need the real track.
-- Real boards and probes: dimensions here are generic.
+- Arm poses: take the nozzle, plug it into a unit socket and the station socket, park it. The station socket mouth is 100 mm from the track axis and 12 mm above it; the parked nozzle is on the cart plate's top edge, about 87 mm out from the pipe plane. Both need the real arm and track.
+- Carry-over of the old sample (see above), pump ml per turn, and how much the tube drips: bench tests.
+- Cart sampler parts (pump head size, 6 mm bore tube, the coil overhanging the plate by 17 mm) are ASSUMED; this adds parts to the cart plate that #265 had said should wait to settle, but the owner asked for it explicitly. Check that against the final plate.
+- Dock position (x = 100) and the real boards and probes: dimensions here are generic.
+- The sample point on the tank is now just the socket and dip tube; the 8 mm dip tube end clearance and the lid sealing (mosquitoes) around the socket are not designed.
