@@ -4,9 +4,9 @@
   "about": "Pond is a vertical vegetable garden that grows outdoors, with a small robot that looks after it. The robot climbs the pipes, checks the plants and swaps the pods, so neighbours can grow food together without the daily chores. I'm designing it in the open: the drawings, the part list and the reasons behind each choice are all on this site.",
   "hero": {
     "src": "drawings/renders/complete-unit-v2-line.png",
-    "alt": "Line drawing of the complete Pond unit: tank, growing pipe with pods in every hole, frame and braces, solar panel, track with the cart, seedling tray and seedling storage, water in the tank, the cart with its water sampler and the water testing station",
+    "alt": "Line drawing of the complete Pond unit: tank, growing pipe with pods in every hole, frame and braces, solar panel, track with the cart, seedling tray and seedling storage",
     "caption": "The complete unit, simplified. Tap to open it in 3D.",
-    "href": "drawings/viewer.html?src=renders/complete-unit-v2.glb&title=Complete%20unit%20v2%20%28simplified%2C%20everything%20together%29&from=home"
+    "href": "drawings/viewer.html?src=renders/complete-unit-v2.glb&title=Complete%20unit%20v2%20%28single-source%3A%20tank%20with%20water%2C%20real%20cart%2C%20sample%20coil%29&from=home"
   },
   "status": [
     {"name": "Pond 1.0", "state": "Built", "note": "The first growing unit is built."},

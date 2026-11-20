@@ -15,32 +15,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from cart_dims import PLATE_Y0, PLATE_X0, PLATE_X1, PLATE_ZH, BATT, BATT_X, ARM_BASE_W, ARM_Y0  # noqa: E402
 from cart_geom import box, cyl  # noqa: E402
-import water_connector as wc  # noqa: E402
+from parts import water_connector as wc  # noqa: E402
+from parts.common import hose, vol, inter  # noqa: E402,F401
+from parts.sample_coil import *  # noqa: E402,F401,F403  (the tubing: coil, link, tail, nozzle and their numbers)
+from parts import sample_coil as sc  # noqa: E402
 
-TUBE_OD, TUBE_ID = 8.0, 6.0            # PU recoil tube
-SIL_OD = 9.0                           # silicone section through the pump head (6 ID)
-COIL_R = 26.0                          # mean coil radius
-COIL_PITCH = 8.0
-COIL_TURNS = 14
-COIL_X = 67.0                          # coil axis (x): 13 mm beyond the plate edge on pipe C side; inner edge 2 mm from the battery column (x +-35)
-COIL_Y = PLATE_Y0 - (COIL_R + TUBE_OD / 2 + 1.0)    # axis out from the plate so the coil clears the plate face by 1 mm
-COIL_Z0 = -58.0                         # starts above the pipe C roll motor (z -91..-63 at x 81..109) so the coil, which overhangs the plate edge, clears it
-PUMP_X, PUMP_Z = -62.0, -28.0          # pump axis along Y, on the pipe B side strip of the plate
 PUMP_R, PUMP_L = 17.0, 40.0
-PARK_Z0, PARK_Z1 = 73.0, 89.0          # parking block (bolts to the plate top edge, z 73..89): its flat BOTTOM face at z 73 carries the flush female socket, looking down (-Z)
-SAMPLE_TUBE_M = COIL_TURNS * 2 * math.pi * COIL_R / 1000.0 + 0.3     # coil plus tails, metres
-COL = dict(pump=(0.92, 0.5, 0.15, 1), sil=(0.85, 0.85, 0.9, 0.9), pu=(0.2, 0.75, 0.85, 1), nozzle=(0.95, 0.95, 0.4, 1), park=(0.95, 0.95, 0.95, 1))
-
-
-def hose(r, pts):
-    out = None
-    for a, b in zip(pts, pts[1:]):
-        v = cq.Vector(*b) - cq.Vector(*a)
-        s = cq.Workplane("XY").add(cq.Solid.makeCylinder(r, v.Length, cq.Vector(*a), v.normalized()))
-        out = s if out is None else out.union(s)
-    for p in pts[1:-1]:
-        out = out.union(cq.Workplane("XY").add(cq.Solid.makeSphere(r, cq.Vector(*p), cq.Vector(0, 0, 1), -90, 90, 360)))
-    return out
+PARK_Z1 = 89.0                        # parking block z 73..89 (PARK_Z0 in parts/sample_coil.py): its flat BOTTOM face carries the flush female socket, looking down (-Z)
+COL = dict(pump=(0.92, 0.5, 0.15, 1), sil=sc.COL['sil'], pu=sc.COL['pu'], nozzle=(0.95, 0.95, 0.4, 1), park=(0.95, 0.95, 0.95, 1))
 
 
 def pump():
@@ -48,31 +30,6 @@ def pump():
     body = cyl(PUMP_R, PUMP_L, "y", (PUMP_X, y0 + PUMP_L / 2, PUMP_Z))
     base = box(2 * PUMP_R, PUMP_L, PUMP_R + 8, (PUMP_X, y0 + PUMP_L / 2, PUMP_Z - PUMP_R / 2 - 4))        # motor/foot block under the rotor
     return body.union(base)
-
-
-def link_hose():
-    """Silicone: out of the pump head, along the bottom of the plate (under the battery column) to the coil start on pipe C's side."""
-    sx = COIL_X + COIL_R
-    return hose(SIL_OD / 2 - 0.5, [(PUMP_X, COIL_Y, PUMP_Z - 25), (PUMP_X, COIL_Y, COIL_Z0 - 8), (sx, COIL_Y, COIL_Z0 - 8), (sx, COIL_Y, COIL_Z0)])
-
-
-def coil():
-    """PU recoil coil, retracted: a helix of the tube radius along +Z, starting at (COIL_X + COIL_R, COIL_Y, COIL_Z0)."""
-    h = cq.Wire.makeHelix(COIL_PITCH, COIL_PITCH * COIL_TURNS, COIL_R)
-    path = cq.Workplane("XY").add(h).translate((COIL_X, COIL_Y, COIL_Z0))
-    start = cq.Vector(COIL_X + COIL_R, COIL_Y, COIL_Z0)
-    prof = cq.Workplane(cq.Plane(origin=(start.x, start.y, start.z), xDir=(1, 0, 0), normal=(0, 1, 0))).circle(TUBE_OD / 2)
-    return prof.sweep(path, isFrenet=True)
-
-
-def nozzle_and_tail():
-    """Tube tail straight up from the coil end to the male nozzle (19 Nov follow-up: thin 4.4 mm spigot on a ringed collar, water_connector.py, like the Omron cuff connector).
-    The nozzle is shown PARKED: spigot pushed straight up into the flush hole in the bottom face of the parking block (z 73), collar hanging below it."""
-    ex = COIL_X + COIL_R
-    z_end = COIL_Z0 + COIL_PITCH * COIL_TURNS
-    nozzle = wc.male(ex, COIL_Y, PARK_Z0, +1)
-    tail = hose(TUBE_OD / 2, [(ex, COIL_Y, z_end), (ex, COIL_Y, PARK_Z0 - wc.COLLAR_L + 2.0)])      # tube goes 2 mm into the collar's base
-    return tail, nozzle
 
 
 def parking_socket():
@@ -84,20 +41,12 @@ def parking_socket():
 
 
 def parts():
-    tail, nozzle = nozzle_and_tail()
-    return {"sampler_pump": (pump(), COL["pump"]), "sampler_silicone_link": (link_hose(), COL["sil"]), "sampler_pu_coil": (coil(), COL["pu"]),
-            "sampler_pu_tail": (tail, COL["pu"]), "sampler_nozzle": (nozzle, COL["nozzle"]), "sampler_parking_socket": (parking_socket(), COL["park"])}
-
-
-def vol(w):
-    return sum(s.Volume() for s in w.solids().vals()) if w.solids().vals() else 0.0
-
-
-def inter(a, b):
-    bb, cc = a.val().BoundingBox(), b.val().BoundingBox()
-    if bb.xmax < cc.xmin or cc.xmax < bb.xmin or bb.ymax < cc.ymin or cc.ymax < bb.ymin or bb.zmax < cc.zmin or cc.zmax < bb.zmin:
-        return 0.0
-    return vol(a.intersect(b))
+    _, nozzle = tail_and_nozzle()
+    out = {"sampler_pump": (pump(), COL["pump"])}
+    out.update(sample_tubing())                      # silicone link, PU coil and tail: cad/parts/sample_coil.py
+    out["sampler_nozzle"] = (nozzle, COL["nozzle"])
+    out["sampler_parking_socket"] = (parking_socket(), COL["park"])
+    return out
 
 
 def check():

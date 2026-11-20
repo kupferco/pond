@@ -3,9 +3,9 @@
  "models": [
   {
    "id": "complete-unit-v2",
-   "title": "Complete unit",
+   "title": "Complete unit v2 (single-source: tank with water, real cart, sample coil)",
    "glb": "drawings/renders/complete-unit-v2.glb",
-   "caption": "Simplified: tank with its water, growing pipe, frame, solar panel, track, the cart with its sample tubing, the water testing station, seedling tray and storage.",
+   "caption": "Tank with water, frame, panel, pods, trays and the cart with its sample coil on the track.",
    "page": "home",
    "section": "Complete unit",
    "poster": "drawings/renders/complete-unit-v2-line.png",
@@ -15,16 +15,16 @@
   },
   {
    "id": "cart-assembly-v5",
-   "title": "Cart assembly",
+   "title": "Whole cart assembly v5 (motors inward)",
    "glb": "drawings/renders/cart-assembly-v5.glb",
-   "caption": "The climbing cart with its motors inward, plates, arm mount and water sampler (pump, blue sample tubing coil).",
+   "caption": "The climbing cart with its motors inward, plate, battery and arm mount.",
    "page": "models",
    "section": "Cart",
    "poster": "drawings/renders/cart-assembly-v5-line.png"
   },
   {
    "id": "cart-arm-v4",
-   "title": "Cart arm",
+   "title": "Cart arm v4 (working pose, regenerated, motors inward)",
    "glb": "drawings/renders/cart-arm-v4.glb",
    "caption": "The small arm that picks and plants pods.",
    "page": "models",
@@ -33,21 +33,12 @@
   },
   {
    "id": "cart-base-v3",
-   "title": "Cart base",
+   "title": "Cart base plate v3 (regenerated, motors inward)",
    "glb": "drawings/renders/cart-base-v3.glb",
    "caption": "The base plate the wheels and motors attach to.",
    "page": "models",
    "section": "Cart",
    "poster": "drawings/renders/cart-base-v3-line.png"
-  },
-  {
-   "id": "unit-bracing-v6",
-   "title": "Unit",
-   "glb": "drawings/renders/unit-bracing-v6.glb",
-   "caption": "The unit on the shared layout: see-through tank with its water, the track, the cart hanging under it with clearance over the lid.",
-   "page": "models",
-   "section": "Unit structure",
-   "poster": "drawings/renders/unit-bracing-v6-line.png"
   },
   {
    "id": "pipe-collar-with-pod-v1",
@@ -68,43 +59,58 @@
    "poster": "drawings/renders/charging-dock-v1-line.png"
   },
   {
-   "id": "water-station-v1",
-   "title": "Water testing station",
-   "glb": "drawings/renders/water-station-v1.glb",
-   "caption": "The shared station on the tank lid: sample cup, probes, nozzle socket and drain, with the tank and its water below.",
-   "page": "models",
-   "section": "Water",
-   "poster": "drawings/renders/water-station-v1-line.png"
-  },
-  {
-   "id": "cart-water-sampler-v1",
-   "title": "Cart water sampler",
-   "glb": "drawings/renders/cart-water-sampler-v1.glb",
-   "caption": "The cart's pump, the blue sample tubing coil and the nozzle parked on the plate.",
-   "page": "models",
-   "section": "Water",
-   "poster": "drawings/renders/cart-water-sampler-v1-line.png"
-  },
-  {
-   "id": "water-assembly-v1",
-   "title": "Water test: full assembly",
-   "glb": "drawings/renders/water-assembly-v1.glb",
-   "caption": "Cart with sampler at the dock, the station, the track supports and the tank with water. The cart clears the lid.",
-   "page": "models",
-   "section": "Water",
-   "poster": "drawings/renders/water-assembly-v1-line.png",
-   "camera": {
-    "orbit": "35deg 65deg auto"
-   }
-  },
-  {
    "id": "track-supports-assembly-v2",
-   "title": "Track supports",
+   "title": "Whole unit with the track supports (with water)",
    "glb": "drawings/renders/track-supports-assembly-v2.glb",
-   "caption": "Posts and rods holding the track pipe, on the raised bottom run, with the see-through tank and its water.",
+   "caption": "The unit with the track supports and the water in the tank.",
    "page": "models",
    "section": "Track",
    "poster": "drawings/renders/track-supports-assembly-v2-line.png"
+  },
+  {
+   "id": "unit-water-v1",
+   "title": "Unit structure with the water in the tank",
+   "glb": "drawings/renders/unit-water-v1.glb",
+   "caption": "The unit structure with its water.",
+   "page": "models",
+   "section": "Unit",
+   "poster": "drawings/renders/unit-water-v1-line.png"
+  },
+  {
+   "id": "tank-water-v1",
+   "title": "Tank (lid off) with the water volume at 15 cm",
+   "glb": "drawings/renders/tank-water-v1.glb",
+   "caption": "The tank with its water volume.",
+   "page": "models",
+   "section": "Unit",
+   "poster": "drawings/renders/tank-water-v1-line.png"
+  },
+  {
+   "id": "sample-coil-v1",
+   "title": "Cart with the water-test sample tubing coil",
+   "glb": "drawings/renders/sample-coil-v1.glb",
+   "caption": "The cart's peristaltic pump and the thin sample tubing coil to the sample nozzle.",
+   "page": "models",
+   "section": "Water",
+   "poster": "drawings/renders/sample-coil-v1-line.png"
+  },
+  {
+   "id": "water-assembly-v1",
+   "title": "Cart with sampler beside the shared water testing station",
+   "glb": "drawings/renders/water-assembly-v1.glb",
+   "caption": "The cart at the shared water testing station.",
+   "page": "models",
+   "section": "Water",
+   "poster": "drawings/renders/water-assembly-v1-line.png"
+  },
+  {
+   "id": "water-station-v1",
+   "title": "Shared water testing station on the unit",
+   "glb": "drawings/renders/water-station-v1.glb",
+   "caption": "The water testing station on the lid.",
+   "page": "models",
+   "section": "Water",
+   "poster": "drawings/renders/water-station-v1-line.png"
   }
  ]
 }

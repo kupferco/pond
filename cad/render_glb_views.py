@@ -13,7 +13,7 @@ import render_local as rl
 VIEWS = (("iso", 28, -50), ("front", 0, -90), ("top", 90, -90), ("side", 0, 0))
 
 
-def collect(glb, hide=(), zmax=None):
+def collect_glb(glb, hide=(), zmax=None):
     sc = trimesh.load(glb, force="scene")
     out = []
     for name, geom_names in sc.graph.nodes_geometry and [(n, None) for n in sc.graph.nodes_geometry]:
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     if "--hide" in sys.argv:
         hide = sys.argv[sys.argv.index("--hide") + 1].split(",")
     zmax = float(sys.argv[sys.argv.index("--zmax") + 1]) if "--zmax" in sys.argv else None
-    parts = collect(glb, hide, zmax)
+    parts = collect_glb(glb, hide, zmax)
     for v, el, az in VIEWS:
         rl.draw(parts, el, az, "%s-%s.png" % (prefix, v), "%s (%s)" % (title, v))
         print("wrote", prefix, v, flush=True)

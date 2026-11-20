@@ -4,6 +4,8 @@ One station on the first unit, on the tank lid next to the dock. The cart brings
 
 **Redesign of 19 Nov 2026 (owner):** no rinse bottle, no rinse pump, no funnel, and no per-unit pump. ONE peristaltic pump on the cart, a coiled recoil tube with a nozzle, a passive socket on every unit.
 
+**Since #365 (single source):** the sample tubing coil is its own part, `cad/parts/sample_coil.py` (silicone link, PU coil, tail), the connector is `cad/parts/water_connector.py`, and the unit around the station (tank, lid, growing pipe, track) comes from `cad/parts/`, including the tank's water volume (15 cm). See `docs/cad-structure.md`; `cad/build_all.py` regenerates everything.
+
 Drawn in `cad/water_station.py` (station and unit socket, numbers and check), `cad/water_sampler.py` (the cart's pump, tube, nozzle, parking socket, and check) and `cad/water_assembly.py` (both in one drawing with the whole cart, and check). Pictures by `cad/render_water_station.py`:
 - `cad/renders/water-assembly-*.png`: the whole cart (layout B from #312) with the sampler, at the dock beside the station;
 - `cad/renders/cart-water-sampler-*.png`: the cart with the pump, coil, nozzle and parking socket;
