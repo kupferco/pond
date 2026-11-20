@@ -54,3 +54,7 @@ These numbers live in one settings file, not in code, because they are not decid
 - Seedling tray grid: 4 × 4 or 3 × 5.
 - Number and order of pipe slots, and how the pipe rotates.
 - Cart commands wait for the cart model to join the sim.
+
+## Sampling commands (added 20 Nov 2026, OpenPocket #357)
+
+`pose <name>` now has named poses for the water sampling job (`rest`, `park_above`, `park_in`, `unit_above`, `unit_in`, `station_above`, `station_in`), plus `gripper open|close`, `cart to unit|station`, `pump in <turns>`, `pump out <turns>` (reverse) and `wait <s>`. See docs/water-station/arm-sample-run.md.

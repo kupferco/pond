@@ -31,6 +31,19 @@ export class SimDriver implements RobotDriver {
   setJointTarget(motorId: string, degrees: number): void {
     this.data.ctrl[this.ctrlIdx[motorId]] = degrees * RAD;
   }
+  private pumped = 0;
+  pump(turns: number): void { this.pumped += turns; }
+  pumpTurns(): number { return this.pumped; }
+  /** Put the arm exactly at these joint angles (degrees by motor id) and run forward kinematics: for the scripted, kinematic runs. The targets follow, so nothing pulls the arm away if the physics runs. */
+  setJointsKinematic(pose: Record<string, number>): void {
+    for (const m of MOTORS) {
+      const d = pose[m.id];
+      if (d === undefined) continue;
+      this.data.qpos[this.qposAdr[m.id]] = d * RAD;
+      this.data.ctrl[this.ctrlIdx[m.id]] = d * RAD;
+    }
+    this.mujoco.mj_forward(this.model, this.data);
+  }
   /** Scene-specific home pose in degrees by motor id (default: each motor's own home). */
   private homePose: Record<string, number> = {};
   setHomePose(pose: Record<string, number>): void {
@@ -60,6 +73,7 @@ export class SimDriver implements RobotDriver {
     for (const m of MOTORS) this.data.qpos[this.qposAdr[m.id]] = (this.homePose[m.id] ?? m.home) * RAD;
     this.mujoco.mj_forward(this.model, this.data);
     this.acc = 0;
+    this.pumped = 0;
   }
 
   /** One physics step of exactly model.opt.timestep seconds (no wall-clock involved). */

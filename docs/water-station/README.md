@@ -128,6 +128,10 @@ Run `python cad/water_station_position.py`.
 - **Bottom sleeve not drawn:** pipe C is 120 mm from the track, level with the lid, the #315 posts and the station box. A bottom sleeve there would sit inside them (posts 6376 mm3, box and door about 1900 mm3, unit socket 3792 mm3; `check()` lists it). Its pipe would be the neighbour unit's track, not drawn either.
 - **Reading used:** "top sleeve" = the upper one when the unit stands upright with its lid below. If the owner meant two sleeves on the SAME pipe, this is not that: say so.
 
+## Arm sample run
+
+The commands, the simulated cycle (control UI scene "10. Water sample") and the real-hardware run sheet are in [arm-sample-run.md](arm-sample-run.md).
+
 ## Arm reach check (OpenPocket #359, 20 Nov 2026)
 
 `python cad/water_assembly.py` now prints `arm_reach_to_sampler_points`: the distance from the arm shoulder to the three places the gripper has to go, with the cart at the dock, and which gripper angles (0 to 180 deg) the arm can solve (`cart_arm.py`, 350 mm reach).

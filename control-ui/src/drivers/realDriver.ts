@@ -11,6 +11,8 @@ export class RealDriver implements RobotDriver {
   }
   setJointTarget(): void { throw new Error('Real arm: not connected yet'); }
   home(): void { throw new Error('Real arm: not connected yet'); }
+  pump(): void { throw new Error('Real arm: not connected yet'); }
+  pumpTurns() { return 0; }
   readJoints() { return null; }
   targets() { return {}; }
 }
