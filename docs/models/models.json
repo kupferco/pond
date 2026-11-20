@@ -2,43 +2,52 @@
  "_help": "One entry per 3D model shown on the site. Add an entry here and it appears: no code. Fields: id (unique), title, glb (path from docs/), caption (optional), page (home or models: where it is embedded), section (heading on the models page), poster (optional image shown until the model loads), camera (optional: orbit like '35deg 70deg auto', target, fov).",
  "models": [
   {
-   "id": "complete-unit-v1",
+   "id": "complete-unit-v2",
    "title": "Complete unit",
-   "glb": "drawings/renders/complete-unit-v1.glb",
-   "caption": "Simplified: tank, growing pipe, frame, solar panel, track, cart, seedling tray and storage.",
+   "glb": "drawings/renders/complete-unit-v2.glb",
+   "caption": "Simplified: tank with its water, growing pipe, frame, solar panel, track, the cart with its sample tubing, the water testing station, seedling tray and storage.",
    "page": "home",
    "section": "Complete unit",
-   "poster": "drawings/renders/complete-unit-v1-line.png",
+   "poster": "drawings/renders/complete-unit-v2-line.png",
    "camera": {
     "orbit": "35deg 70deg auto"
    }
   },
   {
-   "id": "cart-assembly-v4",
+   "id": "cart-assembly-v5",
    "title": "Cart assembly",
-   "glb": "drawings/renders/cart-assembly-v4.glb",
-   "caption": "The climbing cart with its motors, plates and arm mount.",
+   "glb": "drawings/renders/cart-assembly-v5.glb",
+   "caption": "The climbing cart with its motors inward, plates, arm mount and water sampler (pump, blue sample tubing coil).",
    "page": "models",
    "section": "Cart",
-   "poster": "drawings/renders/cart-assembly-v4-line.png"
+   "poster": "drawings/renders/cart-assembly-v5-line.png"
   },
   {
-   "id": "cart-arm-v3",
+   "id": "cart-arm-v4",
    "title": "Cart arm",
-   "glb": "drawings/renders/cart-arm-v3.glb",
+   "glb": "drawings/renders/cart-arm-v4.glb",
    "caption": "The small arm that picks and plants pods.",
    "page": "models",
    "section": "Cart",
-   "poster": "drawings/renders/cart-arm-v3-line.png"
+   "poster": "drawings/renders/cart-arm-v4-line.png"
   },
   {
-   "id": "cart-base-v2",
+   "id": "cart-base-v3",
    "title": "Cart base",
-   "glb": "drawings/renders/cart-base-v2.glb",
+   "glb": "drawings/renders/cart-base-v3.glb",
    "caption": "The base plate the wheels and motors attach to.",
    "page": "models",
    "section": "Cart",
-   "poster": "drawings/renders/cart-base-v2-line.png"
+   "poster": "drawings/renders/cart-base-v3-line.png"
+  },
+  {
+   "id": "unit-bracing-v6",
+   "title": "Unit",
+   "glb": "drawings/renders/unit-bracing-v6.glb",
+   "caption": "The unit on the shared layout: see-through tank with its water, the track, the cart hanging under it with clearance over the lid.",
+   "page": "models",
+   "section": "Unit structure",
+   "poster": "drawings/renders/unit-bracing-v6-line.png"
   },
   {
    "id": "pipe-collar-with-pod-v1",
@@ -57,6 +66,45 @@
    "page": "models",
    "section": "Power",
    "poster": "drawings/renders/charging-dock-v1-line.png"
+  },
+  {
+   "id": "water-station-v1",
+   "title": "Water testing station",
+   "glb": "drawings/renders/water-station-v1.glb",
+   "caption": "The shared station on the tank lid: sample cup, probes, nozzle socket and drain, with the tank and its water below.",
+   "page": "models",
+   "section": "Water",
+   "poster": "drawings/renders/water-station-v1-line.png"
+  },
+  {
+   "id": "cart-water-sampler-v1",
+   "title": "Cart water sampler",
+   "glb": "drawings/renders/cart-water-sampler-v1.glb",
+   "caption": "The cart's pump, the blue sample tubing coil and the nozzle parked on the plate.",
+   "page": "models",
+   "section": "Water",
+   "poster": "drawings/renders/cart-water-sampler-v1-line.png"
+  },
+  {
+   "id": "water-assembly-v1",
+   "title": "Water test: full assembly",
+   "glb": "drawings/renders/water-assembly-v1.glb",
+   "caption": "Cart with sampler at the dock, the station, the track supports and the tank with water. The cart clears the lid.",
+   "page": "models",
+   "section": "Water",
+   "poster": "drawings/renders/water-assembly-v1-line.png",
+   "camera": {
+    "orbit": "35deg 65deg auto"
+   }
+  },
+  {
+   "id": "track-supports-assembly-v2",
+   "title": "Track supports",
+   "glb": "drawings/renders/track-supports-assembly-v2.glb",
+   "caption": "Posts and rods holding the track pipe, on the raised bottom run, with the see-through tank and its water.",
+   "page": "models",
+   "section": "Track",
+   "poster": "drawings/renders/track-supports-assembly-v2-line.png"
   }
  ]
 }

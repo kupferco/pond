@@ -42,8 +42,10 @@ if (!/id="back"/.test(viewer)) problems.push('viewer.html: no Back button');
 const home = JSON.parse(readFileSync(join(dir, '..', 'home.json'), 'utf8')) as { hero: { href: string } };
 const hm = /^drawings\/viewer\.html\?src=(renders\/[A-Za-z0-9._-]+\.glb)(&|$)/.exec(home.hero.href);
 if (!hm || !existsSync(join(dir, hm[1]))) problems.push(`home.json: hero does not open an existing GLB in the shared viewer (${home.hero.href})`);
-else if (hm[1] !== 'renders/complete-unit-v1.glb') problems.push(`home.json: hero should open the complete unit GLB (${hm[1]})`);
-if (data.renders[0]?.id !== 'complete-unit-v1') problems.push('renders.json: the complete unit must be the first card');
+// OpenPocket #364: the complete unit is versioned (v2 now); the hero opens the newest one, and it is the first card.
+const cu = data.renders.filter(r => (r as { part?: string }).part === 'Complete unit').sort((a, b) => ((b as { version?: number }).version ?? 0) - ((a as { version?: number }).version ?? 0))[0];
+if (!cu || !(cu.viewer ?? '').includes(`src=${hm?.[1]}`)) problems.push(`home.json: hero should open the newest complete unit GLB (${hm?.[1]})`);
+if (data.renders[0]?.id !== cu?.id) problems.push('renders.json: the newest complete unit must be the first card');
 const collar = new Set(data.renders.filter(r => /^pipe-collar-/.test(r.id)).map(r => (r as { part?: string }).part));
 if (collar.size !== 1) problems.push(`renders.json: pipe collar entries use ${collar.size} different part names, want 1`);
 

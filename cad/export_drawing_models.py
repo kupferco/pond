@@ -23,8 +23,18 @@ def cart_models():
     hand.add(cs.cyl(hs.R_PIPE, 250.0, "z", (0, 0, 0)), name="track_pipe", color=cq.Color(0.75, 0.78, 0.8, 1))
     for n, (s, col) in cs.hand_parts().items():
         hand.add(s, name=n, color=cq.Color(*col))
+    import cart_assembly as ca
+    import water_sampler as wsa
+
+    def whole_cart():
+        a = cq.Assembly()                                              # the whole cart: both hands on both pipes (motors inward, #312) + the water sampler (#330)
+        for ch in ca.result.children:
+            a.add(ch.obj, name=ch.name, loc=ch.loc, color=ch.color)
+        for n, (s, c) in wsa.parts().items():
+            a.add(s, name=n, color=cq.Color(*c))
+        return a
     return {
-        "cart-assembly-v5": lambda: wa.scene("cart"),                 # whole cart (motors inward) with the water sampler (pump, coil, nozzle, parking block)
+        "cart-assembly-v5": whole_cart,
         "cart-arm-stowed-v4": lambda: arm.result_stowed,
         "cart-arm-v4": lambda: arm.result,
         "cart-base-v3": lambda: cb.result,

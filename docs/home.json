@@ -3,10 +3,10 @@
   "intro": "Pond is an open-source outdoor growing robot I'm building. One day there may be kits you can download for free or buy ready-assembled. For now, this is where I keep my notes and progress.",
   "about": "Pond is a vertical vegetable garden that grows outdoors, with a small robot that looks after it. The robot climbs the pipes, checks the plants and swaps the pods, so neighbours can grow food together without the daily chores. I'm designing it in the open: the drawings, the part list and the reasons behind each choice are all on this site.",
   "hero": {
-    "src": "drawings/renders/complete-unit-v1-line.png",
-    "alt": "Line drawing of the complete Pond unit: tank, growing pipe with pods in every hole, frame and braces, solar panel, track with the cart, seedling tray and seedling storage",
+    "src": "drawings/renders/complete-unit-v2-line.png",
+    "alt": "Line drawing of the complete Pond unit: tank, growing pipe with pods in every hole, frame and braces, solar panel, track with the cart, seedling tray and seedling storage, water in the tank, the cart with its water sampler and the water testing station",
     "caption": "The complete unit, simplified. Tap to open it in 3D.",
-    "href": "drawings/viewer.html?src=renders/complete-unit-v1.glb&title=Complete%20unit%20v1%20%28simplified%2C%20everything%20together%29&from=home"
+    "href": "drawings/viewer.html?src=renders/complete-unit-v2.glb&title=Complete%20unit%20v2%20%28simplified%2C%20everything%20together%29&from=home"
   },
   "status": [
     {"name": "Pond 1.0", "state": "Built", "note": "The first growing unit is built."},

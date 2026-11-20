@@ -43,7 +43,10 @@ for cx, cz, qx, qz in [(-TX + R, ZT - R, -1, 1), (TX - R, ZT - R, 1, 1), (TX - R
     track = track.union(corner(cx, cz, qx, qz))
 add(track, "track_loop", (0.7, 0.7, 0.72, 1))
 add(box(16, 30, 30, 0, -45, ZT - 15).union(box(16, 30, 30, 0, -45, ZB - 15)), "spine_brackets", (0.2, 0.2, 0.2, 1))
-add(box(70, 90, 110, TX, LOOP_Y, ZB + R + 50), "cart", (0.9, 0.2, 0.2, 1))
+# OpenPocket #364: the cart as it is now designed (motors inward #312, water sampler with the sample tubing coil #330), hanging under the bottom run at x = 0, instead of a red box at the corner
+import cart_standin as CS
+for _n, (_s, _c) in CS.parts(ZB, dock=0.0, loop_y=LOOP_Y).items():
+    add(_s, _n, _c)
 B = (0.1, 0.35, 0.85, 1)
 YF = -260.0
 def vdim(x, za, zb, label, side=1):

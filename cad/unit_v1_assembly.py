@@ -89,5 +89,8 @@ add(many(lambda x, z: cq.Workplane("XY").circle(TR + 1.5).circle(TR).extrude(6).
 add(many(lambda z: box(16, abs(LOOP_Y) - GP / 2 + 4, 40, 0, LOOP_Y / 2 - GP / 4 - 2, z - 20) if False else
          box(16, abs(LOOP_Y) - GP / 2 + 6, 30, 0, -(GP / 2 + (abs(LOOP_Y) - GP / 2) / 2), z - 15), [(ZT,), (ZB,)]),
     "spine_brackets", (0.2, 0.2, 0.2, 1))
-add(box(70, 90, 110, TX, LOOP_Y, ZB + R + 50), "cart_low_on_B", (0.9, 0.2, 0.2, 1))
+# OpenPocket #364: the cart as it is now designed (motors inward #312, water sampler with the sample tubing coil #330), hanging under the bottom run at x = 0, instead of a red box at the corner
+import cart_standin as CS
+for _n, (_s, _c) in CS.parts(ZB, dock=0.0, loop_y=LOOP_Y).items():
+    add(_s, _n, _c)
 result = assy
