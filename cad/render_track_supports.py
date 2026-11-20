@@ -6,6 +6,7 @@ import cadquery as cq
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import render_local as rl
+import layout as LAY   # shared heights (cad/layout.json)
 
 OUT = os.path.join(HERE, "renders")
 ns = runpy.run_path(os.path.join(HERE, "track_supports.py"))
@@ -38,7 +39,7 @@ def write(parts, name):
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     write(rl.collect(assy), "track-supports-assembly")
-    for name, box_ in (("track-supports-bottom", (SUP_X, LOOP_Y / 2, (ZB + 304) / 2, 110, 60, 125)),
+    for name, box_ in (("track-supports-bottom", (SUP_X, LOOP_Y / 2, (ZB + LAY.LID_TOP) / 2, 110, 60, 125)),
                        ("track-supports-top", (SUP_X, LOOP_Y / 2, ZT - 40, 110, 60, 110))):
         parts, sub = cropped(*box_)
         write(parts, name)

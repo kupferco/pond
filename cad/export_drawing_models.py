@@ -54,7 +54,7 @@ def unit_models():
     return {
         "unit-bracing-v6": run("unit_v3_aframe.py"),                  # tank with water, shared layout track height
         "unit-v3-dimensioned-v3": run("unit_v3_dimensioned.py"),
-        "unit-full-v4": run("unit_v1_assembly.py"),
+        "unit-full-v4": run("complete_unit.py"),               # OpenPocket #376: from cad/parts/ (real cart, sampler, unit), not from the old study
         "track-supports-assembly-v2": run("track_supports.py"),
     }
 

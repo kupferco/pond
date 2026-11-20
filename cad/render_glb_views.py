@@ -13,6 +13,15 @@ import render_local as rl
 VIEWS = (("iso", 28, -50), ("front", 0, -90), ("top", 90, -90), ("side", 0, 0))
 
 
+def subdivide(t, n=2):
+    """Split every triangle into 4, n times (translucent parts sort better in the painter's algorithm). OpenPocket #376: render_local.subdivide did not exist, so this script never ran."""
+    for _ in range(n):
+        a, b, c = t[:, 0], t[:, 1], t[:, 2]
+        ab, bc, ca = (a + b) / 2, (b + c) / 2, (c + a) / 2
+        t = np.concatenate([np.stack(x, 1) for x in ((a, ab, ca), (ab, b, bc), (ca, bc, c), (ab, bc, ca))])
+    return t
+
+
 def collect_glb(glb, hide=(), zmax=None):
     sc = trimesh.load(glb, force="scene")
     out = []
@@ -30,7 +39,7 @@ def collect_glb(glb, hide=(), zmax=None):
         col = tuple(np.asarray(c if c is not None else (180, 180, 185, 255), float)[:4] / 255.0)
         t = v[f]
         if col[3] < 1.0:
-            t = rl.subdivide(t)
+            t = subdivide(t)
         if zmax is not None:                                   # close-up: only what lies below this height (Z up)
             t = t[t[:, :, 2].max(axis=1) < zmax]
             if not len(t):
