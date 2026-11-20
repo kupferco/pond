@@ -14,7 +14,8 @@
 #   home-station-ring    (OpenPocket #286) hand on the pipe with its hall sensor over the ring of magnet tape
 #   home-station-point   hand rolled to zero with its hall sensor over the point magnet
 #   home-station-rolled  hand rolled 90 deg: the sensor still sees the ring, the point magnet is out of reach
-#   assembly.glb         the whole cart (cart_assembly.py) for the 3D viewer. NOTE (#330): the committed assembly.glb is the cart + water sampler + station, from cad/render_water_station.py; run that after this script
+#   <name>.glb           (#365) a GLB next to the PNGs for the scenes in GLB_SCENES (the whole cart, arm, base, pod holder), published by cad/publish_drawings.py.
+#   NOTE (#330): assembly.glb is the cart + water sampler + station, written ONLY by cad/render_water_station.py; this script no longer touches it.
 import os
 import sys
 import time
@@ -28,7 +29,13 @@ os.makedirs(R, exist_ok=True)
 VIEWS = (("iso", 28, -55), ("front", 0, -90), ("top", 90, -90), ("side", 0, 0))
 
 
+GLB_SCENES = ("cart-assembly", "cart-arm-stowed", "cart-arm-working", "cart-base", "cart-pod-holder")
+
+
 def views(assy, name, title):
+    if name in GLB_SCENES:
+        assy.export(os.path.join(R, name + ".glb"), tolerance=0.5, angularTolerance=0.3)   # coarse mesh like the other GLBs (#316)
+        print("wrote", name + ".glb", flush=True)
     parts = rl.collect(assy)
     for view, el, az in VIEWS:
         t = time.time()
@@ -70,10 +77,6 @@ def scenes():
 if __name__ == "__main__":
     want = sys.argv[1:]
     sc = scenes()
-    if not want or "assembly.glb" in want:
-        import cart_assembly as ca
-        ca.result.export(os.path.join(R, "assembly.glb"), tolerance=0.5, angularTolerance=0.3)   # coarser mesh: 11 MB instead of 50 MB (#316)
-        print("GLB done", flush=True)
     for name, (assy, title) in sc.items():
         if not want or name in want:
             views(assy, name, title)

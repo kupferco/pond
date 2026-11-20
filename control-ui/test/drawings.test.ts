@@ -42,8 +42,8 @@ if (!/id="back"/.test(viewer)) problems.push('viewer.html: no Back button');
 const home = JSON.parse(readFileSync(join(dir, '..', 'home.json'), 'utf8')) as { hero: { href: string } };
 const hm = /^drawings\/viewer\.html\?src=(renders\/[A-Za-z0-9._-]+\.glb)(&|$)/.exec(home.hero.href);
 if (!hm || !existsSync(join(dir, hm[1]))) problems.push(`home.json: hero does not open an existing GLB in the shared viewer (${home.hero.href})`);
-else if (hm[1] !== 'renders/complete-unit-v1.glb') problems.push(`home.json: hero should open the complete unit GLB (${hm[1]})`);
-if (data.renders[0]?.id !== 'complete-unit-v1') problems.push('renders.json: the complete unit must be the first card');
+else if (hm[1] !== 'renders/complete-unit-v2.glb') problems.push(`home.json: hero should open the complete unit GLB (${hm[1]})`);
+if (data.renders[0]?.id !== 'complete-unit-v2') problems.push('renders.json: the complete unit must be the first card');
 const collar = new Set(data.renders.filter(r => /^pipe-collar-/.test(r.id)).map(r => (r as { part?: string }).part));
 if (collar.size !== 1) problems.push(`renders.json: pipe collar entries use ${collar.size} different part names, want 1`);
 

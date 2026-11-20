@@ -1,4 +1,4 @@
-# cad/water_connector.py: the sampling connector pair (OpenPocket #330 follow-up, 19 Nov 2026), after the owner's photo of the Omron blood pressure monitor connector.
+# cad/parts/water_connector.py: the sampling connector pair (OpenPocket #330 follow-up, 19 Nov 2026), after the owner's photo of the Omron blood pressure monitor connector.
 # MALE (on the end of the soft tube): a thin rigid straight spigot (about 4.4 mm across, 1.5 mm bore) on a wider collar with ring grooves at its base that the arm (or a hand) grips.
 # FEMALE (on the tank lids, the test station box, the cart): a plain round hole with a slight recess (counterbore), FLUSH with the surface, nothing sticking up.
 # It pushes straight in and holds by friction (ASSUMED: a soft liner or O-ring in the hole gives the grip; here the hole is 0.1 mm bigger than the spigot so the CAD parts do not overlap).

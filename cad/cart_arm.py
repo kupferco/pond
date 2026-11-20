@@ -253,7 +253,7 @@ BATT, BATT_Y = ca.BATT, ca.BATT[1]
 cart = [("base_plate", plate, (0.35, 0.35, 0.38, 1)),
         ("battery", battery, (0.2, 0.45, 0.85, 1))]
 for tag, sgn in (("pipe_C", 1), ("pipe_B", -1)):
-    cart.append(("track_%s" % tag, xshift(ca.cyl(hs.R_PIPE, PIPE_Z1 - PIPE_Z0, "z", (0, 0, (PIPE_Z0 + PIPE_Z1) / 2)), sgn * HX),
+    cart.append(("track_%s" % tag, ca.track_pipe(sgn * HX, PIPE_Z1 - PIPE_Z0, (PIPE_Z0 + PIPE_Z1) / 2),
                  (0.75, 0.78, 0.8, 1)))
     for nm, shp, col in ca.clamp_hand_parts():     # clamp/jaw sleeve, clamped (cart_sleeves.py)
         cart.append(("hand_on_%s_%s" % (tag, nm), ca.csl.place_hand(shp, sgn), col))
