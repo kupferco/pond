@@ -124,8 +124,34 @@ def track_check(up):
     return out
 
 
+def arm_reach_check(dy=None):
+    """Arm reach (cart_arm.py, REACH 350 from the shoulder) to the three places the gripper must go: the parked nozzle, the unit's lid socket, the station socket.
+    Only the end point is tested (solve_pose over gripper angles 0..180); the path between them and the recoil tube's stretch (up to about 2 m) are not."""
+    import math
+    import cart_arm as carm
+    dy = ws.OFF_Y if dy is None else dy
+    park = wsa.parts()["sampler_nozzle"][0].val().BoundingBox()
+    pts = {"parked_nozzle_collar": ((park.xmin + park.xmax) / 2, (park.ymin + park.ymax) / 2, park.zmin + wsa.wc.COLLAR_L / 2)}
+    for nm, p in (("unit_lid_socket", (ws.UNIT_SOCKET[0], ws.UNIT_SOCKET[1], ws.LID + 40.0)), ("station_socket", (ws.CX, ws.CY + dy, ws.SOCKET_Z_TOP))):
+        b = to_cart(cq.Workplane("XY").box(0.01, 0.01, 0.01).translate(p)).val().BoundingBox()
+        pts[nm] = ((b.xmin + b.xmax) / 2, (b.ymin + b.ymax) / 2, (b.zmin + b.zmax) / 2)
+    out = {}
+    for nm, c in pts.items():
+        ok = []
+        for a3 in range(0, 181, 5):
+            try:
+                carm.solve_pose(c, a3_deg=a3)
+                ok.append(a3)
+            except ValueError:
+                pass
+        out[nm] = {"cart_xyz_mm": tuple(round(v, 1) for v in c), "shoulder_to_point_mm": round(math.dist(c, carm.S_CART), 1),
+                   "percent_of_reach": round(100 * math.dist(c, carm.S_CART) / carm.REACH), "gripper_angles_that_work_deg": (min(ok), max(ok)) if ok else None, "reachable": bool(ok)}
+    return out
+
+
 def check(dy=None):
     out = {}
+    out["arm_reach_to_sampler_points"] = arm_reach_check(dy)
     up = unit_parts(True, False, dy=dy)
     st = {n: v for n, v in up.items() if n.startswith("ws_") or n.startswith("unit_")}
     ctx = {n: v for n, v in up.items() if n not in st}

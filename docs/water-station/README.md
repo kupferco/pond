@@ -127,3 +127,17 @@ Run `python cad/water_station_position.py`.
 - **Cart clamp: top sleeve on the track.** The track is now the TOP pipe (pipe B of `cart_assembly.py`) and the top sleeve (hand B) is closed on it: gap to the pipe is the same 4 mm bore clearance as for every sleeve, no clash with the pipe. The #315 supports sit on it as before. Same rod-versus-jaw overlap as the earlier round (730 mm3, rod through the closed jaw; unchanged finding, see above).
 - **Bottom sleeve not drawn:** pipe C is 120 mm from the track, level with the lid, the #315 posts and the station box. A bottom sleeve there would sit inside them (posts 6376 mm3, box and door about 1900 mm3, unit socket 3792 mm3; `check()` lists it). Its pipe would be the neighbour unit's track, not drawn either.
 - **Reading used:** "top sleeve" = the upper one when the unit stands upright with its lid below. If the owner meant two sleeves on the SAME pipe, this is not that: say so.
+
+## Arm reach check (OpenPocket #359, 20 Nov 2026)
+
+`python cad/water_assembly.py` now prints `arm_reach_to_sampler_points`: the distance from the arm shoulder to the three places the gripper has to go, with the cart at the dock, and which gripper angles (0 to 180 deg) the arm can solve (`cart_arm.py`, 350 mm reach).
+
+| Point | Shoulder to point | Of reach | Gripper angles that work |
+|---|---|---|---|
+| Parked nozzle (parking socket on the plate edge) | 157 mm | 45 % | any (0 to 180) |
+| Unit lid socket | 175 mm | 50 % | 20 to 180 |
+| Station socket (box at the back) | 309 mm | 88 % | 125 to 180 (tilted away) |
+
+The parking socket and the unit socket are comfortable. The station socket is the tight one (known from the earlier station-position round). Only the end points are tested, not the path or the pull of the recoil tube.
+
+Parts list with rough prices (Mercado Livre first): see "Rough cost" above (cart pump, PU recoil tube, printed nozzle and parking socket, and the per-unit printed lid socket with dip tube).
