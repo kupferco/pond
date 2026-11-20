@@ -1,7 +1,7 @@
 # Track supports (OpenPocket #315, part 1 of plan #295)
 
 CAD: `cad/track_supports.py` (the unit of `unit_v3_aframe.py` plus the supports). Pictures and 3D model: `cad/renders/track-supports-*.png`
-(whole unit, bottom close-up, top close-up; iso, front, top, side) and `cad/renders/track-supports-assembly.glb` (also copied to `assembly.glb`).
+(whole unit, bottom close-up, top close-up; iso, front, top, side) and `cad/renders/track-supports-assembly.glb`.
 Render with `python cad/render_track_supports.py`. Sag: `python docs/bench-test/track_support_sag.py` (output kept in `track_support_sag.txt`).
 
 ## What was added

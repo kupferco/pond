@@ -1,6 +1,6 @@
 # Renders for cad/track_supports.py (OpenPocket #315): four views (iso, front, top, side) of the whole unit and of a close-up
 # of each kind of support, plus the GLB of the assembly.
-# Usage: python cad/render_track_supports.py   -> cad/renders/track-supports-*.png, track-supports-assembly.glb, assembly.glb (unit + cart)
+# Usage: python cad/render_track_supports.py   -> cad/renders/track-supports-*.png, track-supports-assembly.glb
 import os, runpy, sys
 import cadquery as cq
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -44,10 +44,5 @@ if __name__ == "__main__":
         write(parts, name)
         sub.export(os.path.join(OUT, name + ".glb"))
     assy.export(os.path.join(OUT, "track-supports-assembly.glb"))
-    # assembly.glb = the unit with the track supports + the cart assembly (cup drain holes from #316), cart set beside the unit
-    import cart_assembly as ca
-    both = cq.Assembly()
-    both.add(assy, name="unit_with_track_supports")
-    both.add(ca.result, name="cart", loc=cq.Location(cq.Vector(700, 0, 0)))
-    both.export(os.path.join(OUT, "assembly.glb"), tolerance=0.1, angularTolerance=0.2)
+    # assembly.glb is NOT written here any more (#330 follow-up): unit + cart side by side drew two track pipes. render_water_station.py writes the full one.
     print("wrote GLBs")

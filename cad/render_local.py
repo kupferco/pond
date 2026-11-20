@@ -28,7 +28,7 @@ def collect(res):
         out.extend(tris(s, (0.7, 0.7, 0.75, 1)) for s in shapes)
     return out
 
-def draw(parts, elev, azim, path, title):
+def draw(parts, elev, azim, path, title, note=None):
     # Z up. Painter's sort on view-space depth.
     az, el = np.radians(azim), np.radians(elev)
     d = np.array([np.cos(el) * np.cos(az), np.cos(el) * np.sin(az), np.sin(el)])  # towards the camera
@@ -52,6 +52,8 @@ def draw(parts, elev, azim, path, title):
     ax.set_zlim(mid[2] - half, mid[2] + half); ax.set_box_aspect((1, 1, 1), zoom=1.6)
     ax.view_init(elev=elev, azim=azim); ax.set_axis_off(); ax.set_proj_type("ortho")
     fig.subplots_adjust(0, 0, 1, 1); ax.set_title(title, fontsize=11, y=0.93)
+    if note:
+        fig.text(0.5, 0.04, note, ha="center", va="bottom", fontsize=10, color="#1f3f8f")
     fig.savefig(path, bbox_inches="tight", facecolor="white"); plt.close(fig)
 
 if __name__ == "__main__":

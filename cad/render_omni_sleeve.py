@@ -14,7 +14,7 @@
 #   home-station-ring    (OpenPocket #286) hand on the pipe with its hall sensor over the ring of magnet tape
 #   home-station-point   hand rolled to zero with its hall sensor over the point magnet
 #   home-station-rolled  hand rolled 90 deg: the sensor still sees the ring, the point magnet is out of reach
-#   assembly.glb         the whole cart (cart_assembly.py) for the 3D viewer
+#   assembly.glb         the whole cart (cart_assembly.py) for the 3D viewer. NOTE (#330): the committed assembly.glb is the cart + water sampler + station, from cad/render_water_station.py; run that after this script
 import os
 import sys
 import time
