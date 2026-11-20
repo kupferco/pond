@@ -69,8 +69,9 @@ SHOULDER_H = 88.0                       # shoulder axis height above the arm bas
 REACH = L1 + L2 + L3                    # 350, as pod_store_reach.py
 
 # Store numbers from pod_store_reach.py (world frame: z up, pipe A at x = -250)
-TH = 400.0; LID_T = 4.0
-LID_TOP = TH + LID_T
+import layout as LAY   # OpenPocket #376: tank height and lid from the ONE shared layout (cad/layout.json); was a local TH = 400 (the old pod_store_reach.py study tank)
+TH = LAY.TANK_H; LID_T = LAY.LID_T
+LID_TOP = LAY.LID_TOP
 PIPE_XW = -290.0
 STORE_X0 = -140.0; ROW_P = 35.0; POD_D = 25.0
 FRONT_Y = -200.0

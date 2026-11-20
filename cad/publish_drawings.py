@@ -46,7 +46,7 @@ PUBLISH = [
      "Top-run support (regenerated)", "DRAFT, regenerated in #365: close-up of the hanger from the crossbar.", ("track-supports-top-v1",), None, None),
     ("unit-dimensioned-v4", "unit-dimensioned.glb", "unit-dimensioned", "Unit v3 dimensioned", "Unit structure", "Unit v3 dimensioned",
      "Unit v3 dimensioned 3D model (current design, with water)",
-     "DRAFT, OpenPocket #365. The dimensioned unit rebuilt from the single-source parts: the old 155 mm shelf and its seedling tray and the red cart stand-in are gone (not in the current design); the water volume is drawn at the normal 15 cm level with a '150 water' dimension. Other dimensions unchanged (1900 total, 300 tank, 150 to the bottom run, 612 and 1466 loop, 700 tank width)." + COMMON,
+     "DRAFT, OpenPocket #365. The dimensioned unit rebuilt from the single-source parts: the old 155 mm shelf and its seedling tray and the red cart stand-in are gone (not in the current design); the water volume is drawn at the normal 15 cm level with a '150 water' dimension. Other dimensions unchanged (1900 total, 300 tank, bottom run at 514 over the floor (210 over the lid, shared layout), 612 and 1466 loop, 700 tank width)." + COMMON,
      ("20261107-134132-a2c1", "20261107-133943-631f"), None, None),
     ("unit-water-v1", "unit-water.glb", "unit-water", "Unit structure with water", "Unit structure", "Unit structure with water",
      "Unit structure with the water in the tank", "DRAFT, OpenPocket #365. The unit's frame, track, spine and growing pipe (cad/unit_v3_aframe.py, assembled from cad/parts/) with the water volume at the normal 15 cm level." + COMMON,
