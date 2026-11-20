@@ -3,7 +3,7 @@
 //
 // From the CAD (DECIDED unless marked ASSUMED):
 //  - tank 700 x 400 x 300 centred on x = 0, y = 0; lid at z = 300; shelf at z = 155 (unit_v3_dimensioned.py)
-//  - bottom track pipe at z = ZB = 450 (lid + 150), in the track plane y = -60 (unit_v3_dimensioned.py)
+//  - bottom track pipe at z = the shared layout height (cad/layout.json: 514 = lid 304 + 210), in the track plane y = -60 (unit_v3_dimensioned.py)
 //  - store rows under the lid, row pitch 35, first row at x = -140 (pod_store_reach.py); the rows slope DOWN towards
 //    the pick line y = 0, where the pick holes in the lid are; 12 degrees (pod_store_reach.py)
 //  - seedling tray 190 x 360 x 35 at x = -245, z 230..265, horizontal, under an access opening in the lid (cart_arm.py, 5)
@@ -27,6 +27,7 @@ import { PIPE_D_MM } from '../cart/track.ts';
 import { staticOmniCart, CART } from '../cart/omni-scene.ts';
 import { HX } from '../cart/omni.ts';
 import { armMjcf } from '../model.ts';
+import * as LAYOUT from '../layout.ts';   // the ONE shared layout (cad/layout.json): tank, lid and bottom track heights
 
 const m = (mm: number) => mm / 1000;
 const f = (n: number) => +n.toFixed(5);
@@ -46,11 +47,11 @@ export const CLAW_GRIP = CLAW_OPEN - POD_R;     // finger travel from open to to
 export const CLAW_ACT = ['claw_l', 'claw_r'];
 
 // --- unit
-export const TANK_W = 0.7, TANK_D = 0.4, TANK_H = 0.3, SHELF_Z = 0.155, SHELF_T = 0.004;   // shelf slab z 155..159 (unit_v3_dimensioned.py)
+export const TANK_W = 0.7, TANK_D = 0.4, TANK_H = LAYOUT.TANK_H, SHELF_Z = 0.155, SHELF_T = 0.004;   // shelf slab z 155..159 (unit_v3_dimensioned.py)
 export const SHELF_TOP = SHELF_Z + SHELF_T;
-export const LID_Z = TANK_H, LID_T = 0.004;
+export const LID_Z = TANK_H, LID_T = LAYOUT.LID_T;
 export const PIPE_Y = 0.104;                    // the track plane. CAD: -60 mm. MOVED 179 mm towards the back (was 115 mm: the omni cart's battery puts the arm base 50 mm further out of the plate, Pond #284) so that all 16 sockets are in front of the cart plate and the arm, mounted on the battery, reaches them (ASSUMED, see the PR)
-export const PIPE_Z = TANK_H + 0.21;            // bottom run of the track, 210 mm over the lid (CAD: 150). The omni cart centre is 60 mm ABOVE the pipe it rides (hand B on the pipe, hand C hanging open above it), and the arm base is on the cart centre: it stays at the height the Pod grab scene always had (ASSUMED, see the PR)
+export const PIPE_Z = LAYOUT.TRACK_BOTTOM_Z;   // bottom run of the track, 210 mm over the lid top (cad/layout.json: the cart's 165 mm under the track plus 45 mm of air, ASSUMED; the CAD guessed 150 before and the sim 210 over the tank). The omni cart centre is 60 mm ABOVE the pipe it rides (hand B on the pipe, hand C hanging open above it), and the arm base is on the cart centre. OpenPocket #364: one number for CAD and sim
 export const PIPE_R = m(PIPE_D_MM) / 2;
 export const PIPE_X0 = -0.40, PIPE_X1 = 0.42;
 export const CART_X_MIN = -0.33, CART_X_MAX = 0.28;   // arm plane = the cart centre (the cart is symmetric about it)

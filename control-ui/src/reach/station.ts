@@ -5,7 +5,7 @@
 //   ref point    = R^T (world point - W) + H
 // Legs: the cart rides leg A (y = -0.29, hand C) or leg B (y = +0.29, hand B, the other hand of the same cart, the cart not turned), at any height of the straight part, as it is (roll 0) or turned 180 degrees about the
 // leg's own axis (roll 180). Runs: the straight part of the bottom or the top run (hand C), roll angle about the run's own axis (0 = the cart's up axis along the run with the plate facing the pipe plane as on a leg).
-import { LOOP_TX, XT, YC } from '../transplant/layout.ts';
+import { LOOP_TX, LOOP_ZB, LOOP_ZT, XT, YC } from '../transplant/layout.ts';
 import { CART_MAX, CART_MIN, CART_STEP } from './layout.ts';
 
 export type V3 = [number, number, number];
@@ -33,7 +33,7 @@ export const LEG_A_Y = -LOOP_TX, LEG_B_Y = LOOP_TX;
 const O: V3 = [XT, YC, 0];                              // the reference cart origin
 const H_C: V3 = [XT, YC - 0.06, 0], H_B: V3 = [XT, YC + 0.06, 0];
 const YRUN = 0.08, RUN_STEP = 0.005;                    // straight part of a run (LOOP_TX - corner radius 0.15 - 0.06 for the sleeve)
-const ZB = 0.45, ZT = 1.9 - 0.016;                      // run heights (LOOP_ZB, LOOP_ZT of transplant/layout.ts)
+const ZB = LOOP_ZB, ZT = LOOP_ZT;                      // run heights: the unit's (transplant/layout.ts, bottom run from the shared layout cad/layout.json; was a separate copy of 0.45)
 
 export interface Station { kind: 'leg A' | 'leg B' | 'bottom run' | 'top run'; roll: number; at: number; R: Mat; W: V3; H: V3; pos: V3; quat: Q; label: string }
 function make(kind: Station['kind'], roll: number, at: number, R: Mat, W: V3, H: V3): Station {

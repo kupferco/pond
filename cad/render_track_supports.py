@@ -38,7 +38,7 @@ def write(parts, name):
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     write(rl.collect(assy), "track-supports-assembly")
-    for name, box_ in (("track-supports-bottom", (SUP_X, LOOP_Y / 2, (ZB + 304) / 2, 110, 60, 100)),
+    for name, box_ in (("track-supports-bottom", (SUP_X, LOOP_Y / 2, (ZB + 304) / 2, 110, 60, 125)),
                        ("track-supports-top", (SUP_X, LOOP_Y / 2, ZT - 40, 110, 60, 110))):
         parts, sub = cropped(*box_)
         write(parts, name)

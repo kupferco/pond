@@ -25,6 +25,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { ARM_Y, BASE_BOTTOM, CART_Z, LID_Z, PIPE_Y, PIPE_Z, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
 import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
+import * as LAYOUT from '../src/layout.ts';
 
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
 import { transplantMjcf, ARM_CY, CUP_ROOT, D_CUP, LID as LID_TOP, TRAY_CAP_TOP, CART_Z0, CART_Z1, CART_ZP, YC, XT, LEG, PSI, CUP_DROP, SEAT_CAP_TOP, PARK_CAP_TOP, ZH, ZP, P0, U_CAP, CAP_T, HOLDER_FLOOR_X, X_TOP, RECESS_T } from '../src/transplant/layout.ts';
@@ -309,6 +310,10 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
 {
   const pg = new SimDriver(mj, podGrabMjcf());
   check('pod grab model has the cart as its one mocap body (the arm base is rigid in it); the pods are free bodies', pg.model.nmocap === 1 && pg.model.nbody > POD_COUNT, String(pg.model.nmocap));
+  // OpenPocket #364: ONE shared layout (cad/layout.json). The sim's tank, lid and bottom track height are that file's numbers, and the cart (165 mm under the track in the CAD) clears the lid with the layout's air gap.
+  check('shared layout: sim tank, lid and bottom track height are the numbers of cad/layout.json, and the cart hangs clear of the lid',
+    LID_Z === LAYOUT.TANK_H && PIPE_Z === LAYOUT.TRACK_BOTTOM_Z && PIPE_Z - (LAYOUT.LID_TOP + LAYOUT.CART_BELOW_TRACK) >= LAYOUT.CART_CLEARANCE - 1e-9 && LAYOUT.CART_CLEARANCE > 0,
+    `track ${(PIPE_Z * 1000).toFixed(0)} mm, lid ${(LAYOUT.LID_TOP * 1000).toFixed(0)}, cart ${(LAYOUT.CART_BELOW_TRACK * 1000).toFixed(0)} under the track, air ${(LAYOUT.CART_CLEARANCE * 1000).toFixed(0)} mm (ASSUMED)`);
   check('store holds enough pods for the tray', STORE_ROWS * STORE_START >= TRAY_SLOTS && STORE_START < STORE_CAP);
   check('unit layout: track 150 mm over the lid, store slopes down to the pick line, tray flat and left of the store',
     PIPE_Z - LID_Z > 0.14 && storePos(0, 1)[2] > storePos(0, 0)[2] && storePos(0, 1)[1] > storePos(0, 0)[1] && seatPos(0)[2] === seatPos(TRAY_SLOTS - 1)[2] && seatPos(TRAY_SLOTS - 1)[0] < ROW_X0);

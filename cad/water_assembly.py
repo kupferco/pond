@@ -17,12 +17,13 @@ import cadquery as cq
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import cart_assembly as ca
+import layout as LAY
 from parts.cart import add_cart
 import water_sampler as wsa
 import water_station as ws
 
 TRACK_X = -60.0                     # the track is pipe B, the top one
-MOVE = dict(rot=-90.0, shift=(450.0 + TRACK_X, 60.0, -ws.DOCK_X))
+MOVE = dict(rot=-90.0, shift=(LAY.TRACK_BOTTOM_Z + TRACK_X, 60.0, -ws.DOCK_X))   # #364: the track is at the shared layout height (was 450)
 SKIP = ("track_loop", "dock_plate_minus", "dock_plate_plus", "ground")
 
 
@@ -123,6 +124,49 @@ def track_check(up):
     return out
 
 
+def cart_tank_check(positions=(-140.0, -70.0, 0.0, 100.0, 140.0)):
+    """OpenPocket #364: the cart, and everything mounted on it (plate, battery, arm, hands, motors, pump, coil, tube, nozzle, parking block), must not touch the tank
+    anywhere along the track. The cart hangs under the bottom run with the top sleeve closed on the track (roll 0), so its depth under the track axis is constant along the
+    straight run (|x| <= 140; past that the track curves UP, away from the tank). The shared layout (layout.json) says how deep the cart may be (cart_below_track_mm) and how
+    much air there is under it (cart_clearance_mm, ASSUMED). This measures the REAL cart: lowest point of every part, a real boolean intersection with the tank (shell, lid
+    and the water) wherever a part comes within 60 mm of it, at each dock position, and fails (AssertionError) on any contact or if the cart is deeper than the layout allows."""
+    out = {}
+    cart = scene("cart")
+    parts = []
+    for ch in cart.children:
+        for o in (ch.obj.vals() if hasattr(ch.obj, "vals") else [ch.obj]):
+            parts.append((ch.name, o.moved(ch.loc) if ch.loc else o))
+    tank = {n: s for n, (s, c) in ws.context_parts().items() if n in ("tank", "tank_water")}
+    tank_c = {n: to_cart(s) for n, s in tank.items()}              # tank, lid and water in the CART frame (unit -> cart)
+    lid_c = to_cart(cq.Workplane("XY").box(2, 2, 0.1, centered=(True, True, False)).translate((0, 0, LAY.LID_TOP - 0.1)))
+    lid_x = lid_c.val().BoundingBox().xmax                        # cart x of the lid top plane (the tank is at x >= this; unit z decreases with cart x)
+    lowest_x, lowest_name = max(((p.BoundingBox().xmax, n) for n, p in parts))
+    track_x = TRACK_X
+    out["cart_deepest_part"] = lowest_name
+    out["cart_depth_under_track_axis_mm (real CAD)"] = round(lowest_x - track_x, 2)
+    out["layout_cart_below_track_mm (layout.json)"] = LAY.CART_BELOW_TRACK
+    out["layout_track_bottom_z_mm / lid_top_z_mm"] = (LAY.TRACK_BOTTOM_Z, LAY.LID_TOP)
+    out["gap_lowest_cart_part_to_lid_mm"] = round(lid_x - lowest_x, 2)
+    out["gap_assumed_in_layout_mm (ASSUMED)"] = LAY.CART_CLEARANCE
+    assert lowest_x - track_x <= LAY.CART_BELOW_TRACK + 1e-6, "the cart is deeper under the track (%.1f mm) than layout.json says (%.1f mm): raise cart_below_track_mm" % (lowest_x - track_x, LAY.CART_BELOW_TRACK)
+    clash = {}
+    near = [(n, p) for n, p in parts if lid_x - p.BoundingBox().xmax < 60.0]
+    for pos in positions:                                         # dock positions along the straight run (unit x); the cart moves along cart z
+        dz = pos - ws.DOCK_X
+        for n, p in near:
+            q = p.translate(cq.Vector(0, 0, dz))
+            for tn, t in tank_c.items():
+                v = ws.inter(cq.Workplane("XY").add(q), t)
+                if v > 1e-3:
+                    clash["%s vs %s at x=%g" % (n, tn, pos)] = round(v, 2)
+    out["cart_parts_within_60mm_of_the_lid"] = sorted(n for n, p in near)
+    out["positions_checked_along_the_run_x_mm"] = list(positions)
+    out["cart_vs_tank_clash_mm3 (must be empty)"] = clash
+    assert not clash, "the cart or something mounted on it intersects the tank: %s" % clash
+    assert lid_x - lowest_x > 0, "the cart reaches the lid plane"
+    return out
+
+
 def arm_reach_check(dy=None):
     """Arm reach (cart_arm.py, REACH 350 from the shoulder) to the three places the gripper must go: the parked nozzle, the unit's lid socket, the station socket.
     Only the end point is tested (solve_pose over gripper angles 0..180); the path between them and the recoil tube's stretch (up to about 2 m) are not."""
@@ -192,6 +236,7 @@ def check(dy=None):
                 pl["%s vs %s" % (n, m)] = round(v, 2)
     out["station_vs_plate_battery_arm_clashes_mm3"] = pl
     out.update(track_check(up))
+    out["CART VS TANK (#364)"] = cart_tank_check()
     bb = wsa.parts()["sampler_nozzle"][0].val().BoundingBox()
     sk = up["ws_socket"][0].val().BoundingBox()
     out["parked_nozzle_xyz_mm"] = ((bb.xmin + bb.xmax) / 2, (bb.ymin + bb.ymax) / 2, bb.zmax)
