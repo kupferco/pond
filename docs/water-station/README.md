@@ -135,3 +135,17 @@ Run `python cad/water_station_position.py`.
 - **New check** `water_assembly.cart_tank_check()` (printed by `python cad/water_assembly.py` as "CART VS TANK"): fails if the cart or anything on it touches the tank shell, lid or water anywhere along the straight run, or if the cart is deeper than the layout says. Result now: lowest part (the parking block) 45 mm over the lid; no intersections at x = -140, -70, 0, 100, 140.
 - **Water in the tank**: a translucent blue part named `tank_water` (150 mm over the floor, the dip tube and spine cut out of it) in every model that draws the tank, so a viewer can hide it. The tank is now hollow and see-through there.
 - Still open from before and unchanged: with the cart at the dock the #315 M8 rod and lock nut of the support at x = 125 overlap the closed top sleeve's jaw (731 + 273 mm3), see above.
+
+## Arm reach check (OpenPocket #359, 20 Nov 2026)
+
+`python cad/water_assembly.py` now prints `arm_reach_to_sampler_points`: the distance from the arm shoulder to the three places the gripper has to go, with the cart at the dock, and which gripper angles (0 to 180 deg) the arm can solve (`cart_arm.py`, 350 mm reach).
+
+| Point | Shoulder to point | Of reach | Gripper angles that work |
+|---|---|---|---|
+| Parked nozzle (parking socket on the plate edge) | 157 mm | 45 % | any (0 to 180) |
+| Unit lid socket | 175 mm | 50 % | 20 to 180 |
+| Station socket (box at the back) | 309 mm | 88 % | 125 to 180 (tilted away) |
+
+The parking socket and the unit socket are comfortable. The station socket is the tight one (known from the earlier station-position round). Only the end points are tested, not the path or the pull of the recoil tube.
+
+Parts list with rough prices (Mercado Livre first): see "Rough cost" above (cart pump, PU recoil tube, printed nozzle and parking socket, and the per-unit printed lid socket with dip tube).
