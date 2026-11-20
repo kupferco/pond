@@ -19,13 +19,14 @@ import cadquery as cq
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-import water_connector as wc
+from parts import water_connector as wc
+from parts.common import hose, vol, inter   # noqa: F401
+from parts.unit import unit_parts
+from parts.unit_dims import TW, TD, TH, LID, TR as TRACK_R, LOOP_Y as TRACK_Y, ZB as TRACK_Z, GP   # the unit's numbers, defined once (they were copied here; GP was the spine's 33.7 by mistake)
+from parts.lid_items import seedling_storage
+from parts.water_volume import COLOR_WATER
 
-# ---------------- unit numbers (mirror complete_unit.py) ----------------
-TW, TD, TH = 700.0, 400.0, 300.0
-LID = TH + 4                     # lid top
-TRACK_Y, TRACK_R, TRACK_Z = -60.0, 16.0, 450.0
-GP = 33.7                        # growing pipe OD
+# ---------------- unit numbers: imported from cad/parts/unit_dims.py (single source) ----------------
 DOCK_X = 100.0                   # ASSUMED dock centre on the bottom run; plates 40 mm either side
 BAR_Z = LID + 15.0               # the 20 x 15 bar across the lid under the pipe (y +-10)
 
@@ -76,29 +77,6 @@ def tube(ro, ri, p0, p1):
     return cyl(ro, p0, p1).cut(cyl(ri, tuple(a - 1e-3 * (b - a) for a, b in zip(p0, p1)), tuple(b + 1e-3 * (b - a) for a, b in zip(p0, p1))))
 
 
-def hose(r, pts):
-    """Solid hose of radius r along a polyline of points, with a ball at each bend."""
-    out = None
-    for a, b in zip(pts, pts[1:]):
-        s = cyl(r, a, b)
-        out = s if out is None else out.union(s)
-    for p in pts[1:-1]:
-        out = out.union(cq.Workplane("XY").add(cq.Solid.makeSphere(r, cq.Vector(*p), cq.Vector(0, 0, 1), -90, 90, 360)))
-    return out
-
-
-def vol(w):
-    return sum(s.Volume() for s in w.solids().vals()) if w.solids().vals() else 0.0
-
-
-def inter(a, b):
-    bb, cc = a.val().BoundingBox(), b.val().BoundingBox()
-    if bb.xmax < cc.xmin or cc.xmax < bb.xmin or bb.ymax < cc.ymin or cc.ymax < bb.ymin or bb.zmax < cc.zmin or cc.zmax < bb.zmin:
-        return 0.0
-    return vol(a.intersect(b))
-
-
-# ---------------- the parts ----------------
 def cup():
     """Sample cup: round, 80 mm tall, ~200 ml, bottom outlet (drain hole 7 mm), flat boss on the +x wall with three probe holes, rim cover with the socket hole."""
     outer = cyl(CUP_R, (CX, CY, CUP_Z0), (CX, CY, CUP_Z0 + CUP_H)).union(box(CX + BOSS_X0 - 100, CX + BOSS_X1 - 100, -BOSS_Y, BOSS_Y, BOSS_Z0, BOSS_Z1))
@@ -253,19 +231,16 @@ WIN = box(-60, 340, -150, 270, -10, 560)
 
 
 def context_parts():
-    """Lid corner of the first unit around the station: tank and lid, growing pipe, lid bar, back strut, tray stand-in, braces, track bottom run, dock plates, the ground."""
+    """Lid corner of the first unit around the station, cropped to WIN. Every unit part comes from cad/parts/ (parts.unit.unit_parts): tank, water volume, lid,
+    growing pipe, lid bars, A-frame legs, track loop, seedling storage. Only the dock plates and the ground are the station's own."""
+    keep = ("tank", "water_volume", "lid", "growing_pipe", "base_bar_and_lid_plates", "lower_aframe_and_back_strut_16mm", "track_loop")
     p = {}
-    p["tank"] = (box(-TW / 2, TW / 2, -TD / 2, TD / 2, 0, TH + 4).cut(cyl(13.0, (UNIT_SOCKET[0], UNIT_SOCKET[1], LID - UNIT_INSERT_D), (UNIT_SOCKET[0], UNIT_SOCKET[1], LID + 1))).cut(cyl(3.0, (UNIT_SOCKET[0], UNIT_SOCKET[1], 8.0), (UNIT_SOCKET[0], UNIT_SOCKET[1], LID))), COL["tank"])    # pocket in the lid for the flush socket insert
-    p["growing_pipe"] = (cyl(GP / 2, (0, 0, LID), (0, 0, 700)), (0.9, 0.9, 0.9, 1))
-    p["lid_bar"] = (box(-340, 340, -10, 10, LID, BAR_Z), COL["frame"])
-    p["lid_back_strut"] = (box(-15, 15, 0, 190, LID, LID + 5), COL["frame"])
-    p["seedling_storage"] = (box(70, 310, -180, -70, LID, LID + 16), (0.35, 0.5, 0.75, 1))
-    for sx in (1, -1):
-        p["brace_%s" % ("r" if sx > 0 else "l")] = (cyl(8.0, (sx * 340, 0, LID), (sx * 21, 0, 1215)), COL["frame"])
-    p["track_bottom_run"] = (cyl(TRACK_R, (-140, TRACK_Y, TRACK_Z), (140, TRACK_Y, TRACK_Z)), COL["track"])
-    arc = (cq.Workplane("XZ", origin=(0, TRACK_Y, 0)).moveTo(140, TRACK_Z).radiusArc((290, TRACK_Z + 150), -150))
-    prof = cq.Workplane("YZ", origin=(140, TRACK_Y, TRACK_Z)).circle(TRACK_R)
-    p["track_corner"] = (prof.sweep(arc), COL["track"])
+    for n, s, c in unit_parts():
+        if n in keep:
+            if n == "lid":     # pocket in the lid for the flush socket insert
+                s = s.cut(cyl(13.0, (UNIT_SOCKET[0], UNIT_SOCKET[1], LID - UNIT_INSERT_D), (UNIT_SOCKET[0], UNIT_SOCKET[1], LID + 1))).cut(cyl(3.0, (UNIT_SOCKET[0], UNIT_SOCKET[1], 8.0), (UNIT_SOCKET[0], UNIT_SOCKET[1], LID)))
+            p[n] = (s, c)
+    p["seedling_storage"] = (seedling_storage(), (0.35, 0.5, 0.75, 1))
     for dx in (-40, 40):
         p["dock_plate_%s" % ("minus" if dx > 0 else "plus")] = (
             cq.Workplane("YZ").circle(TRACK_R + 3).circle(TRACK_R).extrude(40).translate((DOCK_X + dx - 20, TRACK_Y, TRACK_Z)), COL["copper"])
@@ -357,7 +332,7 @@ def check():
     out["station_socket_top_minus_roof_top_mm (0 = flush)"] = round(sb.zmax - rb.zmax, 6)
     us = unit_socket()
     ub = us["unit_socket"][0].val().BoundingBox()
-    lidb = ctx["tank"][0].val().BoundingBox()
+    lidb = ctx["lid"][0].val().BoundingBox()
     out["unit_socket_top_minus_lid_top_mm (0 = flush)"] = round(ub.zmax - lidb.zmax, 6)
     out["highest_thing_over_roof_top_mm (socket neighbourhood, 0 = nothing sticks up)"] = round(max(0.0, sb.zmax - rb.zmax), 6)
     nz = wc.male(CX, CY + OFF_Y, SOCKET_Z_TOP, -1)
@@ -366,7 +341,7 @@ def check():
     out["nozzle_spigot_depth_in_station_socket_mm"] = round(SOCKET_Z_TOP - nb.zmin, 3)
     out["nozzle_tip_over_cup_cover_mm (drips into the cup)"] = round(nb.zmin - (CUP_Z0 + CUP_H + 3), 3)
     nu = wc.male(UNIT_SOCKET[0], UNIT_SOCKET[1], LID, -1)
-    out["nozzle_in_unit_socket_clash_mm3 (0 = fits)"] = round(inter(nu, us["unit_socket"][0]) + inter(nu, ctx["tank"][0]), 4)
+    out["nozzle_in_unit_socket_clash_mm3 (0 = fits)"] = round(inter(nu, us["unit_socket"][0]) + inter(nu, ctx["lid"][0]), 4)
     out["connector_spigot_od_mm"] = 2 * wc.SPIGOT_R
     out["connector_hole_od_mm"] = 2 * wc.HOLE_R
     out["connector_collar_od_mm"] = 2 * wc.COLLAR_R
@@ -385,12 +360,12 @@ def check():
     out["box_floor_gap_to_support_mm"] = max(abs(lg.zmin - LID), abs(lg.zmax - b["z0"]))
     out["legs_footprint_inside_box_footprint"] = (lg.xmin >= b["x0"] and lg.xmax <= b["x1"] and lg.ymin >= b["y0"] + OFF_Y and lg.ymax <= b["y1"] + OFF_Y)
     out["legs_vs_drain_tube_mm3"] = round(inter(sp["ws_legs"][0], sp["ws_drain_tube"][0]), 3)
-    out["legs_vs_lid_bar_mm3"] = round(inter(sp["ws_legs"][0], ctx["lid_bar"][0]), 3)
+    out["legs_vs_lid_bar_mm3"] = round(inter(sp["ws_legs"][0], ctx["base_bar_and_lid_plates"][0]), 3)
     assert out["box_floor_gap_to_support_mm"] < 1e-6, "box is floating"
     out["drain_tube_run_over_lid_bar_mm"] = (DRAIN_Z_RUN - 3.0) - BAR_Z
     out["drain_tube_outside_tank_mm"] = DRAIN_Y_OUT + OFF_Y - TD / 2
     out["drain_tube_length_mm"] = (CUP_Z0 - 3.0 - DRAIN_Z_RUN) + (DRAIN_Y_OUT - CY) + (DRAIN_Z_RUN - 5.0)   # on the unit the cup axis and the drain are both moved OFF_Y, so the run is unchanged
-    out["drain_tube_hits_tank_mm3"] = inter(sp["ws_drain_tube"][0], ctx["tank"][0])
+    out["drain_tube_hits_tank_mm3"] = inter(sp["ws_drain_tube"][0], ctx["lid"][0]) + inter(sp["ws_drain_tube"][0], ctx["tank"][0])
     # nothing in the unit is touched except what the box stands on (the lid bar is cleared by 11 mm, the lid by 26 mm)
     hit = {}
     for n, (s, c) in sp.items():

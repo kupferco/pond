@@ -36,3 +36,7 @@ def build_plate():
     return p
 
 plate = build_plate()
+
+def track_pipe(x, length, zc=0.0):
+    """The track pipe stub the cart clamps (32 mm OD, along Z, at cart x), defined once: cart_assembly.py and cart_arm.py both use it."""
+    return cyl(hs.R_PIPE, length, "z", (x, 0, zc))

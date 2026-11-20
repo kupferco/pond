@@ -41,7 +41,7 @@ def draw(parts, elev, azim, path, title, note=None):
         shade = 0.45 + 0.55 * np.abs(n @ light)
         for tri, sh in zip(T, shade):
             polys.append(tri); depth.append(tri.mean(axis=0) @ d)
-            cols.append((c[0] * sh, c[1] * sh, c[2] * sh, 1))
+            cols.append((c[0] * sh, c[1] * sh, c[2] * sh, c[3] if len(c) > 3 else 1))   # alpha: the tank and the water volume are translucent
     order = np.argsort(depth)
     fig = plt.figure(figsize=(8, 8), dpi=110)
     ax = fig.add_subplot(111, projection="3d", computed_zorder=False)

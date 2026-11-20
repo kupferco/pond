@@ -56,7 +56,7 @@ if __name__ == "__main__":
             ("water-station-closeup", ws.scene("close"), VIEWS, "Water testing station: cup, 3 probes, standpipe, flush nozzle socket, drain (door off, cup cut open)"),
             ("water-station-bench", ws.scene("bench"), VIEWS, "Bench rig: same cup, probes and socket on a board, hand syringe, drain to a bucket"),
             ("cart-water-sampler", wa.scene("cart"), CART_VIEWS, "Cart with the water sampler: pump, PU recoil coil, male nozzle parked in the flush socket under the block"),
-            ("water-assembly", wa.scene("full", door_on=False, cutaway=True, lid_only=True), CART_VIEWS, "Cart with sampler at the dock beside the water testing station (door off, cup cut open; tank not drawn)"))
+            ("water-assembly", wa.scene("full", door_on=False, cutaway=True, lid_only=True), CART_VIEWS, "Cart with sampler at the dock beside the water testing station (door off, cup cut open; tank and lid not drawn)"))
     for name, sc, views, title in jobs:
         parts = rl.collect(sc)
         for v, el, az in views:
