@@ -1,0 +1,107 @@
+# cad/check_single_source.py: fails if two scripts define the same part (OpenPocket #365).   python cad/check_single_source.py
+# Rules (see docs/cad-structure.md):
+#  1. A function defined in cad/parts/ (a part, or a part helper) must not be defined again in any other cad/*.py. (box, cyl, tube, tdir are the
+#     generic one-line helpers every script has with its own signature; they are the only exception.)
+#  2. The names of the unit's parts (tank, water_volume, track_loop, growing_pipe, ...) may be given to an assembly child only in cad/parts/unit.py,
+#     or in a script that imports them from `parts` (it takes the shape from there). A script that builds its own "tank" or "track_loop" fails.
+#  3. Two scripts must not define the same top-level function name, except the generic orchestration names below, the frozen KNOWN_DUPLICATES (older
+#     design studies, listed so they stay visible: shrink the list, never grow it), and the STUDIES files, which are superseded design history that the
+#     build does not run (cad/build_all.py).
+import ast
+import collections
+import glob
+import os
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+GENERIC_HELPERS = {"box", "cyl", "tube", "tdir", "_box", "_cyl"}
+ORCHESTRATION = {"add", "scene", "check", "checks", "main", "draw", "views", "build", "compound", "rot", "parts", "basis", "overlay", "parts_of",
+                 "to_cart", "xshift", "reach", "station", "rail", "pin", "oring", "rod", "bore", "many"}
+# superseded design studies: kept for the drawings they made, not built by build_all.py, not checked as sources (their copies are the reason this list exists)
+STUDIES = {"unit_v1_assembly.py", "pod_store_reach.py", "pod_store.py", "flatpack_tank.py", "flatpack_check.py", "charging_dock.py", "bottom_bracket.py",
+           "base_module.py", "cart_wheel_pairs_v4.py", "hand_sleeve_v4.py", "so101_servo_layout.py", "aframe_pipe_joint.py", "spine_joint.py", "track_joint.py",
+           "cleanout_section.py", "cleanout_section_door.py", "pick_hole_cap.py", "pick_hole_membrane.py", "home_station.py"}
+KNOWN_DUPLICATES = {"build_plate": {"cart_geom.py", "cart_base.py"},        # cart_base.py adds the battery/arm cut-outs to cart_geom's plate (same name, extended)
+                    "bent_pipe": {"cart_wheel_pairs.py"}, "corner_model": {"cart_wheel_pairs.py"}, "two_hand_model": {"cart_wheel_pairs.py"}, "idler_travel": {"cart_wheel_pairs.py"},
+                    "arc_seg": {"track_supports.py", "track_joint.py"}, "inter": set(), "latest": set()}
+
+
+def top_defs(path):
+    tree = ast.parse(open(path).read())
+    return {n.name for n in tree.body if isinstance(n, ast.FunctionDef)}, tree
+
+
+def imports_parts(tree):
+    for n in ast.walk(tree):
+        if isinstance(n, ast.ImportFrom) and (n.module or "").split(".")[0] == "parts":
+            return True
+        if isinstance(n, ast.Import) and any(a.name.split(".")[0] == "parts" for a in n.names):
+            return True
+    return False
+
+
+def child_names(tree):
+    """String names given to assembly children: add(x, "name", ...), assy.add(x, name="name"), p["name"] = (shape, colour)."""
+    out = set()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call):
+            f = n.func
+            fn = f.attr if isinstance(f, ast.Attribute) else getattr(f, "id", "")
+            if fn == "add":
+                for k in n.keywords:
+                    if k.arg == "name" and isinstance(k.value, ast.Constant) and isinstance(k.value.value, str):
+                        out.add(k.value.value)
+                if len(n.args) >= 2 and isinstance(n.args[1], ast.Constant) and isinstance(n.args[1].value, str):
+                    out.add(n.args[1].value)
+        if isinstance(n, ast.Assign) and len(n.targets) == 1 and isinstance(n.targets[0], ast.Subscript):
+            s = n.targets[0].slice
+            if isinstance(s, ast.Constant) and isinstance(s.value, str):
+                out.add(s.value)
+    return out
+
+
+def main():
+    problems, notes = [], []
+    part_files = sorted(glob.glob(os.path.join(HERE, "parts", "*.py")))
+    part_defs = {}
+    for f in part_files:
+        defs, tree = top_defs(f)
+        for d in defs:
+            if not d.startswith("_") and os.path.basename(f) != "common.py" or d in ("hose", "vol", "inter"):
+                part_defs.setdefault(d, []).append(os.path.basename(f))
+    for d, fs in part_defs.items():
+        if len(fs) > 1 and d not in GENERIC_HELPERS and d not in ORCHESTRATION:
+            problems.append("part function %s defined in two files of cad/parts/: %s" % (d, ", ".join(fs)))
+    # the unit's part names, from cad/parts/unit.py itself
+    unit_names = child_names(ast.parse(open(os.path.join(HERE, "parts", "unit.py")).read())) | {"tank", "lid", "water_volume", "track_loop", "growing_pipe", "sampler_pu_coil", "sampler_pu_tail", "sampler_silicone_link"}
+    scripts = [f for f in sorted(glob.glob(os.path.join(HERE, "*.py"))) if os.path.basename(f) not in STUDIES and os.path.basename(f) != os.path.basename(__file__)]
+    defs_by_name = collections.defaultdict(set)
+    for f in scripts:
+        b = os.path.basename(f)
+        defs, tree = top_defs(f)
+        for d in defs:
+            defs_by_name[d].add(b)
+            if d in part_defs and d not in GENERIC_HELPERS:
+                problems.append("%s defines %s again; it belongs to cad/parts/%s" % (b, d, part_defs[d][0]))
+        if not imports_parts(tree):
+            for nm in sorted(child_names(tree) & unit_names):
+                problems.append("%s builds a part named %r itself; take it from cad/parts/ (import it) instead" % (b, nm))
+    for d, fs in sorted(defs_by_name.items()):
+        if len(fs) > 1 and d not in GENERIC_HELPERS and d not in ORCHESTRATION and not d.startswith("render") and d != "vol":
+            if fs - KNOWN_DUPLICATES.get(d, set()):
+                problems.append("%s is defined in more than one script: %s" % (d, ", ".join(sorted(fs))))
+            else:
+                notes.append("known: %s in %s" % (d, ", ".join(sorted(fs))))
+    for n in notes:
+        print(n)
+    if problems:
+        print("\nSINGLE-SOURCE CHECK FAILED:")
+        for p in problems:
+            print(" -", p)
+        return 1
+    print("single-source check OK: %d part files in cad/parts/, %d scripts checked, %d study scripts skipped" % (len(part_files), len(scripts), len(STUDIES)))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

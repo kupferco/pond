@@ -49,7 +49,7 @@ def gaps(dy):
         best = None
         for n, s in st.items():
             ov = ws.inter(s, o)
-            if ov > 1e-3 and not (n == "ws_legs" and m == "tank"):       # the legs stand on the lid on purpose
+            if ov > 1e-3 and not (n == "ws_legs" and m in ("tank", "lid")):       # the legs stand on the lid on purpose
                 clashes.append("%s vs %s %.0f mm3" % (n, m, ov))
             d = s.val().distance(o.val())
             best = d if best is None else min(best, d)

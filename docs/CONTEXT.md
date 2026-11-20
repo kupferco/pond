@@ -17,6 +17,7 @@ Phase 1 moving into the first hardware: the arm is being built in the UK (two mo
 - **Decisions (why things are the way they are):** `docs/decisions/` (index in `docs.json`)
 - **Working notes:** `docs/notes/`
 - **Drawings:** `docs/drawings/` (built from `renders.json`)
+- **CAD structure:** `docs/cad-structure.md`: every part defined once in `cad/parts/`, one build command (`python cad/build_all.py`), one check for duplicate parts
 - **Gallery (images and videos):** `docs/gallery/` (data in Cloud Storage; see `docs/notes/2026-11-14-photos.md`)
 - **Part list and costs:** `docs/part-list/part-list.json`
 - **Live site:** https://kupferco.github.io/pond/ (moving to Firebase project `pond-grow`, pond-grow.web.app, once set up)

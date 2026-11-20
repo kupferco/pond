@@ -54,7 +54,7 @@ import hand_sleeve as hs   # reused, not redrawn; importing runs the model and e
 
 # ---------------- Layout (mm): all shared numbers come from cart_dims.py ----------------
 from cart_dims import *   # noqa: F401,F403  (PIPE_SPACING, HX, PLATE_*, BATT*, MOTOR_*, ARM_*, PIPE_STUB_L, ...)
-from cart_geom import box, cyl, window, build_plate, plate, pad_x, PLATE_CY   # moved to cart_geom.py, unchanged
+from cart_geom import box, cyl, window, build_plate, plate, pad_x, PLATE_CY, track_pipe   # moved to cart_geom.py, unchanged
 
 pad_cx = (hs.PAD_X0 + hs.PAD_X1) / 2
 
@@ -102,7 +102,7 @@ def add(obj, name, color):
 
 add(plate, "base_plate", (0.35, 0.35, 0.38, 1))
 for tag, sgn in (("C", 1), ("B", -1)):
-    add(xshift(cyl(hs.R_PIPE, PIPE_STUB_L, "z", (0, 0, 0)), sgn * HX), "track_pipe_%s" % tag, (0.75, 0.78, 0.8, 1))
+    add(track_pipe(sgn * HX, PIPE_STUB_L), "track_pipe_%s" % tag, (0.75, 0.78, 0.8, 1))
     for nm, shp, col in clamp_hand_parts():
         add(csl.place_hand(shp, sgn), "hand_on_pipe_%s_%s" % (tag, nm), col)
 add(battery, "battery", (0.2, 0.45, 0.85, 1))

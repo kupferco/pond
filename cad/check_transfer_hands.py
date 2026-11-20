@@ -13,8 +13,7 @@ import cart_geom as cg
 import hand_sleeve as hs
 
 
-def vol(w):
-    return sum(s.Volume() for s in w.solids().vals()) if w.vals() else 0.0
+from parts.common import vol   # noqa: E402  (one definition, cad/parts/common.py)
 
 
 def placed(sgn, name):
