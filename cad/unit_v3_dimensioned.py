@@ -3,10 +3,13 @@ import cadquery as cq
 # v2 (14 Nov 2026, Viber #97): track loop widened, TX 250 -> 290 (pipes 60 mm in from the tank edge, so two touching
 # tanks put pipe B and pipe C 120 mm apart); loop label 532 -> 612.
 # Unit v3 (simplified: no store rows, buckets, pod sites) with 3D dimension lines and labels in blue.
-TW, TD, TH = 700.0, 400.0, 300.0
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import layout as LAY   # OpenPocket #364: tank, lid and bottom track heights come from the ONE shared layout (cad/layout.json)
+TW, TD, TH = 700.0, 400.0, LAY.TANK_H
 SHELF = 155.0; GP = 75.0; SP = 33.7
 TX = 290.0; TR = 16.0; R = 150.0; LOOP_Y = -60.0
-ZB = TH + 150.0; ZT = 1900.0 - TR
+ZB = LAY.TRACK_BOTTOM_Z; ZT = 1900.0 - TR
 def box(sx, sy, sz, cx, cy, z0):
     return cq.Workplane("XY").box(sx, sy, sz, centered=(True, True, False)).translate((cx, cy, z0))
 def cyl(r, h, x, y, z0):
@@ -18,6 +21,9 @@ def add(o, n, c): assy.add(o, name=n, color=cq.Color(*c))
 add(box(TW, TD, TH, 0, 0, 0).cut(box(TW - 8, TD - 8, TH, 0, 0, 4)), "tank", (0.75, 0.75, 0.8, 0.35))
 add(box(TW - 8, TD - 8, 4, 0, 0, SHELF), "shelf", (0.5, 0.5, 0.55, 0.6))
 add(box(190, 360, 35, -245, 0, 230), "seedling_tray", (0.3, 0.7, 0.4, 1))
+# OpenPocket #364: water in the tank at the normal level (layout.json water_level_mm = 150 mm over the floor), translucent blue, its own named part so a viewer can hide it.
+# The spine tube standing in the tank is cut out of it (no overlap).
+add(box(TW - 8, TD - 8, LAY.WATER_LEVEL - 4, 0, 0, 4).cut(cyl(SP / 2, TH, 0, 0, 0)), "tank_water", (0.2, 0.5, 0.95, 0.45))
 add(box(TW, TD, 4, 0, 0, TH), "lid", (0.6, 0.6, 0.65, 0.6))
 add(tube(GP / 2 + 10, GP / 2 + 1, 25, 0, 0, TH + 4), "socket", (0.95, 0.6, 0.2, 1))
 add(tube(GP / 2, GP / 2 - 3, 250, 0, 0, TH + 4), "cleanout_section", (0.8, 0.8, 0.82, 1))
@@ -50,8 +56,8 @@ def hdim(xa, xb, z, label):
     return g.union(t)
 dims = vdim(480, 0, 1900, "1900")
 dims = dims.union(vdim(-430, 0, TH, "300", -1))
-dims = dims.union(vdim(-430, TH, ZB, "150", -1))
-dims = dims.union(vdim(-430, ZB - TR, ZT + TR, "1466 loop", -1))
+dims = dims.union(vdim(-430, TH, ZB, "%d" % round(ZB - TH), -1))
+dims = dims.union(vdim(-430, ZB - TR, ZT + TR, "%d loop" % round(ZT + TR - (ZB - TR)), -1))
 dims = dims.union(hdim(-350, 350, -90, "700"))
 dims = dims.union(hdim(-TX - TR, TX + TR, 1990, "612 loop"))
 dims = dims.union(box(4, 400, 4, 420, 0, -40))

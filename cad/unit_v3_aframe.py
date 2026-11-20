@@ -6,10 +6,13 @@ import cadquery as cq, math
 #     ring between pipe and spine carries the load to the spine. Lower collar z=1215 (side legs + back strut),
 #     top collar z=1547.5. 30 W panel 450 x 350 at 23 deg on a 400 mm top bar.
 # v4: short collars but legs through drilled pipe. v3: single panel. v2: strut, feet, V roof. v1: lower A-frame.
-TW, TD, TH = 700.0, 400.0, 300.0
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import layout as LAY   # OpenPocket #364: tank, lid and bottom track heights come from the ONE shared layout (cad/layout.json)
+TW, TD, TH = 700.0, 400.0, LAY.TANK_H
 GP = 75.0; SP = 33.7; LR = 8.0
 TX = 290.0; TR = 16.0; R = 150.0; LOOP_Y = -60.0
-ZB = TH + 150.0; ZT = 1900.0 - TR
+ZB = LAY.TRACK_BOTTOM_Z; ZT = 1900.0 - TR
 ZC1 = 1215.0; ZC2 = 1547.5; FOOT_X = 340.0; LID = TH + 4; ZBAR = 1900.0; BAR_X = 200.0
 RP = GP / 2; RC = RP + 3
 def box(sx, sy, sz, cx, cy, z0):
@@ -28,6 +31,9 @@ def U(a, b):
 assy = cq.Assembly()
 def add(o, n, c): assy.add(o, name=n, color=cq.Color(*c))
 add(box(TW, TD, TH, 0, 0, 0).cut(box(TW - 8, TD - 8, TH, 0, 0, 4)), "tank", (0.75, 0.75, 0.8, 0.35))
+# OpenPocket #364: water in the tank at the normal level (layout.json water_level_mm = 150 mm over the floor), translucent blue, its own named part so a viewer can hide it.
+# The spine tube standing in the tank is cut out of it (no overlap).
+add(box(TW - 8, TD - 8, LAY.WATER_LEVEL - 4, 0, 0, 4).cut(cyl(SP / 2, TH, 0, 0, 0)), "tank_water", (0.2, 0.5, 0.95, 0.45))
 add(box(TW, TD, 4, 0, 0, TH), "lid", (0.6, 0.6, 0.65, 0.6))
 add(tube(RP + 10, RP + 1, 25, 0, 0, LID), "socket", (0.95, 0.6, 0.2, 1))
 add(tube(RP, RP - 3, ZT - LID, 0, 0, LID), "growing_pipe", (0.95, 0.95, 0.95, 0.5))

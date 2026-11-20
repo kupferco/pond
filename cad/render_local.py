@@ -9,10 +9,22 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import cadquery as cq
 
+def subdivide(T, max_edge=40.0):
+    """Triangles (n,3,3) -> the same surface cut into pieces with edges <= max_edge mm (trimesh)."""
+    import trimesh
+    V = T.reshape(-1, 3)
+    f = np.arange(len(V)).reshape(-1, 3)
+    v2, f2 = trimesh.remesh.subdivide_to_size(V, f, max_edge=max_edge)
+    return v2[f2]
+
+
 def tris(shape, color):
     v, t = shape.tessellate(0.4, 0.3)
     V = np.array([(p.x, p.y, p.z) for p in v])
-    return V[np.array(t)], color
+    T = V[np.array(t)]
+    if len(color) > 3 and color[3] < 1.0:                          # #364: see-through parts (tank, water): cut the big faces up so the painter's sort draws them in a sensible order
+        T = subdivide(T)
+    return T, color
 
 def collect(res):
     out = []
@@ -41,7 +53,7 @@ def draw(parts, elev, azim, path, title, note=None):
         shade = 0.45 + 0.55 * np.abs(n @ light)
         for tri, sh in zip(T, shade):
             polys.append(tri); depth.append(tri.mean(axis=0) @ d)
-            cols.append((c[0] * sh, c[1] * sh, c[2] * sh, 1))
+            cols.append((c[0] * sh, c[1] * sh, c[2] * sh, c[3] if len(c) > 3 else 1))   # #364: alpha from the part colour, so translucent tanks and water show
     order = np.argsort(depth)
     fig = plt.figure(figsize=(8, 8), dpi=110)
     ax = fig.add_subplot(111, projection="3d", computed_zorder=False)
