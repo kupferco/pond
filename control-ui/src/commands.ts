@@ -1,6 +1,7 @@
 // One command layer, two drivers. Later commands (cart moves, "pick pod B5 -> F4") are added to
 // RobotDriver and built from these primitives, so the UI never talks to MuJoCo or the serial port.
 import { MOTORS, type MotorSpec } from './model.ts';
+import { POSES, type PoseName } from './sample/layout.ts';
 
 export type Mode = 'sim' | 'real';
 
@@ -14,6 +15,10 @@ export interface RobotDriver {
   readJoints(): Record<string, number> | null;
   /** Latest targets in degrees by motor id. */
   targets(): Record<string, number>;
+  /** Run the sampling pump by this many rotor turns: positive draws (nozzle to tube), negative runs in reverse (tube to nozzle). */
+  pump(turns: number): void;
+  /** Net rotor turns since start (positive = drawn in): what the pump has been told to do. */
+  pumpTurns(): number;
 }
 
 export function motorById(id: string): MotorSpec {
@@ -50,5 +55,10 @@ export class CommandLayer {
     for (const [id, deg] of Object.entries(pose)) this.setJointTarget(id, deg);
   }
   home(): void { this.driver.home(); }
+  /** Move the arm to a named pose of the sampling job (joints A to E; the gripper is separate). */
+  pose(name: PoseName): void { this.setAllTargets(POSES[name]); }
+  /** Gripper open (true) or closed on the nozzle collar (false). */
+  gripper(open: boolean, openDeg: number, holdDeg: number): void { this.setJointTarget('F', open ? openDeg : holdDeg); }
+  pump(turns: number): void { this.driver.pump(turns); }
   readJoints() { return this.driver.readJoints(); }
 }

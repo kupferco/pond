@@ -130,6 +130,10 @@ Run `python cad/water_station_position.py`.
 - **Bottom sleeve not drawn:** pipe C is 120 mm from the track, level with the lid, the #315 posts and the station box. A bottom sleeve there would sit inside them (posts 6376 mm3, box and door about 1900 mm3, unit socket 3792 mm3; `check()` lists it). Its pipe would be the neighbour unit's track, not drawn either.
 - **Reading used:** "top sleeve" = the upper one when the unit stands upright with its lid below. If the owner meant two sleeves on the SAME pipe, this is not that: say so.
 
+## Arm sample run
+
+The commands, the simulated cycle (control UI scene "10. Water sample") and the real-hardware run sheet are in [arm-sample-run.md](arm-sample-run.md).
+
 ## Follow-up 4 (OpenPocket #364): one shared layout, cart clear of the tank, water in the tank
 
 - **The collision.** In `assembly.glb` the cart's lowest parts (the blue sample tubing coil, the silicone link and the parking block under the cart) were 19 mm *below* the top of the tank lid. Cause: the bottom track height (450), the tank and the cart depth were guessed separately in each drawing. Now `cad/layout.json` is the only place (see `docs/layout.md`): the cart hangs 165 mm under the track (measured), there is 45 mm of air (**ASSUMED**), so the bottom run is 210 mm over the lid, axis at z = 514.
