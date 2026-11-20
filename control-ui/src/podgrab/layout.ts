@@ -3,7 +3,7 @@
 //
 // From the CAD (DECIDED unless marked ASSUMED):
 //  - tank 700 x 400 x 300 centred on x = 0, y = 0; lid at z = 300; shelf at z = 155 (unit_v3_dimensioned.py)
-//  - bottom track pipe at z = ZB = 450 (lid + 150), in the track plane y = -60 (unit_v3_dimensioned.py)
+//  - bottom track pipe at z = the shared layout height (cad/layout.json: 514 = lid 304 + 210), in the track plane y = -60 (unit_v3_dimensioned.py)
 //  - store rows under the lid, row pitch 35, first row at x = -140 (pod_store_reach.py); the rows slope DOWN towards
 //    the pick line y = 0, where the pick holes in the lid are; 12 degrees (pod_store_reach.py)
 //  - seedling tray 190 x 360 x 35 at x = -245, z 230..265, horizontal, under an access opening in the lid (cart_arm.py, 5)

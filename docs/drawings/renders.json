@@ -1535,6 +1535,71 @@
    "comment": "Top run hanger, unchanged shape, re-exported from the current unit.",
    "viewer": "viewer.html?src=renders/track-supports-top-v2.glb&title=Track%20supports%20v2%3A%20top%20run%20hanger",
    "thumb": "renders/track-supports-top-v2-line.png"
+  },
+  {
+   "id": "transplant-seedling-start-v7",
+   "date": "2026-11-20",
+   "part": "Transplant seedling scene",
+   "category": "Pod handling",
+   "status": "draft",
+   "version": 7,
+   "group": "Transplant seedling scene (sim)",
+   "title": "Transplant seedling: Start: arm folded over the seedling tray inside the tank",
+   "comment": "v7 (OpenPocket #364): regenerated from the current sim, with the omni cart as built now (#284/#312) (this scene keeps its own tuned 450 mm bottom run, not the shared layout: see the PR). Cart at the seedling tray (0.68 m), seedling pods in the tray, pod holder empty, plug seated in the central pipe's collar. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v6 (round 7): the cart pod holder (cad/cart_pod_holder.py v3) is straight, 90 degrees to the plate, the pod sitting in it on the O-ring friction fit so it stays put upside down; the seedling tray is now INSIDE the tank (under an opening in the lid, as in the Pod grab scene), in the back corner on the same side as the cart, which rides the -y leg of the ONE track (one sleeve, the track joined to the spine). The arm reaches every step and no step has a contact. Views: -iso, -front, -side, -top, -closeup.",
+   "viewer": "viewer.html?src=renders/transplant-seedling-start-v7.glb&title=Transplant%20seedling%3A%20Start%3A%20arm%20folded%20over%20the%20seedling%20tray%20inside%20the%20tank",
+   "thumb": "renders/transplant-seedling-start-v7-line.png"
+  },
+  {
+   "id": "transplant-seedling-step1-pick-v7",
+   "date": "2026-11-20",
+   "part": "Transplant seedling scene",
+   "category": "Pod handling",
+   "status": "draft",
+   "version": 7,
+   "group": "Transplant seedling scene (sim)",
+   "title": "Transplant seedling: Step 1: seedling picked and put in the cart holder",
+   "comment": "v7 (OpenPocket #364): regenerated from the current sim, with the omni cart as built now (#284/#312) (this scene keeps its own tuned 450 mm bottom run, not the shared layout: see the PR). The arm picked the middle seedling pod from the tray. Out of reach (known gap): the pod holder on the cart; there the arm stays still and the pod is put in the holder without it. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v6 (round 7): the cart pod holder (cad/cart_pod_holder.py v3) is straight, 90 degrees to the plate, the pod sitting in it on the O-ring friction fit so it stays put upside down; the seedling tray is now INSIDE the tank (under an opening in the lid, as in the Pod grab scene), in the back corner on the same side as the cart, which rides the -y leg of the ONE track (one sleeve, the track joined to the spine). The arm reaches every step and no step has a contact. Views: -iso, -front, -side, -top, -closeup. Clip: transplant-seedling-step1-pick-v6-clip.gif.",
+   "viewer": "viewer.html?src=renders/transplant-seedling-step1-pick-v7.glb&title=Transplant%20seedling%3A%20Step%201%3A%20seedling%20picked%20and%20put%20in%20the%20cart%20holder",
+   "thumb": "renders/transplant-seedling-step1-pick-v7-line.png"
+  },
+  {
+   "id": "transplant-seedling-step2-drive-v7",
+   "date": "2026-11-20",
+   "part": "Transplant seedling scene",
+   "category": "Pod handling",
+   "status": "draft",
+   "version": 7,
+   "group": "Transplant seedling scene (sim)",
+   "title": "Transplant seedling: Step 2: cart at the hole",
+   "comment": "v7 (OpenPocket #364): regenerated from the current sim, with the omni cart as built now (#284/#312) (this scene keeps its own tuned 450 mm bottom run, not the shared layout: see the PR). The cart drove up the track (its one sleeve riding the leg) to the hole stop at 1.04 m. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v6 (round 7): the cart pod holder (cad/cart_pod_holder.py v3) is straight, 90 degrees to the plate, the pod sitting in it on the O-ring friction fit so it stays put upside down; the seedling tray is now INSIDE the tank (under an opening in the lid, as in the Pod grab scene), in the back corner on the same side as the cart, which rides the -y leg of the ONE track (one sleeve, the track joined to the spine). The arm reaches every step and no step has a contact. Views: -iso, -front, -side, -top, -closeup, -collar. Clip: transplant-seedling-step2-drive-v6-clip.gif.",
+   "viewer": "viewer.html?src=renders/transplant-seedling-step2-drive-v7.glb&title=Transplant%20seedling%3A%20Step%202%3A%20cart%20at%20the%20hole",
+   "thumb": "renders/transplant-seedling-step2-drive-v7-line.png"
+  },
+  {
+   "id": "transplant-seedling-step3-plug-v7",
+   "date": "2026-11-20",
+   "part": "Transplant seedling scene",
+   "category": "Pod handling",
+   "status": "draft",
+   "version": 7,
+   "group": "Transplant seedling scene (sim)",
+   "title": "Transplant seedling: Step 3: plug parked, hole open",
+   "comment": "v7 (OpenPocket #364): regenerated from the current sim, with the omni cart as built now (#284/#312) (this scene keeps its own tuned 450 mm bottom run, not the shared layout: see the PR). The arm pulled the plug out of the hole along the 45 degree axis, the cart went down to the plug holder's height (0.756 m) and the arm tilted the plug to horizontal and pushed it into the holder (stands 5 mm proud). The hole is open. Fully in reach. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v6 (round 7): the cart pod holder (cad/cart_pod_holder.py v3) is straight, 90 degrees to the plate, the pod sitting in it on the O-ring friction fit so it stays put upside down; the seedling tray is now INSIDE the tank (under an opening in the lid, as in the Pod grab scene), in the back corner on the same side as the cart, which rides the -y leg of the ONE track (one sleeve, the track joined to the spine). The arm reaches every step and no step has a contact. Views: -iso, -front, -side, -top, -closeup, -collar. Clip: transplant-seedling-step3-plug-v6-clip.gif.",
+   "viewer": "viewer.html?src=renders/transplant-seedling-step3-plug-v7.glb&title=Transplant%20seedling%3A%20Step%203%3A%20plug%20parked%2C%20hole%20open",
+   "thumb": "renders/transplant-seedling-step3-plug-v7-line.png"
+  },
+  {
+   "id": "transplant-seedling-step4-seat-v7",
+   "date": "2026-11-20",
+   "part": "Transplant seedling scene",
+   "category": "Pod handling",
+   "status": "draft",
+   "version": 7,
+   "group": "Transplant seedling scene (sim)",
+   "title": "Transplant seedling: Step 4: seedling seated, hole closed",
+   "comment": "v7 (OpenPocket #364): regenerated from the current sim, with the omni cart as built now (#284/#312) (this scene keeps its own tuned 450 mm bottom run, not the shared layout: see the PR). The pod was taken from the holder (out of reach, known gap), the cart went back up to the hole stop and the arm pushed the pod into the hole. Hole open for about 10 s of simulated time. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v6 (round 7): the cart pod holder (cad/cart_pod_holder.py v3) is straight, 90 degrees to the plate, the pod sitting in it on the O-ring friction fit so it stays put upside down; the seedling tray is now INSIDE the tank (under an opening in the lid, as in the Pod grab scene), in the back corner on the same side as the cart, which rides the -y leg of the ONE track (one sleeve, the track joined to the spine). The arm reaches every step and no step has a contact. Views: -iso, -front, -side, -top, -closeup, -collar. Clip: transplant-seedling-step4-seat-v6-clip.gif.",
+   "viewer": "viewer.html?src=renders/transplant-seedling-step4-seat-v7.glb&title=Transplant%20seedling%3A%20Step%204%3A%20seedling%20seated%2C%20hole%20closed",
+   "thumb": "renders/transplant-seedling-step4-seat-v7-line.png"
   }
  ]
 }

@@ -8,7 +8,7 @@
 //  - plug holder: a straight (horizontal, +x) blind socket of the same shape, 44 mm BELOW the hole, floor at x = 40, seat face at x = 54
 //  - pod and plug: body 25 (plug 25.5) x 32 (plug 17), cap 34 x 8
 //  - cart (the omni cart, Pond #284): plate 6 mm on the sleeve pads (plate face at cart y -56), battery 70 x 50 x 70 under the arm base, arm base on the plate centre; the arm base underside is 106 mm out of the pipe plane (cart y -106); pod holder: a cup of 42 mm / bore 26 mm, 40 mm long, axis 45 degrees out of the plate AND up
-//  - track (cad/unit_v3_dimensioned.py, unit_v1_assembly.py): ONE loop, tube radius 16, corner radius 150, legs 580 mm apart (x = -/+290), bottom run at the shared layout height (cad/layout.json, 514), top run at 1884, in the plane 60 mm in front of the pipe axis (LOOP_Y = -60);
+//  - track (cad/unit_v3_dimensioned.py, unit_v1_assembly.py): ONE loop, tube radius 16, corner radius 150, legs 580 mm apart (x = -/+290), bottom run at 450 (the OLD guess, see the note at LOOP_ZB), top run at 1884, in the plane 60 mm in front of the pipe axis (LOOP_Y = -60);
 //    spine 33.7 x 2 tube on the pipe axis up to 1884, and two brackets (16 x 30 x 30) joining the top and the bottom run to it at x = 0; joint rings (6 mm, r 17.5) at four heights on each leg
 //  - the cart rides the track with ONE of its two hands (hand C, on the leg at y = -0.29 here); the other hand (B) hangs open beside it, its jaw open 92 degrees, and is only used for transfers between pipes (Transfer scene)
 // ASSUMED here (not in the repo): hole height ZH 0.80 m and the collar's azimuth round the pipe (PSI); the seedling tray (3 cells) inside the tank, 240 mm over its floor; the three heights the cart stops at (the arm reaches only inside its own plane,
@@ -232,7 +232,12 @@ export function cartGeoms(): string[] {
 /** The track: the unit's ONE track loop of cad/unit_v3_dimensioned.py, a rounded-corner PORTRAIT rectangle (tube radius 16 mm, corner radius 150 mm, legs 580 mm apart, bottom run at 450 mm, top run at 1884 mm) standing
  *  in front of the central pipe, in the plane x = XT; plus what joins it to the spine: the spine tube (33.7 x 2, on the pipe axis, inside the growing pipe, up to the top run) and the two spine brackets (16 x 30 x 30 mm,
  *  at the top and at the bottom run, on the pipe's centre line), and the joint rings of cad/unit_v1_assembly.py (6 mm, r 17.5, at four heights on each leg; shown only, the wheel pairs ride over them flush). */
-export const LOOP_TX = LEG, LOOP_R = 0.15, LOOP_ZB = LAYOUT.TRACK_BOTTOM_Z, LOOP_ZT = ZT, LOOP_TR = mm(16);
+// OpenPocket #364 NOT MOVED: the shared layout (cad/layout.json) puts the bottom run at 514 mm, 64 mm higher than this scene's 450. This scene is tuned to 450: the cart can ride down the leg only to 0.64 m (below that
+// the sleeve lobe touches the bottom corner, which starts 0.6 m up), and the seedling tray inside the tank (240 mm over the floor, under the 304 mm lid) is reached from that stop. With the corner at 0.514 + 0.15 the lowest stop
+// would be about 0.70 m and the arm would have to reach 64 mm lower, down through the lid hole to a tray that cannot go higher (the lid is at 0.304). That is a design question for the owner (see the PR), so this scene keeps its
+// own 450 and the tests that pin it (sim.test.ts: first stop 0.64 m) stay valid. podgrab/layout.ts already uses the shared layout.
+export const SCENE_TRACK_BOTTOM_STILL_OLD_MM = 450;
+export const LOOP_TX = LEG, LOOP_R = 0.15, LOOP_ZB = 0.45, LOOP_ZT = ZT, LOOP_TR = mm(16);
 export function track(): string[] {
   const out: string[] = [], r = LOOP_TR;
   const seg = (name: string, a: V3, b: V3) => out.push(`<geom name="${name}" type="cylinder" fromto="${a.map(f).join(' ')} ${b.map(f).join(' ')}" size="${r}" ${OBST} ${rgba(0.62, 0.66, 0.7)}/>`);
