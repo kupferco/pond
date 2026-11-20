@@ -1,0 +1,15 @@
+{
+  "_about": "ONE shared layout for the unit (OpenPocket #364). Read by cad/layout.py (every part, assembly, render and GLB script) and by control-ui/src/layout.ts (the sim). mm, Z up, tank floor at z = 0. Anything marked ASSUMED is not given by the owner.",
+  "tank_h_mm": 300,
+  "lid_t_mm": 4,
+  "water_level_mm": 150,
+  "cart_below_track_mm": 165,
+  "cart_clearance_mm": 45,
+  "_notes": {
+    "tank_h_mm": "given (30 cm tank, unit_v3_aframe.py)",
+    "lid_t_mm": "given (4 mm lid)",
+    "water_level_mm": "owner: normal water level about 15 cm above the tank floor",
+    "cart_below_track_mm": "MEASURED from the CAD: the cart (plate, battery, sampler coil, silicone link, parking socket) reaches 165 mm past the track axis on the lid side when the top sleeve is closed on the track (parking socket x 105 vs track axis x -60 in cart_assembly.py). water_assembly.check() recomputes it and fails if the real cart is deeper than this number.",
+    "cart_clearance_mm": "ASSUMED: 45 mm of air between the lowest cart part and the tank lid (the sim already put the bottom run 210 mm over the lid, 165 + 45)"
+  }
+}

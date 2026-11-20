@@ -2,14 +2,17 @@ import cadquery as cq
 import math
 # cad/unit_v1_assembly.py — v3 (6 Nov 2026)
 # v4 (14 Nov 2026, Viber #97): track loop widened, TX 250 -> 290 (pipes 60 mm in from the tank edge).
-# v3: tank 300 tall (water 155 / store 145), top of track 1900, loop bottom run 150 above lid.
+# v3: tank 300 tall (water 155 / store 145), top of track 1900, loop bottom run 150 above lid (OpenPocket #364: now the shared layout, cad/layout.json; the buckets in this old drawing are its water, so no extra water part).
 #     Spine is a 33.7 OD tube ending level with the top-run centreline; top and bottom brackets.
 #     Track long sides in 3 x 378 pieces (joint rings shown). Growing pipe in 4 sections.
 # Other sizes ASSUMED as before.
-TW, TD, TH = 700.0, 400.0, 300.0
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import layout as LAY   # OpenPocket #364: tank, lid and bottom track heights come from the ONE shared layout (cad/layout.json)
+TW, TD, TH = 700.0, 400.0, LAY.TANK_H
 SHELF = 155.0; GP = 75.0; SP = 33.7
 TX = 290.0; TR = 16.0; R = 150.0; LOOP_Y = -60.0
-ZB = TH + 150.0; ZT = 1900.0 - TR
+ZB = LAY.TRACK_BOTTOM_Z; ZT = 1900.0 - TR
 SLOPE = 12.0
 
 def box(sx, sy, sz, cx, cy, z0):
@@ -86,5 +89,8 @@ add(many(lambda x, z: cq.Workplane("XY").circle(TR + 1.5).circle(TR).extrude(6).
 add(many(lambda z: box(16, abs(LOOP_Y) - GP / 2 + 4, 40, 0, LOOP_Y / 2 - GP / 4 - 2, z - 20) if False else
          box(16, abs(LOOP_Y) - GP / 2 + 6, 30, 0, -(GP / 2 + (abs(LOOP_Y) - GP / 2) / 2), z - 15), [(ZT,), (ZB,)]),
     "spine_brackets", (0.2, 0.2, 0.2, 1))
-add(box(70, 90, 110, TX, LOOP_Y, ZB + R + 50), "cart_low_on_B", (0.9, 0.2, 0.2, 1))
+# OpenPocket #364: the cart as it is now designed (motors inward #312, water sampler with the sample tubing coil #330), hanging under the bottom run at x = 0, instead of a red box at the corner
+import cart_standin as CS
+for _n, (_s, _c) in CS.parts(ZB, dock=0.0, loop_y=LOOP_Y).items():
+    add(_s, _n, _c)
 result = assy

@@ -27,6 +27,9 @@ from parts.lid_items import seedling_storage
 from parts.water_volume import COLOR_WATER
 
 # ---------------- unit numbers: imported from cad/parts/unit_dims.py (single source) ----------------
+import layout as LAY            # OpenPocket #364: tank, lid and bottom track heights from the ONE shared layout (cad/layout.json)
+DZ = LAY.TRACK_RISE              # OpenPocket #364: the station moved UP by this much with the track, so its socket is where the cart's arm expects it. The legs got longer (lid to box floor), the drain tube still ends on the ground.
+WATER_LEVEL = LAY.WATER_LEVEL
 DOCK_X = 100.0                   # ASSUMED dock centre on the bottom run; plates 40 mm either side
 BAR_Z = LID + 15.0               # the 20 x 15 bar across the lid under the pipe (y +-10)
 
@@ -59,7 +62,7 @@ DRAIN_Z_RUN = 324.0              # the drain tube runs between lid bar top (319)
 COL = dict(shell=(0.93, 0.93, 0.9, 1), roof=(0.82, 0.82, 0.78, 1), cup=(0.62, 0.8, 0.95, 1), water=(0.35, 0.65, 0.95, 1),
            stand=(0.2, 0.5, 0.8, 1), grom=(0.1, 0.1, 0.1, 1), pcb=(0.1, 0.5, 0.25, 1), esp=(0.1, 0.1, 0.16, 1), buck=(0.15, 0.3, 0.7, 1),
            drain=(0.3, 0.3, 0.35, 1), sock=(0.95, 0.95, 0.95, 1), dip=(0.3, 0.3, 0.35, 1),
-           tank=(0.75, 0.78, 0.82, 1), frame=(0.55, 0.57, 0.6, 1), track=(0.7, 0.7, 0.72, 1),
+           tank=(0.75, 0.78, 0.82, 0.35), tank_water=(0.2, 0.5, 0.95, 0.5), frame=(0.55, 0.57, 0.6, 1), track=(0.7, 0.7, 0.72, 1),
            copper=(0.85, 0.5, 0.2, 1), bnc=(0.8, 0.8, 0.82, 1), ground=(0.55, 0.42, 0.3, 1), board=(0.78, 0.65, 0.45, 1))
 
 
@@ -144,12 +147,12 @@ LEG_XS = (60.0, 240.0)           # leg x0 (leg is LEG wide); the drain tube is a
 LEG_YS = (-28.0, 30.0)           # station-local y0; after OFF_Y the front legs stand at y 22..42, clear of the lid bar (y +-10)
 
 
-def legs():
-    """Four printed legs from the tank lid (z 304) to the box floor underside (z 330). Union of 4 boxes; they touch the lid and the floor (face contact)."""
+def legs(dz=0.0):
+    """Four printed legs from the tank lid (z 304) to the box floor underside (z 330 + dz). Union of 4 boxes; they touch the lid and the floor (face contact)."""
     out = None
     for x0 in LEG_XS:
         for y0 in LEG_YS:
-            b = box(x0, x0 + LEG, y0, y0 + LEG, LID, BOX["z0"])
+            b = box(x0, x0 + LEG, y0, y0 + LEG, LID, BOX["z0"] + dz)
             out = b if out is None else out.union(b)
     return out
 
@@ -189,21 +192,22 @@ def electronics():
     }
 
 
-def tubes():
+def tubes(dz=0.0):
     b = BOX
     return {
-        "drain_tube": (hose(3.0, [(CX, CY, CUP_Z0 - 3.0), (CX, CY, DRAIN_Z_RUN), (CX, DRAIN_Y_OUT, DRAIN_Z_RUN), (CX, DRAIN_Y_OUT, 5.0)]), COL["drain"]),
+        "drain_tube": (hose(3.0, [(CX, CY, CUP_Z0 - 3.0 + dz), (CX, CY, DRAIN_Z_RUN), (CX, DRAIN_Y_OUT, DRAIN_Z_RUN), (CX, DRAIN_Y_OUT, 5.0)]), COL["drain"]),
     }
 
 
-def station_parts(door_on=False, cutaway=True, dy=None):
+def station_parts(door_on=False, cutaway=True, dy=None, dz=None):
     """dict name -> (shape, colour). door_on=False draws the box with the front door off so the inside shows; cutaway=True cuts the front of the cup away."""
     p = {}
     p["ws_shell"] = (shell(), COL["shell"])
     if door_on:
         p["ws_door"] = (door(), COL["shell"])
     p["ws_roof"] = (roof(), COL["roof"])
-    p["ws_legs"] = (legs(), COL["frame"])
+    dz = DZ if dz is None else dz
+    p["ws_legs"] = (legs(dz), COL["frame"])
     c, cv, w = cup(), cup_cover(), heel_water()
     gr = grommets()
     if cutaway:
@@ -220,14 +224,15 @@ def station_parts(door_on=False, cutaway=True, dy=None):
         p["ws_" + n] = v
     for n, v in electronics().items():
         p["ws_" + n] = v
-    for n, v in tubes().items():
+    for n, v in tubes(dz).items():
         p["ws_" + n] = v
     dy = OFF_Y if dy is None else dy
-    return {n: (sh.translate((0, dy, 0)), c) for n, (sh, c) in p.items()}
+    fixed = ("ws_legs", "ws_drain_tube")           # these already end on the lid / the ground: only the rest moves up with the track
+    return {n: (sh.translate((0, dy, 0 if n in fixed else dz)), c) for n, (sh, c) in p.items()}
 
 
 # ---------------- the unit around it (cropped, simplified) ----------------
-WIN = box(-60, 340, -150, 270, -10, 560)
+WIN = box(-60, 340, -150, 270, -10, 640)
 
 
 def context_parts():
@@ -276,7 +281,7 @@ def bench():
     socket and pushes the sample in by hand (the cart pump and coil tube are tested on their own, see docs/water-station/README.md). The drain tube runs into a bucket.
     Same coordinates as the station, so the same numbers apply."""
     a = cq.Assembly()
-    sp = station_parts(door_on=False, cutaway=True, dy=0.0)
+    sp = station_parts(door_on=False, cutaway=True, dy=0.0, dz=0.0)
     for n, (s, c) in sp.items():
         if n in ("ws_shell", "ws_roof", "ws_door", "ws_legs"):
             continue
@@ -324,8 +329,8 @@ def check():
     out["box_front_gap_to_track_pipe_mm"] = (b["y0"] + OFF_Y - (TRACK_Y + TRACK_R))
     out["box_front_gap_to_cart_sleeve_R61_mm"] = (b["y0"] + OFF_Y - TRACK_Y) - 61.0     # cart omni sleeve outer radius (hand_sleeve.WALL_OUT_R); the cart can roll so the full radius counts
     out["socket_distance_from_track_axis_mm"] = CY + OFF_Y - TRACK_Y
-    out["roof_top_below_track_top_mm"] = (TRACK_Z + TRACK_R) - (b["z1"])
-    out["socket_top_above_track_axis_mm"] = SOCKET_Z_TOP - TRACK_Z
+    out["roof_top_below_track_top_mm"] = (TRACK_Z + TRACK_R) - (b["z1"] + DZ)
+    out["socket_top_above_track_axis_mm"] = SOCKET_Z_TOP + DZ - TRACK_Z      # #364: the station rose with the track, so this is the same as before (-7)
     # 19 Nov follow-up: FLUSH female sockets, nothing sticking up, and the male nozzle plugs in without touching the walls
     sb = sp["ws_socket"][0].val().BoundingBox()
     rb = sp["ws_roof"][0].val().BoundingBox()
@@ -335,11 +340,11 @@ def check():
     lidb = ctx["lid"][0].val().BoundingBox()
     out["unit_socket_top_minus_lid_top_mm (0 = flush)"] = round(ub.zmax - lidb.zmax, 6)
     out["highest_thing_over_roof_top_mm (socket neighbourhood, 0 = nothing sticks up)"] = round(max(0.0, sb.zmax - rb.zmax), 6)
-    nz = wc.male(CX, CY + OFF_Y, SOCKET_Z_TOP, -1)
+    nz = wc.male(CX, CY + OFF_Y, SOCKET_Z_TOP + DZ, -1)
     out["nozzle_in_station_socket_clash_mm3 (0 = fits)"] = round(sum(inter(nz, sp[n][0]) for n in ("ws_socket", "ws_roof", "ws_cup_cover", "ws_cup")), 4)
     nb = nz.val().BoundingBox()
-    out["nozzle_spigot_depth_in_station_socket_mm"] = round(SOCKET_Z_TOP - nb.zmin, 3)
-    out["nozzle_tip_over_cup_cover_mm (drips into the cup)"] = round(nb.zmin - (CUP_Z0 + CUP_H + 3), 3)
+    out["nozzle_spigot_depth_in_station_socket_mm"] = round(SOCKET_Z_TOP + DZ - nb.zmin, 3)
+    out["nozzle_tip_over_cup_cover_mm (drips into the cup)"] = round(nb.zmin - (CUP_Z0 + CUP_H + 3 + DZ), 3)
     nu = wc.male(UNIT_SOCKET[0], UNIT_SOCKET[1], LID, -1)
     out["nozzle_in_unit_socket_clash_mm3 (0 = fits)"] = round(inter(nu, us["unit_socket"][0]) + inter(nu, ctx["lid"][0]), 4)
     out["connector_spigot_od_mm"] = 2 * wc.SPIGOT_R
@@ -352,19 +357,19 @@ def check():
     out["unit_dip_tube_inner_volume_ml"] = math.pi * 2.0 ** 2 * (LID + 2.0 - 8.0) / 1000.0
     out["unit_socket_clashes_mm3"] = {m: round(inter(us["unit_socket"][0], o), 2) for m, (o, _) in ctx.items() if m != "ground" and inter(us["unit_socket"][0], o) > 1e-3}
     out["unit_socket_vs_station_mm3"] = round(sum(inter(us["unit_socket"][0], s_[0]) for s_ in sp.values()), 2)
-    out["box_floor_over_lid_bar_mm"] = b["z0"] - BAR_Z
+    out["box_floor_over_lid_bar_mm"] = b["z0"] + DZ - BAR_Z
     # v3: the box must sit on something. Legs stand on the lid (z = LID) and carry the floor (z = box z0): no gap at either end.
     lg = sp["ws_legs"][0].val().BoundingBox()
     out["legs_bottom_minus_lid_top_mm"] = lg.zmin - LID
-    out["legs_top_minus_box_floor_mm"] = lg.zmax - b["z0"]
-    out["box_floor_gap_to_support_mm"] = max(abs(lg.zmin - LID), abs(lg.zmax - b["z0"]))
+    out["legs_top_minus_box_floor_mm"] = lg.zmax - (b["z0"] + DZ)
+    out["box_floor_gap_to_support_mm"] = max(abs(lg.zmin - LID), abs(lg.zmax - (b["z0"] + DZ)))
     out["legs_footprint_inside_box_footprint"] = (lg.xmin >= b["x0"] and lg.xmax <= b["x1"] and lg.ymin >= b["y0"] + OFF_Y and lg.ymax <= b["y1"] + OFF_Y)
     out["legs_vs_drain_tube_mm3"] = round(inter(sp["ws_legs"][0], sp["ws_drain_tube"][0]), 3)
     out["legs_vs_lid_bar_mm3"] = round(inter(sp["ws_legs"][0], ctx["base_bar_and_lid_plates"][0]), 3)
     assert out["box_floor_gap_to_support_mm"] < 1e-6, "box is floating"
     out["drain_tube_run_over_lid_bar_mm"] = (DRAIN_Z_RUN - 3.0) - BAR_Z
     out["drain_tube_outside_tank_mm"] = DRAIN_Y_OUT + OFF_Y - TD / 2
-    out["drain_tube_length_mm"] = (CUP_Z0 - 3.0 - DRAIN_Z_RUN) + (DRAIN_Y_OUT - CY) + (DRAIN_Z_RUN - 5.0)   # on the unit the cup axis and the drain are both moved OFF_Y, so the run is unchanged
+    out["drain_tube_length_mm"] = (CUP_Z0 - 3.0 + DZ - DRAIN_Z_RUN) + (DRAIN_Y_OUT - CY) + (DRAIN_Z_RUN - 5.0)   # on the unit the cup axis and the drain are both moved OFF_Y, so the run is unchanged
     out["drain_tube_hits_tank_mm3"] = inter(sp["ws_drain_tube"][0], ctx["lid"][0]) + inter(sp["ws_drain_tube"][0], ctx["tank"][0])
     # nothing in the unit is touched except what the box stands on (the lid bar is cleared by 11 mm, the lid by 26 mm)
     hit = {}
