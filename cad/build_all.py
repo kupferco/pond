@@ -11,10 +11,12 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 STEPS_CHECK = [
     ("single-source check (fails if two scripts define the same part)", ["check_single_source.py"]),
+    ("sim matches the CAD (control-ui/src/generated vs the cart, track and unit sources; fails on drift)", ["check_sim_matches_cad.py"]),
     ("water assembly clash check (cart, sampler, station, unit supports)", ["water_assembly.py"]),
     ("complete unit: cart and sample coil vs every unit part (writes complete-unit.glb)", ["complete_unit.py"]),
 ]
 STEPS_BUILD = [
+    ("regenerate the MuJoCo sim's cart meshes and numbers from the CAD (control-ui/src/generated)", ["export_sim_model.py"]),
     ("cart family renders + GLBs (cart assembly, arm, base, pod holder, sleeves, wheel pairs, home station)", ["render_omni_sleeve.py"]),
     ("track supports renders + GLBs", ["render_track_supports.py"]),
     ("unit renders + GLBs (complete unit, unit with water, tank with water, sample coil)", ["render_unit.py"]),

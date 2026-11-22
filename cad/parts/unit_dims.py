@@ -24,3 +24,8 @@ BAR_X = 200.0
 RP = GP / 2
 RC = RP + 3
 WATER_LEVEL = LAY.WATER_LEVEL                      # normal water level in the tank, measured from the tank floor (owner: about 15 cm)
+# The shelf inside the tank (OpenPocket #447: restored; #365 had taken it out as "not in the current design", which was wrong). A 4 mm plate resting on the
+# tank walls, 5 mm above the normal water level so the seedling tray and storage on it stay dry, and under the lid with the rest of the tank height to spare.
+SHELF_T = 4.0
+SHELF_Z = WATER_LEVEL + 5.0                        # shelf underside: 155 (the 155 mm shelf of the older drawings and of the sim's pod grab / transplant scenes)
+SHELF_TOP = SHELF_Z + SHELF_T                      # 159: what the seedling tray and storage stand on

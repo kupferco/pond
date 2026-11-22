@@ -14,7 +14,7 @@ import cadquery as cq
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from cart_dims import PLATE_Y0, PLATE_X0, PLATE_X1, PLATE_ZH, BATT, BATT_X, ARM_BASE_W, ARM_Y0  # noqa: E402
-from cart_geom import box, cyl  # noqa: E402
+from cart_geom import box, cyl, track_pipe  # noqa: E402
 from parts import water_connector as wc  # noqa: E402
 from parts.common import hose, vol, inter  # noqa: E402,F401
 from parts.sample_coil import *  # noqa: E402,F401,F403  (the tubing: coil, link, tail, nozzle and their numbers)
@@ -76,7 +76,7 @@ def check():
     clash = {}
     for n, (s, c) in pp.items():
         for m in ("base_plate", "battery", "so101_arm_envelope", "track_pipe_B", "track_pipe_C"):
-            v = inter(s, ca.plate if m == "base_plate" else {"battery": ca.battery, "so101_arm_envelope": ca.arm}.get(m) or cq.Workplane("XY").add(cq.Solid.makeCylinder(16, 330, cq.Vector(-60 if m.endswith("B") else 60, 0, 0), cq.Vector(0, 0, 1))))
+            v = inter(s, ca.plate if m == "base_plate" else {"battery": ca.battery, "so101_arm_envelope": ca.arm}.get(m) or track_pipe(-60 if m.endswith("B") else 60, 330, 165))
             if v > 1e-3:
                 clash["%s vs %s" % (n, m)] = round(v, 2)
     # sleeves/hands: use the assembly's own parts

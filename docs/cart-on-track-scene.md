@@ -7,11 +7,11 @@ What the scene (`control-ui/src/scenes/cart.ts`) now does, and what it found. Co
 ## Findings
 
 1. **The rigid 124 mm sleeve does not follow the R150 bend.** With the best sideways shift and yaw (1 cm steps through the bend) the riding sleeve still
-   penetrates the pipe by up to **3.99 mm** in the middle of the bend (the ring, the lobes, the wheels and the ball cups all touch). Cause: the pipe's
+   penetrates the pipe by up to **4.01 mm** (3.99 mm before #447, when hand B rode) in the middle of the bend (the ring, the lobes, the wheels and the ball cups all touch). Cause: the pipe's
    sag from the straight line over 124 mm on R150 is 12.8 mm, the bore only leaves 4 mm all round. It needs about 4 mm more radial room in the
    sleeve, or a shorter sleeve, or a larger bend radius, before the transfer (part 9) can work. The scene shows the contact in red text; it does not
    block driving, so the bend can be watched. The test pins the 4 mm figure so a CAD change makes it fail and the rows get searched again.
-2. **Roll clearance of the free hand and the base against the track is not the problem**: with hand B riding and hand C released on the inside, a roll
+2. **Roll clearance of the free hand and the base against the track is not the problem**: with hand C riding and hand B released on the OUTSIDE of the bend (the Complete unit's arrangement since #447; before, hand B rode with C hanging over the unit), a roll
    of 0 to 180 degrees in either direction touches nothing on the leg, and held through the bend (every 30 degrees, every 2 cm) the free hand and
    the base clear the curved pipe too. Both directions clear, so by Q3 the controller uses + (the plate side), and stops and asks if neither ever clears.
    Not yet tested: the other pipe, the spine, the joint rods, the tank (they are in the transfer and reach scenes, parts 9 and 11).

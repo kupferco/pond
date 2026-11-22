@@ -25,8 +25,10 @@
 // the track and lowers it into a silicone collar of the horizontal seedling tray.
 import { PIPE_D_MM } from '../cart/track.ts';
 import { staticOmniCart, CART } from '../cart/omni-scene.ts';
+import { withCartAssets } from '../cart/cad-cart.ts';
 import { HX } from '../cart/omni.ts';
 import { armMjcf } from '../model.ts';
+import { CAD_CONSTANTS } from '../generated/cad-sim.ts';
 import * as LAYOUT from '../layout.ts';   // the ONE shared layout (cad/layout.json): tank, lid and bottom track heights
 
 const m = (mm: number) => mm / 1000;
@@ -47,7 +49,7 @@ export const CLAW_GRIP = CLAW_OPEN - POD_R;     // finger travel from open to to
 export const CLAW_ACT = ['claw_l', 'claw_r'];
 
 // --- unit
-export const TANK_W = 0.7, TANK_D = 0.4, TANK_H = LAYOUT.TANK_H, SHELF_Z = 0.155, SHELF_T = 0.004;   // shelf slab z 155..159 (unit_v3_dimensioned.py)
+export const TANK_W = 0.7, TANK_D = 0.4, TANK_H = LAYOUT.TANK_H, SHELF_Z = CAD_CONSTANTS.unit_dims.SHELF_Z / 1000, SHELF_T = CAD_CONSTANTS.unit_dims.SHELF_T / 1000;   // shelf slab z 155..159 (cad/parts/shelf.py, #447)
 export const SHELF_TOP = SHELF_Z + SHELF_T;
 export const LID_Z = TANK_H, LID_T = LAYOUT.LID_T;
 export const PIPE_Y = 0.104;                    // the track plane. CAD: -60 mm. MOVED 179 mm towards the back (was 115 mm: the omni cart's battery puts the arm base 50 mm further out of the plate, Pond #284) so that all 16 sockets are in front of the cart plate and the arm, mounted on the battery, reaches them (ASSUMED, see the PR)
@@ -56,7 +58,7 @@ export const PIPE_R = m(PIPE_D_MM) / 2;
 export const PIPE_X0 = -0.40, PIPE_X1 = 0.42;
 export const CART_X_MIN = -0.33, CART_X_MAX = 0.28;   // arm plane = the cart centre (the cart is symmetric about it)
 export const CART_HOME_X = -0.1;
-export const CART_SPINE_ZONE = 0.11;           // the cart touches the spine and its bracket only with its centre within about 95 mm of x = 0 (sleeve half length 62 + spine radius 35 - 2); only this zone is scanned
+export const CART_SPINE_ZONE = 0.14;           // the cart touches the spine and its bracket only with its centre within about 13 cm of x = 0 (sleeve half length 62, the jaw motors on the CAD sleeve reach z +/-104 mm, spine radius 35; OpenPocket #447: the CAD cart's own parts are in the scan now, was 0.11 with the old stand-in shapes); only this zone is scanned
 // spine and brackets
 export const SPINE_R = 0.070 / 2, SPINE_TOP = 0.86;   // 70 mm: more than double the 33.7 mm tube of unit_v3_dimensioned.py (follow-up request)
 export const SPINE_Y = PIPE_Y + 0.06;           // the spine axis is 60 mm behind the track plane (CAD: LOOP_Y = -60; the scene had 75 mm before the omni cart), so its back surface is just inside the tank's back wall
@@ -332,7 +334,7 @@ export function podGrabMjcf(): string {
       ${finger('claw_r', -1)}`;
   const clawActs = CLAW_ACT.map((n) => `<position name="${n}" joint="${n}" kp="100" ctrlrange="0 ${CLAW_GRIP * 3}"/>`).join('\n    ');
   const cart = cartMount();
-  return armMjcf(world, {
+  return withCartAssets(armMjcf(world, {
     noGround: true,
     // 60 pods with ~350 contacts: a 4 ms step and a lighter solver keep the sim at real time in the browser (it was 1.5 ms of CPU per 2 ms step)
     option: '<option timestep="0.004" gravity="0 0 -9.81" iterations="20" ls_iterations="10"/>',
@@ -342,5 +344,5 @@ export function podGrabMjcf(): string {
     baseAttrs: cart.baseAttrs,
     handExtra: claw,
     actuators: clawActs,
-  });
+  }));
 }

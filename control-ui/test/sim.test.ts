@@ -16,7 +16,7 @@ import { CORRIDORS, JAW_A1_DEG, TransferRun, rollPlan, type Variant } from '../s
 import { S_MAX_CM, S_MIN_CM, transferMjcf, worldToCad } from '../src/cart/transfer-model.ts';
 import * as DIMS from '../src/cart/dims.ts';
 import * as OC from '../src/cart/omni.ts';
-import { BEND_TRIM_ROWS, NO_TRIM, bendTrim, omniTrackMjcf, placeOmniCart, trackContacts } from '../src/cart/omni-track.ts';
+import { BEND_TRIM_ROWS, NO_TRIM, RIDER, bendTrim, omniTrackMjcf, placeOmniCart, trackContacts } from '../src/cart/omni-track.ts';
 import { RollMotion, ROLL_HOME_TOL_DEG, canRoll, driveLimit, pickRollDirection, sweep } from '../src/cart/roll.ts';
 import { POINT_CM, POINT_WINDOW_DEG, RING_CM, RING_W_CM, hall, runHoming } from '../src/cart/homing.ts';
 import { LOAD_N, PIPES, maxCantileverMm, sagTable } from '../src/cart/track-sag.ts';
@@ -381,8 +381,8 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     check('pod grab: no hinge, worm, tongue or second hand below the pipe: the one plate carries the battery and the arm (cartbase), the arm base is the arm\'s own', !/hinge|worm|tongue/i.test(nmz.replace(/type="hinge"/g, '')) && nmz.includes('name="battery"') && nmz.includes('name="cartbase"') && !nmz.includes('name="armbase"'));
     check('pod grab: the arm base is 106 mm out of the pipe plane (plate 6 + battery 50 on the 50 mm pads) and 60 mm above the pipe', Math.abs(PIPE_Y - ARM_Y - 0.0975) < 1e-9 && Math.abs(CART_Z - PIPE_Z - 0.06) < 1e-9);
     // spine and bracket: the finding of the plan's section 7 (Q6). Clear everywhere but within 95 mm of the spine.
-    const xs = [-0.33, -0.2, -0.145, -0.1, 0.1, 0.105, 0.2, 0.28], depths = xs.map((x) => world.probeCart(x).depth);
-    check('pod grab: the cart is clear of the spine and the track bracket along the bottom run outside 10 cm of the spine, at the tray end, the store end and in between', depths.every((d) => d === 0), depths.join());
+    const xs = [-0.33, -0.2, -0.15, 0.15, 0.2, 0.28], depths = xs.map((x) => world.probeCart(x).depth);
+    check('pod grab: the cart is clear of the spine and the track bracket along the bottom run outside 14 cm of the spine (the CAD jaw motors reach 104 mm along the pipe), at the tray end, the store end and in between', depths.every((d) => d === 0), depths.join());
     const inZone = [-0.09, -0.05, 0, 0.05, 0.09].map((x) => world.probeCart(x));
     check('FINDING pod grab: the rigid sleeves hit the spine (53 mm deep at the cart centre) and the track bracket (10 mm) with the cart centre within 9 cm of the spine: the cart cannot cross between the tray and the store', inZone.every((r) => r.depth < -0.001) && inZone[2].depth < -0.03 && inZone.every((r) => r.by.track_bracket < 0 || r.by.spine_tube < 0) && inZone[2].by.track_bracket < -0.005 && inZone[2].by.spine_tube < -0.03, JSON.stringify(inZone));
   }
@@ -622,10 +622,10 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   for (let i = 0; i < tm.ngeom; i++) tm.geom_margin[i] = 0.0002;
   const at = (s: number, rollDeg = 0, trim = NO_TRIM) => { placeOmniCart(tm as any, td as any, s, (rollDeg * Math.PI) / 180, trim); mj.mj_forward(tm, td); return trackContacts(tm as any, td as any); };
   const touch = (c: Record<string, number>) => Math.min(c.rider, c.freehand, c.base);
-  check('cart on track: flat, riding on hand B, no contact with the track at every 5 cm on the leg and on the run', [5, 10, 20, 30, 40, 50, 100, 110, 120, 140].every((s) => touch(at(s)) >= -1e-9));
+  check('cart on track: flat, riding on hand C (as in the Complete unit, OpenPocket #447), no contact with the track at every 5 cm on the leg and on the run', [5, 10, 20, 30, 40, 50, 100, 110, 120, 140].every((s) => touch(at(s)) >= -1e-9));
   // the riding pipe axis really sits on the track (hand B body frame)
-  at(30); const hb = tm.body('handB').id;
-  check('hand B\'s pipe axis is on the track centre line on the leg (x 0, z 0.30)', Math.abs(td.xpos[3 * hb]) < 1e-6 && Math.abs(td.xpos[3 * hb + 2] - 0.3) < 1e-6, `${td.xpos[3 * hb]},${td.xpos[3 * hb + 2]}`);
+  at(30); const hb = tm.body('hand' + RIDER).id;
+  check('the riding hand\'s pipe axis is on the track centre line on the leg (x 0, z 0.30)', Math.abs(td.xpos[3 * hb]) < 1e-6 && Math.abs(td.xpos[3 * hb + 2] - 0.3) < 1e-6, `${td.xpos[3 * hb]},${td.xpos[3 * hb + 2]}`);
   at(110); check('and on the run (x past the bend, z = 0.75)', Math.abs(td.xpos[3 * hb + 2] - 0.75) < 1e-6 && td.xpos[3 * hb] > 0.15);
   const rollClear = (dir: 1 | -1, s: number) => sweep(0, dir * 180, 5).every((a) => { const c = at(s, a); return c.rider >= -1e-9 && c.freehand >= -1e-9 && c.base >= -1e-9; });
   check('roll on the leg, both directions, 0 to 180 in 5 degree steps: rider, free hand and base never touch the track (Q3: both clear, + chosen)', rollClear(1, 30) && rollClear(-1, 30) && pickRollDirection({ plus: true, minus: true }).dir === 1);
@@ -702,6 +702,39 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     if (plain) { const m = mj.MjModel.from_xml_string(plain), d = new mj.MjData(m); d.ctrl[m.actuator('drive').id] = 2 * Math.PI; const b = m.body('cart').id; mj.mj_forward(m, d); const z0 = d.xpos[3 * b + 2]; for (let i = 0; i < 3 / m.opt.timestep; i++) mj.mj_step(m, d);
       check('pipe_climb default (the old wheels, dry, 30 N) is unchanged: the cart still climbs', d.xpos[3 * b + 2] - z0 > 0.05, (d.xpos[3 * b + 2] - z0).toFixed(3)); m.delete(); d.delete(); }
   }
+}
+
+
+// --- The sim's geometry comes from the CAD (OpenPocket #447): cad/export_sim_model.py -> src/generated/cad-sim*.ts ---------------------------------------------------------
+{
+  const { CAD_CONSTANTS: K, CAD_UNIT: U, CAD_CART_PARTS: PARTS } = await import('../src/generated/cad-sim.ts');
+  const { cadMesh } = await import('../src/cart/cad-cart.ts');
+  const { auditScenes } = await import('../src/cart/audit-scenes.ts');
+  // 1. the omni cart's numbers ARE the generated CAD numbers (omni.ts imports them; a hand-typed copy would differ here)
+  const same = OC.PIPE_SPACING === K.cart_dims.PIPE_SPACING && OC.R_PIPE === K.cart_omni.R_PIPE && OC.OMNI_R === K.cart_omni.OMNI_R && OC.SLEEVE_L === K.hand_sleeve.SLEEVE_L && OC.ROW_Z === K.hand_sleeve.ROW_Z
+    && OC.JAW_A0 === K.cart_sleeves.JAW_A0 && OC.JAW_A1 === K.cart_sleeves.JAW_A1 && OC.JAW_OPEN_DEG === K.cart_sleeves.JAW_OPEN && OC.PLATE_Y0 === K.cart_dims.PLATE_Y0 && OC.PLATE_X1 === K.cart_dims.PLATE_X1 && OC.R_ARM_OMNI === K.hand_sleeve.R_ARM_OMNI;
+  check('sim cart numbers are the generated CAD numbers (cad/export_sim_model.py), none typed in twice', same);
+  // 2. the cart's shapes are the CAD parts: both sleeves, both hands' wheels, motors, the plate and the battery are in the sim, and each mesh sits where the CAD part is
+  const need = ['hand_on_pipe_B_sleeve', 'hand_on_pipe_C_sleeve', 'hand_on_pipe_B_drive_wheel_hub', 'hand_on_pipe_C_roll_wheel_hub', 'hand_on_pipe_B_drive_motor', 'hand_on_pipe_C_roll_motor', 'base_plate', 'battery'];
+  check('sim cart has the CAD parts: both sleeves, the omni wheels, the motors, the plate and the battery', need.every((n) => PARTS.some((p) => p.name === n)), need.filter((n) => !PARTS.some((p) => p.name === n)).join(','));
+  let worstBox = 0, bad = '';
+  for (const p of PARTS) {
+    const me = cadMesh(p.name); let lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+    for (let i = 0; i < me.vertices.length; i += 3) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], me.vertices[i + k]); hi[k] = Math.max(hi[k], me.vertices[i + k]); }
+    const d = Math.max(...[0, 1, 2].flatMap((k) => [Math.abs(lo[k] - p.bbox[2 * k]), Math.abs(hi[k] - p.bbox[2 * k + 1])]));
+    if (d > worstBox) { worstBox = d; bad = p.name; }
+  }
+  check('every sim cart mesh lies within 3 mm of its CAD part bounding box (thinned meshes, no hand-edited geometry)', worstBox < 3, `${bad} ${worstBox.toFixed(2)} mm`);
+  // 3. the unit around the cart: the legs, the track plane, the corner radius and the heights are the CAD's
+  const cadHs = readFileSync(new URL('../../cad/parts/unit_dims.py', import.meta.url), 'utf8');
+  check('sim unit: track legs +/-290, track plane 60 in front of the pipe, corner radius 150, bottom run on the shared layout height',
+    Math.abs(LEG * 1000 - U.TX) < 1e-9 && Math.abs(XT * 1000 + U.LOOP_Y) < 1e-9 && U.R === 150 && U.TX === 290 && U.LOOP_Y === -60 && Math.abs(U.ZB / 1000 - PIPE_Z) < 1e-9 && /^TX = 290/m.test(cadHs));
+  check('the Complete unit puts the cart on the right leg: hand B pipe on the leg (x = TX), cart origin 60 outside it, the plate on the front (-y) side, no rotation', U.CART_SHIFT[0] === U.TX + 60 && U.CART_SHIFT[1] === U.LOOP_Y);
+  // 4. where the cart stands in every scene, against that arrangement (rider hand on the leg, upright, roll as meant, free hand on the matching side)
+  for (const r of auditScenes(mj)) check(`scene audit: ${r.scene}: pipe axis on the leg (${r.p.offAxisMm.toFixed(2)} mm), upright (${r.p.tiltDeg.toFixed(2)} deg), roll ${r.p.rollDeg.toFixed(0)}, free hand ${r.p.freeSide}`, r.ok, r.expect);
+  // 5. the python side: the committed sim files are what the CAD sources give now (skipped without cadquery)
+  try { execFileSync('python3', [new URL('../../cad/export_sim_model.py', import.meta.url).pathname, '--check'], { stdio: 'pipe' }); check('cad/export_sim_model.py --check: the generated sim files match the CAD', true); }
+  catch (e) { const st = (e as { status?: number; stderr?: Buffer }); const noPython = /ModuleNotFoundError|ImportError/.test(String(st.stderr ?? '')); if (st.status === 1 && !noPython) check('cad/export_sim_model.py --check: the generated sim files match the CAD', false, 'run python cad/export_sim_model.py'); else console.log('skip   cad/export_sim_model.py --check (no cadquery here)'); }
 }
 
 const t0 = performance.now(); run(5); const ms = performance.now() - t0;

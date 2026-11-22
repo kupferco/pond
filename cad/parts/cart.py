@@ -8,12 +8,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import cart_assembly as ca   # noqa: E402
 
 
-def cart_children(drop_pipe=None, skip=()):
-    """(name, shape-with-location, colour, loc) of every cart part, flat. drop_pipe 'B' or 'C' leaves out that track pipe stub AND the hand clamped on it
-    (used when the unit's own track pipe stands in for it, so there is ONE track pipe in the picture)."""
+def cart_children(drop_pipe=None, skip=(), drop_hand=False):
+    """(name, shape-with-location, colour, loc) of every cart part, flat. The cart carries NO track pipe (#447): the track comes only from
+    cad/parts/track.py. Both hands (sleeve, wheels, motors) always stay: the cart always has both sleeves (#447; leaving one out is what made "Complete unit v2"
+    show one sleeve). Only drop_hand=True with drop_pipe 'B' or 'C' removes that hand."""
     out = []
     for ch in ca.result.children:
-        if drop_pipe and (ch.name == "track_pipe_%s" % drop_pipe or ch.name.startswith("hand_on_pipe_%s_" % drop_pipe)):
+        if drop_pipe and drop_hand and ch.name.startswith("hand_on_pipe_%s_" % drop_pipe):
             continue
         if ch.name in skip:
             continue
@@ -21,10 +22,10 @@ def cart_children(drop_pipe=None, skip=()):
     return out
 
 
-def add_cart(assy, prefix="cart_", drop_pipe=None, shift=(0, 0, 0), skip=()):
+def add_cart(assy, prefix="cart_", drop_pipe=None, shift=(0, 0, 0), skip=(), drop_hand=False):
     """Add the cart to a cq.Assembly as flat parts named prefix + original name, moved by the plain translation `shift` (no rotation, no mirroring)."""
     import cadquery as cq
     mv = cq.Location(cq.Vector(*shift))
-    for ch in cart_children(drop_pipe, skip):
+    for ch in cart_children(drop_pipe, skip, drop_hand):
         assy.add(ch.obj, name=prefix + ch.name, loc=mv * ch.loc if ch.loc else mv, color=ch.color)
     return assy

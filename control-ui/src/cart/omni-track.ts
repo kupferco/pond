@@ -1,12 +1,17 @@
 // The omni-wheel cart on ONE track pipe (OpenPocket #282, plan task 265 part 8): placement on the path, bend trim, roll limits.
 // Cart frame = CAD hand frame of src/cart/omni.ts: z along the pipe, x across (hand B at -60, hand C at +60), y out of the track plane, plate on -y.
-// The cart rides on hand B; hand C is released and hangs beside the track on the INSIDE of the bend (cart +x = towards the bend's centre).
+// The cart rides on hand C; hand B is released and hangs beside the track on the OUTSIDE of the bend (cart +x = towards the bend's centre, so B is at cart -x, away from the unit).
+// OpenPocket #447: this is the Complete unit's arrangement (cad/complete_unit.py: the cart's riding hand clamps the unit's track leg, the other hand hangs on the OUTER side, where the
+// neighbour unit's track leg is). The CAD has hand B on the unit's RIGHT leg (bend towards -x); this scene's pipe is the unit's LEFT leg (bend towards +x) and the cart is symmetric
+// across x = 0, so the same arrangement is hand C riding with B outward. Before #447 hand B rode with C hanging INWARD over the unit, which the CAD never does.
 // Mapping to the track (pathAt: x right, z up, pipe at y = 0): cart z = tangent t, cart x = inward normal n = (tz, 0, -tx), cart y = world +Y.
 import { omniCartBody, omniActuators, setOmniCart, PIPE_X, type Hand } from './omni.ts';
 import { pipeGeoms } from './model.ts';
+import { withCartAssets } from './cad-cart.ts';
 import { pathAt, type PathPoint } from './track.ts';
 
-export const RIDER: Hand = 'B';
+export const RIDER: Hand = 'C';
+export const FREE_HAND: Hand = (RIDER as Hand) === 'B' ? 'C' : 'B';
 export const DEG = Math.PI / 180;
 
 /** Pose of the cart on the track: the path point (cm), a trim in the cart frame (mm, mm, deg): dx across (+ = inward), dy out of the plane, yaw about the cart y axis. */
@@ -15,13 +20,13 @@ export const NO_TRIM: BendTrim = { dx: 0, dy: 0, yaw: 0 };
 
 /**
  * Rows [s cm, dx mm, yaw deg] of the best trim of the RIGID cart through the R150 bend, from scripts/search-roll.ts (max of the least clearance over dx and yaw, 1 cm steps).
- * The straight sleeve (124 mm) does NOT clear the bend: the best trim still leaves up to 3.99 mm of penetration in the middle of the bend (plan section 13 risk 5).
+ * The straight sleeve (124 mm) does NOT clear the bend: the best trim still leaves up to 4.01 mm of penetration in the middle of the bend (plan section 13 risk 5).
  * Outside the rows (the straights) the trim is zero.
  */
 export const BEND_TRIM_ROWS: [number, number, number][] = [
-  [58, 0.5, 1.5], [59, 1, 3.5], [60, 2, 6], [61, 3, 4.5], [62, 4, 3], [63, 4.5, 2], [64, 5, 1], [65, 5.5, 0.5], [66, 6, 0.5], [67, 6, 0], [68, 6, 0], [69, 6, 0],
-  [70, 6, 0], [71, 6, 0], [72, 6, 0], [73, 6, 0], [74, 6, 0], [75, 6, 0], [76, 6, 0], [77, 6, 0], [78, 6, 0], [79, 5.5, -1], [80, 5, -1.5], [81, 4, -2.5],
-  [82, 3.5, -3.5], [83, 2, -5.5], [84, 0.5, -5.5], [85, 0, -3], [86, 0, -1],
+  [57, 0.5, 1], [58, 1.5, 2.5], [59, 2.5, 4.5], [60, 4.5, 6], [61, 5.5, 4.5], [62, 7, 3], [63, 7.5, 2], [64, 8, 1], [65, 8.5, 0.5], [66, 9, 0],
+  [67, 9, 0], [68, 9, 0], [69, 9, 0], [70, 9, 0], [71, 9, 0], [72, 9, 0], [73, 9, 0], [74, 9, 0], [75, 9, 0], [76, 9, 0], [77, 9, 0], [78, 9, 0],
+  [79, 8.5, -1], [80, 8, -1.5], [81, 7, -2.5], [82, 6.5, -3.5], [83, 5, -5.5], [84, 3, -5.5], [85, 2, -3.5], [86, 1, -2], [87, 0.5, -0.5],
 ];
 /** The bend trim at path position s (cm), linearly interpolated between the rows, zero outside them. */
 export function bendTrim(sCm: number): BendTrim {
@@ -60,9 +65,9 @@ export function matToQuat(R: number[][]): [number, number, number, number] {
   return [w, x, y, z];
 }
 
-/** The cart on the track: floor-free scene with the track pipe and the cart on a mocap body (hand B rides, hand C is released). */
+/** The cart on the track: floor-free scene with the track pipe and the cart on a mocap body (hand C rides, hand B is released, outside the bend). */
 export function omniTrackMjcf(): string {
-  return `
+  return withCartAssets(`
 <mujoco model="pond_omni_cart_on_track">
   <option timestep="0.002" gravity="0 0 -9.81"/>
   <worldbody>
@@ -76,7 +81,7 @@ export function omniTrackMjcf(): string {
     </body>
   </worldbody>
   ${omniActuators()}
-</mujoco>`;
+</mujoco>`);
 }
 
 type Mj = Parameters<typeof setOmniCart>[0] & { body(name: string): { id: number }; body_mocapid: ArrayLike<number> };
@@ -92,8 +97,9 @@ export function placeOmniCart(model: Mj, data: Dt, sCm: number, rollRad: number,
 }
 
 export type Owner = 'rider' | 'freehand' | 'base' | 'other';
-/** Which part of the cart a body belongs to: the riding hand B (sleeve, wheels, balls), the released hand C, or the rigid base (plate, battery, arm base). */
-export const ownerOf = (body: string): Owner => /^(handC|driveC|rollwheelC|ballC|jawC)/.test(body) ? 'freehand' : body === 'base' ? 'base' : /^(handB|driveB|rollwheelB|ballB|jawB)/.test(body) ? 'rider' : 'other';
+/** Which part of the cart a body belongs to: the riding hand (sleeve, wheels, balls), the released hand, or the rigid base (plate, battery, arm base). */
+const handRe = (h: Hand) => new RegExp(`^(hand${h}|drive${h}|rollwheel${h}|ball${h}|jaw${h})`);
+export const ownerOf = (body: string): Owner => handRe(FREE_HAND).test(body) ? 'freehand' : body === 'base' ? 'base' : handRe(RIDER).test(body) ? 'rider' : 'other';
 type Cm = { ngeom: number; geom_bodyid: ArrayLike<number>; body(i: number): { name: string; delete?(): void } };
 type Cd = { ncon: number; contact: { get(i: number): { geom1: number; geom2: number; dist: number; delete?(): void } | undefined; delete?(): void } };
 /** Deepest penetration (m, negative; 0 = none) of each part of the cart against the track pipe. Call after mj_forward. */

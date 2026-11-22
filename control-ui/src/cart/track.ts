@@ -2,15 +2,16 @@
 // Pure maths, no MuJoCo or DOM. Track plane is X (right) and Z (up, MuJoCo); the pipe sits at y = 0.
 // Path coordinate s is in cm from the bottom of the vertical section to the end of the horizontal section.
 
+import { CAD_CONSTANTS } from '../generated/cad-sim.ts';
 // Dimensions in mm. DECIDED numbers come from cad/hand_sleeve.py and cad/cart_dims.py; the rest are ASSUMED placeholders.
-export const PIPE_D_MM = 32;             // DECIDED (hand_sleeve.py PIPE_D)
+export const PIPE_D_MM: number = CAD_CONSTANTS.hand_sleeve.PIPE_D;   // hand_sleeve.py PIPE_D (generated from the CAD, OpenPocket #447)
 export const PIPE_SPACING_MM = 280;      // ASSUMED in cart_dims.py: distance from the clamped (engaged) wheel to the free wheel across the cart
-export const BEND_R_MM = 150;            // DECIDED in cart_wheel_pairs.py (loop corner centreline radius)
+export const BEND_R_MM: number = CAD_CONSTANTS.hand_sleeve.BEND_R;   // loop corner centreline radius (hand_sleeve.py BEND_R = parts/unit_dims.py R)
 export const VERTICAL_MM = 600;          // ASSUMED: vertical section length
 export const HORIZONTAL_MM = 600;        // ASSUMED: horizontal section length
 
 
-export const SLEEVE_L_MM = 90;           // hand_sleeve.py SLEEVE_L (used by the pod grab layout)
+export const SLEEVE_L_MM: number = CAD_CONSTANTS.hand_sleeve.SLEEVE_L;   // hand_sleeve.py SLEEVE_L
 export const SLEEVE_R_MM = 36;           // wheel centre radius 26 + wheel radius 10 (hand_sleeve.py)
 export const PLATE_MM = { alongTrack: 112, t: 6 }; // cart_dims.py: 112 x 6 plate. Its length across the hands is set from the hand spacing in cartBody: clamp edge to clamp edge (spacing + 2 x 34 mm).
 

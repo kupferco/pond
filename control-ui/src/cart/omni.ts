@@ -15,40 +15,45 @@
 // anisotropy (grip in the rolling direction, almost none across it) is the function omniContact() below, which the scenes and tests use for
 // every traction question. This part does not simulate the traction as a contact force: the cart is a mocap body like the legacy one and the scenes
 // set the joints, as before. A force level traction sim is the render-server work (plan task 12, sim/pipe_climb.py).
+import { CAD_CONSTANTS } from '../generated/cad-sim.ts';
+import { cartMeshGeoms, withCartAssets } from './cad-cart.ts';
 const m = (mm: number) => +(mm / 1000).toFixed(5);
 const f = (n: number) => +n.toFixed(5);
 const rad = (deg: number) => (deg * Math.PI) / 180;
 
 // ---------------- Numbers from the CAD (mm) ----------------
-export const PIPE_SPACING = 120;                    // cart_dims.py PIPE_SPACING
+// Every number below is READ from the CAD sources by cad/export_sim_model.py (control-ui/src/generated/cad-sim.ts), not typed in here (OpenPocket #447):
+// change the CAD, re-run the export, and the sim follows. cad/check_sim_matches_cad.py and test/sim.test.ts fail if the generated file or this block drifts.
+const HS = CAD_CONSTANTS.hand_sleeve, CD = CAD_CONSTANTS.cart_dims, CO = CAD_CONSTANTS.cart_omni, CSL = CAD_CONSTANTS.cart_sleeves;
+export const PIPE_SPACING: number = CD.PIPE_SPACING;
 export const HX = PIPE_SPACING / 2;
-export const R_PIPE = 16;                           // cart_omni.py PIPE_D 32 (owner answer Q1)
-export const OMNI_R = 19;                           // 38 mm driven omni wheel
-export const OMNI_W = 18.8;                         // cart_omni.py OMNI_W (hub width)
+export const R_PIPE: number = CO.R_PIPE;            // 32 mm track pipe
+export const OMNI_R: number = CO.OMNI_R;            // 38 mm driven omni wheel
+export const OMNI_W: number = CO.OMNI_W;            // hub width
 export const OMNI_AXLE_R = R_PIPE + OMNI_R;         // 35: wheel centre from the pipe axis
 export const OMNI_REACH = OMNI_AXLE_R + OMNI_R;     // 54
-export const ROW_Z = 38;                            // hand_sleeve.py ROW_Z: wheel rows at z = +/-38 (76 apart)
-export const DRIVE_Z = ROW_Z, ROLL_Z = -ROW_Z;      // drive wheel in the top row, roll wheel in the bottom row
-export const SLEEVE_L = 124;                        // hand_sleeve.py SLEEVE_L
-export const R_BORE = 20, TUBE_R_MIN = 34.5, END_WALL = 4;
-export const R_ARM_OMNI = 61, ARM_W_OMNI = 30.8;    // outer lobe (180 deg): wheels, 61 mm outer radius
-export const R_ARM_CUP = 43.65, ARM_W_CUP = 28;     // the +/-60 deg lobes
-export const INNER_ANG = 60;                        // deg, the two ball-cup lobes either side of the C gap (+X for hand B)
-export const BALL_D = 11, CUP_R = 9, CUP_BACK = 30.65, BALL_CENTRE_R = R_PIPE + BALL_D / 2, FACE_R = R_PIPE + 1.5;
-export const JAW_A0 = 20, JAW_A1 = 110, JAW_OPEN_DEG = 92;   // hand_sleeve.py jaw: the ring sector 20..110 deg with the +60 deg lobe and its two ball cups swings open 92 deg on a pin at the 110 deg edge
+export const ROW_Z: number = HS.ROW_Z;              // wheel rows at z = +/-38 (76 apart)
+export const DRIVE_Z: number = HS.DRIVE_Z, ROLL_Z: number = HS.ROLL_Z;   // drive wheel in the top row, roll wheel in the bottom row
+export const SLEEVE_L: number = HS.SLEEVE_L;
+export const R_BORE: number = HS.R_BORE, TUBE_R_MIN: number = HS.TUBE_R_MIN, END_WALL: number = HS.END_WALL;
+export const R_ARM_OMNI: number = HS.R_ARM_OMNI, ARM_W_OMNI: number = HS.ARM_W_OMNI;    // outer lobe (180 deg): wheels, 61 mm outer radius
+export const R_ARM_CUP: number = HS.R_ARM_CUP, ARM_W_CUP: number = HS.ARM_W_CUP;        // the +/-60 deg lobes
+export const INNER_ANG: number = HS.INNER_ANGS[0];  // deg, the two ball-cup lobes either side of the C gap (+X for hand B)
+export const BALL_D: number = CO.BALL_D, CUP_R = HS.BORE_CUP_D / 2 - 0.3, CUP_BACK: number = HS.CARRIER_R0, BALL_CENTRE_R = R_PIPE + BALL_D / 2, FACE_R = R_PIPE + CO.FACE_GAP;
+export const JAW_A0: number = CSL.JAW_A0, JAW_A1: number = CSL.JAW_A1, JAW_OPEN_DEG: number = CSL.JAW_OPEN;   // cart_sleeves.py: the jaw wall from the middle of the C gap (0) to 110 deg swings open 92 deg on a pin at the 110 deg edge
 export const JAW_OPEN_RAD = (JAW_OPEN_DEG * Math.PI) / 180;
-export const GAP_HALF_DEG = 20;                     // the C gap in the tube ring: 18 mm wide at its narrow middle
-export const PAD = { x0: -20, x1: 0, y0: -50, y1: -22 };   // hand_sleeve.py pad (hand B: on the -X / -Y side)
-export const PLATE_T = 6, PLATE_Y1 = PAD.y0, PLATE_Y0 = PLATE_Y1 - PLATE_T;   // plate front face -56
-export const PLATE_X0 = -HX + PAD.x0, PLATE_X1 = HX - PAD.x0;                  // -80 .. +80 (pad -20 since #312: the plate-side motors need the room)
-export const PLATE_ZH = (SLEEVE_L + 22) / 2;        // 73
-export const ARM_BASE_W = 70, BATT = [70, 50, 70] as const, ARM_BASE_T = 20;   // arm base 70 x 70 footprint (ARM_BASE_T ASSUMED)
-export const MOTOR_R = 14, MOTOR_L = 55, GB_L = 30, GB_T = 22;                // worm motor placeholder (cart_omni.py)
-export const DRIVE_MOTOR_FACE_Y = 29.5, ROLL_MOTOR_GAP_Z = 3;           // layout B standoffs (hand_sleeve.py DRIVE_MOTOR_WALL_Y + 1, ROLL_MOTOR_WALL_Z)
-export const MOTOR_RPM = 60, MOTOR_RATED_NM = 0.30;
-export const WHEEL_RATING_N = 20, MU_WET = 0.3;
-export const PRELOAD_N = 20;
-export const CART_MASS_KG = 3;
+export const GAP_HALF_DEG = 20;                     // the C gap in the tube ring: 18 mm wide at its narrow middle (hand_sleeve.py OPENING_W)
+export const PAD = { x0: HS.PAD_X0 as number, x1: HS.PAD_X1 as number, y0: HS.PAD_Y0 as number, y1: HS.PAD_Y1 as number };   // hand B's pad: on the -X / -Y side
+export const PLATE_T: number = CD.PLATE_T, PLATE_Y1: number = CD.PLATE_Y1, PLATE_Y0: number = CD.PLATE_Y0;   // plate front face -56
+export const PLATE_X0: number = CD.PLATE_X0, PLATE_X1: number = CD.PLATE_X1;                                    // -80 .. +80
+export const PLATE_ZH: number = CD.PLATE_ZH;        // 73
+export const ARM_BASE_W: number = CD.ARM_BASE_W, BATT = CD.BATT as readonly [number, number, number], ARM_BASE_T = 20;   // arm base 70 x 70 footprint (ARM_BASE_T ASSUMED, the sim's stand-in block)
+export const MOTOR_R: number = CO.MOTOR_R, MOTOR_L: number = CO.MOTOR_L, GB_L: number = CO.GB_L, GB_T: number = CO.GB_T;   // worm motor placeholder
+export const DRIVE_MOTOR_FACE_Y = HS.DRIVE_MOTOR_WALL_Y + 1, ROLL_MOTOR_GAP_Z: number = HS.ROLL_MOTOR_WALL_Z;       // layout B standoffs
+export const MOTOR_RPM: number = CD.MOTOR_RPM, MOTOR_RATED_NM: number = CD.MOTOR_RATED_NM;
+export const WHEEL_RATING_N: number = CD.WHEEL_RATING_N, MU_WET: number = CD.MU_WET;
+export const PRELOAD_N: number = HS.SPRING_PRELOAD_N;
+export const CART_MASS_KG: number = CD.CART_MASS_KG;
 
 export type Hand = 'B' | 'C';
 /** +1 for hand B (as drawn in the CAD), -1 for hand C (its mirror across x = 0). */
@@ -61,8 +66,9 @@ const VISUAL = 'contype="0" conaffinity="0"';
 export const CONTACT_CLEAR_MM = 0.3;
 
 export const rgba = (c: [number, number, number, number?]) => `rgba="${c[0]} ${c[1]} ${c[2]} ${c[3] ?? 1}"`;
-const GREY = rgba([0.12, 0.12, 0.12]), HUBC = rgba([0.2, 0.45, 0.7]), STEEL = rgba([0.75, 0.75, 0.78]), SLEEVEC = rgba([0.95, 0.75, 0.2, 0.5]);
-const PLATEC = rgba([0.25, 0.27, 0.3]), MOTORC = rgba([0.85, 0.25, 0.25]), PADC = rgba([0.95, 0.75, 0.2]);
+// The primitive geoms below are the COLLISION shapes (numbers from the CAD, see above); they are drawn invisible and the CAD meshes (cad-cart.ts) are what shows.
+const HIDDEN = rgba([0.5, 0.5, 0.5, 0]);
+const GREY = HIDDEN, STEEL = HIDDEN, SLEEVEC = HIDDEN, PLATEC = HIDDEN, PADC = HIDDEN;
 
 // ---------------- Roll kinematics and budget ----------------
 /**
@@ -142,7 +148,7 @@ function handInner(h: Hand, jawA1 = JAW_A1, jawOpen = 0): string {
     const jpos = P(wx, 0, z);
     return `<body name="${name}"><joint name="${name}" type="hinge" pos="${jpos}" axis="${jaxis}" range="-100000 100000"/>
         <geom type="cylinder" fromto="${from} ${to}" size="${f(m(OMNI_R))}" ${GREY} friction="${MU_WET} 0.005 0.0001" ${CART_COL}/>
-        <geom type="cylinder" fromto="${axis === 'y' ? P(wx, -half - 0.3, z) : P(wx, 0, z - half - 0.3)} ${axis === 'y' ? P(wx, half + 0.3, z) : P(wx, 0, z + half + 0.3)}" size="${f(m(13))}" ${HUBC} ${VISUAL}/>
+        ${cartMeshGeoms(h, name.startsWith('drive') ? 'drive' : 'roll', [PIPE_X[h], 0, 0])}
       </body>`;
   };
   const jbodies: string[] = [];
@@ -153,22 +159,14 @@ function handInner(h: Hand, jawA1 = JAW_A1, jawOpen = 0): string {
     for (const z of [ROW_Z, -ROW_Z]) {
       const nm = `ball${h}${sa > 0 ? 'p' : 'm'}${z > 0 ? 'f' : 'b'}`;
       const rb = BALL_CENTRE_R + clear;
-      (sa > 0 ? jg : g).push(`<geom type="cylinder" fromto="${P(ux * (FACE_R + 1.5), uy * (FACE_R + 1.5), z)} ${P(ux * CUP_BACK, uy * CUP_BACK, z)}" size="${f(m(CUP_R))}" ${rgba([0.55, 0.6, 0.6])} ${VISUAL}/>`);
       (sa > 0 ? jbodies : bodies).push(`<body name="${nm}" pos="${P(ux * rb, uy * rb, z)}"><joint name="${nm}" type="ball" pos="0 0 0"/>
         <geom type="sphere" size="${f(m(BALL_D / 2))}" ${STEEL} friction="0.05 0.002 0.0001" ${CART_COL}/>
       </body>`);
     }
   }
-  // Motors (visual), layout B (OpenPocket #312, cad/cart_omni.py): both on the PLATE side (-Y) of the outer lobe, nothing on the plant side, nothing out sideways.
-  // Drive motor: gearbox on the -Y side of the lobe, its face DRIVE_MOTOR_FACE_Y off the pipe axis, body along the pipe pointing to the sleeve middle (z = 0).
-  // Roll motor: below the sleeve end, body pointing -Y towards the plate.
-  const mx = -OMNI_AXLE_R, dgy = -(DRIVE_MOTOR_FACE_Y + GB_T / 2);
-  const gbOff = GB_L / 2 - MOTOR_R, bodyStart = GB_L - MOTOR_R;      // gearbox centre and body start, along the motor axis, from the shaft
-  box('', mx, dgy, DRIVE_Z - gbOff, MOTOR_R, GB_T / 2, GB_L / 2, MOTORC, VISUAL);                // gearbox z 22..52
-  g.push(`<geom type="cylinder" fromto="${P(mx, dgy, DRIVE_Z - bodyStart)} ${P(mx, dgy, DRIVE_Z - bodyStart - MOTOR_L)}" size="${f(m(MOTOR_R))}" ${MOTORC} ${VISUAL}/>`);
-  const gz = -(SLEEVE_L / 2 + ROLL_MOTOR_GAP_Z + 1) - GB_T / 2;
-  box('', mx, -gbOff, gz, MOTOR_R, GB_L / 2, GB_T / 2, MOTORC, VISUAL);
-  g.push(`<geom type="cylinder" fromto="${P(mx, -bodyStart, gz)} ${P(mx, -bodyStart - MOTOR_L, gz)}" size="${f(m(MOTOR_R))}" ${MOTORC} ${VISUAL}/>`);
+  // The CAD meshes of this hand (cad/cart_assembly.py: sleeve, drive and roll motors, wheels' hubs, rollers, shafts, springs, cups, Hall sensor ...): the rigid parts here, the jaw group on the jaw below.
+  g.push(cartMeshGeoms(h, 'static', [PIPE_X[h], 0, 0]));
+  jg.push(cartMeshGeoms(h, 'jaw', [PIPE_X[h], 0, 0]));
   // The jaw: a hinge about an axis along the pipe at the 110 deg edge of the tube (hand_sleeve.py), 0 = closed round the pipe, JAW_OPEN_RAD = released.
   const pa = rad(jawA1), pivot = P(TUBE_R_MIN * Math.cos(pa), TUBE_R_MIN * Math.sin(pa), 0);
   // jawOpen > 0 (rad): the jaw is built already swung open, with no joint (the static scenes: pod grab, transplant), by turning its body about the pivot.
@@ -189,7 +187,8 @@ function baseGeoms(): string {
   const box = (name: string, x: number, y: number, z: number, hx: number, hy: number, hz: number, col: string) =>
     g.push(`<geom ${name ? `name="${name}" ` : ''}type="box" pos="${n3(x, y, z)}" size="${f(m(hx))} ${f(m(hy))} ${f(m(hz))}" ${col} ${CART_COL}/>`);
   box('plate', (PLATE_X0 + PLATE_X1) / 2, PLATE_Y0 + PLATE_T / 2, 0, (PLATE_X1 - PLATE_X0) / 2, PLATE_T / 2, PLATE_ZH, PLATEC);
-  box('battery', 0, PLATE_Y0 - BATT[1] / 2, 0, BATT[0] / 2, BATT[1] / 2, BATT[2] / 2, rgba([0.3, 0.55, 0.35]));
+  box('battery', 0, PLATE_Y0 - BATT[1] / 2, 0, BATT[0] / 2, BATT[1] / 2, BATT[2] / 2, HIDDEN);
+  g.push(cartMeshGeoms('base', 'static'));
   box('armbase', 0, PLATE_Y0 - BATT[1] - ARM_BASE_T / 2, 0, ARM_BASE_W / 2, ARM_BASE_T / 2, ARM_BASE_W / 2, rgba([0.9, 0.65, 0.2]));
   return g.join('\n      ');
 }
@@ -260,7 +259,7 @@ export function omniCartMjcf(o: { pipeB?: boolean; pipeC?: boolean } = {}): stri
   const { pipeB = true, pipeC = true } = o;
   const col = 'rgba="0.62 0.66 0.70 1" contype="1" conaffinity="2"';
   const pipe = (h: Hand) => `<geom name="pipe${h}" type="cylinder" fromto="${n3(PIPE_X[h], 0, -350)} ${n3(PIPE_X[h], 0, 350)}" size="${f(m(R_PIPE))}" ${col}/>`;
-  return `
+  return withCartAssets(`
 <mujoco model="pond_omni_cart">
   <option timestep="0.002" gravity="0 0 -9.81"/>
   <worldbody>
@@ -271,5 +270,5 @@ export function omniCartMjcf(o: { pipeB?: boolean; pipeC?: boolean } = {}): stri
     </body>
   </worldbody>
   ${omniActuators()}
-</mujoco>`;
+</mujoco>`);
 }
