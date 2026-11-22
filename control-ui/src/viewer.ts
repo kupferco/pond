@@ -57,6 +57,13 @@ export class Viewer {
         geo = new THREE.CylinderGeometry(s[0], s[0], s[1] * 2, 32).rotateX(Math.PI / 2);
       } else if (type === T.mjGEOM_CAPSULE.value) {
         geo = new THREE.CapsuleGeometry(s[0], s[1] * 2, 8, 16).rotateX(Math.PI / 2);
+      } else if (type === T.mjGEOM_MESH.value) {
+        // a CAD mesh of the cart (src/cart/cad-cart.ts): its vertices are stored in the geom's own frame
+        const id = m.geom_dataid[i], v0 = m.mesh_vertadr[id], vn = m.mesh_vertnum[id], f0 = m.mesh_faceadr[id], fn = m.mesh_facenum[id];
+        geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(Float32Array.from(m.mesh_vert.subarray(3 * v0, 3 * (v0 + vn))), 3));
+        geo.setIndex(Array.from(m.mesh_face.subarray(3 * f0, 3 * (f0 + fn))));
+        geo.computeVertexNormals();
       } else {
         continue; // unsupported: skip, keep index alignment via sparse array
       }

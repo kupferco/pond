@@ -29,7 +29,7 @@ CART_NAMES = {"base_plate", "battery", "so101_arm_envelope", "track_pipe_B", "tr
 CART_PREFIXES = ("hand_on_pipe_",)
 CART_FILES = {"cart_assembly.py", "cart_arm.py", "cart_base.py", "cart_sleeves.py", "cart_omni.py", "cart_geom.py", "cart_dims.py", "cart_pod_holder.py",
               "cart_wheel_pairs.py", "export_cart_v2_views.py", "render_omni_sleeve.py", "render_cart_wheel_pairs.py", "render_base_gallery.py", "render_motor_layouts.py",
-              "export_drawing_models.py", "check_transfer_hands.py", "render_transfer_hands.py", "water_sampler.py"}
+              "export_drawing_models.py", "check_transfer_hands.py", "render_transfer_hands.py", "water_sampler.py", "export_sim_model.py"}
 CART_HAND_DROPPED = {"water_assembly.py"}     # pictures and the #364 tank-clearance check of the cart at the station: top sleeve only (see water_assembly.py)
 KNOWN_DUPLICATES = {"build_plate": {"cart_geom.py", "cart_base.py"},        # cart_base.py adds the battery/arm cut-outs to cart_geom's plate (same name, extended)
                     "bent_pipe": {"cart_wheel_pairs.py"}, "corner_model": {"cart_wheel_pairs.py"}, "two_hand_model": {"cart_wheel_pairs.py"}, "idler_travel": {"cart_wheel_pairs.py"},

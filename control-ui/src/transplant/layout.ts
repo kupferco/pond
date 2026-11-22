@@ -16,6 +16,9 @@
 import { armMjcf } from '../model.ts';
 import * as LAYOUT from '../layout.ts';   // the ONE shared layout (cad/layout.json): tank, lid and bottom track heights
 import { staticOmniCart, CART } from '../cart/omni-scene.ts';
+import { CAD_UNIT, CAD_CONSTANTS } from '../generated/cad-sim.ts';
+const CAD_UNIT_DIMS = CAD_CONSTANTS.unit_dims;
+import { withCartAssets } from '../cart/cad-cart.ts';
 import { HX } from '../cart/omni.ts';
 
 /** Which leg of the track the cart rides: -1 = the leg at world y = -0.29. The seedling tray is in the tank's back corner on that same side (the arm works along its base axis, towards the back), so the pods are
@@ -34,7 +37,7 @@ export const RECESS_R = mm(17.6), RECESS_T = mm(2);   // cap recess 35.2 mm, 2 m
 export const PROUD = CAP_T - RECESS_T;                // 6 mm of cap stand proud of the seat face
 
 // --- central pipe and collar
-export const PIPE_RP = mm(37.5), PIPE_WALL = mm(3), ZT = 1.9 - mm(16), PIPE_TOP = ZT;   // the growing pipe and the spine run up to the top run's height (unit_v3_dimensioned.py)
+export const PIPE_RP = mm(CAD_UNIT_DIMS.GP / 2), PIPE_WALL = mm(3), ZT = CAD_UNIT.ZT / 1000, PIPE_TOP = ZT;   // growing pipe OD 75 and the top run height: cad/parts/unit_dims.py GP, ZT   // the growing pipe and the spine run up to the top run's height (unit_v3_dimensioned.py)
 export const TANK_L = 0.7, TANK_W = 0.4, LID = LAYOUT.LID_TOP;     // tank 700 (along world y) x 400 (along x), lid top at 304 mm (unit_v3_aframe.py: TH 300 + 4)
 export const SOCKET_R = PIPE_RP + mm(10);
 export const DRILL_R = mm(22.5);
@@ -58,8 +61,8 @@ export const PARK_CAP_TOP: V3 = rz([X_TOP - RECESS_T + PARK_DX + CAP_T, 0, ZP]);
 export const D_PARK: V3 = rz([1, 0, 0]);
 
 // --- the cart (CART frame of cad/cart_dims.py: x across the pipes, y out of the pipe plane, plate on -y, z up the pipes)
-export const XT = 0.06;                               // world x of the track plane: 60 mm in front of the pipe axis (unit_v3_dimensioned.py LOOP_Y = -60)
-export const LEG = 0.29;                              // the track's legs stand at world y = -/+ 0.29 (TX = 290)
+export const XT = -CAD_UNIT.LOOP_Y / 1000;            // world x of the track plane: 60 mm in front of the pipe axis (cad/parts/unit_dims.py LOOP_Y = -60; sim x = -CAD y)
+export const LEG = CAD_UNIT.TX / 1000;                // the track's legs stand at world y = -/+ 0.29 (cad/parts/unit_dims.py TX = 290; sim y = CAD x)
 /** The cart rides the leg at SIDE * LEG with the hand on that side (hand B, cart x = -60 mm, on the +y leg; hand C, cart x = +60 mm, on the -y leg, see cart/omni.ts): the cart origin is 60 mm towards the pipe plane from it. */
 export const YC = SIDE * (LEG - HX / 1000);
 export const ARM_CX = 0;                              // arm base centre across the plate (cad/cart_dims.py ARM_X = 0)
@@ -234,7 +237,7 @@ export function cartGeoms(): string[] {
  *  at the top and at the bottom run, on the pipe's centre line), and the joint rings of cad/unit_v1_assembly.py (6 mm, r 17.5, at four heights on each leg; shown only, the wheel pairs ride over them flush). */
 // OpenPocket #376: the bottom run is at the shared layout height (cad/layout.json: 514 mm), no local copy any more (it was 0.45, a guess). The scene was tuned to 0.45: the new height makes the sleeve lobe touch the bottom
 // track corner at the old lowest stop and puts the seedling tray out of reach; sim.test.ts lists those checks as KNOWN_CLASH (see the pull request).
-export const LOOP_TX = LEG, LOOP_R = 0.15, LOOP_ZB = LAYOUT.TRACK_BOTTOM_Z, LOOP_ZT = ZT, LOOP_TR = mm(16);
+export const LOOP_TX = LEG, LOOP_R = CAD_UNIT.R / 1000, LOOP_ZB = CAD_UNIT.ZB / 1000, LOOP_ZT = CAD_UNIT.ZT / 1000, LOOP_TR = CAD_UNIT.TR / 1000;   // cad/parts/unit_dims.py (R 150, ZB = the shared layout's bottom run, ZT, TR 16)
 export function track(): string[] {
   const out: string[] = [], r = LOOP_TR;
   const seg = (name: string, a: V3, b: V3) => out.push(`<geom name="${name}" type="cylinder" fromto="${a.map(f).join(' ')} ${b.map(f).join(' ')}" size="${r}" ${OBST} ${rgba(0.62, 0.66, 0.7)}/>`);
@@ -254,7 +257,7 @@ export function track(): string[] {
     out.push(`<geom type="cylinder" fromto="${f(XT)} ${f(e * LOOP_TX)} ${f(z - 0.003)} ${f(XT)} ${f(e * LOOP_TX)} ${f(z + 0.003)}" size="${mm(17.5)}" ${VIS} ${rgba(0.95, 0.6, 0.2)}/>`);
   }
   // spine tube and the two brackets joining the track's top and bottom run to it
-  out.push(...tube([0, 0, 0], [0, 0, 1], 0, ZT, mm(33.7 / 2 - 2), mm(33.7 / 2), 24, `${VIS} ${rgba(0.35, 0.35, 0.35)}`));
+  out.push(...tube([0, 0, 0], [0, 0, 1], 0, ZT, mm(CAD_UNIT_DIMS.SP / 2 - 2), mm(CAD_UNIT_DIMS.SP / 2), 24, `${VIS} ${rgba(0.35, 0.35, 0.35)}`));
   for (const z of [LOOP_ZT, LOOP_ZB]) out.push(`<geom name="bracket${z === LOOP_ZT ? 'top' : 'bot'}" type="box" pos="${f(XT - mm(15))} 0 ${f(z)}" size="${mm(15)} ${mm(8)} ${mm(15)}" ${OBST} ${rgba(0.2, 0.2, 0.2)}/>`);
   return out;
 }
@@ -275,11 +278,11 @@ export function transplantMjcf(): string {
   const base = `pos="${f(ARM_CY - BASE_BOTTOM)} 0 0" xyaxes="0 0 -1 0 -1 0"`;   // base x = down, base y = -y, so the base axis (z) points out of the plate, -x: towards the pipe
   const open = `<body name="cart" mocap="true" pos="${XT} ${YC} ${CART_Z0}">
       ${cartGeoms().join('\n      ')}`;
-  return armMjcf(world, {
+  return withCartAssets(armMjcf(world, {
     noGround: true,
     option: '<option timestep="0.004" gravity="0 0 0"/>',
     armCollides: true,
     mount: { open, close: '</body>' },
     baseAttrs: base,
-  });
+  }));
 }

@@ -8,6 +8,7 @@
 import { omniCartBody, omniActuators, jawActuatorsXml, setOmniCart, PIPE_X, R_PIPE, OMNI_R, JAW_OPEN_RAD, rgba, type Hand } from './omni.ts';
 import { pipeGeoms } from './model.ts';
 import { L_ARC, L_VERT, pathAt } from './track.ts';
+import { withCartAssets } from './cad-cart.ts';
 import { matToQuat } from './omni-track.ts';
 
 const m = (mm: number) => +(mm / 1000).toFixed(5);
@@ -37,7 +38,7 @@ export function trackXml(): string {
 }
 /** The Transfer scene's MJCF: floor, both track pipes, the cart on a mocap body with both jaws and the roll, drive and jaw actuators. */
 export function transferMjcf(o: { jawA1?: number } = {}): string {
-  return `
+  return withCartAssets(`
 <mujoco model="pond_omni_transfer">
   <option timestep="0.002" gravity="0 0 -9.81"/>
   <worldbody>
@@ -48,7 +49,7 @@ export function transferMjcf(o: { jawA1?: number } = {}): string {
     </body>
   </worldbody>
   ${omniActuators().replace('</actuator>', `${jawActuatorsXml()}\n  </actuator>`)}
-</mujoco>`;
+</mujoco>`);
 }
 
 // ---------------- Placement ----------------

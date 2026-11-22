@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-20",
+  "updated": "2026-11-22",
   "renders": [
     {
       "id": "complete-unit-v2",
@@ -1457,6 +1457,58 @@
       "comment": "Side experiment, not part of the unit.",
       "viewer": "viewer.html?src=renders/20261105-135403-66c1.glb&title=Marshmallow%20spaghetti%20tower",
       "thumb": "renders/20261105-135403-66c1-line.png"
+    },
+    {
+      "id": "sim-cart-on-track-v1",
+      "date": "2026-11-22",
+      "part": "Sim scene",
+      "category": "Sim",
+      "status": "draft",
+      "version": 1,
+      "group": "Sim scenes (CAD cart)",
+      "title": "Sim: cart on the track",
+      "comment": "The Cart scene: the cart rides the track leg on hand C with hand B hanging on the OUTER side, as in the Complete unit (before, hand B rode with hand C hanging over the unit). DRAFT, OpenPocket #447: the MuJoCo sim draws the cart from the CAD parts (cad/export_sim_model.py), not its own hand-built shapes, and the scene audit (control-ui/test/sim.test.ts) checks the cart sits on the track leg, upright, at the right roll. Drawn from the MuJoCo model by a software renderer. Views: -iso, -front, -top, -side.",
+      "thumb": "renders/sim-cart-on-track-v1-line.png",
+      "viewer": "viewer.html?src=renders/sim-cart-on-track-v1.glb&title=Sim:%20cart%20on%20the%20track"
+    },
+    {
+      "id": "sim-transfer-v1",
+      "date": "2026-11-22",
+      "part": "Sim scene",
+      "category": "Sim",
+      "status": "draft",
+      "version": 1,
+      "group": "Sim scenes (CAD cart)",
+      "title": "Sim: transfer, start at the roll station",
+      "comment": "The Transfer scene: the CAD cart on pipes B and C of two neighbouring units, both hands clamped. DRAFT, OpenPocket #447: the MuJoCo sim draws the cart from the CAD parts (cad/export_sim_model.py), not its own hand-built shapes, and the scene audit (control-ui/test/sim.test.ts) checks the cart sits on the track leg, upright, at the right roll. Drawn from the MuJoCo model by a software renderer. Views: -iso, -front, -top, -side.",
+      "thumb": "renders/sim-transfer-v1-line.png",
+      "viewer": "viewer.html?src=renders/sim-transfer-v1.glb&title=Sim:%20transfer,%20start%20at%20the%20roll%20station"
+    },
+    {
+      "id": "sim-pod-grab-v1",
+      "date": "2026-11-22",
+      "part": "Sim scene",
+      "category": "Sim",
+      "status": "draft",
+      "version": 1,
+      "group": "Sim scenes (CAD cart)",
+      "title": "Sim: pod grab, start",
+      "comment": "The Pod grab scene: the CAD cart on the bottom run of the loop (plate towards the unit, free hand above the run), arm over the tank. DRAFT, OpenPocket #447: the MuJoCo sim draws the cart from the CAD parts (cad/export_sim_model.py), not its own hand-built shapes, and the scene audit (control-ui/test/sim.test.ts) checks the cart sits on the track leg, upright, at the right roll. Drawn from the MuJoCo model by a software renderer. Views: -iso, -front, -top, -side.",
+      "thumb": "renders/sim-pod-grab-v1-line.png",
+      "viewer": "viewer.html?src=renders/sim-pod-grab-v1.glb&title=Sim:%20pod%20grab,%20start"
+    },
+    {
+      "id": "sim-transplant-v1",
+      "date": "2026-11-22",
+      "part": "Sim scene",
+      "category": "Sim",
+      "status": "draft",
+      "version": 1,
+      "group": "Sim scenes (CAD cart)",
+      "title": "Sim: transplant seedling, at the hole",
+      "comment": "The Transplant scene (and the reach test, which uses the same cart): the CAD cart rolled 180 degrees on the -y leg, plate towards the growing pipe. DRAFT, OpenPocket #447: the MuJoCo sim draws the cart from the CAD parts (cad/export_sim_model.py), not its own hand-built shapes, and the scene audit (control-ui/test/sim.test.ts) checks the cart sits on the track leg, upright, at the right roll. Drawn from the MuJoCo model by a software renderer. Views: -iso, -front, -top, -side.",
+      "thumb": "renders/sim-transplant-v1-line.png",
+      "viewer": "viewer.html?src=renders/sim-transplant-v1.glb&title=Sim:%20transplant%20seedling,%20at%20the%20hole"
     }
   ]
 }

@@ -54,4 +54,16 @@ move it with a plain translation or rotation (`add_cart(..., shift=...)`, `water
 * The superseded studies in `STUDIES` (`unit_v1_assembly.py`, `pod_store_reach.py`, `flatpack_*.py`, `charging_dock.py`, ...) keep their own simplified tank and track copies.
   They made older drawings and are not part of the build.
 * `cad/cart_arm.py` still draws its own seedling-tray and lid stand-ins for the reach study.
-* The sim scenes (reach test, transplant steps, drawn from the MuJoCo model in `control-ui/`) are a separate geometry source and are not regenerated here.
+* The sim's own SO-101 arm (`control-ui/src/model.ts`, the moving arm with its servos) and the scene furniture (pod store, tray, sample station, the water-sample scene's box cart) are still the sim's own shapes.
+  The cart, the track loop and the unit numbers are NOT: see the next section.
+
+## The MuJoCo sim takes the cart from the CAD (#447)
+
+`python cad/export_sim_model.py` (run by `build_all.py`) reads the cart (every child of `cart_assembly.result`, the same cart `add_cart()` gives the Complete unit) and the numbers of `hand_sleeve.py`, `cart_dims.py`,
+`cart_omni.py`, `cart_sleeves.py`, `cart_base.py`, `cart_geom.py`, `parts/unit_dims.py` and `layout.py`, and writes `control-ui/src/generated/cad-sim.ts` (numbers, part list with CAD bounding boxes, cart placement on the unit)
+and `cad-sim-cart.ts` (the cart meshes, thinned by vertex clustering). The sim imports both: `cart/omni.ts` and `cart/track.ts` and `transplant/layout.ts` have no copy of those numbers any more, and every scene draws the
+CAD meshes (`cart/cad-cart.ts`); the sim's primitive shapes are only the collision shapes and are invisible.
+
+`python cad/check_sim_matches_cad.py` (in `build_all.py`) fails if the generated files differ from what the CAD gives now, or if the sim code stops importing them. `control-ui/test/sim.test.ts` then checks every scene against the
+Complete unit (`scripts/audit-scenes.ts` prints the table): the riding hand's pipe axis on the track leg, the cart upright, the roll about the leg, the side of the free hand.
+Pictures: `control-ui/scripts/export-*.ts` + `render_*.py` into `cad/renders/`, then `python cad/publish_sim_scenes.py` and `python cad/render_line_thumbs.py views <ids>` for the Drawings page (group "Sim scenes (CAD cart)").

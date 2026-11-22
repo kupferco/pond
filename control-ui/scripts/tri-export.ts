@@ -11,6 +11,7 @@ export function triangles(mj: MainModule, model: MjModel, data: MjData): Tri[] {
     if (a === 0 || type === T.mjGEOM_PLANE.value) continue;
     const s = [model.geom_size[3 * g], model.geom_size[3 * g + 1], model.geom_size[3 * g + 2]];
     const p = [data.geom_xpos[3 * g], data.geom_xpos[3 * g + 1], data.geom_xpos[3 * g + 2]];
+    if (p[2] < -5) continue;   // parked helper geoms (a hidden marker at z = -50 m) are not part of the picture
     const R = Array.from({ length: 9 }, (_, k) => data.geom_xmat[9 * g + k]);
     const col = [model.geom_rgba[4 * g], model.geom_rgba[4 * g + 1], model.geom_rgba[4 * g + 2], a];
     const w = (l: number[]) => [p[0] + R[0] * l[0] + R[1] * l[1] + R[2] * l[2], p[1] + R[3] * l[0] + R[4] * l[1] + R[5] * l[2], p[2] + R[6] * l[0] + R[7] * l[1] + R[8] * l[2]];
@@ -32,6 +33,12 @@ export function triangles(mj: MainModule, model: MjModel, data: MjData): Tri[] {
       for (let k = 0; k < n; k++) {
         const a0 = 2 * Math.PI * k / n, a1 = 2 * Math.PI * (k + 1) / n;
         quad([r * Math.cos(a0), r * Math.sin(a0), -h], [r * Math.cos(a1), r * Math.sin(a1), -h], [r * Math.cos(a1), r * Math.sin(a1), h], [r * Math.cos(a0), r * Math.sin(a0), h]);
+      }
+    } else if (type === T.mjGEOM_MESH.value) {
+      const id = model.geom_dataid[g], v0 = model.mesh_vertadr[id], f0 = model.mesh_faceadr[id], fn = model.mesh_facenum[id];
+      for (let k = 0; k < fn; k++) {
+        const tri = [0, 1, 2].map((c) => { const vi = v0 + model.mesh_face[3 * (f0 + k) + c]; return w([model.mesh_vert[3 * vi], model.mesh_vert[3 * vi + 1], model.mesh_vert[3 * vi + 2]]); });
+        tris.push([...tri[0], ...tri[1], ...tri[2], ...col]);
       }
     } else if (type === T.mjGEOM_CYLINDER.value) {
       const n = 28, r = s[0], h = s[1];

@@ -5,6 +5,7 @@
 // turned 60 degrees (a staggered spiral), a vertical pitch of 130 mm, the lowest at 100 mm above the pipe's lower end (z0 = tank 300 + 254 = 554 mm, so z = 654 mm). The CAD rule would give nine levels (27 sites)
 // with today's 1884 mm top; the brief names 24, so the lowest EIGHT levels (3 x 8) are used and the ninth (1694 mm) is left out. Azimuths: the CAD frame (x along the tank) is turned a quarter turn in this scene
 // (world x = -CAD y, world y = CAD x), so the CAD azimuth a is world azimuth a + 90 degrees. Collar, hole, seat, plug holder and plug are those of cad/pipe_collar.py as in the Transplant scene (layout.ts).
+import { withCartAssets } from '../cart/cad-cart.ts';
 import { armMjcf } from '../model.ts';
 import {
   BORE_R, CAP_R, CAP_T, DRILL_R, HOLDER_FLOOR_X, LID, OBST, P0, PIPE_RP, PIPE_TOP, PIPE_WALL, PLUG_BODY_L, PLUG_BODY_R, POD_BODY_L, POD_BODY_R, RECESS_R, RECESS_T, S, SHELF_T, SHELF_Z,
@@ -154,6 +155,6 @@ export function reachMjcf(): string {
   const base = `pos="${f(-mm(102) - 0.0085)} 0 0" xyaxes="0 0 -1 0 -1 0"`;
   const open = `<body name="cart" mocap="true" pos="${XT} ${YC} ${CART_MIN}">
       ${cartGeoms().join('\n      ')}`;
-  return armMjcf(world, { noGround: true, option: '<option timestep="0.004" gravity="0 0 0"/>', armCollides: true, mount: { open, close: '</body>' }, baseAttrs: base });
+  return withCartAssets(armMjcf(world, { noGround: true, option: '<option timestep="0.004" gravity="0 0 0"/>', armCollides: true, mount: { open, close: '</body>' }, baseAttrs: base }));
 }
 export { GREY, ZH, ZP, XB };
