@@ -1,8 +1,9 @@
 # cad/complete_unit.py: the COMPLETE UNIT model (OpenPocket #311, rebuilt single-source in #365). Nothing is drawn here: every part is imported.
 #   unit (tank, WATER VOLUME, lid, growing pipe, spine, track, frame, panel, feet): cad/parts/unit.py
-#   pods in the growing pipe's holes (simplified): cad/parts/pods.py;  seedling tray and storage: cad/parts/lid_items.py
+#   pods in the growing pipe's holes (simplified): cad/parts/pods.py;  seedling tray and storage: cad/parts.shelf_items.py
 #   the REAL cart (motors inward, #312) with its sample tubing coil (#330): cad/parts/cart.py + cad/water_sampler.py, clamped on the right vertical track run.
-# The cart's own pipe stub stands in for the track there (hand and stub of pipe C left out), so there is ONE track pipe. Z up, mm; the GLB is Y up like the others.
+#   the shelf (z 155..159, above the water) with the seedling tray and the storage on it, under the lid: cad/parts/shelf.py, cad/parts/shelf_items.py
+# The cart carries no pipe of its own (#447): the only track is the unit's track_loop (cad/parts/track.py); hand B closes on it, hand C is where the neighbour's track would be. Z up, mm; the GLB is Y up like the others.
 #   python cad/complete_unit.py   -> cad/renders/complete-unit.glb   (+ PNGs with cad/render_unit.py)
 import os
 import sys
@@ -13,7 +14,7 @@ sys.path.insert(0, HERE)
 from parts.unit import unit_parts
 from parts.unit_dims import TX, LOOP_Y
 from parts.pods import pods_and_caps
-from parts.lid_items import seedling_storage, seedling_tray
+from parts.shelf_items import seedling_storage, seedling_tray
 from parts.cart import add_cart
 import water_sampler as wsa
 
@@ -35,8 +36,8 @@ def scene(with_cart=True, water=True):
     a.add(seedling_tray(), name="seedling_tray", color=cq.Color(0.59, 0.43, 0.27, 1))
     a.add(seedling_storage(), name="seedling_storage", color=cq.Color(0.35, 0.5, 0.75, 1))
     if with_cart:
-        # the unit's track pipe IS the pipe hand B clamps: the cart's pipe B stub is left out; BOTH hands stay (hand C clamps the neighbour's track, its pipe C stub is shown)
-        add_cart(a, "cart_", drop_pipe="B", shift=CART_SHIFT)
+        # the unit's track pipe IS the pipe hand B clamps; BOTH hands stay (hand C is on the neighbour unit's track, which is not drawn)
+        add_cart(a, "cart_", shift=CART_SHIFT)
         for n, (s, c) in wsa.parts().items():
             a.add(to_unit(s), name=n, color=cq.Color(*c))
     return a

@@ -9,12 +9,12 @@ import cart_assembly as ca   # noqa: E402
 
 
 def cart_children(drop_pipe=None, skip=(), drop_hand=False):
-    """(name, shape-with-location, colour, loc) of every cart part, flat. drop_pipe 'B' or 'C' leaves out that track pipe stub (used when the unit's own
-    track pipe stands in for it, so there is ONE track pipe in the picture). The hand (sleeve, wheels, motors) clamped on it STAYS: the cart always has
-    both sleeves (#447; leaving one out is what made "Complete unit v2" show one sleeve). Only drop_hand=True removes it too."""
+    """(name, shape-with-location, colour, loc) of every cart part, flat. The cart carries NO track pipe (#447): the track comes only from
+    cad/parts/track.py. Both hands (sleeve, wheels, motors) always stay: the cart always has both sleeves (#447; leaving one out is what made "Complete unit v2"
+    show one sleeve). Only drop_hand=True with drop_pipe 'B' or 'C' removes that hand."""
     out = []
     for ch in ca.result.children:
-        if drop_pipe and (ch.name == "track_pipe_%s" % drop_pipe or (drop_hand and ch.name.startswith("hand_on_pipe_%s_" % drop_pipe))):
+        if drop_pipe and drop_hand and ch.name.startswith("hand_on_pipe_%s_" % drop_pipe):
             continue
         if ch.name in skip:
             continue

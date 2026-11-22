@@ -47,7 +47,7 @@ def unit_dimensioned():
 
 
 JOBS = {"complete-unit": (complete_unit, "Complete unit: tank with water, frame, panel, pods, trays, cart (motors inward) with sample coil on the track"),
-        "unit-dimensioned": (unit_dimensioned, "Unit v3 dimensioned (current design: water at 15 cm, no shelf, no stand-in cart)"),
+        "unit-dimensioned": (unit_dimensioned, "Unit v3 dimensioned (water 15 cm, shelf 155 with seedling items)"),
         "unit-water": (unit_water, "Unit structure with the water volume (normal level 15 cm, translucent blue)"),
         "tank-water": (tank_water, "Tank (lid off) and water volume at the normal level (15 cm)"),
         "sample-coil": (sample_coil, "Cart with the water-test sample tubing: pump, silicone link, PU recoil coil, tail, parked nozzle")}

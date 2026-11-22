@@ -1,6 +1,7 @@
 # cad/parts/unit.py: the unit as an ordered list of (name, shape, colour), built ONLY from the part files in this package.
 # unit_v3_aframe.py, track_supports.py, complete_unit.py and water_station.py all take their unit geometry from here.
 from . import unit_frame as uf
+from .shelf import shelf, COLOR_SHELF
 from .tank import tank_shell, tank_lid, COLOR_TANK, COLOR_LID
 from .track import track_loop, COLOR_TRACK
 from .water_volume import water_volume, COLOR_WATER, PART_NAME as WATER_NAME
@@ -15,6 +16,7 @@ def unit_parts(water=True):
         out.append((WATER_NAME, water_volume(), COLOR_WATER))
     out += [
         ("lid", tank_lid(), COLOR_LID),
+        ("shelf", shelf(), COLOR_SHELF),
         ("socket", uf.pipe_socket(), ORANGE),
         ("growing_pipe", uf.growing_pipe(), (0.95, 0.95, 0.95, 0.5)),
         ("spine_tube", uf.spine_tube(), (0.35, 0.35, 0.35, 1)),

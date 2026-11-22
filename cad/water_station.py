@@ -23,7 +23,7 @@ from parts import water_connector as wc
 from parts.common import hose, vol, inter   # noqa: F401
 from parts.unit import unit_parts
 from parts.unit_dims import TW, TD, TH, LID, TR as TRACK_R, LOOP_Y as TRACK_Y, ZB as TRACK_Z, GP   # the unit's numbers, defined once (they were copied here; GP was the spine's 33.7 by mistake)
-from parts.lid_items import seedling_storage
+from parts.shelf_items import seedling_storage
 from parts.water_volume import COLOR_WATER
 
 # ---------------- unit numbers: imported from cad/parts/unit_dims.py (single source) ----------------
@@ -238,7 +238,7 @@ WIN = box(-60, 340, -150, 270, -10, 640)
 def context_parts():
     """Lid corner of the first unit around the station, cropped to WIN. Every unit part comes from cad/parts/ (parts.unit.unit_parts): tank, water volume, lid,
     growing pipe, lid bars, A-frame legs, track loop, seedling storage. Only the dock plates and the ground are the station's own."""
-    keep = ("tank", "water_volume", "lid", "growing_pipe", "base_bar_and_lid_plates", "lower_aframe_and_back_strut_16mm", "track_loop")
+    keep = ("tank", "water_volume", "lid", "shelf", "growing_pipe", "base_bar_and_lid_plates", "lower_aframe_and_back_strut_16mm", "track_loop")
     p = {}
     for n, s, c in unit_parts():
         if n in keep:

@@ -53,8 +53,6 @@ def constants():
 
 def group_of(name):
     """(body, group) of a cart child by its name. body: 'B', 'C' (the hands) or 'base'; group: what moves as one in the sim."""
-    if name.startswith("track_pipe_"):
-        return None
     if name in ("base_plate", "battery"):
         return "base", "static"
     if name == "so101_arm_envelope":

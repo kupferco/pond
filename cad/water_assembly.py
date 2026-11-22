@@ -8,7 +8,7 @@
 # Before, the track was pipe C and only the bottom sleeve (hand C) was drawn, clamped on it. Now hand B is closed on the track and the bottom sleeve (hand C) is
 # NOT drawn: pipe C, 120 mm below the track, is at the height of the lid, the #315 posts and the station box (unit z 330), so a bottom sleeve there would sit inside them
 # (check() measures it: "bottom_sleeve_open_vs_unit_mm3"). Its pipe would be the neighbour unit's track, which is not drawn either, so no clamp hangs in the air.
-# The cart's own pipe stub stands in for the unit's track, so the unit's track pieces and ground are left out here.
+# The cart carries no pipe (#447): the track here is the unit's own track_loop (cad/parts/track.py), cropped to the station window. The dock plates and the ground are left out.
 # This is only a drawing of where the parts sit relative to each other; it does not say the cart can drive there or the arm can reach.
 import os
 import sys
@@ -24,7 +24,7 @@ import water_station as ws
 
 TRACK_X = -60.0                     # the track is pipe B, the top one
 MOVE = dict(rot=-90.0, shift=(LAY.TRACK_BOTTOM_Z + TRACK_X, 60.0, -ws.DOCK_X))   # #364: the track is at the shared layout height (was 450)
-SKIP = ("track_loop", "dock_plate_minus", "dock_plate_plus", "ground")
+SKIP = ("dock_plate_minus", "dock_plate_plus", "ground")
 
 
 OPEN_DEG = ca.csl.JAW_OPEN   # jaw angle of the free (bottom) sleeve, fully released
@@ -40,7 +40,7 @@ def to_cart(shape):
 
 def track_support_parts():
     """Main's #315 track supports on the bottom run (nut plate, M8 rod, lock nut, post, base plate) inside the station window, UNIT frame.
-    The unit's track loop itself is NOT taken: the cart's pipe stub is the one and only track pipe in this assembly."""
+    The unit's track loop itself comes from scene_parts() (context_parts), the one and only track pipe in this assembly."""
     import runpy
     ts = runpy.run_path(os.path.join(HERE, "track_supports.py"))
     out = {}
@@ -89,7 +89,8 @@ def track_check(up):
     """The one track pipe is main's cart pipe C. Checks: it is where the unit's track maps to; clamp C touches it with no gap and no clash;
     the #315 supports sit on it; nothing is left of pipe B or its clamp in the scene."""
     out = {}
-    pipe = {ch.name: ch for ch in ca.result.children}["track_pipe_B"].obj
+    # the unit's track (cad/parts/track.py), its straight bottom run (|x| <= 140, where the corners start), moved into the cart frame
+    pipe = to_cart(ws.context_parts()["track_loop"][0].intersect(ws.box(-140.0, 140.0, -200.0, 200.0, 0.0, 2000.0)))
     pb = pipe.val().BoundingBox()
     out["track_pipe_axis_xy_mm"] = ((pb.xmin + pb.xmax) / 2, (pb.ymin + pb.ymax) / 2)
     tr = to_cart(cq.Workplane("XY").add(cq.Vector(0, ws.TRACK_Y, ws.TRACK_Z)).val() if False else cq.Workplane("XY").sphere(0.1).translate((0, ws.TRACK_Y, ws.TRACK_Z)))
@@ -116,7 +117,7 @@ def track_check(up):
     out["track_support_gap_to_pipe_mm (rod/nut touch, post is 34 mm out on the rod)"] = sg
     out["track_support_vs_pipe_clash_mm3 (nut plate/rod sit in the pipe bore in real life)"] = sc
     scn = scene("full")
-    out["pipes_in_scene"] = sorted(c.name for c in scn.children if "track_pipe" in c.name)
+    out["pipes_in_scene"] = sorted(c.name for c in scn.children if "track_pipe" in c.name or c.name == "track_loop")
     out["top_sleeve_parts_in_scene (closed on the track)"] = sum(1 for c in scn.children if c.name.startswith("cart_hand_on_pipe_B_"))
     out["bottom_sleeve_parts_in_scene (not drawn)"] = sum(1 for c in scn.children if c.name.startswith("cart_hand_on_pipe_C"))
     out["top_sleeve_x_mm / bottom_sleeve_x_mm"] = (ca.csl.HAND_X * -1, ca.csl.HAND_X)
@@ -213,7 +214,7 @@ def check(dy=None):
         for side, sgn in (("B", -1),):                # B = top sleeve closed on the track
             h = ca.csl.place_hand(shp, sgn)
             for n, (s, c) in up.items():
-                if n in ("tank", "water_volume", "lid", "base_bar_and_lid_plates", "seedling_storage", "growing_pipe", "lower_aframe_and_back_strut_16mm"):
+                if n in ("tank", "water_volume", "lid", "base_bar_and_lid_plates", "seedling_storage", "shelf", "growing_pipe", "lower_aframe_and_back_strut_16mm"):
                     continue
                 v = ws.inter(s, h)
                 if v > 1e-3:
@@ -222,7 +223,7 @@ def check(dy=None):
     cs = {}                                       # info only: the bottom sleeve (hand C, jaw released) is where the unit's lid parts are, which is why it is not drawn
     open_parts = {k: sh for k, sh, _ in ca.clamp_hand_parts(OPEN_DEG)}
     for n, (s, c) in up.items():
-        if n in ("tank", "water_volume", "lid", "base_bar_and_lid_plates", "seedling_storage", "growing_pipe", "lower_aframe_and_back_strut_16mm"):
+        if n in ("tank", "water_volume", "lid", "base_bar_and_lid_plates", "seedling_storage", "shelf", "growing_pipe", "lower_aframe_and_back_strut_16mm"):
             continue
         v = sum(ws.inter(s, ca.csl.place_hand(sh, 1)) for sh in open_parts.values())
         if v > 1e-3:

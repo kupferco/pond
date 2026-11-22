@@ -28,6 +28,7 @@ import { staticOmniCart, CART } from '../cart/omni-scene.ts';
 import { withCartAssets } from '../cart/cad-cart.ts';
 import { HX } from '../cart/omni.ts';
 import { armMjcf } from '../model.ts';
+import { CAD_CONSTANTS } from '../generated/cad-sim.ts';
 import * as LAYOUT from '../layout.ts';   // the ONE shared layout (cad/layout.json): tank, lid and bottom track heights
 
 const m = (mm: number) => mm / 1000;
@@ -48,7 +49,7 @@ export const CLAW_GRIP = CLAW_OPEN - POD_R;     // finger travel from open to to
 export const CLAW_ACT = ['claw_l', 'claw_r'];
 
 // --- unit
-export const TANK_W = 0.7, TANK_D = 0.4, TANK_H = LAYOUT.TANK_H, SHELF_Z = 0.155, SHELF_T = 0.004;   // shelf slab z 155..159 (unit_v3_dimensioned.py)
+export const TANK_W = 0.7, TANK_D = 0.4, TANK_H = LAYOUT.TANK_H, SHELF_Z = CAD_CONSTANTS.unit_dims.SHELF_Z / 1000, SHELF_T = CAD_CONSTANTS.unit_dims.SHELF_T / 1000;   // shelf slab z 155..159 (cad/parts/shelf.py, #447)
 export const SHELF_TOP = SHELF_Z + SHELF_T;
 export const LID_Z = TANK_H, LID_T = LAYOUT.LID_T;
 export const PIPE_Y = 0.104;                    // the track plane. CAD: -60 mm. MOVED 179 mm towards the back (was 115 mm: the omni cart's battery puts the arm base 50 mm further out of the plate, Pond #284) so that all 16 sockets are in front of the cart plate and the arm, mounted on the battery, reaches them (ASSUMED, see the PR)

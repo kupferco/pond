@@ -42,7 +42,8 @@
 #  5. Arm mount: SO-101 base on top of the battery at the plate centre (x = -12, midway between the pads), arm shown folded over
 #     the cart (counterweight idea from the 31 Oct decisions).
 #  6. SO-101 arm is an envelope only (boxes sized from cad/so101_servo_layout.py), not real parts.
-#  7. Track pipe OD 32 mm (assumed in hand_sleeve.py too). Each pipe is shown as a 330 mm stub.
+#  7. Track pipe OD 32 mm (assumed in hand_sleeve.py too). The cart carries NO pipe (#447, owner: the leftover grey stub where there is no track):
+#     the track comes only from cad/parts/track.py; the hands close round the unit's track where the cart is placed on it.
 import math
 import os
 import sys
@@ -54,7 +55,7 @@ import hand_sleeve as hs   # reused, not redrawn; importing runs the model and e
 
 # ---------------- Layout (mm): all shared numbers come from cart_dims.py ----------------
 from cart_dims import *   # noqa: F401,F403  (PIPE_SPACING, HX, PLATE_*, BATT*, MOTOR_*, ARM_*, PIPE_STUB_L, ...)
-from cart_geom import box, cyl, window, build_plate, plate, pad_x, PLATE_CY, track_pipe   # moved to cart_geom.py, unchanged
+from cart_geom import box, cyl, window, build_plate, plate, pad_x, PLATE_CY   # moved to cart_geom.py, unchanged
 
 pad_cx = (hs.PAD_X0 + hs.PAD_X1) / 2
 
@@ -102,7 +103,6 @@ def add(obj, name, color):
 
 add(plate, "base_plate", (0.35, 0.35, 0.38, 1))
 for tag, sgn in (("C", 1), ("B", -1)):
-    add(track_pipe(sgn * HX, PIPE_STUB_L), "track_pipe_%s" % tag, (0.75, 0.78, 0.8, 1))
     for nm, shp, col in clamp_hand_parts():
         add(csl.place_hand(shp, sgn), "hand_on_pipe_%s_%s" % (tag, nm), col)
 add(battery, "battery", (0.2, 0.45, 0.85, 1))

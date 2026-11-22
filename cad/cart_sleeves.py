@@ -141,7 +141,6 @@ def build_pair(static=None, roll=0.0, with_plate=True, jaws=None, off=None):
     def rolled(shape):
         return shape.rotate(ax, (ax[0], 0, 1), sgn_s * roll) if (static and roll) else shape
     for tag, sgn in TAGS:
-        a.add(cyl(hs.R_PIPE, PIPE_STUB_L, "z", (sgn * HAND_X, 0, 0)), name="track_pipe_%s" % tag, color=cq.Color(0.75, 0.78, 0.8, 1))
         role = "static" if static == tag else ("released" if static else "hand")
         for name, (shp, col) in hand_parts(jaws.get(tag, 0.0)).items():
             if static == tag and name.startswith(("drive_wheel_rollers", "roll_wheel_rollers")):

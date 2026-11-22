@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-22",
+  "updated": "2026-11-20",
   "renders": [
     {
       "id": "complete-unit-v2",
@@ -10,7 +10,7 @@
       "version": 2,
       "group": "Complete unit",
       "title": "Complete unit v2 (single-source: tank with water, real cart, sample coil)",
-      "comment": "DRAFT, OpenPocket #365. Rebuilt from the single-source parts (cad/parts/): tank with the water volume at the normal 15 cm level (translucent blue), frame, solar panel, growing pipe with a pod in each of its 48 holes (simplified), seedling tray and storage, and the REAL cart (motors inward, #312) with its sample tubing coil (#330) clamped on the right track run, instead of the old red box stand-in. 3D model: cad/renders/complete-unit.glb. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
+      "comment": "DRAFT, OpenPocket #365. Rebuilt from the single-source parts (cad/parts/): tank with the water volume at the normal 15 cm level (translucent blue), frame, solar panel, growing pipe with a pod in each of its 48 holes (simplified), the 155 mm shelf inside the tank with the seedling tray and the seedling storage (blue) standing on it UNDER the lid (#447: they were drawn on top of the lid), and the REAL cart (motors inward, #312, both omni sleeves) with its sample tubing coil (#330) clamped on the right track run, instead of the old red box stand-in. #447: the cart no longer carries a stub of track pipe: the only track is the unit's. 3D model: cad/renders/complete-unit.glb. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
       "thumb": "renders/complete-unit-v2-line.png",
       "viewer": "viewer.html?src=renders/complete-unit-v2.glb&title=Complete%20unit%20v2%20(single-source:%20tank%20with%20water,%20real%20cart,%20sample%20coil)"
     },
@@ -23,7 +23,7 @@
       "version": 5,
       "group": "Cart assembly",
       "title": "Whole cart assembly v5 (motors inward)",
-      "comment": "DRAFT, OpenPocket #365 (regenerated from cart_assembly.py after #312). The cart with the drive and roll motors INWARD in the sleeves, clear of the lettuce; rigid plate, battery under the arm, folded SO-101 envelope. Pipes 120 mm apart. 3D model: cad/renders/cart-assembly.glb. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
+      "comment": "DRAFT, OpenPocket #365 (regenerated from cart_assembly.py after #312). The cart with the drive and roll motors INWARD in the sleeves, clear of the lettuce; rigid plate, battery under the arm, folded SO-101 envelope. Pipes 120 mm apart. #447: no track pipe on the cart any more (the leftover grey stub is gone); the two sleeves close round the unit's track. 3D model: cad/renders/cart-assembly.glb. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
       "thumb": "renders/cart-assembly-v5-line.png",
       "viewer": "viewer.html?src=renders/cart-assembly-v5.glb&title=Whole%20cart%20assembly%20v5%20(motors%20inward)"
     },
@@ -127,7 +127,7 @@
       "version": 4,
       "group": "Unit v3 dimensioned",
       "title": "Unit v3 dimensioned 3D model (current design, with water)",
-      "comment": "DRAFT, OpenPocket #365. The dimensioned unit rebuilt from the single-source parts: the old 155 mm shelf and its seedling tray and the red cart stand-in are gone (not in the current design); the water volume is drawn at the normal 15 cm level with a '150 water' dimension. Other dimensions unchanged (1900 total, 300 tank, bottom run at 514 over the floor (210 over the lid, shared layout), 612 and 1466 loop, 700 tank width). Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
+      "comment": "DRAFT, OpenPocket #365. The dimensioned unit rebuilt from the single-source parts: the red cart stand-in is gone; #447: the 155 mm shelf is back (task 365 took it out by mistake) with the seedling tray and the seedling storage standing on it under the lid, and a '155 shelf' dimension; the water volume is drawn at the normal 15 cm level with a '150 water' dimension. Other dimensions unchanged (1900 total, 300 tank, bottom run at 514 over the floor (210 over the lid, shared layout), 612 and 1466 loop, 700 tank width). Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
       "thumb": "renders/unit-dimensioned-v4-line.png",
       "viewer": "viewer.html?src=renders/unit-dimensioned-v4.glb&title=Unit%20v3%20dimensioned%203D%20model%20(current%20design,%20with%20water)"
     },
