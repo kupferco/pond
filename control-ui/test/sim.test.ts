@@ -734,7 +734,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   for (const r of auditScenes(mj)) check(`scene audit: ${r.scene}: pipe axis on the leg (${r.p.offAxisMm.toFixed(2)} mm), upright (${r.p.tiltDeg.toFixed(2)} deg), roll ${r.p.rollDeg.toFixed(0)}, free hand ${r.p.freeSide}`, r.ok, r.expect);
   // 5. the python side: the committed sim files are what the CAD sources give now (skipped without cadquery)
   try { execFileSync('python3', [new URL('../../cad/export_sim_model.py', import.meta.url).pathname, '--check'], { stdio: 'pipe' }); check('cad/export_sim_model.py --check: the generated sim files match the CAD', true); }
-  catch (e) { const st = (e as { status?: number; stderr?: Buffer }); if (st.status === 1) check('cad/export_sim_model.py --check: the generated sim files match the CAD', false, 'run python cad/export_sim_model.py'); else console.log('skip   cad/export_sim_model.py --check (no cadquery here)'); }
+  catch (e) { const st = (e as { status?: number; stderr?: Buffer }); const noPython = /ModuleNotFoundError|ImportError/.test(String(st.stderr ?? '')); if (st.status === 1 && !noPython) check('cad/export_sim_model.py --check: the generated sim files match the CAD', false, 'run python cad/export_sim_model.py'); else console.log('skip   cad/export_sim_model.py --check (no cadquery here)'); }
 }
 
 const t0 = performance.now(); run(5); const ms = performance.now() - t0;
