@@ -35,8 +35,8 @@ def scene(with_cart=True, water=True):
     a.add(seedling_tray(), name="seedling_tray", color=cq.Color(0.59, 0.43, 0.27, 1))
     a.add(seedling_storage(), name="seedling_storage", color=cq.Color(0.35, 0.5, 0.75, 1))
     if with_cart:
-        # the unit's track pipe IS the clamped pipe: leave the cart's pipe B stub out too (hand B stays, clamped on the track); pipe C and its hand are the neighbour's
-        add_cart(a, "cart_", drop_pipe="C", shift=CART_SHIFT, skip=("track_pipe_B",))
+        # the unit's track pipe IS the pipe hand B clamps: the cart's pipe B stub is left out; BOTH hands stay (hand C clamps the neighbour's track, its pipe C stub is shown)
+        add_cart(a, "cart_", drop_pipe="B", shift=CART_SHIFT)
         for n, (s, c) in wsa.parts().items():
             a.add(to_unit(s), name=n, color=cq.Color(*c))
     return a

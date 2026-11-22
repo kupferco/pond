@@ -75,7 +75,7 @@ def scene(kind="full", door_on=True, cutaway=False, lid_only=False):
     a = cq.Assembly()
     # ONE track pipe only: pipe B (the top one) of the cart IS the unit's track (the #315 supports sit on it, see check()). Pipe C would be the neighbour unit's
     # track (not drawn) and its hand is left out too, see the note at the top and check(). The cart comes from cad/parts/cart.py (not copied here).
-    add_cart(a, "cart_", drop_pipe="C")
+    add_cart(a, "cart_", drop_pipe="C", drop_hand=True)   # the water-station pictures and the #364 tank clearance are for the top sleeve only (see the note above)
 
     for n, (s, c) in wsa.parts().items():
         a.add(s, name=n, color=cq.Color(*c))
