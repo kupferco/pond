@@ -111,6 +111,51 @@
    "camera": {
     "orbit": "35deg 70deg auto"
    }
+  },
+  {
+   "id": "cart-hand-corner-v5",
+   "title": "Cart hand on a 150 mm loop corner v5 (current sleeve and wheels)",
+   "glb": "drawings/renders/cart-hand-corner-v5.glb",
+   "caption": "The hand on a 150 mm corner.",
+   "page": "models",
+   "section": "Cart",
+   "poster": "drawings/renders/cart-hand-corner-v5-line.png"
+  },
+  {
+   "id": "cart-sleeves-v5",
+   "title": "Cart sleeves v5 (both hands clamped on two pipes, rigid plate)",
+   "glb": "drawings/renders/cart-sleeves-v5.glb",
+   "caption": "Both hands clamped on the two pipes.",
+   "page": "models",
+   "section": "Cart",
+   "poster": "drawings/renders/cart-sleeves-v5-line.png"
+  },
+  {
+   "id": "cart-omni-v5",
+   "title": "Cart wheels v5 (omni wheels, ball cups and motors, no sleeve)",
+   "glb": "drawings/renders/cart-omni-v5.glb",
+   "caption": "The omni wheels, ball cups and motors of one hand.",
+   "page": "models",
+   "section": "Cart",
+   "poster": "drawings/renders/cart-omni-v5-line.png"
+  },
+  {
+   "id": "cart-hand-exploded-v3",
+   "title": "Cart hand exploded v3 (current sleeve and omni wheels)",
+   "glb": "drawings/renders/cart-hand-exploded-v3.glb",
+   "caption": "The hand pulled apart.",
+   "page": "models",
+   "section": "Cart",
+   "poster": "drawings/renders/cart-hand-exploded-v3-line.png"
+  },
+  {
+   "id": "cart-hand-v5",
+   "title": "Cart hand v5 (three-lobe sleeve, omni wheels, ball cups, motors)",
+   "glb": "drawings/renders/cart-hand-v5.glb",
+   "caption": "One hand: sleeve, omni wheels, ball cups and motors on the pipe.",
+   "page": "models",
+   "section": "Cart",
+   "poster": "drawings/renders/cart-hand-v5-line.png"
   }
  ]
 }

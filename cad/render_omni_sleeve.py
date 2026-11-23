@@ -1,5 +1,6 @@
 # Renders the v5 omni-wheel hand (OpenPocket #278): PNG views (iso, front, top, side) of every changed part IN ITS ASSEMBLY CONTEXT and a GLB.
 # Usage: python cad/render_omni_sleeve.py [name ...]     (writes cad/renders/; no names = everything)
+#   hand-exploded        (#459) one hand pulled apart: sleeve, jaw, wheels, gearboxes, motors, ball-cup pairs, hall sensor (offsets for readability only)
 #   cart-omni            drive + roll omni wheels, ball cups, motors of one hand on the pipe (cart_omni.py in context, no sleeve)
 #   hand-sleeve          the v5 three-lobe sleeve with its wheels, cups and motors on the pipe (hand_sleeve.py in context)
 #   cart-sleeves         both hands clamped, rigid plate (cart_sleeves.py)
@@ -29,7 +30,8 @@ os.makedirs(R, exist_ok=True)
 VIEWS = (("iso", 28, -55), ("front", 0, -90), ("top", 90, -90), ("side", 0, 0))
 
 
-GLB_SCENES = ("cart-assembly", "cart-arm-stowed", "cart-arm-working", "cart-base", "cart-pod-holder")
+GLB_SCENES = ("cart-assembly", "cart-arm-stowed", "cart-arm-working", "cart-base", "cart-pod-holder",
+              "hand-sleeve", "hand-exploded", "cart-omni", "cart-sleeves", "cart-wheel-pairs-corner")   # (#459: the hand drawings are published too)
 
 
 def views(assy, name, title):
@@ -41,6 +43,31 @@ def views(assy, name, title):
         t = time.time()
         rl.draw(parts, el, az, os.path.join(R, "%s-%s.png" % (name, view)), "%s (%s)" % (title, view))
         print("wrote", name, view, "%.0fs" % (time.time() - t), flush=True)
+
+
+_U60 = (0.5, 0.866, 0.0)   # outward direction of the +60 deg lobe; the -60 deg lobe mirrors it in y
+# part-name prefix -> shift (x, y, z) mm in the hand frame. Readability only; the sleeve stays put.
+EXPLODE = {
+    "jaw_hinge_pin": (-30, 45, 0), "jaw_gearbox": (0, 0, 30), "jaw_motor": (0, 0, 55), "jaw": (35, 35, 0),
+    "drive_wheel_rollers": (-70, 0, 0), "drive_wheel_o_rings": (-70, 0, 0), "drive_wheel_hub": (-100, 0, 0), "drive_wheel_pins_screws": (-125, 0, 0),
+    "roll_wheel_rollers": (-70, 0, 0), "roll_wheel_o_rings": (-70, 0, 0), "roll_wheel_hub": (-100, 0, 0), "roll_wheel_pins_screws": (-125, 0, 0),
+    "drive_shaft": (-60, -20, 20), "drive_gearbox": (-20, -55, 35), "drive_motor": (-20, -78, 45),
+    "roll_shaft": (-60, 0, -20), "roll_gearbox": (-20, -40, -45), "roll_motor": (-20, -45, -60),
+    "hall_pcb": (0, -35, -25), "hall_chip": (0, -35, -25), "hall_cable": (0, -35, -25),
+}
+_RADIAL = {"balls": 15, "cups": 30, "springs": 45, "carrier": 60, "cap": 65}
+
+
+def exploded_hand():
+    import cart_sleeves as cs
+    hand = cq.Assembly()
+    for n, (s, col) in cs.hand_parts().items():
+        d = EXPLODE.get(n)
+        if d is None and n[:4] in ("p60_", "m60_"):
+            k = _RADIAL[n[4:]]
+            d = (k * _U60[0], k * _U60[1] * (1 if n[0] == "p" else -1), 0)
+        hand.add(s.translate(d) if d else s, name=n, color=cq.Color(*col))
+    return hand
 
 
 def scenes():
@@ -57,6 +84,7 @@ def scenes():
     for n, (s, col) in cs.hand_parts().items():
         hand.add(s, name=n, color=cq.Color(*col))
     return {
+        "hand-exploded": (exploded_hand(), "Hand exploded (offsets for readability only)"),
         "cart-omni": (cw.result, "Omni wheels, ball cups and motors of one hand on the 32 mm pipe"),
         "hand-sleeve": (hand, "Hand sleeve v5 (three lobes) with wheels, cups and motors, on the pipe"),
         "cart-assembly": (ca.result, "Whole cart: rigid plate, battery, folded arm, two omni hands on two pipes"),

@@ -20,7 +20,7 @@
   .dcard .comment{font-size:14px;line-height:1.5}
   .s-sketch{background:#eef1f5;color:#555}.s-draft{background:var(--amber-soft);color:var(--amber)}
   .s-tested{background:#dcecff;color:#0b4f86}.s-final{background:#d9f2e3;color:var(--green)}
-  .s-experiment{background:#f0e1ff;color:#5d2a85}.s-superseded{background:#f8dddd;color:#8a2b2b}
+  .s-archived{background:#f8dddd;color:#8a2b2b}.s-experiment{background:#f0e1ff;color:#5d2a85}.s-superseded{background:#f8dddd;color:#8a2b2b}
   .hist-btn{margin-top:12px;height:32px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:#fff;font:600 13px var(--sans);color:var(--ink);cursor:pointer}
   .hist{display:none;margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
   .hist.open{display:block}
@@ -35,7 +35,7 @@
   <div class="inner wide">
     <p class="label">CAD</p>
     <h1>Drawings</h1>
-    <p class="updated">One card per part, showing its current version; older versions and other views are tucked under each card. Tap a drawing to open it in 3D.</p>
+    <p class="updated">One card per distinct drawing, showing its current version; retired drawings are kept under Archive. Tap a drawing to open it in 3D.</p>
   </div>
 </header>
 <nav id="filters" aria-label="Filter by category"></nav>
@@ -43,7 +43,7 @@
 <footer class="site" id="foot"></footer>
 <script>
 const CATEGORIES=["Complete unit","Cart","Arm","Unit structure","Pod handling","Water","Track","Power","Flat-pack and transport","Experiments"];
-let DATA=null,active="All";
+let DATA=null,ARCH=null,active="All";
 function chip(text,cls){const s=document.createElement('span');s.className='chip '+cls;s.textContent=text;return s;}
 function viewerUrl(r){
   // GLB files in this repo open in our own small 3D viewer page; server links open as they are.
@@ -57,7 +57,7 @@ function viewerUrl(r){
 // Same window everywhere (a new tab has no way back in the Home Screen app). Remember the category in the
 // address so Back from the viewer lands on the same list.
 function setActive(c){active=c;history.replaceState(null,'',c==='All'?location.pathname:'#cat='+encodeURIComponent(c));}
-(function(){const m=/^#cat=(.+)$/.exec(location.hash);if(m){try{const c=decodeURIComponent(m[1]);if(CATEGORIES.includes(c))active=c;}catch(e){}}})();
+(function(){const m=/^#cat=(.+)$/.exec(location.hash);if(m){try{const c=decodeURIComponent(m[1]);if(CATEGORIES.includes(c)||c==='Archive')active=c;}catch(e){}}})();
 function thumbEl(r){
   if(r.thumb){const i=document.createElement('img');i.src=r.thumb;i.alt=r.title;i.loading='lazy';return i;}
   const d=document.createElement('div');d.className='noimg';d.textContent='Open in viewer';return d;
@@ -97,7 +97,17 @@ function card(list){
   }
   return el;
 }
+function renderArchive(){
+  const main=document.getElementById('gallery');main.innerHTML='';
+  const p=document.createElement('p');p.className='comment';p.style.margin='0 0 16px';
+  p.textContent='Retired drawings: out of date, or replaced by a newer drawing of the same thing. Nothing is deleted; they open in 3D like the others.';
+  main.appendChild(p);
+  const grid=document.createElement('div');grid.className='grid';
+  ARCH.renders.slice().sort((a,b)=>(b.date>a.date?1:-1)).forEach(r=>grid.appendChild(card([r])));
+  main.appendChild(grid);
+}
 function render(){
+  if(active==='Archive'&&ARCH)return renderArchive();
   const main=document.getElementById('gallery');main.innerHTML='';
   const by=parts();
   const cats=active==='All'?CATEGORIES.concat(['Other']):[active];
@@ -114,14 +124,16 @@ function render(){
 }
 function filters(){
   const nav=document.getElementById('filters');nav.innerHTML='';
-  ['All'].concat(CATEGORIES).forEach(c=>{
+  ['All'].concat(CATEGORIES,['Archive']).forEach(c=>{
     const b=document.createElement('button');b.textContent=c;if(c===active)b.className='on';
     b.onclick=()=>{setActive(c);filters();render();};
     nav.appendChild(b);
   });
 }
-fetch('renders.json',{cache:'no-store'}).then(r=>r.json()).then(data=>{
-  DATA=data;filters();render();
+fetch('renders.json',{cache:'no-store'}).then(r=>r.json()).then(async data=>{
+  DATA=data;
+  try{ARCH=await (await fetch('archive/renders.json',{cache:'no-store'})).json();}catch(e){ARCH={renders:[]};}
+  filters();render();
   document.getElementById('foot').textContent='List updated '+data.updated+' · source: docs/drawings/renders.json';
 }).catch(()=>{document.getElementById('gallery').textContent='Could not load renders.json.';});
 </script>
