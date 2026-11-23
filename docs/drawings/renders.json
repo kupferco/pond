@@ -275,19 +275,6 @@
       "thumb": "renders/reach-test-turn90-v1-line.png"
     },
     {
-      "id": "reach-test-turn90-example-v1",
-      "date": "2026-11-18",
-      "part": "Reach test scene",
-      "category": "Pod handling",
-      "status": "draft",
-      "version": 1,
-      "group": "Reach test scene (sim)",
-      "title": "Reach test: arm on hole H6, cart turned 90 degrees",
-      "comment": "The arm on hole H6 (green at 270 degrees). Views: -iso, -front, -top, -side, -closeup. Sim scene (control-ui, OpenPocket #313), drawn from the MuJoCo model by a software renderer. The see-through blue copy of the unit on the left is the ghost neighbour (50 mm from this tank). Cart turned 90 degrees counterclockwise seen from above from the 180-degree roll (roll 270 about leg A). Parts coloured: green = reached at 270 degrees, amber = reached at another angle (best angle 255 reaches the most, 7 holes), red = at no angle. Result at 270: holes 4 green, 11 amber, 9 red; pods 0 green, 0 amber, 16 red.",
-      "viewer": "viewer.html?src=renders/reach-test-turn90-example-v1.glb&title=Reach%20test%3A%20arm%20on%20H6%2C%20cart%20turned%2090%20degrees",
-      "thumb": "renders/reach-test-turn90-example-v1-line.png"
-    },
-    {
       "id": "reach-test-result-v3",
       "date": "2026-11-17",
       "part": "Reach test scene",
@@ -312,19 +299,6 @@
       "comment": "The best station found for H2 is at a roll of 330 degrees, not 0 or 180, so H2 stays red. Views: -iso, -front, -top, -side, -closeup. Sim scene (control-ui, OpenPocket #262, round 3), drawn from the MuJoCo model by a software renderer. The cart is shown ROLLED 180 degrees about leg A's own axis (the whole cart: plate, arm, sleeve, pod holder), which puts the plate and arm 109 mm in FRONT of the track plane with the arm pointing at the front of the tank; it does NOT point at the spine (see the scene page). 24 planting holes of the unit's site rule (cad/unit_v1_assembly.py), each with collar, seat, plug holder and plug; 16 seedling pods in the 4 x 4 tray in the front of the tank as in the Pod grab scene. Cart tried at every station of both legs and both runs (5 mm steps), as is and rolled 180 degrees. Result: holes 0 green, 0 amber, 24 red; pods 0 green, 0 amber, 16 red.",
       "viewer": "viewer.html?src=renders/reach-test-example-v3.glb&title=Reach%20test%3A%20the%20arm%20on%20hole%20H2%20%28roll%20330%20degrees%29",
       "thumb": "renders/reach-test-example-v3-line.png"
-    },
-    {
-      "id": "reach-test-cart-rolled-v3",
-      "date": "2026-11-17",
-      "part": "Reach test scene",
-      "category": "Pod handling",
-      "status": "draft",
-      "version": 3,
-      "group": "Reach test scene (sim)",
-      "title": "Reach test: cart rolled 180 degrees about leg A",
-      "comment": "The cart rolled 180 degrees about leg A at 1.0 m, arm folded. Views: -top, -front. Sim scene (control-ui, OpenPocket #262, round 3), drawn from the MuJoCo model by a software renderer. The cart is shown ROLLED 180 degrees about leg A's own axis (the whole cart: plate, arm, sleeve, pod holder), which puts the plate and arm 109 mm in FRONT of the track plane with the arm pointing at the front of the tank; it does NOT point at the spine (see the scene page). 24 planting holes of the unit's site rule (cad/unit_v1_assembly.py), each with collar, seat, plug holder and plug; 16 seedling pods in the 4 x 4 tray in the front of the tank as in the Pod grab scene. Cart tried at every station of both legs and both runs (5 mm steps), as is and rolled 180 degrees. Result: holes 0 green, 0 amber, 24 red; pods 0 green, 0 amber, 16 red.",
-      "viewer": "viewer.html?src=renders/reach-test-cart-rolled-v3.glb&title=Reach%20test%3A%20cart%20rolled%20180%20degrees%20about%20leg%20A",
-      "thumb": "renders/reach-test-cart-rolled-v3-line.png"
     },
     {
       "id": "reach-test-cart-asis-v3",

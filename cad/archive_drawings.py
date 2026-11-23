@@ -16,6 +16,10 @@ RJ = os.path.join(D, "renders.json")
 AJ = os.path.join(D, "archive", "renders.json")
 
 
+# Drawings that show the same thing as a kept one (owner review, OpenPocket #459).
+RETIRE = {"reach-test-turn90-example-v1", "reach-test-cart-rolled-v3", "unit-water-v1"}
+
+
 def stem_version(rid):
     m = re.match(r"^(.*)-v(\d+)$", rid)
     return (m.group(1), int(m.group(2))) if m else (rid, None)
@@ -33,7 +37,7 @@ def main():
     keep, move = [], []
     for r in data["renders"]:
         s, v = stem_version(r["id"])
-        old = r.get("status") == "superseded" or (v is not None and v < newest.get(s, 0))
+        old = r["id"] in RETIRE or r.get("status") == "superseded" or (v is not None and v < newest.get(s, 0))
         if old and ("renders/%s.glb" % r["id"]) not in models:
             move.append(r)
         else:
