@@ -83,10 +83,7 @@ export const CUP_CAP_TOP_REL: V3 = (() => { const r = cupRoot(); return at(r, D_
 
 // --- seedling tray
 // Inside the tank, as in the Pod grab scene (podgrab/layout.ts): a thin tray 240 mm over the tank floor (TRAY_Z0, on two rails over the 155 mm shelf; the Pod grab scene has it at 200 mm, 40 mm higher here because the cart cannot ride lower than 0.63 m on the straight leg and the SO-101 cannot reach further down from there), under an opening in the lid; the pods stand in it, caps up, 20 mm under the lid.
-// Drawings only (OpenPocket #459): DRAWING_TRAY_FRONT=1 puts the tray at the FRONT of the unit, where the CAD has it (cad/parts/shelf_items.py: plate centre 125 mm in front of the pipe axis). The sim keeps it behind
-// the arm base, because the arm works towards the back and cannot reach a front tray (with the tray at the front the Transplant reach checks fail).
-const TRAY_AT_FRONT = !!(globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.DRAWING_TRAY_FRONT;
-export const TRAY_X = TRAY_AT_FRONT ? 0.125 : XB - 0.10, TRAY_Y: number[] = [YC - 0.06, YC, YC + 0.06], TRAY_T = 0.004, TRAY_Z0 = 0.24, TRAY_TOP = TRAY_Z0 + TRAY_T;
+export const TRAY_X = XB - 0.10, TRAY_Y: number[] = [YC - 0.06, YC, YC + 0.06], TRAY_T = 0.004, TRAY_Z0 = 0.24, TRAY_TOP = TRAY_Z0 + TRAY_T;
 export const WALL = 0.004, SHELF_Z = CAD_UNIT_DIMS.SHELF_Z / 1000, SHELF_T = CAD_UNIT_DIMS.SHELF_T / 1000;   // the shelf (cad/parts/shelf.py, #447)
 export const OPEN_HX = 0.04, OPEN_HY = 0.095;   // the lid opening over the tray: half size along x and y
 export const CELL_RIN = mm(13), CELL_H = mm(30);
@@ -171,16 +168,18 @@ function pipeAndCollar(): string[] {
   const H = mm(108), RI = PIPE_RP + 0.0001, RO = RI + mm(5), z0 = ZH - mm(68);
   out.push(...tube([0, 0, z0], [0, 0, 1], 0, H, RI, RO, 36, `${VIS} ${rgba(0.55, 0.6, 0.68, 0.38)}`));
   // seat tube along the 45 degree axis: a narrow part through the drilled hole, the boss (R 20) outside the pipe, then the cap rim (recess)
-  out.push(...tube(P0, D_SEAT, -mm(10), mm(12), BORE_R, mm(15), 16, `${OBST} ${DARK}`, { name: 'seat_spigot' }));
-  out.push(...tube(P0, D_SEAT, mm(12), U_CAP - GAP, BORE_R, mm(20), 16, `${OBST} ${DARK}`, { name: 'seat_boss' }));
-  out.push(...tube(P0, D_SEAT, U_CAP - GAP, U_FACE, RECESS_R, mm(20), 16, `${OBST} ${DARK}`, { name: 'seat_rim' }));
+  // (the collar frame body is already turned by PSI about the pipe axis, so the seat is given in its own frame: P0 and D_SEAT are world values and would be turned twice, which put the seat tube 96 degrees round, away from where the pod sits)
+  const P0L: V3 = [PIPE_RP - mm(1.5), 0, ZH], DL: V3 = [S, 0, S];
+  out.push(...tube(P0L, DL, -mm(10), mm(12), BORE_R, mm(15), 16, `${OBST} ${DARK}`, { name: 'seat_spigot' }));
+  out.push(...tube(P0L, DL, mm(12), U_CAP - GAP, BORE_R, mm(20), 16, `${OBST} ${DARK}`, { name: 'seat_boss' }));
+  out.push(...tube(P0L, DL, U_CAP - GAP, U_FACE, RECESS_R, mm(20), 16, `${OBST} ${DARK}`, { name: 'seat_rim' }));
   // the plug holder: straight, horizontal, blind (a floor disc), 44 mm below the hole
   const pp: V3 = [0, 0, ZP];
   out.push(...tube(pp, [1, 0, 0], HOLDER_FLOOR_X - GAP, X_TOP - RECESS_T - GAP, BORE_R, mm(20), 16, `${OBST} ${DARK}`, { name: 'holder_boss' }));
   out.push(...tube(pp, [1, 0, 0], X_TOP - RECESS_T - GAP, X_TOP, RECESS_R, mm(20), 16, `${OBST} ${DARK}`, { name: 'holder_rim' }));
-  out.push(`<geom type="cylinder" pos="${f(HOLDER_FLOOR_X - GAP - 0.002)} 0 ${f(ZP)}" size="${mm(20)} 0.002" euler="0 1.5708 0" ${OBST} ${DARK}/>`);
+  out.push(`<geom name="holder_floor" type="cylinder" pos="${f(HOLDER_FLOOR_X - GAP - 0.002)} 0 ${f(ZP)}" size="${mm(20)} 0.002" euler="0 1.5708 0" ${OBST} ${DARK}/>`);
   // web between the two bosses (shown only)
-  out.push(`<geom type="box" pos="${f(mm(40))} 0 ${f((ZH + ZP) / 2 - mm(8))}" size="${mm(10)} ${mm(18)} ${f((ZH - ZP) / 2)}" ${VIS} ${DARK}/>`);
+  out.push(`<geom name="holder_web" type="box" pos="${f(mm(40))} 0 ${f((ZH + ZP) / 2 - mm(8))}" size="${mm(10)} ${mm(18)} ${f((ZH - ZP) / 2)}" ${VIS} ${DARK}/>`);
   return [...world, `<body name="collar_frame" euler="0 0 ${f(PSI)}">`, ...out, '</body>'];
 }
 
