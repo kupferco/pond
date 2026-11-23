@@ -14,8 +14,7 @@ export const SCENE_INFOS: readonly SceneInfo[] = [
   { id: 'transfer', name: '3. Transfer', group: 'Tests', description: 'Handing over from one unit to another.' },
   { id: 'pod-grab', name: '4. Pod grab', group: 'Tests', description: 'Grab a pod inside the tank and move it to the seedling tray.' },
   { id: 'transplant', name: '5. Transplant seedling', group: 'Tests', description: 'One trip: pick a seedling, ride the cart up to the hole, park the plug, seat the seedling.' },
-  { id: 'reach-test', name: '6. Reach test', group: 'Tests', description: 'Can the arm reach all 24 planting holes and all 16 seedling pods, as is and with the cart rolled 180°? Green, amber, red.' },
-  { id: 'water-sample', name: '9. Water sample', group: 'Tests', description: 'The daily water sample: the arm plugs the cart nozzle into a unit, the pump draws the sample, then the arm and pump fill the station cup.' },
+  { id: 'water-sample', name: '6. Water sample', group: 'Tests', description: 'The daily water sample: the arm plugs the cart nozzle into a unit, the pump draws the sample, then the arm and pump fill the station cup.' },
   { id: 'single-unit', name: '7. Single unit', group: 'Systems', description: 'One complete unit in isolation, with full control.' },
   { id: 'four-units', name: '8. Four units', group: 'Systems', description: 'Four complete units with full tracks, one unit placed at an angle; the robot drives along the tracks and grabs pods.' },
 ];

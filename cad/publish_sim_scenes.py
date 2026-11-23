@@ -21,7 +21,7 @@ SCENES = [
     ("sim-pod-grab-v1", "podgrab-omni-1-start", "podgrab-assembly.glb", "Sim: pod grab, start",
      "The Pod grab scene: the CAD cart on the bottom run of the loop (plate towards the unit, free hand above the run), arm over the tank."),
     ("sim-transplant-v1", "transplant-omni-2-drive", "transplant-assembly.glb", "Sim: transplant seedling, at the hole",
-     "The Transplant scene (and the reach test, which uses the same cart): the CAD cart rolled 180 degrees on the -y leg, plate towards the growing pipe."),
+     "The Transplant scene: the CAD cart rolled 180 degrees on the -y leg, plate towards the growing pipe."),
 ]
 
 
