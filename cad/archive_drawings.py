@@ -17,7 +17,7 @@ AJ = os.path.join(D, "archive", "renders.json")
 
 
 # Drawings that show the same thing as a kept one (owner review, OpenPocket #459).
-RETIRE = {"reach-test-turn90-example-v1", "reach-test-cart-rolled-v3", "unit-water-v1"}
+RETIRE = {"reach-test-turn90-example-v1", "reach-test-cart-rolled-v3", "unit-water-v1", "transplant-real-layout-v3"}
 
 
 def stem_version(rid):
