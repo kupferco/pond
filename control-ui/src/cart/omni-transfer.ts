@@ -24,17 +24,9 @@ export const P_BEND_START = L_VERT, P_BEND_END = L_VERT + L_ARC;
 /** The roll is held through the bend (Q7) and rolled back at the start of the top run, a declared transfer roll (the bend end is the first place it may turn without being on the curve). */
 export const S_FLAT_CM = Math.ceil((P_BEND_END + 1) * 10) / 10;
 export const P_TOP_CM = P_BEND_END + 34;               // the cart's farthest position on the top bar, clear of the bar's free end
-/** M8 track-joint rods and rings (hand_sleeve.py jaw side), at four heights of the leg (cm along the pipe, ASSUMED): none above the roll station, so the rolled cart passes no joint. */
-export const JOINT_CM = [6, 16, 26, 36];
-const ROD_R = 4, ROD_OUT = 50, RING_R = 17.5, RING_W = 8;
 /** The track pipes' own geoms stand on the world: B at -60 bending left, C at +60 bending right (the Cart scene's pipeGeoms). */
 export function trackXml(): string {
-  const joints = (h: Hand) => JOINT_CM.map((cm, i) => {
-    const x = PIPE_X[h], dir = h === 'B' ? 1 : -1, z = cm * 10;     // the rod is on the hand's jaw side: towards the other pipe
-    return `<geom name="rod${h}${i}" type="cylinder" fromto="${f(m(x + dir * R_PIPE))} 0 ${f(m(z))} ${f(m(x + dir * (R_PIPE + ROD_OUT)))} 0 ${f(m(z))}" size="${f(m(ROD_R))}" ${rgba([0.5, 0.5, 0.55])} contype="1" conaffinity="2"/>
-    <geom name="ring${h}${i}" type="cylinder" fromto="${f(m(x))} 0 ${f(m(z - RING_W / 2))} ${f(m(x))} 0 ${f(m(z + RING_W / 2))}" size="${f(m(RING_R))}" ${rgba([0.5, 0.5, 0.55])} contype="1" conaffinity="2"/>`;
-  }).join('\n    ');
-  return [pipeGeoms(m(PIPE_X.B), -1, TRACK_HORIZ_MM, 'pipeB'), pipeGeoms(m(PIPE_X.C), 1, TRACK_HORIZ_MM, 'pipeC'), joints('B'), joints('C')].join('\n    ');
+  return [pipeGeoms(m(PIPE_X.B), -1, TRACK_HORIZ_MM, 'pipeB'), pipeGeoms(m(PIPE_X.C), 1, TRACK_HORIZ_MM, 'pipeC')].join('\n    ');
 }
 /** The Transfer scene's MJCF: floor, both track pipes, the cart on a mocap body with both jaws and the roll, drive and jaw actuators. */
 export function transferMjcf(o: { jawA1?: number } = {}): string {
