@@ -27,10 +27,10 @@ export function auditScenes(mj: MainModule): Row[] {
     const leg: Leg = { point: [x, 0, 0], dir: [0, 0, 1], toUnit: [0, 1, 0], outward: [rider === 'B' ? 1 : -1, 0, 0] };
     add(`transfer, hand ${rider} riding (s 30 cm)`, placementOf(m as never, d as never, leg, rider), 0, 'outer');
   }
-  // 3. Transplant and reach test: the track plane x = XT, legs at y = -/+0.29, the unit (growing pipe at x = y = 0) towards -x; the cart rides the -y leg, plate towards the unit (rolled 180).
+  // 3. Transplant: the track plane x = XT, legs at y = -/+0.29, the unit (growing pipe at x = y = 0) towards -x; the cart rides the -y leg, plate towards the unit (rolled 180).
   { const { m, d } = make(transplantMjcf()); mj.mj_forward(m, d);
     const leg: Leg = { point: [XT, -CAD_UNIT.TX / 1000, CART_Z0], dir: [0, 0, 1], toUnit: [-1, 0, 0], outward: [0, -1, 0] };
-    add('transplant / reach test (leg -y)', placementOf(m as never, d as never, leg, 'C'), 180, 'inner'); void YC; }
+    add('transplant (leg -y)', placementOf(m as never, d as never, leg, 'C'), 180, 'inner'); void YC; }
   // 4. Pod grab: rides the bottom run (along world x) of the loop at y = PIPE_Y, z = PIPE_Z; the unit towards -y (growing pipe at y = 0), the loop's middle above the run; the TOP hand C clamps the pipe and hand B hangs open below it (outer side).
   { const { m, d } = make(podGrabMjcf()); mj.mj_forward(m, d);
     const leg: Leg = { point: [CART_HOME_X, PIPE_Y, PIPE_Z], dir: [1, 0, 0], toUnit: [0, -1, 0], outward: [0, 0, -1] };

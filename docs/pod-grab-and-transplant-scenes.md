@@ -25,7 +25,6 @@ Pictures: `cad/renders/podgrab-omni-*` and `cad/renders/transplant-omni-*` (four
 - Lowest stop: the first stop stays 0.64 m. The new sleeve's -60 degree lobe touches the track corner at 0.63 m, so 0.64 m is still the lowest the cart can go on the straight leg
   (tested: clear at 0.64 m, touching at 0.625 m).
 - `check-transplant-reach.ts` gives the same reach table as before (the arm only moved 4 mm along its own base axis).
-- The Reach test scene shares `cartGeoms()` and `XB` with this scene, so it now draws the new cart too. Its own conversion (real roll mechanism, roll sweep, the 40 targets) is part 11. One consequence is already in: the lowest cart height of its table is now **0.635 m** (was 0.63; at 0.63 the new sleeve's lobe touches the lower corner by 0.05 mm); the top stays 1.67 m (the new sleeve is clear up to 1.70 m). The 40 results themselves were not re-run or compared here.
 
 ### Pod grab
 - The cart rides the **bottom run on hand B**; hand C, its mirror, hangs open on the inside of the loop, **above the pipe**. The cart centre, the plate centre and the arm base are therefore
