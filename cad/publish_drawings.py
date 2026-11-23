@@ -13,7 +13,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 DOCS = os.path.join(HERE, "..", "docs")
 R = os.path.join(HERE, "renders")
-DATE = "2026-11-20"
+DATE = "2026-11-23"
 COMMON = " Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide."
 
 # id, cad glb, cad png prefix, part, category, group, title, comment, supersedes (ids), models page section (None = drawings only), caption
@@ -26,6 +26,27 @@ PUBLISH = [
      "Whole cart assembly v5 (motors inward)",
      "DRAFT, OpenPocket #365 (regenerated from cart_assembly.py after #312). The cart with the drive and roll motors INWARD in the sleeves, clear of the lettuce; rigid plate, battery under the arm, folded SO-101 envelope. Pipes 120 mm apart. #447: no track pipe on the cart any more (the leftover grey stub is gone); the two sleeves close round the unit's track. 3D model: cad/renders/cart-assembly.glb." + COMMON,
      ("cart-assembly-v4",), ("models", "Cart"), "The climbing cart with its motors inward, plate, battery and arm mount."),
+    # OpenPocket #459: the hand drawings, redrawn from the current sleeve (hand_sleeve.py v5 + jaw) and the omni wheels (cart_omni.py); they replace the v2/v4 wheel and sleeve drawings.
+    ("cart-hand-v5", "hand-sleeve.glb", "hand-sleeve", "Cart hand (sleeve, wheels, motors)", "Cart", "Cart hand",
+     "Cart hand v5 (three-lobe sleeve, omni wheels, ball cups, motors)",
+     "DRAFT, OpenPocket #459. One hand on the 32 mm pipe, drawn from the current CAD: the three-lobe sleeve with its jaw, the drive and roll omni wheels with their worm motors, the four ball cups on two sprung carriers, the hall sensor and the jaw motor. Replaces Hand sleeve v4 and the old wheel-pair drawing." + COMMON,
+     ("20261102-185143-a610", "20261102-185223-ed57", "cart-wheel-pairs-v1"), ("models", "Cart"), "One hand: sleeve, omni wheels, ball cups and motors on the pipe."),
+    ("cart-hand-exploded-v3", "hand-exploded.glb", "hand-exploded", "Cart hand, exploded", "Cart", "Cart hand, exploded",
+     "Cart hand exploded v3 (current sleeve and omni wheels)",
+     "DRAFT, OpenPocket #459. The current hand pulled apart: sleeve, jaw and hinge pin, jaw motor, both omni wheels (rollers, O-rings, hub, pins), shafts, gearboxes and motors, the two ball-cup carriers (balls, cups, springs, cap) and the hall sensor. Offsets are for readability only." + COMMON,
+     ("cart-sleeves-exploded-v2",), ("models", "Cart"), "The hand pulled apart."),
+    ("cart-omni-v5", "cart-omni.glb", "cart-omni", "Cart wheels (omni wheels, cups, motors)", "Cart", "Cart wheels",
+     "Cart wheels v5 (omni wheels, ball cups and motors, no sleeve)",
+     "DRAFT, OpenPocket #459. The new wheel design on its own, without the sleeve: drive omni wheel (top row) and roll omni wheel (bottom row) with their worm motors, and the four passive ball cups on two sprung carriers, on the 32 mm pipe. Replaces the old wheel-pair drawings (one hand, both hands)." + COMMON,
+     ("cart-wheel-two-hands-v1",), ("models", "Cart"), "The omni wheels, ball cups and motors of one hand."),
+    ("cart-sleeves-v5", "cart-sleeves.glb", "cart-sleeves", "Cart sleeves on two pipes", "Cart", "Cart sleeves on two pipes",
+     "Cart sleeves v5 (both hands clamped on two pipes, rigid plate)",
+     "DRAFT, OpenPocket #459. Both hands, one on each of the two pipes 120 mm apart, jaws closed, joined by the rigid plate. Drawn from the current hand. Replaces Cart sleeve systems v2." + COMMON,
+     ("cart-sleeves-v2",), ("models", "Cart"), "Both hands clamped on the two pipes."),
+    ("cart-hand-corner-v5", "cart-wheel-pairs-corner.glb", "cart-wheel-pairs-corner", "Cart hand on a 150 mm loop corner", "Cart", "Cart hand on a corner",
+     "Cart hand on a 150 mm loop corner v5 (current sleeve and wheels)",
+     "DRAFT, OpenPocket #459. The current hand at the middle of a 90 degree loop corner of 150 mm centreline radius, to see that the sleeve and the cups clear the bent pipe. Replaces the old 150 mm corner drawing." + COMMON,
+     ("cart-wheel-corner-v1",), ("models", "Cart"), "The hand on a 150 mm corner."),
     ("cart-base-v3", "cart-base.glb", "cart-base", "Cart base plate", "Cart", "Cart base",
      "Cart base plate v3 (regenerated, motors inward)",
      "DRAFT, OpenPocket #365. Same rigid plate as v2, redrawn with the current hands (motors inward, #312).", ("cart-base-v2",), ("models", "Cart"), "The base plate the wheels and motors attach to."),

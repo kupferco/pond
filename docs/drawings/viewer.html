@@ -27,7 +27,7 @@
   const q = new URLSearchParams(location.search);
   const src = q.get('src') || '';
   // only files from this gallery's renders/ folder (no other hosts, no folder climbing)
-  if (/^renders\/[A-Za-z0-9._-]+\.glb$/.test(src)) {
+  if (/^(archive\/)?renders\/[A-Za-z0-9._-]+\.glb$/.test(src)) {
     const mv = document.getElementById('mv');
     mv.src = src; mv.alt = q.get('title') || 'Pond render';
     document.getElementById('dl').href = src;
