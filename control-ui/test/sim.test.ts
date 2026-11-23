@@ -23,7 +23,7 @@ import { LOAD_N, PIPES, maxCantileverMm, sagTable } from '../src/cart/track-sag.
 import * as TS from '../src/cart/track-supports.ts';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { ARM_Y, BASE_BOTTOM, CART_Z, LID_Z, PIPE_Y, PIPE_Z, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
+import { ARM_Y, BASE_BOTTOM, CART_Z, LID_Z, PIPE_Y, PIPE_Z, TRACK_RISE, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
 import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
 import * as LAYOUT from '../src/layout.ts';
 
@@ -319,7 +319,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('pod grab model has the cart as its one mocap body (the arm base is rigid in it); the pods are free bodies', pg.model.nmocap === 1 && pg.model.nbody > POD_COUNT, String(pg.model.nmocap));
   // OpenPocket #364: ONE shared layout (cad/layout.json). The sim's tank, lid and bottom track height are that file's numbers, and the cart (165 mm under the track in the CAD) clears the lid with the layout's air gap.
   check('shared layout: sim tank, lid and bottom track height are the numbers of cad/layout.json, and the cart hangs clear of the lid',
-    LID_Z === LAYOUT.TANK_H && PIPE_Z === LAYOUT.TRACK_BOTTOM_Z && PIPE_Z - (LAYOUT.LID_TOP + LAYOUT.CART_BELOW_TRACK) >= LAYOUT.CART_CLEARANCE - 1e-9 && LAYOUT.CART_CLEARANCE > 0,
+    LID_Z === LAYOUT.TANK_H && PIPE_Z === LAYOUT.TRACK_BOTTOM_Z + TRACK_RISE && PIPE_Z - (LAYOUT.LID_TOP + LAYOUT.CART_BELOW_TRACK) >= LAYOUT.CART_CLEARANCE - 1e-9 && LAYOUT.CART_CLEARANCE > 0,
     `track ${(PIPE_Z * 1000).toFixed(0)} mm, lid ${(LAYOUT.LID_TOP * 1000).toFixed(0)}, cart ${(LAYOUT.CART_BELOW_TRACK * 1000).toFixed(0)} under the track, air ${(LAYOUT.CART_CLEARANCE * 1000).toFixed(0)} mm (ASSUMED)`);
   check('store holds enough pods for the tray', STORE_ROWS * STORE_START >= TRAY_SLOTS && STORE_START < STORE_CAP);
   check('unit layout: track 150 mm over the lid, store slopes down to the pick line, tray flat and left of the store',
@@ -369,17 +369,17 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const pgCmd = new CommandLayer(pg, new RealDriver());
   const world = new PodWorld(pg);
 
-  // Pond #284: the omni cart on the bottom run, hand B on the pipe, hand C open above it, flat, no hinges.
+  // Pond #284: the omni cart on the bottom run, top hand C on the pipe, hand B open below it, flat, no hinges.
   {
     pg.step();
     const where = (n: string) => { const b = pg.model.body(n), id = b.id; b.delete(); return [0, 1, 2].map((k) => pg.data.xpos[3 * id + k]); };
     const quat = (n: string) => { const b = pg.model.body(n), id = b.id; b.delete(); return [0, 1, 2, 3].map((k) => pg.model.body_quat[4 * id + k]); };
     const hb = where('handB'), hc = where('handC');
-    check('pod grab: the cart rides the bottom pipe on hand B (its pipe axis is the track line) and hand C hangs 120 mm above it', Math.abs(hb[1] - PIPE_Y) < 1e-6 && Math.abs(hb[2] - PIPE_Z) < 1e-6 && Math.abs(hc[1] - PIPE_Y) < 1e-6 && Math.abs(hc[2] - PIPE_Z - 0.12) < 1e-6, `${hb} ${hc}`);
-    check('pod grab: the free hand (C) has its jaw open 92 degrees, the riding hand (B) is closed', Math.abs(2 * Math.asin(Math.abs(quat('jawC')[3])) * 180 / Math.PI - 92) < 0.1 && Math.abs(quat('jawB')[0] - 1) < 1e-9);
+    check('pod grab: the cart rides the bottom pipe on its TOP hand C (its pipe axis is the track line) and hand B hangs 120 mm below it (#461)', Math.abs(hc[1] - PIPE_Y) < 1e-6 && Math.abs(hc[2] - PIPE_Z) < 1e-6 && Math.abs(hb[1] - PIPE_Y) < 1e-6 && Math.abs(PIPE_Z - hb[2] - 0.12) < 1e-6, `${hb} ${hc}`);
+    check('pod grab: the free hand (B) has its jaw open 92 degrees, the riding top hand (C) is closed', Math.abs(2 * Math.asin(Math.abs(quat('jawB')[3])) * 180 / Math.PI - 92) < 0.1 && Math.abs(quat('jawC')[0] - 1) < 1e-9);
     const nmz = podGrabMjcf();
     check('pod grab: no hinge, worm, tongue or second hand below the pipe: the one plate carries the battery and the arm (cartbase), the arm base is the arm\'s own', !/hinge|worm|tongue/i.test(nmz.replace(/type="hinge"/g, '')) && nmz.includes('name="battery"') && nmz.includes('name="cartbase"') && !nmz.includes('name="armbase"'));
-    check('pod grab: the arm base is 106 mm out of the pipe plane (plate 6 + battery 50 on the 50 mm pads) and 60 mm above the pipe', Math.abs(PIPE_Y - ARM_Y - 0.0975) < 1e-9 && Math.abs(CART_Z - PIPE_Z - 0.06) < 1e-9);
+    check('pod grab: the arm base is 106 mm out of the pipe plane (plate 6 + battery 50 on the 50 mm pads) and 60 mm BELOW the pipe it clamps with the top sleeve', Math.abs(PIPE_Y - ARM_Y - 0.0975) < 1e-9 && Math.abs(CART_Z - PIPE_Z + 0.06) < 1e-9);
     // spine and bracket: the finding of the plan's section 7 (Q6). Clear everywhere but within 95 mm of the spine.
     const xs = [-0.33, -0.2, -0.15, 0.15, 0.2, 0.28], depths = xs.map((x) => world.probeCart(x).depth);
     check('pod grab: the cart is clear of the spine and the track bracket along the bottom run outside 14 cm of the spine (the CAD jaw motors reach 104 mm along the pipe), at the tray end, the store end and in between', depths.every((d) => d === 0), depths.join());
@@ -727,8 +727,8 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('every sim cart mesh lies within 3 mm of its CAD part bounding box (thinned meshes, no hand-edited geometry)', worstBox < 3, `${bad} ${worstBox.toFixed(2)} mm`);
   // 3. the unit around the cart: the legs, the track plane, the corner radius and the heights are the CAD's
   const cadHs = readFileSync(new URL('../../cad/parts/unit_dims.py', import.meta.url), 'utf8');
-  check('sim unit: track legs +/-290, track plane 60 in front of the pipe, corner radius 150, bottom run on the shared layout height',
-    Math.abs(LEG * 1000 - U.TX) < 1e-9 && Math.abs(XT * 1000 + U.LOOP_Y) < 1e-9 && U.R === 150 && U.TX === 290 && U.LOOP_Y === -60 && Math.abs(U.ZB / 1000 - PIPE_Z) < 1e-9 && /^TX = 290/m.test(cadHs));
+  check('sim unit: track legs +/-290, track plane 60 in front of the pipe, corner radius 150, bottom run on the shared layout height (the pod-grab scene lifts it by TRACK_RISE)',
+    Math.abs(LEG * 1000 - U.TX) < 1e-9 && Math.abs(XT * 1000 + U.LOOP_Y) < 1e-9 && U.R === 150 && U.TX === 290 && U.LOOP_Y === -60 && Math.abs(U.ZB / 1000 - (PIPE_Z - TRACK_RISE)) < 1e-9 && /^TX = 290/m.test(cadHs));
   check('the Complete unit puts the cart on the right leg: hand B pipe on the leg (x = TX), cart origin 60 outside it, the plate on the front (-y) side, no rotation', U.CART_SHIFT[0] === U.TX + 60 && U.CART_SHIFT[1] === U.LOOP_Y);
   // 4. where the cart stands in every scene, against that arrangement (rider hand on the leg, upright, roll as meant, free hand on the matching side)
   for (const r of auditScenes(mj)) check(`scene audit: ${r.scene}: pipe axis on the leg (${r.p.offAxisMm.toFixed(2)} mm), upright (${r.p.tiltDeg.toFixed(2)} deg), roll ${r.p.rollDeg.toFixed(0)}, free hand ${r.p.freeSide}`, r.ok, r.expect);
