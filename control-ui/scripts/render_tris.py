@@ -18,9 +18,9 @@ VIEWS = {  # name: (azimuth, elevation) of the camera, degrees; z is up
     "front": (0.0, 0.0),       # from +x, the FRONT of the unit (the cart and the arm face it, so does the hole): y to the right, z up
     "side": (-90.0, 0.0),      # from -y: x to the right (front of the unit on the right), z up: the plane the arm works in
     "top": (-90.0, 90.0),      # from above: x to the right, y up
-    "hole": (-48.0, 12.0),     # from the way the collar's hole faces (azimuth -132 deg round the pipe in the sim, layout.ts PSI, turned to -48 by the mirror that puts it at the front): the seat, the hole and the plug holder face the camera
+    "hole": (0.0, 0.0),      # from the front, a little from the cart's side (the right): the collar's seat on the front of the spine, the pod and the hand
 }
-FLOOR = (-0.8, 0.7, -0.6, 0.6)
+FLOOR = (-0.5, 0.6, -0.7, 0.7)
 
 
 def basis(az, el):
@@ -64,9 +64,9 @@ def draw(tris, view, box, path, px=1100, floor=True):
 
 # framing: (centre x, y, z, half width, half height) per view. The unit stands at the origin: pipe and spine on the z axis, the track loop in the plane x = 0.06 (the cart rides the leg at y = -0.29) (in front of the pipe), the tank 0.4 (x) by 0.7 (y).
 FULL = {"iso": (0.0, 0.1, 0.98, 1.2, 1.2), "front": (0.0, 0.0, 0.98, 0.6, 1.05), "side": (0.0, 0.0, 0.98, 0.75, 1.05), "top": (0.0, 0.0, 0.0, 0.5, 0.5)}
-HOLE = (0.04, -0.12, 0.88, 0.34, 0.27)   # round the collar, the cart's hand on the track, the pod holder and the arm, steps 3 and 4
-COLLAR = (0.03, -0.04, 0.82, 0.11, 0.09)   # right on the collar: seat, hole, plug holder
-TRAY = (0.1, -0.2, 0.45, 0.4, 0.33)   # front view round the seedling tray on the tank, the arm and the pod holder, step 1
+HOLE = (0.0, 0.1, 0.84, 0.34, 0.27)   # round the collar, the cart's hand on the track, the pod holder and the arm, steps 3 and 4
+COLLAR = (0.04, 0.0, 0.82, 0.11, 0.09)   # right on the collar: seat, hole, plug holder
+TRAY = (0.0, -0.2, 0.45, 0.4, 0.33)   # front view round the seedling tray on the tank, the arm and the pod holder, step 1
 
 
 def main():
@@ -76,22 +76,22 @@ def main():
     names = {"step0": "start", "step1": "step1-pick", "step2": "step2-drive", "step3": "step3-plug", "step4": "step4-seat"}
     for st in stages:
         tris = json.load(open(os.path.join(src, st["id"] + ".json")))
-        base = "transplant-seedling-" + names[st["id"]] + "-v9"
+        base = "transplant-seedling-" + names[st["id"]] + "-v10"
         for v, box in FULL.items():
             draw(tris, v, box, os.path.join(out, f"{base}-{v}.png"))
         close = TRAY if st["id"] in ("step0", "step1") else HOLE
-        draw(tris, "side" if st["id"] in ("step0", "step1") else "hole", close, os.path.join(out, f"{base}-closeup.png"))
+        draw(tris, "front" if st["id"] in ("step0", "step1") else "hole", close, os.path.join(out, f"{base}-closeup.png"))
         if st["id"] in ("step2", "step3", "step4"):
             draw(tris, "hole", COLLAR, os.path.join(out, f"{base}-collar.png"), px=900)
     # clips: one GIF per step from the frames of the run (front view, framed on where the action is)
-    for i, view, box in ((1, "side", TRAY), (2, "front", (0.0, 0.0, 0.95, 0.5, 0.75)), (3, "hole", HOLE), (4, "hole", HOLE)):
+    for i, view, box in ((1, "front", TRAY), (2, "front", (0.0, 0.0, 0.8, 0.5, 0.75)), (3, "hole", HOLE), (4, "hole", HOLE)):
         frames = json.load(open(os.path.join(src, f"step{i}-frames.json")))
         imgs = []
         for k, tris in enumerate(frames):
             p = os.path.join(out, f"_f{i}_{k}.png")
             draw(tris, view, box, p, px=640)
             imgs.append(Image.open(p).convert("P", palette=Image.ADAPTIVE, colors=64))
-        imgs[0].save(os.path.join(out, f"transplant-seedling-{names['step' + str(i)]}-v9-clip.gif"), save_all=True, append_images=imgs[1:], duration=250, loop=0, optimize=True)
+        imgs[0].save(os.path.join(out, f"transplant-seedling-{names['step' + str(i)]}-v10-clip.gif"), save_all=True, append_images=imgs[1:], duration=250, loop=0, optimize=True)
         for k in range(len(frames)):
             os.remove(os.path.join(out, f"_f{i}_{k}.png"))
 

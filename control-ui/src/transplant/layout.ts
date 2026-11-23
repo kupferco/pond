@@ -20,6 +20,7 @@ import { CAD_UNIT, CAD_CONSTANTS } from '../generated/cad-sim.ts';
 const CAD_UNIT_DIMS = CAD_CONSTANTS.unit_dims;
 import { withCartAssets } from '../cart/cad-cart.ts';
 import { HX } from '../cart/omni.ts';
+import { TRAY_COLS, TRAY_ROWS, TRAY_HX, TRAY_HY, trayX, trayY } from '../podgrab/layout.ts';   // the Pod grab scene's seedling tray (4 x 4, rows A to D from the front): the drawings take its place and size from there
 
 /** Which leg of the track the cart rides: -1 = the leg at world y = -0.29. The seedling tray is in the tank's back corner on that same side (the arm works along its base axis, towards the back), so the pods are
  *  in the corner opposite to where they were (v5: +y leg, tray at +y). */
@@ -153,14 +154,24 @@ export const GAP = 0.0005;   // seats end this far below a part's resting face, 
 const SILVER = rgba(0.62, 0.66, 0.7), DARK = rgba(0.3, 0.36, 0.45), STEEL = rgba(0.3, 0.32, 0.36);
 
 /** The central pipe, drilled; the collar's two seats; the plug holder. Static, in world coordinates. */
-function pipeAndCollar(): string[] {
+/** Drawings only (OpenPocket #459): the unit as the transplant drawings show it. The collar faces `psi` (round the pipe, from +x = the front towards +y), there is no plug holder, and the seedling tray is the Pod grab scene's
+ *  4 x 4 tray (16 silicone sockets, rows A to D from the front) at the front left of the lid, in the same place and size as in the sim (podgrab/layout.ts: tray centre 0.24 m left, 190 x 370, rows 38 mm apart, columns 45 mm). */
+export interface DrawingOpts { psi: number; free?: 'B' | 'C' }
+/** A tray socket's centre in the unit frame of these drawings (x to the front, y along the tank, as in the front view from the front): the Pod grab frame (x along the tank, y front = -y) turned a quarter turn. */
+export const drawingSocket = (row: number, col: number): [number, number] => [-trayY(row), trayX(col)];
+export const DRAWING_TRAY_HX = TRAY_HY, DRAWING_TRAY_HY = TRAY_HX, DRAWING_TRAY_YC = trayX((TRAY_COLS - 1) / 2);
+/** The socket the picked seedling comes from: row A (front), column 3 (the one in line with the cart). */
+export const DRAWING_PICK: [number, number] = [0, 2];
+export const DRAWING_COLLAR_RIN = mm(13), DRAWING_COLLAR_H = mm(18);
+
+function pipeAndCollar(dw?: DrawingOpts): string[] {
   const out: string[] = [];
   const rIn = PIPE_RP - PIPE_WALL;
   // the 45 mm hole: slat pieces whose centre lies inside the drilled circle (in the y, z plane, on the +x side) are left out
   const inHole = (x: number, y: number, z: number) => x > 0 && Math.hypot(y, z - ZH) < DRILL_R + 0.0015;
   // the tank (700 along y x 400 along x x 300, lid on top) and the pipe's socket on the lid: static, in the world frame
   const world: string[] = [];
-  world.push(...tank());
+  world.push(...tank(dw));
   world.push(...tube([0, 0, LID], [0, 0, 1], 0, 0.025, PIPE_RP + 0.001, SOCKET_R, 32, `${OBST} ${rgba(0.95, 0.6, 0.2)}`));
   // the pipe, the collar and the plug holder are built with the hole facing +x and turned by PSI about the pipe axis (a static body)
   out.push(...tube([0, 0, LID], [0, 0, 1], 0, PIPE_TOP - LID, rIn, PIPE_RP, 48, `${OBST} ${rgba(0.93, 0.95, 0.97, 0.28)}`, { chunk: 0.003, skip: inHole, name: 'pipe' }));
@@ -173,18 +184,20 @@ function pipeAndCollar(): string[] {
   out.push(...tube(P0L, DL, -mm(10), mm(12), BORE_R, mm(15), 16, `${OBST} ${DARK}`, { name: 'seat_spigot' }));
   out.push(...tube(P0L, DL, mm(12), U_CAP - GAP, BORE_R, mm(20), 16, `${OBST} ${DARK}`, { name: 'seat_boss' }));
   out.push(...tube(P0L, DL, U_CAP - GAP, U_FACE, RECESS_R, mm(20), 16, `${OBST} ${DARK}`, { name: 'seat_rim' }));
-  // the plug holder: straight, horizontal, blind (a floor disc), 44 mm below the hole
+  // the plug holder: straight, horizontal, blind (a floor disc), 44 mm below the hole (not in the drawings: one insertion only)
+  if (!dw) {
   const pp: V3 = [0, 0, ZP];
   out.push(...tube(pp, [1, 0, 0], HOLDER_FLOOR_X - GAP, X_TOP - RECESS_T - GAP, BORE_R, mm(20), 16, `${OBST} ${DARK}`, { name: 'holder_boss' }));
   out.push(...tube(pp, [1, 0, 0], X_TOP - RECESS_T - GAP, X_TOP, RECESS_R, mm(20), 16, `${OBST} ${DARK}`, { name: 'holder_rim' }));
   out.push(`<geom name="holder_floor" type="cylinder" pos="${f(HOLDER_FLOOR_X - GAP - 0.002)} 0 ${f(ZP)}" size="${mm(20)} 0.002" euler="0 1.5708 0" ${OBST} ${DARK}/>`);
   // web between the two bosses (shown only)
   out.push(`<geom name="holder_web" type="box" pos="${f(mm(40))} 0 ${f((ZH + ZP) / 2 - mm(8))}" size="${mm(10)} ${mm(18)} ${f((ZH - ZP) / 2)}" ${VIS} ${DARK}/>`);
-  return [...world, `<body name="collar_frame" euler="0 0 ${f(PSI)}">`, ...out, '</body>'];
+  }
+  return [...world, `<body name="collar_frame" euler="0 0 ${f(dw ? dw.psi : PSI)}">`, ...out, '</body>'];
 }
 
 /** The tank as in the Pod grab scene: 700 (along y) x 400 (along x) x 300, hollow (4 mm walls and floor), a 4 mm lid with an access opening over the seedling tray, the 155 mm shelf, and the tray on two rails. */
-function tank(): string[] {
+function tank(dw?: DrawingOpts): string[] {
   const out: string[] = [], hx = TANK_W / 2, hy = TANK_L / 2, glass = rgba(0.75, 0.77, 0.82, 0.35), lid = rgba(0.6, 0.62, 0.68);
   const box = (x0: number, x1: number, y0: number, y1: number, z0: number, z1: number, c: string) =>
     out.push(`<geom type="box" pos="${f((x0 + x1) / 2)} ${f((y0 + y1) / 2)} ${f((z0 + z1) / 2)}" size="${f((x1 - x0) / 2)} ${f((y1 - y0) / 2)} ${f((z1 - z0) / 2)}" ${OBST} ${c}/>`);
@@ -194,10 +207,25 @@ function tank(): string[] {
   box(-hx + WALL, hx - WALL, -hy, -hy + WALL, WALL, zl, glass); box(-hx + WALL, hx - WALL, hy - WALL, hy, WALL, zl, glass);   // walls along x
   box(-hx + WALL, hx - WALL, -hy + WALL, hy - WALL, SHELF_Z, SHELF_Z + SHELF_T, glass);       // shelf
   // lid: four slabs round the opening over the tray
-  const ox0 = TRAY_X - OPEN_HX, ox1 = TRAY_X + OPEN_HX, oy0 = YC - OPEN_HY, oy1 = YC + OPEN_HY;
+  const ox0 = dw ? 0.005 : TRAY_X - OPEN_HX, ox1 = dw ? hx - WALL : TRAY_X + OPEN_HX, oy0 = dw ? DRAWING_TRAY_YC - DRAWING_TRAY_HY : YC - OPEN_HY, oy1 = dw ? DRAWING_TRAY_YC + DRAWING_TRAY_HY : YC + OPEN_HY;
   box(-hx, ox0, -hy, hy, zl, LID, lid); box(ox1, hx, -hy, hy, zl, LID, lid);
   box(ox0, ox1, -hy, oy0, zl, LID, lid); box(ox0, ox1, oy1, hy, zl, LID, lid);
   // seedling tray: a thin plate on two rails over the shelf, three cells
+  if (dw) {
+    // the 4 x 4 tray of the Pod grab scene, at the front left: plate, two rails, a silicone socket (ring) in each of the 16 cells
+    const cx = 0, cy = DRAWING_TRAY_YC, hxx = DRAWING_TRAY_HX, hyy = DRAWING_TRAY_HY, green = rgba(0.2, 0.62, 0.38);
+    box(cx - hxx, cx + hxx, cy - hyy, cy + hyy, TRAY_Z0, TRAY_TOP, green);
+    for (const sy of [-1, 1]) box(cx - hxx, cx + hxx, cy + sy * (hyy - 0.01) - 0.01, cy + sy * (hyy - 0.01) + 0.01, SHELF_Z + SHELF_T, TRAY_Z0, rgba(0.42, 0.44, 0.5));
+    for (let r = 0; r < TRAY_ROWS; r++) for (let c = 0; c < TRAY_COLS; c++) {
+      const [x, y] = drawingSocket(r, c);
+      out.push(...tube([x, y, TRAY_TOP], [0, 0, 1], 0, DRAWING_COLLAR_H, DRAWING_COLLAR_RIN, DRAWING_COLLAR_RIN + mm(3), 12, `${VIS} ${rgba(0.95, 0.55, 0.2)}`));
+      if (r === DRAWING_PICK[0] && c === DRAWING_PICK[1]) continue;   // the pod that is picked is its own moving body
+      const zb = TRAY_TOP + 0.0003, pc = rgba(0.85, 0.65, 0.3);
+      out.push(`<geom type="cylinder" pos="${f(x)} ${f(y)} ${f(zb + POD_BODY_L / 2)}" size="${POD_BODY_R} ${f(POD_BODY_L / 2)}" ${VIS} ${pc}/>`,
+        `<geom type="cylinder" pos="${f(x)} ${f(y)} ${f(zb + POD_BODY_L + CAP_T / 2)}" size="${CAP_R} ${f(CAP_T / 2)}" ${VIS} ${pc}/>`);
+    }
+    return out;
+  }
   const trh = 0.045, tyh = 0.10;
   box(TRAY_X - trh, TRAY_X + trh, YC - tyh, YC + tyh, TRAY_Z0, TRAY_TOP, rgba(0.2, 0.62, 0.38));
   for (const sx of [-1, 1]) box(TRAY_X + sx * (trh - 0.006) - 0.004, TRAY_X + sx * (trh - 0.006) + 0.004, YC - tyh, YC + tyh, SHELF_Z + SHELF_T, TRAY_Z0, rgba(0.2, 0.62, 0.38));
@@ -215,12 +243,12 @@ export const BODIES = { pod: 'seedling_pod', plug: 'plug', other: ['seedling_a',
 const podColor = rgba(0.85, 0.65, 0.3), plugColor = rgba(0.12, 0.12, 0.14);
 
 /** The cart and what it carries (cart frame -> world axes), as the text to put inside the cart body. */
-export function cartGeoms(): string[] {
+export function cartGeoms(free: 'B' | 'C' = 'B'): string[] {
   const out: string[] = [];
   // The real omni cart (cad/cart_base.py, hand_sleeve.py v5, cart_omni.py via cart/omni-scene.ts, exactly as in the Transfer scene, Pond #284): plate, battery, the two three-lobe sleeves with their omni wheels,
   // ball cups, motors and jaws, on the plate frame (CAD x across = world -y, CAD y out of the pipe plane = world x, z up). The arm is the scene's own moving one.
   // The cart is checked against the arm and the track: hand C rides the track leg, hand B hangs beside it with its jaw open. No hinges, nothing swings: the base is rigid on both sleeves.
-  const cartParts = staticOmniCart({ free: 'B', col: OBST });
+  const cartParts = staticOmniCart({ free, col: OBST });
   out.push(`<body name="plate" xyaxes="0 -1 0 1 0 0"><joint name="plate_lock" type="hinge" axis="0 0 1" range="0 0"/>
       ${cartParts}
     </body>`);
@@ -265,13 +293,13 @@ export function track(): string[] {
 }
 
 /** MJCF of the whole scene. */
-export function transplantMjcf(): string {
+export function transplantMjcf(dw?: DrawingOpts): string {
   const [qw, qx, qy, qz] = [1, 0, 0, 0];
   // free bodies (no gravity, never stepped): the scene writes their pose each frame, and having a degree of freedom is what lets MuJoCo test them against the static geoms
   const mocap = (name: string, pos: V3, geoms: string) => `<body name="${name}" pos="${pos.map(f).join(' ')}" quat="${qw} ${qx} ${qy} ${qz}"><joint type="free"/>${geoms}</body>`;
   const world = [
     `<geom name="floor" type="plane" size="1.6 1.2 0.01" pos="0 0 0" ${OBST} ${rgba(0.84, 0.88, 0.92)}/>`,
-    ...pipeAndCollar(), ...track(),
+    ...pipeAndCollar(dw), ...track(),
     mocap(BODIES.pod, [0, 0, 2], podGeoms(POD_BODY_R, POD_BODY_L, podColor, false)),
     mocap(BODIES.plug, [0, 0, 2.2], podGeoms(PLUG_BODY_R, PLUG_BODY_L, plugColor, true)),
     mocap(BODIES.other[0], [0, 0, 2.4], podGeoms(POD_BODY_R, POD_BODY_L, podColor, false)),
@@ -279,7 +307,7 @@ export function transplantMjcf(): string {
   ].join('\n    ');
   const base = `pos="${f(ARM_CY - BASE_BOTTOM)} 0 0" xyaxes="0 0 -1 0 -1 0"`;   // base x = down, base y = -y, so the base axis (z) points out of the plate, -x: towards the pipe
   const open = `<body name="cart" mocap="true" pos="${XT} ${YC} ${CART_Z0}">
-      ${cartGeoms().join('\n      ')}`;
+      ${cartGeoms(dw?.free).join('\n      ')}`;
   return withCartAssets(armMjcf(world, {
     noGround: true,
     option: '<option timestep="0.004" gravity="0 0 0"/>',

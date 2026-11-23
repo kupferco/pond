@@ -962,6 +962,71 @@
       "comment": "The pod was taken from the holder (out of reach, known gap), the cart went back up to the hole stop and the arm pushed the pod into the hole. Hole open for about 10 s of simulated time. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v8 (OpenPocket #459): the seedling tray is at the FRONT of the unit, in front of the growing pipe on the shelf side the CAD puts it (cad/parts/shelf_items.py), no longer at the back. The cart is unchanged. KNOWN GAP: with the tray at the front the arm (which works towards the back) does not reach it, so the pick is drawn without the arm reaching the tray. Views: -iso, -front, -side, -top, -closeup, -collar. Clip: transplant-seedling-step4-seat-v6-clip.gif.",
       "viewer": "viewer.html?src=archive/renders/transplant-seedling-step4-seat-v8.glb&title=Transplant%20seedling%3A%20Step%204%3A%20seedling%20seated%2C%20hole%20closed",
       "thumb": "archive/renders/transplant-seedling-step4-seat-v8-line.png"
+    },
+    {
+      "id": "transplant-seedling-start-v9",
+      "date": "2026-11-23",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "archived",
+      "version": 9,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Start: arm folded over the seedling tray inside the tank",
+      "comment": "Cart at the seedling tray (0.68 m), seedling pods in the tray, pod holder empty, plug seated in the central pipe's collar. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v9 (OpenPocket #459, owner review): the cart and its SO-101 arm now face the FRONT of the unit (turned 180 degrees), so the seedling tray, the arm and the hole are all at the front; only one insertion is shown, the seedling pod in the collar at the front (the plug holder and the parked plug are left out); the FRONT view looks at the unit from the front, so the insertion is visible whatever height the cart is at (the cart rides behind the pipe in this drawing, so it does not hide it). The collar seat is now drawn where the pod sits (it was drawn 96 degrees round). The sim itself is unchanged. Views: -iso, -front, -side, -top, -closeup.",
+      "viewer": "viewer.html?src=archive/renders/transplant-seedling-start-v9.glb&title=Transplant%20seedling%3A%20Start%3A%20arm%20folded%20over%20the%20seedling%20tray%20inside%20the%20tank",
+      "thumb": "archive/renders/transplant-seedling-start-v9-line.png"
+    },
+    {
+      "id": "transplant-seedling-step1-pick-v9",
+      "date": "2026-11-23",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "archived",
+      "version": 9,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 1: seedling picked and put in the cart holder",
+      "comment": "The arm picked the middle seedling pod from the tray. Out of reach (known gap): the pod holder on the cart; there the arm stays still and the pod is put in the holder without it. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v9 (OpenPocket #459, owner review): the cart and its SO-101 arm now face the FRONT of the unit (turned 180 degrees), so the seedling tray, the arm and the hole are all at the front; only one insertion is shown, the seedling pod in the collar at the front (the plug holder and the parked plug are left out); the FRONT view looks at the unit from the front, so the insertion is visible whatever height the cart is at (the cart rides behind the pipe in this drawing, so it does not hide it). The collar seat is now drawn where the pod sits (it was drawn 96 degrees round). The sim itself is unchanged. Views: -iso, -front, -side, -top, -closeup. Clip: transplant-seedling-step1-pick-v6-clip.gif.",
+      "viewer": "viewer.html?src=archive/renders/transplant-seedling-step1-pick-v9.glb&title=Transplant%20seedling%3A%20Step%201%3A%20seedling%20picked%20and%20put%20in%20the%20cart%20holder",
+      "thumb": "archive/renders/transplant-seedling-step1-pick-v9-line.png"
+    },
+    {
+      "id": "transplant-seedling-step2-drive-v9",
+      "date": "2026-11-23",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "archived",
+      "version": 9,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 2: cart at the hole",
+      "comment": "The cart drove up the track (its one sleeve riding the leg) to the hole stop at 1.04 m. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v9 (OpenPocket #459, owner review): the cart and its SO-101 arm now face the FRONT of the unit (turned 180 degrees), so the seedling tray, the arm and the hole are all at the front; only one insertion is shown, the seedling pod in the collar at the front (the plug holder and the parked plug are left out); the FRONT view looks at the unit from the front, so the insertion is visible whatever height the cart is at (the cart rides behind the pipe in this drawing, so it does not hide it). The collar seat is now drawn where the pod sits (it was drawn 96 degrees round). The sim itself is unchanged. Views: -iso, -front, -side, -top, -closeup, -collar. Clip: transplant-seedling-step2-drive-v6-clip.gif.",
+      "viewer": "viewer.html?src=archive/renders/transplant-seedling-step2-drive-v9.glb&title=Transplant%20seedling%3A%20Step%202%3A%20cart%20at%20the%20hole",
+      "thumb": "archive/renders/transplant-seedling-step2-drive-v9-line.png"
+    },
+    {
+      "id": "transplant-seedling-step3-plug-v9",
+      "date": "2026-11-23",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "archived",
+      "version": 9,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 3: plug parked, hole open",
+      "comment": "The arm pulled the plug out of the hole along the 45 degree axis, the cart went down to the plug holder's height (0.756 m) and the arm tilted the plug to horizontal and pushed it into the holder (stands 5 mm proud). The hole is open. Fully in reach. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v9 (OpenPocket #459, owner review): the cart and its SO-101 arm now face the FRONT of the unit (turned 180 degrees), so the seedling tray, the arm and the hole are all at the front; only one insertion is shown, the seedling pod in the collar at the front (the plug holder and the parked plug are left out); the FRONT view looks at the unit from the front, so the insertion is visible whatever height the cart is at (the cart rides behind the pipe in this drawing, so it does not hide it). The collar seat is now drawn where the pod sits (it was drawn 96 degrees round). The sim itself is unchanged. Views: -iso, -front, -side, -top, -closeup, -collar. Clip: transplant-seedling-step3-plug-v6-clip.gif.",
+      "viewer": "viewer.html?src=archive/renders/transplant-seedling-step3-plug-v9.glb&title=Transplant%20seedling%3A%20Step%203%3A%20plug%20parked%2C%20hole%20open",
+      "thumb": "archive/renders/transplant-seedling-step3-plug-v9-line.png"
+    },
+    {
+      "id": "transplant-seedling-step4-seat-v9",
+      "date": "2026-11-23",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "archived",
+      "version": 9,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 4: seedling seated, hole closed",
+      "comment": "The pod was taken from the holder (out of reach, known gap), the cart went back up to the hole stop and the arm pushed the pod into the hole. Hole open for about 10 s of simulated time. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v9 (OpenPocket #459, owner review): the cart and its SO-101 arm now face the FRONT of the unit (turned 180 degrees), so the seedling tray, the arm and the hole are all at the front; only one insertion is shown, the seedling pod in the collar at the front (the plug holder and the parked plug are left out); the FRONT view looks at the unit from the front, so the insertion is visible whatever height the cart is at (the cart rides behind the pipe in this drawing, so it does not hide it). The collar seat is now drawn where the pod sits (it was drawn 96 degrees round). The sim itself is unchanged. Views: -iso, -front, -side, -top, -closeup, -collar. Clip: transplant-seedling-step4-seat-v6-clip.gif.",
+      "viewer": "viewer.html?src=archive/renders/transplant-seedling-step4-seat-v9.glb&title=Transplant%20seedling%3A%20Step%204%3A%20seedling%20seated%2C%20hole%20closed",
+      "thumb": "archive/renders/transplant-seedling-step4-seat-v9-line.png"
     }
   ]
 }
