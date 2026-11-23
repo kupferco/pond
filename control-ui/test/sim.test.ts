@@ -70,7 +70,7 @@ let msg = '';
 try { await cmd.setMode('real'); } catch (e) { msg = (e as Error).message; }
 check('real mode refuses, stays on sim', msg.includes('not connected') && cmd.mode === 'sim');
 
-check('ten scenes, two groups, Transplant seedling, Reach test and Water sample under the Tests', SCENE_INFOS.length === 10 && SCENE_INFOS.filter((s) => s.group === 'Tests').length === 8 && SCENE_INFOS.some((s) => s.id === 'water-sample' && s.group === 'Tests') && SCENE_INFOS.some((s) => s.id === 'transplant' && s.group === 'Tests') && SCENE_INFOS.some((s) => s.id === 'reach-test' && s.group === 'Tests'));
+check('nine scenes, two groups, Transplant seedling, Reach test and Water sample under the Tests', SCENE_INFOS.length === 9 && SCENE_INFOS.filter((s) => s.group === 'Tests').length === 7 && SCENE_INFOS.some((s) => s.id === 'water-sample' && s.group === 'Tests') && SCENE_INFOS.some((s) => s.id === 'transplant' && s.group === 'Tests') && SCENE_INFOS.some((s) => s.id === 'reach-test' && s.group === 'Tests'));
 check('scene default is arm', resolveSceneId('', null) === 'arm');
 check('scene URL wins over stored', resolveSceneId('?scene=cart', 'transplant') === 'cart');
 check('old pillar URL goes to transplant', resolveSceneId('?scene=pillar', null) === 'transplant');
