@@ -9,7 +9,7 @@ export type CartBody = 'B' | 'C' | 'base';
 export type CartGroup = 'static' | 'jaw' | 'drive' | 'roll';
 const bytes = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 /** MJCF mesh name of a CAD part: numbered (cadm12), so no CAD word such as hinge or worm appears in the scene text that tests grep for. */
-const meshName = (part: string) => `cadm${CAD_CART_PARTS.findIndex((p) => p.name === part)}`;
+export const meshName = (part: string) => `cadm${CAD_CART_PARTS.findIndex((p) => p.name === part)}`;
 const m5 = (mm: number) => +(mm / 1000).toFixed(5);
 
 export interface CadMesh { name: string; vertices: Float32Array; faces: Uint32Array; rgba: readonly number[]; body: CartBody; group: CartGroup }

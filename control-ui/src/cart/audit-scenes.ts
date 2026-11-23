@@ -34,6 +34,6 @@ export function auditScenes(mj: MainModule): Row[] {
   // 4. Pod grab: rides the bottom run (along world x) of the loop at y = PIPE_Y, z = PIPE_Z; the unit towards -y (growing pipe at y = 0), the loop's middle above the run.
   { const { m, d } = make(podGrabMjcf()); mj.mj_forward(m, d);
     const leg: Leg = { point: [CART_HOME_X, PIPE_Y, PIPE_Z], dir: [1, 0, 0], toUnit: [0, -1, 0], outward: [0, 0, -1] };
-    add('pod grab (bottom run)', placementOf(m as never, d as never, leg, 'B'), 180, 'inner'); }
+    add('pod grab (bottom run)', placementOf(m as never, d as never, leg, 'C'), 180, 'inner'); }
   return rows;
 }
