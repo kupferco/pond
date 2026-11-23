@@ -119,58 +119,6 @@
       "viewer": "viewer.html?src=archive/renders/cart-assembly-v4.glb&title=Whole%20cart%20assembly%20v4%20%28rigid%20base%2C%20omni%20hands%29"
     },
     {
-      "id": "reach-test-result-v2",
-      "date": "2026-11-17",
-      "part": "Reach test scene",
-      "category": "Pod handling",
-      "status": "archived",
-      "version": 2,
-      "group": "Reach test scene (sim)",
-      "title": "Reach test: result, all 24 holes and 16 pods coloured",
-      "comment": "Plug caps and pods are green (reachable as is), amber (only after the 180-degree roll) or red (not reachable). Sim scene (control-ui, OpenPocket #262, round 2), drawn from the MuJoCo model by a software renderer. The 24 planting holes of the unit's site rule (cad/unit_v1_assembly.py: 3 columns 120 degrees apart, every other level turned 60, 130 mm pitch, lowest 0.654 m, eight levels) each with collar, seat, plug holder and plug on the central pipe; the Transplant scene's track and cart; the 16 seedling pods in the 4 x 4 tray flat under the lid in the FRONT of the tank, reached through 16 pick holes in the lid, with the sloping pod store, as in the Pod grab scene. Cart tried at every station of both legs and both runs, as is and rolled 180 degrees. Result: holes 0 green, 0 amber, 24 red; pods 0 green, 0 amber, 16 red (15 of the 24 holes would work at another roll angle such as 240, 330, 30 or 120 degrees). Views: -iso, -front, -top, -side, -pipe-front, -pipe-back, -pipe-left, -pipe-right, -tray-top, -tray-iso.",
-      "viewer": "viewer.html?src=archive/renders/reach-test-result-v2.glb&title=Reach%20test%3A%20result%2C%20all%2024%20holes%20and%2016%20pods%20coloured",
-      "thumb": "archive/renders/reach-test-result-v2-line.png"
-    },
-    {
-      "id": "reach-test-example-v2",
-      "date": "2026-11-17",
-      "part": "Reach test scene",
-      "category": "Pod handling",
-      "status": "archived",
-      "version": 2,
-      "group": "Reach test scene (sim)",
-      "title": "Reach test: the arm on hole H2 (roll 330 degrees)",
-      "comment": "The arm on hole H2 at the best station found, leg A at 0.830 m with the cart rolled 330 degrees; no contacts. This is a roll other than 0 or 180, so H2 stays red. Sim scene (control-ui, OpenPocket #262, round 2), drawn from the MuJoCo model by a software renderer. The 24 planting holes of the unit's site rule (cad/unit_v1_assembly.py: 3 columns 120 degrees apart, every other level turned 60, 130 mm pitch, lowest 0.654 m, eight levels) each with collar, seat, plug holder and plug on the central pipe; the Transplant scene's track and cart; the 16 seedling pods in the 4 x 4 tray flat under the lid in the FRONT of the tank, reached through 16 pick holes in the lid, with the sloping pod store, as in the Pod grab scene. Cart tried at every station of both legs and both runs, as is and rolled 180 degrees. Result: holes 0 green, 0 amber, 24 red; pods 0 green, 0 amber, 16 red (15 of the 24 holes would work at another roll angle such as 240, 330, 30 or 120 degrees). Views: -iso, -front, -top, -side, -closeup.",
-      "viewer": "viewer.html?src=archive/renders/reach-test-example-v2.glb&title=Reach%20test%3A%20the%20arm%20on%20hole%20H2%20(roll%20330%20degrees)",
-      "thumb": "archive/renders/reach-test-example-v2-line.png"
-    },
-    {
-      "id": "reach-test-cart-asis-v2",
-      "date": "2026-11-17",
-      "part": "Reach test scene",
-      "category": "Pod handling",
-      "status": "archived",
-      "version": 2,
-      "group": "Reach test scene (sim)",
-      "title": "Reach test: cart as it is on leg A",
-      "comment": "The cart as it is (roll 0) on leg A at 1.0 m, arm folded: the arm points from the track towards the back of the pipe. Sim scene (control-ui, OpenPocket #262, round 2), drawn from the MuJoCo model by a software renderer. The 24 planting holes of the unit's site rule (cad/unit_v1_assembly.py: 3 columns 120 degrees apart, every other level turned 60, 130 mm pitch, lowest 0.654 m, eight levels) each with collar, seat, plug holder and plug on the central pipe; the Transplant scene's track and cart; the 16 seedling pods in the 4 x 4 tray flat under the lid in the FRONT of the tank, reached through 16 pick holes in the lid, with the sloping pod store, as in the Pod grab scene. Cart tried at every station of both legs and both runs, as is and rolled 180 degrees. Result: holes 0 green, 0 amber, 24 red; pods 0 green, 0 amber, 16 red (15 of the 24 holes would work at another roll angle such as 240, 330, 30 or 120 degrees). Views: -top, -front.",
-      "thumb": "archive/renders/reach-test-cart-asis-v2-line.png",
-      "viewer": "viewer.html?src=archive/renders/reach-test-cart-asis-v2.glb&title=Reach%20test%3A%20cart%20as%20it%20is%20on%20leg%20A"
-    },
-    {
-      "id": "reach-test-cart-rolled-v2",
-      "date": "2026-11-17",
-      "part": "Reach test scene",
-      "category": "Pod handling",
-      "status": "archived",
-      "version": 2,
-      "group": "Reach test scene (sim)",
-      "title": "Reach test: cart rolled 180 degrees about leg A",
-      "comment": "The cart rolled 180 degrees about leg A's own axis at 1.0 m, arm folded: the arm stands on the far side of the leg and points away from the pipe, towards the front. Sim scene (control-ui, OpenPocket #262, round 2), drawn from the MuJoCo model by a software renderer. The 24 planting holes of the unit's site rule (cad/unit_v1_assembly.py: 3 columns 120 degrees apart, every other level turned 60, 130 mm pitch, lowest 0.654 m, eight levels) each with collar, seat, plug holder and plug on the central pipe; the Transplant scene's track and cart; the 16 seedling pods in the 4 x 4 tray flat under the lid in the FRONT of the tank, reached through 16 pick holes in the lid, with the sloping pod store, as in the Pod grab scene. Cart tried at every station of both legs and both runs, as is and rolled 180 degrees. Result: holes 0 green, 0 amber, 24 red; pods 0 green, 0 amber, 16 red (15 of the 24 holes would work at another roll angle such as 240, 330, 30 or 120 degrees). Views: -top, -front.",
-      "thumb": "archive/renders/reach-test-cart-rolled-v2-line.png",
-      "viewer": "viewer.html?src=archive/renders/reach-test-cart-rolled-v2.glb&title=Reach%20test%3A%20cart%20rolled%20180%20degrees%20about%20leg%20A"
-    },
-    {
       "id": "transplant-seedling-start-v5",
       "date": "2026-11-17",
       "part": "Transplant seedling scene",
@@ -873,32 +821,6 @@
       "thumb": "archive/renders/20261102-185223-ed57-line.png"
     },
     {
-      "id": "reach-test-turn90-example-v1",
-      "date": "2026-11-18",
-      "part": "Reach test scene",
-      "category": "Pod handling",
-      "status": "archived",
-      "version": 1,
-      "group": "Reach test scene (sim)",
-      "title": "Reach test: arm on hole H6, cart turned 90 degrees",
-      "comment": "The arm on hole H6 (green at 270 degrees). Views: -iso, -front, -top, -side, -closeup. Sim scene (control-ui, OpenPocket #313), drawn from the MuJoCo model by a software renderer. The see-through blue copy of the unit on the left is the ghost neighbour (50 mm from this tank). Cart turned 90 degrees counterclockwise seen from above from the 180-degree roll (roll 270 about leg A). Parts coloured: green = reached at 270 degrees, amber = reached at another angle (best angle 255 reaches the most, 7 holes), red = at no angle. Result at 270: holes 4 green, 11 amber, 9 red; pods 0 green, 0 amber, 16 red.",
-      "viewer": "viewer.html?src=archive/renders/reach-test-turn90-example-v1.glb&title=Reach%20test%3A%20arm%20on%20H6%2C%20cart%20turned%2090%20degrees",
-      "thumb": "archive/renders/reach-test-turn90-example-v1-line.png"
-    },
-    {
-      "id": "reach-test-cart-rolled-v3",
-      "date": "2026-11-17",
-      "part": "Reach test scene",
-      "category": "Pod handling",
-      "status": "archived",
-      "version": 3,
-      "group": "Reach test scene (sim)",
-      "title": "Reach test: cart rolled 180 degrees about leg A",
-      "comment": "The cart rolled 180 degrees about leg A at 1.0 m, arm folded. Views: -top, -front. Sim scene (control-ui, OpenPocket #262, round 3), drawn from the MuJoCo model by a software renderer. The cart is shown ROLLED 180 degrees about leg A's own axis (the whole cart: plate, arm, sleeve, pod holder), which puts the plate and arm 109 mm in FRONT of the track plane with the arm pointing at the front of the tank; it does NOT point at the spine (see the scene page). 24 planting holes of the unit's site rule (cad/unit_v1_assembly.py), each with collar, seat, plug holder and plug; 16 seedling pods in the 4 x 4 tray in the front of the tank as in the Pod grab scene. Cart tried at every station of both legs and both runs (5 mm steps), as is and rolled 180 degrees. Result: holes 0 green, 0 amber, 24 red; pods 0 green, 0 amber, 16 red.",
-      "viewer": "viewer.html?src=archive/renders/reach-test-cart-rolled-v3.glb&title=Reach%20test%3A%20cart%20rolled%20180%20degrees%20about%20leg%20A",
-      "thumb": "archive/renders/reach-test-cart-rolled-v3-line.png"
-    },
-    {
       "id": "transplant-real-layout-v3",
       "date": "2026-11-16",
       "part": "Transplant seedling scene",
@@ -910,6 +832,71 @@
       "comment": "Check only, no geometry changed (OpenPocket #230, round 3). Tank, growing pipe, track pipes (x -/+290 and the neighbour at +/-410, y -60) and the real cart (166 x 112 plate, battery, SO-101 base 102 mm out) in their CAD places. Result: the arm cannot seat a pod in the collar from here (pod axis at best 22 degrees out of the arm's plane, wrist at the reach limit). Views: -top, -front. Opens the 3D Transplant scene this check was made on (the check itself is a 2D plan).",
       "thumb": "archive/renders/transplant-real-layout-v3-line.png",
       "viewer": "viewer.html?src=archive/renders/transplant-seedling-start-v3.glb&title=Transplant%20seedling%3A%20real%20parts%20in%20their%20real%20places%2C%20reach%20check%20v3"
+    },
+    {
+      "id": "transplant-seedling-start-v6",
+      "date": "2026-11-17",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "archived",
+      "version": 6,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Start: arm folded over the seedling tray inside the tank",
+      "comment": "Cart at the seedling tray (0.68 m), seedling pods in the tray, pod holder empty, plug seated in the central pipe's collar. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v6 (round 7): the cart pod holder (cad/cart_pod_holder.py v3) is straight, 90 degrees to the plate, the pod sitting in it on the O-ring friction fit so it stays put upside down; the seedling tray is now INSIDE the tank (under an opening in the lid, as in the Pod grab scene), in the back corner on the same side as the cart, which rides the -y leg of the ONE track (one sleeve, the track joined to the spine). The arm reaches every step and no step has a contact. Views: -iso, -front, -side, -top, -closeup.",
+      "viewer": "viewer.html?src=archive/renders/transplant-seedling-start-v6.glb&title=Transplant%20seedling%3A%20Start%3A%20arm%20folded%20over%20the%20seedling%20tray%20inside%20the%20tank",
+      "thumb": "archive/renders/transplant-seedling-start-v6-line.png"
+    },
+    {
+      "id": "transplant-seedling-step1-pick-v6",
+      "date": "2026-11-17",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "archived",
+      "version": 6,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 1: seedling picked and put in the cart holder",
+      "comment": "The arm picked the middle seedling pod from the tray. Out of reach (known gap): the pod holder on the cart; there the arm stays still and the pod is put in the holder without it. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v6 (round 7): the cart pod holder (cad/cart_pod_holder.py v3) is straight, 90 degrees to the plate, the pod sitting in it on the O-ring friction fit so it stays put upside down; the seedling tray is now INSIDE the tank (under an opening in the lid, as in the Pod grab scene), in the back corner on the same side as the cart, which rides the -y leg of the ONE track (one sleeve, the track joined to the spine). The arm reaches every step and no step has a contact. Views: -iso, -front, -side, -top, -closeup. Clip: transplant-seedling-step1-pick-v6-clip.gif.",
+      "viewer": "viewer.html?src=archive/renders/transplant-seedling-step1-pick-v6.glb&title=Transplant%20seedling%3A%20Step%201%3A%20seedling%20picked%20and%20put%20in%20the%20cart%20holder",
+      "thumb": "archive/renders/transplant-seedling-step1-pick-v6-line.png"
+    },
+    {
+      "id": "transplant-seedling-step2-drive-v6",
+      "date": "2026-11-17",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "archived",
+      "version": 6,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 2: cart at the hole",
+      "comment": "The cart drove up the track (its one sleeve riding the leg) to the hole stop at 1.04 m. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v6 (round 7): the cart pod holder (cad/cart_pod_holder.py v3) is straight, 90 degrees to the plate, the pod sitting in it on the O-ring friction fit so it stays put upside down; the seedling tray is now INSIDE the tank (under an opening in the lid, as in the Pod grab scene), in the back corner on the same side as the cart, which rides the -y leg of the ONE track (one sleeve, the track joined to the spine). The arm reaches every step and no step has a contact. Views: -iso, -front, -side, -top, -closeup, -collar. Clip: transplant-seedling-step2-drive-v6-clip.gif.",
+      "viewer": "viewer.html?src=archive/renders/transplant-seedling-step2-drive-v6.glb&title=Transplant%20seedling%3A%20Step%202%3A%20cart%20at%20the%20hole",
+      "thumb": "archive/renders/transplant-seedling-step2-drive-v6-line.png"
+    },
+    {
+      "id": "transplant-seedling-step3-plug-v6",
+      "date": "2026-11-17",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "archived",
+      "version": 6,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 3: plug parked, hole open",
+      "comment": "The arm pulled the plug out of the hole along the 45 degree axis, the cart went down to the plug holder's height (0.756 m) and the arm tilted the plug to horizontal and pushed it into the holder (stands 5 mm proud). The hole is open. Fully in reach. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v6 (round 7): the cart pod holder (cad/cart_pod_holder.py v3) is straight, 90 degrees to the plate, the pod sitting in it on the O-ring friction fit so it stays put upside down; the seedling tray is now INSIDE the tank (under an opening in the lid, as in the Pod grab scene), in the back corner on the same side as the cart, which rides the -y leg of the ONE track (one sleeve, the track joined to the spine). The arm reaches every step and no step has a contact. Views: -iso, -front, -side, -top, -closeup, -collar. Clip: transplant-seedling-step3-plug-v6-clip.gif.",
+      "viewer": "viewer.html?src=archive/renders/transplant-seedling-step3-plug-v6.glb&title=Transplant%20seedling%3A%20Step%203%3A%20plug%20parked%2C%20hole%20open",
+      "thumb": "archive/renders/transplant-seedling-step3-plug-v6-line.png"
+    },
+    {
+      "id": "transplant-seedling-step4-seat-v6",
+      "date": "2026-11-17",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "archived",
+      "version": 6,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 4: seedling seated, hole closed",
+      "comment": "The pod was taken from the holder (out of reach, known gap), the cart went back up to the hole stop and the arm pushed the pod into the hole. Hole open for about 10 s of simulated time. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v6 (round 7): the cart pod holder (cad/cart_pod_holder.py v3) is straight, 90 degrees to the plate, the pod sitting in it on the O-ring friction fit so it stays put upside down; the seedling tray is now INSIDE the tank (under an opening in the lid, as in the Pod grab scene), in the back corner on the same side as the cart, which rides the -y leg of the ONE track (one sleeve, the track joined to the spine). The arm reaches every step and no step has a contact. Views: -iso, -front, -side, -top, -closeup, -collar. Clip: transplant-seedling-step4-seat-v6-clip.gif.",
+      "viewer": "viewer.html?src=archive/renders/transplant-seedling-step4-seat-v6.glb&title=Transplant%20seedling%3A%20Step%204%3A%20seedling%20seated%2C%20hole%20closed",
+      "thumb": "archive/renders/transplant-seedling-step4-seat-v6-line.png"
     }
   ]
 }

@@ -83,7 +83,10 @@ export const CUP_CAP_TOP_REL: V3 = (() => { const r = cupRoot(); return at(r, D_
 
 // --- seedling tray
 // Inside the tank, as in the Pod grab scene (podgrab/layout.ts): a thin tray 240 mm over the tank floor (TRAY_Z0, on two rails over the 155 mm shelf; the Pod grab scene has it at 200 mm, 40 mm higher here because the cart cannot ride lower than 0.63 m on the straight leg and the SO-101 cannot reach further down from there), under an opening in the lid; the pods stand in it, caps up, 20 mm under the lid.
-export const TRAY_X = XB - 0.10, TRAY_Y: number[] = [YC - 0.06, YC, YC + 0.06], TRAY_T = 0.004, TRAY_Z0 = 0.24, TRAY_TOP = TRAY_Z0 + TRAY_T;
+// Drawings only (OpenPocket #459): DRAWING_TRAY_FRONT=1 puts the tray at the FRONT of the unit, where the CAD has it (cad/parts/shelf_items.py: plate centre 125 mm in front of the pipe axis). The sim keeps it behind
+// the arm base, because the arm works towards the back and cannot reach a front tray (with the tray at the front the Transplant reach checks fail).
+const TRAY_AT_FRONT = !!(globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.DRAWING_TRAY_FRONT;
+export const TRAY_X = TRAY_AT_FRONT ? 0.125 : XB - 0.10, TRAY_Y: number[] = [YC - 0.06, YC, YC + 0.06], TRAY_T = 0.004, TRAY_Z0 = 0.24, TRAY_TOP = TRAY_Z0 + TRAY_T;
 export const WALL = 0.004, SHELF_Z = CAD_UNIT_DIMS.SHELF_Z / 1000, SHELF_T = CAD_UNIT_DIMS.SHELF_T / 1000;   // the shelf (cad/parts/shelf.py, #447)
 export const OPEN_HX = 0.04, OPEN_HY = 0.095;   // the lid opening over the tray: half size along x and y
 export const CELL_RIN = mm(13), CELL_H = mm(30);
