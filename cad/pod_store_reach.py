@@ -7,6 +7,9 @@
 # reach 350; pod 25 dia, 28 pitch; row pitch 35; spine not drawn (position TBC).
 import cadquery as cq
 import math
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "parts"))
+from pod_store_dims import STORE_SLOPE_DEG   # the one slope, also read by the sim (#461)
 
 TW, TD, TH = 700.0, 400.0, 400.0
 POD_D = 25.0; PITCH = 28.0; ROW_P = 35.0; N_ROWS = 14
@@ -27,7 +30,7 @@ for i in range(N_ROWS):
     end_y = -(KEEP_R + 10) if clash else 0.0
     length = end_y - FRONT_Y
     r = (cq.Workplane("XY").box(ROW_P - 4, length, 30, centered=(True, False, False))
-         .rotate((0, 0, 0), (1, 0, 0), -12).translate((x, FRONT_Y, TH - 70)))
+         .rotate((0, 0, 0), (1, 0, 0), -STORE_SLOPE_DEG).translate((x, FRONT_Y, TH - 70)))
     rows = rows.union(r)
     lid = lid.cut(cq.Workplane("XY").circle(POD_D / 2 + 2).extrude(20).translate((x, end_y, TH - 5)))
     picks.append((x, end_y, int(length // PITCH)))

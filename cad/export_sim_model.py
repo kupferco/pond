@@ -23,7 +23,7 @@ sys.path.insert(0, HERE)
 OUT_DIR = os.path.join(HERE, "..", "control-ui", "src", "generated")
 CLUSTER_MM = 0.9            # vertex clustering cell: the finest thinning tolerance
 MAX_TRIS = 1200             # most triangles kept per part: the cell grows until a part fits
-MODULES = ["hand_sleeve", "cart_dims", "cart_omni", "cart_sleeves", "cart_base", "cart_geom", "parts.unit_dims", "layout"]
+MODULES = ["hand_sleeve", "cart_dims", "cart_omni", "cart_sleeves", "cart_base", "cart_geom", "parts.unit_dims", "parts.pod_store_dims", "layout"]
 
 
 def _num(v):

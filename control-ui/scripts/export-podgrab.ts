@@ -54,4 +54,7 @@ for (const [id, x] of [['6-spine-m10', -0.1], ['7-spine-0', 0], ['8-spine-p10', 
   const probe = world.probeCart(x);
   snap(id, `The cart at ${x * 100} cm: the bracket goes through the slot of the sleeves`, `spine ${(-probe.by.spine_tube * 1000).toFixed(1)} mm, bracket ${(-probe.by.track_bracket * 1000).toFixed(1)} mm`, [0, PIPE_Y, PIPE_Z - 0.06], 0.26);
 }
+// the pod store under the lid (#461): the 7 degree slope, the highest point (back end) 6 mm under the lid
+world.reset();
+snap('9-store', 'The pod store: the whole store, back end included, sits under the lid; the pods slide to the pick holes at the front', 'slope 7 degrees', [0.175, 0, 0.26], 0.24);
 writeFileSync(join(out, 'stages.json'), JSON.stringify(list));

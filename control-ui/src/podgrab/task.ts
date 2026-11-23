@@ -326,6 +326,9 @@ export class PodTask {
   private planJob() {
     const { row, slot } = this.cfg.jobs[this.ji];
     const w = this.world;
+    // The gentler 7 degree slope (#461) moves the row up a place more slowly than 12 degrees did: if pods are still sliding to the pick line, let them arrive (up to 8 s of sim time) before planning from where the front pod is.
+    const h = this.world.sim.model.opt.timestep;
+    for (let k = 0; k < 8 / h && w.frontPod(row) < 0 && w.rowCount(row) > 0; k++) { this.world.sim.step(); this.steps++; w.tick(h); }
     const front = w.frontPod(row);
     if (front < 0) return this.fail(`store row ${row + 1} is empty`);
     if (w.trayPod(slot) >= 0) return this.fail(`socket ${slotLabel(slot)} is already filled`);

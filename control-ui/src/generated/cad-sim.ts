@@ -306,22 +306,25 @@ export const CAD_CONSTANTS = {
   "TW": 700.0,
   "TX": 290.0,
   "WATER_LEVEL": 150.0,
-  "ZB": 514.0,
+  "ZB": 579.0,
   "ZBAR": 1900.0,
   "ZC1": 1215.0,
   "ZC2": 1547.5,
   "ZT": 1884.0
  },
+ "pod_store_dims": {
+  "STORE_SLOPE_DEG": 7.0
+ },
  "layout": {
   "CART_BELOW_TRACK": 165.0,
-  "CART_CLEARANCE": 45.0,
+  "CART_CLEARANCE": 110.0,
   "LID_T": 4.0,
   "LID_TOP": 304.0,
   "OLD_TRACK_BOTTOM_Z": 450.0,
   "TANK_H": 300.0,
-  "TRACK_BOTTOM_ABOVE_LID": 210.0,
-  "TRACK_BOTTOM_Z": 514.0,
-  "TRACK_RISE": 64.0,
+  "TRACK_BOTTOM_ABOVE_LID": 275.0,
+  "TRACK_BOTTOM_Z": 579.0,
+  "TRACK_RISE": 129.0,
   "WATER_LEVEL": 150.0
  }
 } as const;
@@ -337,7 +340,7 @@ export const CAD_UNIT = {
  "TR": 16.0,
  "R": 150.0,
  "LOOP_Y": -60.0,
- "ZB": 514.0,
+ "ZB": 579.0,
  "ZT": 1884.0,
  "note": "sim world (x, y, z) = (-cad_y, cad_x, cad_z): the sim's track plane is x = -LOOP_Y, its two legs stand at y = -TX and +TX; the cart origin of the Complete unit is CART_SHIFT (hand B on the leg at TX)"
 } as const;

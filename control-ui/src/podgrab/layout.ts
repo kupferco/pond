@@ -5,7 +5,7 @@
 //  - tank 700 x 400 x 300 centred on x = 0, y = 0; lid at z = 300; shelf at z = 155 (unit_v3_dimensioned.py)
 //  - bottom track pipe at z = the shared layout height (cad/layout.json: 514 = lid 304 + 210), in the track plane y = -60 (unit_v3_dimensioned.py)
 //  - store rows under the lid, row pitch 35, first row at x = -140 (pod_store_reach.py); the rows slope DOWN towards
-//    the pick line y = 0, where the pick holes in the lid are; 12 degrees (pod_store_reach.py)
+//    the pick line y = 0, where the pick holes in the lid are; 7 degrees (cad/parts/pod_store_dims.py, used by pod_store_reach.py): the whole store, back end included, stays under the lid
 //  - seedling tray 190 x 360 x 35 at x = -245, z 230..265, horizontal, under an access opening in the lid (cart_arm.py, 5)
 //  - pod 25 mm diameter, 40 mm tall, 28 mm pitch (pod_store.py ASSUMED)
 //  - spine: 33.7 mm tube on the tank centre x = 0, y = 0 (unit_v3_dimensioned.py); track bracket 16 x 30 x 30 on the spine
@@ -53,15 +53,14 @@ export const TANK_W = 0.7, TANK_D = 0.4, TANK_H = LAYOUT.TANK_H, SHELF_Z = CAD_C
 export const SHELF_TOP = SHELF_Z + SHELF_T;
 export const LID_Z = TANK_H, LID_T = LAYOUT.LID_T;
 export const PIPE_Y = 0.104;                    // the track plane. CAD: -60 mm. MOVED 179 mm towards the back (was 115 mm: the omni cart's battery puts the arm base 50 mm further out of the plate, Pond #284) so that all 16 sockets are in front of the cart plate and the arm, mounted on the battery, reaches them (ASSUMED, see the PR)
-export const TRACK_RISE = 0.08;                 // the pod-grab track is 80 mm higher than the shared layout's bottom run (ASSUMED, #461). The cart now hangs UNDER the pipe on its top sleeve: the arm base is 80 mm lower relative to the pipe than when it rode on the bottom sleeve, and with it the arm cannot fold in far enough to carry a pod over the lid to the rows of the tray nearest the plate (rows B to D). Raising the track by the same 80 mm puts the arm base back at its old height over the lid.
-export const PIPE_Z = LAYOUT.TRACK_BOTTOM_Z + TRACK_RISE;   // bottom run of the track, 210 mm over the lid top (cad/layout.json: the cart's 165 mm under the track plus 45 mm of air, ASSUMED; the CAD guessed 150 before and the sim 210 over the tank). The omni cart centre is 60 mm BELOW the pipe it rides (the TOP hand C clamps the pipe, hand B hangs open below it), and the arm base is on the cart centre. OpenPocket #364: one number for CAD and sim
+export const PIPE_Z = LAYOUT.TRACK_BOTTOM_Z;   // bottom run of the track, 275 mm over the lid top (cad/layout.json: the cart's 165 mm under the track plus 110 mm of air, ASSUMED: the smallest that lets the arm, hanging under the pipe on the top sleeve, reach tray rows B to D; no sim-only offset, #461; the CAD guessed 150 before and the sim 210 over the tank). The omni cart centre is 60 mm BELOW the pipe it rides (the TOP hand C clamps the pipe, hand B hangs open below it), and the arm base is on the cart centre. OpenPocket #364: one number for CAD and sim
 export const PIPE_R = m(PIPE_D_MM) / 2;
 export const PIPE_X0 = -0.40, PIPE_X1 = 0.42;
 export const CART_X_MIN = -0.33, CART_X_MAX = 0.28;   // arm plane = the cart centre (the cart is symmetric about it)
 export const CART_HOME_X = -0.1;
 export const CART_SPINE_ZONE = 0.14;           // the cart touches the spine and its bracket only with its centre within about 13 cm of x = 0 (sleeve half length 62, the jaw motors on the CAD sleeve reach z +/-104 mm, spine radius 35; OpenPocket #447: the CAD cart's own parts are in the scan now, was 0.11 with the old stand-in shapes); only this zone is scanned
 // spine and brackets
-export const SPINE_R = 0.023, SPINE_TOP = 0.86;   // 46 mm: 1.4 times the 33.7 mm tube of unit_v3_dimensioned.py. It was 70 mm (an owner request), but the sleeves' 34.5 mm outer ring cannot pass a spine whose surface is closer than that to the pipe axis (60 mm CAD distance minus the radius): 46 mm is the thickest that leaves 2.5 mm clear (#461)
+export const SPINE_R = CAD_CONSTANTS.unit_dims.SP / 2000, SPINE_TOP = 0.86;   // the CAD spine tube, 33.7 mm OD (cad/parts/unit_dims.py SP): no sim-only thickening (#461)
 export const SPINE_Y = PIPE_Y + 0.06;           // the spine axis is 60 mm behind the track plane (CAD: LOOP_Y = -60; the scene had 75 mm before the omni cart), so its back surface is just inside the tank's back wall
 export const BRACKET_T = 0.004;
 // The spine-to-track bracket (cad/bottom_bracket.py bracket_saddle 16 x 10 x 30 mm, unit_v3_dimensioned.py): 16 mm along the track, 10 mm in the other direction across the pipe, 30 mm out from the pipe towards the spine. The sleeves' C gap (18 mm narrow, hand_sleeve.py OPENING_W) faces the spine (HAND_TURN) and the bracket passes through it with its thin sides: 16 along the pipe, 10 across.
@@ -98,7 +97,7 @@ export const STORE_START = 10;                  // pods per row at the start
 export const POD_PITCH = POD_R * 2 + 0.0005;    // pods rest against each other on the slope
 export const ROW_PITCH = 0.035;
 export const ROW_X0 = 0.07 + ROW_PITCH / 2;
-export const SLOPE = 12 * Math.PI / 180;
+export const SLOPE = CAD_CONSTANTS.pod_store_dims.STORE_SLOPE_DEG * Math.PI / 180;   // cad/parts/pod_store_dims.py: 7 degrees, so the whole store (back end included) stays under the lid (#461)
 export const STORE_Z0 = 0.205;                  // floor of the channel under position 0 (the store stands on legs on the shelf, under the lid)
 export const STORE_Y0 = -0.145;                 // y of the channel under position 0 (the pick line)
 export const LOAD_CLEAR = 0.5;                  // clear floor needed behind the unit to load the store from the back
@@ -164,7 +163,7 @@ const rgba = (r: number, g: number, b: number, a = 1) => `rgba="${r} ${g} ${b} $
 const SOLID = 'contype="1" conaffinity="1"';
 // fixed unit parts: pods collide with them (bit 1) and so does the arm (bit 2)
 const OBST = 'contype="1" conaffinity="3"';
-const SLICK = `${OBST} friction="0.05 0.005 0.0001"`;   // store channel: pods slide (MuJoCo takes the larger friction of a pair)
+const SLICK = `${OBST} friction="0.02 0.005 0.0001" condim="1"`;   // store channel: pods slide (MuJoCo takes the larger friction of a pair)
 const SILICONE = rgba(0.95, 0.55, 0.2);
 // silicone collars: pods and the arm (bit 2) both collide with them, so a gripper contact can be detected (geoms named collar_*)
 const SOFT = 'contype="1" conaffinity="3"';
@@ -175,7 +174,7 @@ const CART_COL = 'contype="4" conaffinity="2"';   // the cart's parts: they coll
  *  except the battery, which the arm base sits flush on. Against the spine and the track bracket the cart is measured, not simulated: see PodWorld.scanCart. */
 function cartMount(): { open: string; close: string; baseAttrs: string } {
   const open = `<body name="cart" mocap="true" pos="${CART_HOME_X} ${PIPE_Y} ${f(CART_Z)}" quat="${CART_QUAT.map(f).join(' ')}">
-      ${staticOmniCart({ free: 'B', handTurn: HAND_TURN, batteryX: ARM_SLIDE * 1000, col: CART_COL, colBattery: SOLID })}`;
+      ${staticOmniCart({ free: 'B', jawOpenRad: 0, handTurn: HAND_TURN, batteryX: ARM_SLIDE * 1000, col: CART_COL, colBattery: SOLID })}`;
   // no joint and no extra base: the arm's own base body is a fixed child of the cart, its underside flat on the battery face
   const baseAttrs = `pos="${f(ARM_SLIDE)} ${f(PLATE_FACE_Y + BASE_BOTTOM)} 0" xyaxes="${BASE_XYAXES}"`;
   return { open, close: '</body>', baseAttrs };
@@ -216,8 +215,8 @@ function podMjcf(i: number): string {
   const lift = 0.0004;                                 // start just above the floor so the pods do not begin in contact
   const q = STORE_QUAT.map(f).join(' ');
   return `<body name="${podName(i)}" pos="${f(x)} ${f(y - lift * sinT)} ${f(z + lift * cosT)}" quat="${q}">
-      <joint type="free" damping="0.002"/>
-      <geom type="cylinder" size="${POD_R} ${POD_LEN / 2}" mass="0.012" friction="0.05 0.005 0.0001" ${SOLID} ${rgba(0.93, 0.93, 0.9)}/>
+      <joint type="free" damping="0.01"/>
+      <geom type="cylinder" size="${POD_R} ${POD_LEN / 2}" mass="0.012" friction="0.02 0.005 0.0001" condim="1" ${SOLID} ${rgba(0.93, 0.93, 0.9)}/>
       <geom type="cylinder" size="${HOLE_R} ${POD_LEN / 2 + 0.0002}" contype="0" conaffinity="0" ${rgba(0.12, 0.12, 0.14)}/>
     </body>`;
 }

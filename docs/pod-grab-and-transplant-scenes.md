@@ -13,7 +13,8 @@ Pictures: `cad/renders/podgrab-omni-*` and `cad/renders/transplant-omni-*` (four
 - **Pod grab works on the new cart, and the cart can ride the whole bottom run, past the spine (#461).** The sleeves are turned 90 degrees about their pipes (`HAND_TURN` in `podgrab/layout.ts`)
   so the 18 mm slot of each sleeve faces the spine; the spine-to-track bracket (CAD saddle 16 x 10 x 30 mm, 16 mm along the pipe, 10 mm across) passes through the slot. Checked on the CAD
   triangles (`podgrab/clearance.ts`) at every 5 mm from -33 to +28 cm: nothing intersects the spine, the bracket plate, its rod or the pipe, for both hands and the open hand's jaw and motors.
-  The spine is 46 mm thick, not 70: the sleeve ring is 34.5 mm out from the pipe axis and the spine surface is 60 mm minus the spine radius from it, so 46 mm is the thickest that leaves 2.5 mm clear.
+  The spine is the CAD 33.7 mm tube (`cad/parts/unit_dims.py` SP), 60 mm behind the pipe; the sim has no sim-only offsets any more. The hand that hangs open below the pipe has its jaw CLOSED (it takes less room). The pod-grab track is at the shared CAD height; to let the arm (hanging under the pipe on the top sleeve) reach tray rows B to D, `cad/layout.json` `cart_clearance_mm` went from 45 to 110 (smallest tried that works: 45, 65, 85, 105 fail, 110 to 125 pass), so CAD and sim are identical.
+  The pod store slope is 7 degrees (`cad/parts/pod_store_dims.py`, was 12): at 12 degrees the back end of the 13-pod channel stood 17 mm through the lid; now the highest point is 6 mm under it. Pod friction in the store is frictionless contact (condim 1) with a little damping, so pods still slide to the pick hole.
   The whole 4 x 4 tray is filled, 16 pods, the arm never touches the spine, the bracket or the pipe.
 
 ## What changed in the scenes
