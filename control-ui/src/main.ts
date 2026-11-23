@@ -2,7 +2,7 @@ import loadMujoco from '@mujoco/mujoco';
 import wasmUrl from '@mujoco/mujoco/mujoco.wasm?url';
 import './style.css';
 import { SCENES } from './scenes/index.ts';
-import { GROUPS, STORAGE_KEY, resolveSceneId } from './scenes/list.ts';
+import { GROUPS, STORAGE_KEY, isDevSceneId, resolveSceneId } from './scenes/list.ts';
 import type { Scene, SceneInstance } from './scenes/scene.ts';
 
 const status = document.getElementById('status')!;
@@ -26,7 +26,7 @@ async function main() {
     <button id="picker-btn" aria-haspopup="listbox" aria-expanded="false"><span class="label"></span><span class="caret" aria-hidden="true">▾</span></button>
     <div id="picker-list" role="listbox" aria-label="Scene" hidden>${GROUPS.map((g) => `
       <div class="grp" role="presentation">${g}</div>
-      ${SCENES.filter((s) => s.group === g).map((s) => `<button role="option" data-id="${s.id}">${s.name}</button>`).join('')}`).join('')}
+      ${SCENES.filter((s) => s.group === g && !isDevSceneId(s.id)).map((s) => `<button role="option" data-id="${s.id}">${s.name}</button>`).join('')}`).join('')}
     </div>`;
   const btn = document.getElementById('picker-btn')!;
   const list = document.getElementById('picker-list')!;
@@ -54,7 +54,7 @@ async function main() {
     const mine = ++token;
     currentId = id;
     reflect(scene);
-    writeStored(id);
+    if (!isDevSceneId(id)) writeStored(id);
     if (push) {
       const url = new URL(location.href);
       url.searchParams.set('scene', id);

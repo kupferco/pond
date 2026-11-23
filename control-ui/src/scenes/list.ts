@@ -15,10 +15,14 @@ export const SCENE_INFOS: readonly SceneInfo[] = [
   { id: 'pod-grab', name: '4. Pod grab', group: 'Tests', description: 'Grab a pod inside the tank and move it to the seedling tray.' },
   { id: 'pillar', name: '5. Pillar', group: 'Tests', description: 'Push pods into and pull them out of the central pillar, including the blank plug.' },
   { id: 'transplant', name: '6. Transplant seedling', group: 'Tests', description: 'One trip: pick a seedling, ride the cart up to the hole, park the plug, seat the seedling.' },
-  { id: 'reach-test', name: '7. Reach test', group: 'Tests', description: 'Can the arm reach all 24 planting holes and all 16 seedling pods, as is and with the cart rolled 180°? Green, amber, red.' },
-  { id: 'water-sample', name: '10. Water sample', group: 'Tests', description: 'The daily water sample: the arm plugs the cart nozzle into a unit, the pump draws the sample, then the arm and pump fill the station cup.' },
+  { id: 'water-sample', name: '7. Water sample', group: 'Tests', description: 'The daily water sample: the arm plugs the cart nozzle into a unit, the pump draws the sample, then the arm and pump fill the station cup.' },
   { id: 'single-unit', name: '8. Single unit', group: 'Systems', description: 'One complete unit in isolation, with full control.' },
   { id: 'four-units', name: '9. Four units', group: 'Systems', description: 'Four complete units with full tracks, one unit placed at an angle; the robot drives along the tracks and grabs pods.' },
+];
+
+/** Engineering-only scenes: never in the picker or linked from the site. Open with ?scene=<id>&dev=1. */
+export const DEV_SCENE_INFOS: readonly SceneInfo[] = [
+  { id: 'reach-test', name: 'Reach test (dev)', group: 'Tests', description: 'Can the arm reach all 24 planting holes and all 16 seedling pods, as is and with the cart rolled 180°? Green, amber, red.' },
 ];
 
 export const GROUPS: readonly SceneGroup[] = ['Tests', 'Systems'];
@@ -27,10 +31,14 @@ export const STORAGE_KEY = 'pond.sim.scene';
 
 export const isSceneId = (id: unknown): id is string => typeof id === 'string' && SCENE_INFOS.some((s) => s.id === id);
 
-/** URL (?scene=) wins over the remembered choice; anything unknown falls back to the default. */
+export const isDevSceneId = (id: unknown): id is string => typeof id === 'string' && DEV_SCENE_INFOS.some((s) => s.id === id);
+
+/** URL (?scene=) wins over the remembered choice; anything unknown falls back to the default. Dev scenes need &dev=1 and are never remembered. */
 export function resolveSceneId(search: string, stored: string | null): string {
-  const fromUrl = new URLSearchParams(search).get('scene');
+  const q = new URLSearchParams(search);
+  const fromUrl = q.get('scene');
   if (isSceneId(fromUrl)) return fromUrl;
+  if (q.get('dev') === '1' && isDevSceneId(fromUrl)) return fromUrl;
   if (isSceneId(stored)) return stored;
   return DEFAULT_SCENE;
 }

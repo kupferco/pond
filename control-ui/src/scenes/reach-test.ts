@@ -13,10 +13,10 @@ import { SWEEP_ANGLES, TURN_90, TURN_90_FROM_ZERO, runSweep, type RollCell, type
 /** The cart as shown at load and when the arm is folded: rolled 180° about leg A's own axis, at 1.0 m. */
 const ROLLED_HOME = stations('leg A', 180).find((s) => Math.abs(s.at - 1.0) < 1e-6)!;
 import { JAW_CAP_DEG } from '../transplant/layout.ts';
-import { SCENE_INFOS } from './list.ts';
+import { DEV_SCENE_INFOS } from './list.ts';
 import type { Scene } from './scene.ts';
 
-const info = SCENE_INFOS.find((s) => s.id === 'reach-test')!;
+const info = DEV_SCENE_INFOS.find((s) => s.id === 'reach-test')!;
 const VIEWS: Record<string, { target: [number, number, number]; dist: number; az: number; el: number }> = {
   overview: { target: [0.1, 0.1, 0.95], dist: 3.2, az: 0.5, el: 0.2 },
   tray: { target: [0.1, -0.24, 0.3], dist: 0.9, az: 0.4, el: 0.45 },

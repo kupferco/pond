@@ -70,7 +70,8 @@ let msg = '';
 try { await cmd.setMode('real'); } catch (e) { msg = (e as Error).message; }
 check('real mode refuses, stays on sim', msg.includes('not connected') && cmd.mode === 'sim');
 
-check('ten scenes, two groups, Transplant seedling, Reach test and Water sample under the Tests', SCENE_INFOS.length === 10 && SCENE_INFOS.filter((s) => s.group === 'Tests').length === 8 && SCENE_INFOS.some((s) => s.id === 'water-sample' && s.group === 'Tests') && SCENE_INFOS.some((s) => s.id === 'transplant' && s.group === 'Tests') && SCENE_INFOS.some((s) => s.id === 'reach-test' && s.group === 'Tests'));
+check('nine public scenes numbered 1 to 9, Transplant seedling and Water sample under the Tests, no Reach test', SCENE_INFOS.length === 9 && SCENE_INFOS.every((s, i) => s.name.startsWith(`${i + 1}. `)) && SCENE_INFOS.filter((s) => s.group === 'Tests').length === 7 && !SCENE_INFOS.some((s) => s.id === 'reach-test') && SCENE_INFOS.some((s) => s.id === 'water-sample' && s.group === 'Tests') && SCENE_INFOS.some((s) => s.id === 'transplant' && s.group === 'Tests'));
+check('reach test only opens with dev=1 and is not remembered', resolveSceneId('?scene=reach-test', null) === 'arm' && resolveSceneId('?scene=reach-test&dev=1', null) === 'reach-test' && resolveSceneId('', 'reach-test') === 'arm');
 check('scene default is arm', resolveSceneId('', null) === 'arm');
 check('scene URL wins over stored', resolveSceneId('?scene=cart', 'pillar') === 'cart');
 check('stored scene used without URL', resolveSceneId('', 'pillar') === 'pillar');
