@@ -1,6 +1,6 @@
 // The omni-wheel cart for MuJoCo (OpenPocket #281, plan task 265 part 7, docs/plans/cart-roll-redesign-plan.md sections 3 to 5 and 10).
 // It replaces the hinge-era cart in model.ts / dims.ts, which stay in place only until the scene parts of the plan (cart on track, transfer,
-// pod grab, transplant, reach test) move over to this file; they are marked LEGACY and are deleted with the last scene that uses them.
+// pod grab, transplant) move over to this file; they are marked LEGACY and are deleted with the last scene that uses them.
 //
 // What it models, from the CAD (cad/hand_sleeve.py v5, cad/cart_omni.py, cad/cart_dims.py v3; the Python files are the source of truth,
 // test/sim.test.ts reads them and fails if a number here drifts):

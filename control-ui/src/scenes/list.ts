@@ -20,25 +20,16 @@ export const SCENE_INFOS: readonly SceneInfo[] = [
   { id: 'four-units', name: '9. Four units', group: 'Systems', description: 'Four complete units with full tracks, one unit placed at an angle; the robot drives along the tracks and grabs pods.' },
 ];
 
-/** Engineering-only scenes: never in the picker or linked from the site. Open with ?scene=<id>&dev=1. */
-export const DEV_SCENE_INFOS: readonly SceneInfo[] = [
-  { id: 'reach-test', name: 'Reach test (dev)', group: 'Tests', description: 'Can the arm reach all 24 planting holes and all 16 seedling pods, as is and with the cart rolled 180°? Green, amber, red.' },
-];
-
 export const GROUPS: readonly SceneGroup[] = ['Tests', 'Systems'];
 export const DEFAULT_SCENE = 'arm';
 export const STORAGE_KEY = 'pond.sim.scene';
 
 export const isSceneId = (id: unknown): id is string => typeof id === 'string' && SCENE_INFOS.some((s) => s.id === id);
 
-export const isDevSceneId = (id: unknown): id is string => typeof id === 'string' && DEV_SCENE_INFOS.some((s) => s.id === id);
-
-/** URL (?scene=) wins over the remembered choice; anything unknown falls back to the default. Dev scenes need &dev=1 and are never remembered. */
+/** URL (?scene=) wins over the remembered choice; anything unknown falls back to the default. */
 export function resolveSceneId(search: string, stored: string | null): string {
-  const q = new URLSearchParams(search);
-  const fromUrl = q.get('scene');
+  const fromUrl = new URLSearchParams(search).get('scene');
   if (isSceneId(fromUrl)) return fromUrl;
-  if (q.get('dev') === '1' && isDevSceneId(fromUrl)) return fromUrl;
   if (isSceneId(stored)) return stored;
   return DEFAULT_SCENE;
 }
