@@ -12,7 +12,7 @@ import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
 import { cartMjcf, WHEEL_OPEN_M, cartActuators, cartBody, setMotors } from '../src/cart/model.ts';
 import { P_TOP_CM, ROLL_STATION_CM, S_FLAT_CM, placeTransfer, transferContacts, transferMjcf as transferMjcfO, blockedBy, type Trim } from '../src/cart/omni-transfer.ts';
-import { CORRIDORS, JAW_A1_DEG, TransferRun, rollPlan, type Variant } from '../src/cart/omni-transfer-run.ts';
+import { CORRIDOR, JAW_A1_DEG, TRANSIT_ROLL_DEG, TransferRun, rollPlan } from '../src/cart/omni-transfer-run.ts';
 import { S_MAX_CM, S_MIN_CM, transferMjcf, worldToCad } from '../src/cart/transfer-model.ts';
 import * as DIMS from '../src/cart/dims.ts';
 import * as OC from '../src/cart/omni.ts';
@@ -228,12 +228,12 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
 
   // ---- Transfer on the omni cart (OpenPocket #283, plan task 265 part 9): the roll about the static pipe replaces the hinge swing ----
   // The legacy hinge model above (transfer-model.ts) stays only for the Transplant scene until plan task 10 moves it over; the Transfer scene itself is src/cart/omni-transfer.ts.
-  const ot = (variant: Variant) => { const mm = mj.MjModel.from_xml_string(transferMjcfO({ jawA1: JAW_A1_DEG[variant] })), dd = new mj.MjData(mm); mm.geom_margin.fill(0.0001); return { mm, dd }; };
+  const ot = () => { const mm = mj.MjModel.from_xml_string(transferMjcfO({ jawA1: JAW_A1_DEG })), dd = new mj.MjData(mm); mm.geom_margin.fill(0.0001); return { mm, dd }; };
   const probeAt = (w: { mm: any; dd: any }, rider: 'B' | 'C', s: number, roll: number, open = 1, trim?: Trim) => { placeTransfer(w.mm, w.dd, { rider, s, roll, open, trim }); mj.mj_forward(w.mm, w.dd); const d = transferContacts(w.mm, w.dd, rider); return { what: blockedBy(d), d }; };
-  const cadW = ot('cad'), wideW = ot('wide');
+  const cadW = ot();
   check('transfer model: one mocap cart, 8 actuators (2 drive, 2 roll motor, 2 roll joint, 2 jaw), the jaws are hinges 0 to 92 degrees, no hinge1/hinge2, rods and rings on both pipes',
     cadW.mm.nmocap === 1 && cadW.mm.nu === 8 && ['jawB', 'jawC'].every((n) => cadW.mm.jnt(n).id >= 0 && Math.abs(cadW.mm.jnt_range[2 * cadW.mm.jnt(n).id + 1] - OC.JAW_OPEN_RAD) < 1e-9) && !/hinge[12]/.test(transferMjcfO()) && !/name="(rod|ring)/.test(transferMjcfO()));
-  check('jaw wedge numbers: CAD 0 to 110 degrees and 92 degrees open (cad/cart_sleeves.py), the proposed wedge 150', OC.JAW_A1 === 110 && JAW_A1_DEG.cad === 110 && JAW_A1_DEG.wide === 150 && OC.JAW_OPEN_DEG === 92 && /^JAW_A0, JAW_A1 = 0\.0, 110\.0/m.test(py('cart_sleeves.py')) && /^JAW_OPEN = 92\.0/m.test(py('cart_sleeves.py')));
+  check('jaw wedge numbers: CAD 0 to 110 degrees and 92 degrees open (cad/cart_sleeves.py), the only wedge the sim uses', OC.JAW_A1 === 110 && JAW_A1_DEG === 110 && OC.JAW_OPEN_DEG === 92 && /^JAW_A0, JAW_A1 = 0\.0, 110\.0/m.test(py('cart_sleeves.py')) && /^JAW_OPEN = 92\.0/m.test(py('cart_sleeves.py')));
   // placement: the riding hand's pipe axis sits on its own pipe, hand B and C mirror each other
   { const at = (rider: 'B' | 'C', s: number, roll = 0) => { placeTransfer(cadW.mm, cadW.dd, { rider, s, roll, open: 0 }); mj.mj_forward(cadW.mm, cadW.dd); const p = (n: string) => [cadW.dd.xpos[3 * cadW.mm.body(n).id], cadW.dd.xpos[3 * cadW.mm.body(n).id + 1], cadW.dd.xpos[3 * cadW.mm.body(n).id + 2]]; return { B: p('handB'), C: p('handC') }; };
     const a = at('C', 30), b = at('B', 30);
@@ -243,26 +243,25 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     const r1 = at('C', 30, 90), r2 = at('B', 30, 90);
     check('a positive roll turns the free hand to the plate side (-y) for both trips, round the static pipe (120 mm radius)', r1.B[1] < -0.1 && r2.C[1] < -0.1 && Math.abs(Math.hypot(r1.B[0] - 0.06, r1.B[1]) - 0.12) < 1e-6 && Math.abs(Math.hypot(r2.C[0] + 0.06, r2.C[1]) - 0.12) < 1e-6 && Math.abs(r1.C[0] - 0.06) < 1e-9 && Math.abs(r2.B[0] + 0.06) < 1e-9, JSON.stringify([r1.B, r2.C])); }
   // clamped on the leg and a jaw opened on its own pipe touch nothing; the rods are passed at roll 0
-  check('both hands clamped, riding the whole leg every 1 cm: no collision (rods and rings included)', [S_MIN_CM, 20, 30, 40, 50, 55].every((s) => ['B', 'C'].every((r) => probeAt(cadW, r as 'B' | 'C', s, 0, 0).what === '')));
+  check('both hands clamped, riding the whole leg every 1 cm: no collision', [S_MIN_CM, 20, 30, 40, 50, 55].every((s) => ['B', 'C'].every((r) => probeAt(cadW, r as 'B' | 'C', s, 0, 0).what === '')));
   check('a jaw open 92 degrees round its own pipe at roll 0, on the leg: the free hand touches nothing (both hands)', ['B', 'C'].every((r) => [S_MIN_CM, 30, 50].every((s) => probeAt(cadW, r as 'B' | 'C', s, 0, 1).what === '')));
   // ---- the go or no-go: the roll corridors, both directions, both trips, both jaw wedges ----
   for (const rider of ['C', 'B'] as const) {
     const free = rider === 'C' ? 'B' : 'C', trip = rider === 'C' ? 'up pipe C (hand B released)' : 'up pipe B (hand C released)';
-    const firstHit = (w: typeof cadW, dir: 1 | -1) => { for (let a = 0; a <= 180; a++) { const r = probeAt(w, rider, ROLL_STATION_CM, dir * a); if (r.what) return { a, what: r.what }; } return null; };
-    const cp = firstHit(cadW, 1), cs = firstHit(cadW, -1);
-    check(`CAD jaw wedge (0 to 110), trip ${trip}: neither direction clears: the plate side hits the free hand's own pipe within 5 degrees (${cp?.a}), the spine side within 5 degrees (${cs?.a})`, !!cp && !!cs && cp.a <= 5 && cs.a <= 5 && /free:pipe/.test(cp.what) && /free:pipe/.test(cs.what));
-    const wp = firstHit(wideW, 1), ws = firstHit(wideW, -1);
-    check(`wedge 0 to 150, trip ${trip}: the plate side rolls 0 to 180 degrees at the roll station without touching anything, the spine side still hits (${ws?.a} degrees)`, wp === null && !!ws && ws.a <= 5);
+    const firstHit = (dir: 1 | -1, from = 0) => { for (let a = from; a <= 180; a++) { const r = probeAt(cadW, rider, ROLL_STATION_CM, dir * a); if (r.what) return { a, what: r.what }; } return null; };
+    const afterTransit = firstHit(1, TRANSIT_ROLL_DEG);
+    const inTransit = firstHit(1);
+    check(`CAD jaw wedge (0 to 110), trip ${trip}: the plate side is clear from ${TRANSIT_ROLL_DEG} to 180 degrees at the station; before that the free jaw passes through its own pipe (first at ${inTransit?.a} degrees)`, afterTransit === null && !!inTransit && inTransit.a <= 5 && /free:pipe/.test(inTransit.what));
     // held through the bend: roll angles in the corridor, every 0.25 cm from the roll station to the roll-back point
-    const heldBad = (deg: number) => { let n = 0; for (let s = ROLL_STATION_CM; s <= S_FLAT_CM + 1e-9; s += 0.25) if (probeAt(wideW, rider, s, deg).what) n++; return n; };
-    check(`wedge 150, trip ${trip}: the roll held at 35, 90 and 180 degrees through the whole bend (every 0.25 cm, ${Math.round((S_FLAT_CM - ROLL_STATION_CM) / 0.25) + 1} poses each): no contact`, [35, 90, 180].every((d) => heldBad(d) === 0));
-    check(`wedge 150, trip ${trip}: below the corridor (20 and 30 degrees) the free hand still catches pipe ${free}'s bend`, heldBad(20) > 0 && heldBad(30) > 0);
-    check(`wedge 150, trip ${trip}: the roll back at the start of the top run (every 1 degree, 90 to 0) is clear and the flat cart with the jaw open clears the top bar every 0.5 cm`, sweep(90, 0, 1).every((a) => probeAt(wideW, rider, S_FLAT_CM, a).what === '') && (() => { for (let s = S_FLAT_CM; s <= P_TOP_CM + 1e-9; s += 0.5) if (probeAt(wideW, rider, s, 0).what) return false; return true; })());
+    const heldBad = (deg: number) => { let n = 0; for (let s = ROLL_STATION_CM; s <= S_FLAT_CM + 1e-9; s += 0.25) if (probeAt(cadW, rider, s, deg).what) n++; return n; };
+    check(`CAD wedge, trip ${trip}: the roll held at 45, 90 and 180 degrees through the whole bend (every 0.25 cm, ${Math.round((S_FLAT_CM - ROLL_STATION_CM) / 0.25) + 1} poses each): no contact`, [TRANSIT_ROLL_DEG, 90, 180].every((d) => heldBad(d) === 0));
+    check(`CAD wedge, trip ${trip}: below the corridor (20 and 30 degrees) the free hand still passes through pipe ${free}'s bend`, heldBad(20) > 0 && heldBad(30) > 0);
+    check(`CAD wedge, trip ${trip}: the roll back at the start of the top run (every 1 degree, 90 to 45; below 45 is the transit) is clear and the flat cart with the jaw open clears the top bar every 0.5 cm`, sweep(90, TRANSIT_ROLL_DEG, 1).every((a) => probeAt(cadW, rider, S_FLAT_CM, a).what === '') && (() => { for (let s = S_FLAT_CM; s <= P_TOP_CM + 1e-9; s += 0.5) if (probeAt(cadW, rider, s, 0).what) return false; return true; })());
   }
-  check('the two trips have the same corridors (the hands are true mirrors): the roll corridor table is the same for B and C in both variants', JSON.stringify(CORRIDORS.cad.B) === JSON.stringify(CORRIDORS.cad.C) && JSON.stringify(CORRIDORS.wide.B) === JSON.stringify(CORRIDORS.wide.C));
-  check('roll plan: the CAD wedge has no direction (stop and ask the owner, Q3); the wide wedge rolls 90 degrees to the plate side, inside 35 to 180', rollPlan('cad', 'C').dir === null && /ask the owner/.test(rollPlan('cad', 'C').reason!) && rollPlan('wide', 'C').dir === 1 && rollPlan('wide', 'C').roll === 90 && rollPlan('wide', 'B').roll === 90 && CORRIDORS.wide.C.plate![0] <= 90 && CORRIDORS.wide.C.plate![1] >= 90);
+  check('the two trips have the same corridor (the hands are true mirrors)', JSON.stringify(CORRIDOR.B) === JSON.stringify(CORRIDOR.C));
+  check('roll plan: the transfer rolls 90 degrees to the plate side, inside 45 to 180', rollPlan('C').dir === 1 && rollPlan('C').roll === 90 && rollPlan('B').roll === 90);
   // the rider's own sleeve on the bend is a separate finding (cart on track scene): it is not a collision of the transfer, and the rods are passed at roll 0
-  { let w = 0; for (let s = L_VERT; s <= L_VERT + L_ARC; s += 1) w = Math.min(w, probeAt(wideW, 'C', s, 0, 0).d['rider:pipe']);
+  { let w = 0; for (let s = L_VERT; s <= L_VERT + L_ARC; s += 1) w = Math.min(w, probeAt(cadW, 'C', s, 0, 0).d['rider:pipe']);
     check('known finding kept apart: the riding sleeve on the 150 mm bend still penetrates its own pipe by 3 to 5 mm (rigid 124 mm sleeve), which is not counted as a collision of the transfer', w < -0.002 && w > -0.006, `${(w * 1000).toFixed(2)} mm`); }
   // ---- controller ----
   const stepAll = (r: TransferRun, w: typeof cadW | null, max = 4000, dt = 1 / 30) => {
@@ -273,44 +272,39 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
       maxRoll = Math.max(maxRoll, Math.abs(r.st.roll)); maxRollStep = Math.max(maxRollStep, Math.abs(r.st.roll - prevRoll) / dt); prevRoll = r.st.roll;
       if (r.rolled && before !== 'roll' && before !== 'rollBack' && before !== 'move' && before !== 'moveBack' && r.st.s !== s0) drivenRolledOutsideMove++;
       if (r.st.roll !== 0 && r.st.roll !== prevRoll && (before !== 'roll' && before !== 'rollBack')) rolledOutsideRoll++;
-      if (w) { const x = probeAt(w, r.rider, r.st.s, r.st.roll, r.open(r.free), undefined); const p = x.what; if (p) { bad++; what = p; } placeTransfer(w.mm, w.dd, { rider: r.rider, s: r.st.s, roll: r.st.roll, open: r.open(r.free), riderOpen: r.open(r.rider) }); mj.mj_forward(w.mm, w.dd); if (blockedBy(transferContacts(w.mm, w.dd, r.rider))) { bad++; what = blockedBy(transferContacts(w.mm, w.dd, r.rider)); } }
+      const transit = Math.abs(r.st.roll) < TRANSIT_ROLL_DEG && r.rolling; if (w && !transit) { const x = probeAt(w, r.rider, r.st.s, r.st.roll, r.open(r.free), undefined); const p = x.what; if (p) { bad++; what = p; } placeTransfer(w.mm, w.dd, { rider: r.rider, s: r.st.s, roll: r.st.roll, open: r.open(r.free), riderOpen: r.open(r.rider) }); mj.mj_forward(w.mm, w.dd); if (blockedBy(transferContacts(w.mm, w.dd, r.rider))) { bad++; what = blockedBy(transferContacts(w.mm, w.dd, r.rider)); } }
       if (r.done && !r.busy) break;
     }
     return { phases, bad, frames, maxRoll, maxRollStep, rolledOutsideRoll, drivenRolledOutsideMove, what, rollStepOutsideWindow };
   };
-  { const r = new TransferRun('cad'); r.reset(30);
-    check('CAD wedge: the transfer refuses to start and says no roll direction clears (Q3: stop and come back to the owner)', !r.start('B') && /Neither roll direction clears/.test(r.msg) && !r.busy && r.st.s === 30, r.msg);
-    check('CAD wedge: the other trip refuses too, and a manual roll to clear is refused', !r.start('C') && (r.clampHand('B', true), r.advance(2.5), !r.rollTo(1)) && /Neither roll direction clears|ask the owner/.test(r.msg));
-    r.reset(ROLL_STATION_CM); r.clampHand('B', true); for (let i = 0; i < 100; i++) r.advance(0.05);
-    check('CAD wedge: rolling by hand 20 degrees anyway (the "try" button) is allowed and the contact check sees the free hand hit its own pipe', r.rollTo(1, 20) && (() => { for (let i = 0; i < 100; i++) r.advance(0.05); return probeAt(cadW, r.rider, r.st.s, r.st.roll).what.includes('free:pipe'); })()); }
-  { const r = new TransferRun('wide'); r.reset(30);
-    check('wide wedge: roll refused with both jaws clamped, with only the static jaw open, away from the roll station and on the run', !r.rollTo(1) && /Release hand B first/.test(r.msg) && (r.clampHand('B', true), r.advance(0.2), !r.rollTo(1)) && /Release hand B first/.test(r.msg));
+  { const r = new TransferRun(); r.reset(30);
+    check('controller: roll refused with both jaws clamped, with only the static jaw open, away from the roll station and on the run', !r.rollTo(1) && /Release hand B first/.test(r.msg) && (r.clampHand('B', true), r.advance(0.2), !r.rollTo(1)) && /Release hand B first/.test(r.msg));
     for (let i = 0; i < 100; i++) r.advance(0.05);
-    check('wide wedge: with hand B fully open at 30 cm the roll is refused (the rolled sleeve would hit the track-joint rods, the roll station is 47 to 50 cm)', !r.rollTo(1) && /roll station/.test(r.msg) && r.st.roll === 0);
-    check('wide wedge: releasing hand C as well is refused (the cart would let go)', !r.clampHand('C', true) && /not clamped/.test(r.msg));
-    check('wide wedge: nudging the cart to the top of the leg and rolling works there; a rolled cart refuses to jaw or release', r.nudge(40) && (() => { for (let i = 0; i < 400; i++) r.advance(0.05); return r.st.s === S_MAX_CM && r.rollTo(1); })() && (() => { for (let i = 0; i < 100; i++) r.advance(0.05); return r.st.roll === 90 && !r.clampHand('B', false); })());
-    check('wide wedge: rolled, forward drives round the bend only up to the end of the bend (the run needs roll 0), further is clipped with the reason', r.nudge(100) && r.goal.s === S_FLAT_CM && /run needs roll 0/.test(r.msg));
-    check('wide wedge: rolled cart cannot be driven with the free jaw not fully open (jaw moving)', (() => { const q = new TransferRun('wide'); q.reset(S_MAX_CM); q.clampHand('B', true); for (let i = 0; i < 100; i++) q.advance(0.05); q.rollTo(1); for (let i = 0; i < 100; i++) q.advance(0.05); q.goal.openB = 0; q.advance(0.5); const s0 = q.st.s; q.goal.s = s0 + 5; q.advance(0.5); return q.st.s === s0; })()); }
+    check('controller: with hand B fully open at 30 cm the roll is refused (the rolled sleeve would hit the track-joint rods, the roll station is 47 to 50 cm)', !r.rollTo(1) && /roll station/.test(r.msg) && r.st.roll === 0);
+    check('controller: releasing hand C as well is refused (the cart would let go)', !r.clampHand('C', true) && /not clamped/.test(r.msg));
+    check('controller: nudging the cart to the top of the leg and rolling works there; a rolled cart refuses to jaw or release', r.nudge(40) && (() => { for (let i = 0; i < 400; i++) r.advance(0.05); return r.st.s === S_MAX_CM && r.rollTo(1); })() && (() => { for (let i = 0; i < 100; i++) r.advance(0.05); return r.st.roll === 90 && !r.clampHand('B', false); })());
+    check('controller: rolled, forward drives round the bend only up to the end of the bend (the run needs roll 0), further is clipped with the reason', r.nudge(100) && r.goal.s === S_FLAT_CM && /run needs roll 0/.test(r.msg));
+    check('controller: rolled cart cannot be driven with the free jaw not fully open (jaw moving)', (() => { const q = new TransferRun(); q.reset(S_MAX_CM); q.clampHand('B', true); for (let i = 0; i < 100; i++) q.advance(0.05); q.rollTo(1); for (let i = 0; i < 100; i++) q.advance(0.05); q.goal.openB = 0; q.advance(0.5); const s0 = q.st.s; q.goal.s = s0 + 5; q.advance(0.5); return q.st.s === s0; })()); }
   // full transfers, both ways, with every frame contact-checked
   for (const s0 of [S_MIN_CM, 30, S_MAX_CM]) for (const rel of ['B', 'C'] as const) {
-    const r = new TransferRun('wide'); r.reset(s0), r.setSpeed(20);
-    const started = r.start(rel), out = stepAll(r, wideW), top = rel === 'B' ? 'right' : 'left';
+    const r = new TransferRun(); r.reset(s0), r.setSpeed(20);
+    const started = r.start(rel), out = stepAll(r, cadW), top = rel === 'B' ? 'right' : 'left';
     check(`trip releasing hand ${rel} from ${s0} cm: starts, runs toStation > release > roll > move > rollBack > moveTop and finishes`, started && r.done && out.phases.join('>') === 'toStation>release>roll>move>rollBack>moveTop', out.phases.join('>'));
     check(`trip releasing hand ${rel} from ${s0} cm: zero collisions of the free hand, base and rods on every frame (${out.frames} frames), the roll never above 90 degrees and never faster than the roll speed`, out.bad === 0 && out.maxRoll === 90 && out.maxRollStep <= r.rollDegS + 1e-6, `${out.bad} bad ${out.what}, max roll ${out.maxRoll}, ${out.maxRollStep.toFixed(1)} deg/s`);
     check(`trip releasing hand ${rel} from ${s0} cm: ends at the top ${top} of pipe ${rel === 'B' ? 'C' : 'B'}, flat, hand ${rel} open, the other clamped, and the cart travelled round the bend (more than 60 cm)`, r.st.s === P_TOP_CM && r.st.roll === 0 && r.open(rel) === 1 && r.open(rel === 'B' ? 'C' : 'B') === 0 && P_TOP_CM - s0 > 60);
     check(`trip releasing hand ${rel} from ${s0} cm: the cart rolls only in the roll steps and never drives rolled outside the move steps`, out.rolledOutsideRoll === 0 && out.drivenRolledOutsideMove === 0);
   }
   { // there and back, and on to the other pipe: press three times
-    const r = new TransferRun('wide'); r.reset(S_MAX_CM); r.setSpeed(30); const ends: string[] = [], seq: string[] = []; let bad = 0;
-    for (let p = 0; p < 3; p++) { const ok = r.press(); const o = stepAll(r, wideW); bad += o.bad; seq.push(o.phases.join('>')); ends.push(`${ok}:${r.st.s.toFixed(1)}:${r.rider}`); }
+    const r = new TransferRun(); r.reset(S_MAX_CM); r.setSpeed(30); const ends: string[] = [], seq: string[] = []; let bad = 0;
+    for (let p = 0; p < 3; p++) { const ok = r.press(); const o = stepAll(r, cadW); bad += o.bad; seq.push(o.phases.join('>')); ends.push(`${ok}:${r.st.s.toFixed(1)}:${r.rider}`); }
     check('three presses: up C, then (back and) up B, then (back and) up C, ending on the top bar each time', ends.join(' ') === `true:${P_TOP_CM.toFixed(1)}:C true:${P_TOP_CM.toFixed(1)}:B true:${P_TOP_CM.toFixed(1)}:C`, ends.join(' '));
     check('press 2 comes back: drive flat to the bend end, roll, drive back round the bend rolled, roll flat, clamp, then the trip up the other pipe', seq[1] === 'moveFlat>roll>moveBack>rollBack>clamp>toStation>release>roll>move>rollBack>moveTop', seq[1]);
     check('three presses: zero collisions on every frame', bad === 0, String(bad)); }
-  { const r = new TransferRun('wide'); r.reset(S_MAX_CM); r.setSpeed(30); r.start('B'); const o = stepAll(r, wideW); r.reset(); const t0 = r.start('C');
+  { const r = new TransferRun(); r.reset(S_MAX_CM); r.setSpeed(30); r.start('B'); const o = stepAll(r, cadW); r.reset(); const t0 = r.start('C');
     check('reset: cart back at the top of the leg, both clamped, ready for another transfer; reset again and the other trip starts', o.bad === 0 && t0 && r.st.openB === 0 && r.st.openC === 0 && r.current === 'toStation'); }
-  { const r = new TransferRun('wide'); r.reset(S_MAX_CM); r.start('B'); r.advance(0.1); const msg = r.start('B'), stopped = (r.stop(), r.msg === 'Stopped.' && !r.busy);
+  { const r = new TransferRun(); r.reset(S_MAX_CM); r.start('B'); r.advance(0.1); const msg = r.start('B'), stopped = (r.stop(), r.msg === 'Stopped.' && !r.busy);
     check('a running transfer refuses a second start and stop() ends it where it is', !msg && stopped); }
-  cadW.mm.delete(); cadW.dd.delete(); wideW.mm.delete(); wideW.dd.delete();
+  cadW.mm.delete(); cadW.dd.delete();
 }
 
 // Pod grab: the arm on the cart takes pods out of the sloped store rows and lowers them into the silicone collars of the 4 x 4 tray.

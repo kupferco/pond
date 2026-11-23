@@ -10,25 +10,22 @@ import type { Hand } from './omni.ts';
 export { P_TOP_CM, ROLL_STATION_CM, S_FLAT_CM, S_MAX_CM, S_MIN_CM, S_START_CM, P_BEND_END };
 
 /**
- * The jaw wedge's far edge in degrees (the hinge pin sits there, cad/cart_sleeves.py JAW_A1) and the roll corridors it gives, found by scripts/search-swing.ts (MuJoCo contact detection, jaw open 92 degrees,
- * both trips, both directions, roll angles 0..180 in 1 degree steps, held at every 0.25 cm from the roll station to the roll-back point; test/sim.test.ts probes them again).
- *  - 'cad' = the wedge as drawn (0 to 110 degrees): NEITHER direction clears. The free hand moves along the roll circle, which at first is straight to the plate side or the spine side, and the
- *    fixed part of the sleeve (110 to 340 degrees) is still round the pipe after 2 to 3 degrees of roll. This is the go or no-go finding of the plan: the design does not work as drawn.
- *  - 'wide' = the wedge to 150 degrees: the plate side clears from 35 to 180 degrees (the spine side still does not). A wedge to 140 degrees is the least that works (135 does not).
+ * The jaw wedge is the CAD's (0 to 110 degrees, cad/cart_sleeves.py JAW_A1, jaw open 92 degrees): the sim always uses it (owner decision, task 460; the widened 150 degree what-if is gone).
+ * Roll corridor found by scripts/search-swing.ts (MuJoCo contact detection, both trips, roll angles 0..180 in 1 degree steps, held at every 0.25 cm from the roll station to the roll-back point):
+ * the plate side is clear from 45 to 180 degrees, the spine side from 90 (not used). Between 3 and 45 degrees the free hand's jaw sector passes through its own pipe on the way (a transit, not a place the cart stays at):
+ * the transfer rolls through it, and the contact check ignores it (TRANSIT_ROLL_DEG).
  */
-export type Variant = 'cad' | 'wide';
-export const JAW_A1_DEG: Record<Variant, number> = { cad: 110, wide: 150 };
+export const JAW_A1_DEG = 110;
 export interface Corridor { plate: [number, number] | null; spine: [number, number] | null }
-export const CORRIDORS: Record<Variant, Record<Hand, Corridor>> = {
-  cad: { B: { plate: null, spine: null }, C: { plate: null, spine: null } },
-  wide: { B: { plate: [35, 180], spine: null }, C: { plate: [35, 180], spine: null } },
-};
+export const CORRIDOR: Record<Hand, Corridor> = { B: { plate: [45, 180], spine: null }, C: { plate: [45, 180], spine: null } };
+/** The roll angles (deg) the jaw passes through its own pipe on the way to the corridor: not counted as a collision. */
+export const TRANSIT_ROLL_DEG = 45;
 /** The roll the transfer uses when the corridor allows it: a quarter turn, well inside 35 to 180 degrees (the same swing as sim/unit_change.py). */
 export const TRANSFER_ROLL_DEG = 90;
 
 /** Roll plan of a trip where `rider` stays clamped: the direction that clears (Q3, plate side first), the signed roll (deg) and, when neither clears, why. */
-export function rollPlan(variant: Variant, rider: Hand): { dir: 1 | -1 | null; roll: number; side: 'plate' | 'spine' | null; reason?: string } {
-  const c = CORRIDORS[variant][rider], pick = pickRollDirection({ plus: !!c.plate, minus: !!c.spine });
+export function rollPlan(rider: Hand): { dir: 1 | -1 | null; roll: number; side: 'plate' | 'spine' | null; reason?: string } {
+  const c = CORRIDOR[rider], pick = pickRollDirection({ plus: !!c.plate, minus: !!c.spine });
   if (pick.dir === null) return { dir: null, roll: 0, side: null, reason: pick.reason };
   const [lo, hi] = (pick.dir === 1 ? c.plate : c.spine)!, deg = Math.min(hi, Math.max(lo, TRANSFER_ROLL_DEG));
   return { dir: pick.dir, roll: pick.dir * deg, side: pick.dir === 1 ? 'plate' : 'spine' };
@@ -79,10 +76,8 @@ export class TransferRun {
   lastTrip: Hand | null = null;
   /** Which hand a transfer releases when neither is open yet (B: the trip up pipe C). */
   private hint: Hand = 'B';
-  variant: Variant;
-  constructor(variant: Variant = 'cad') { this.variant = variant; }
 
-  get plan() { return rollPlan(this.variant, other(this.free)); }
+  get plan() { return rollPlan(other(this.free)); }
   /** The free (released or being released) hand: the more open one; with both clamped, the hand the next transfer releases. */
   get free(): Hand { const { openB: b, openC: c } = this.st; return b > c ? 'B' : c > b ? 'C' : this.hint; }
   /** The static (riding) hand. */
@@ -131,7 +126,7 @@ export class TransferRun {
     if (this.open(F) < 1 - EPS) return this.refuse(`Release hand ${F} first.`);
     const target = toward ? override ?? this.plan.roll : 0;   // `override`: try an angle by hand (shows the clash when no direction clears)
     if (toward && override === undefined && this.plan.dir === null) return this.refuse(this.plan.reason ?? 'No roll direction clears.');
-    if (!this.atStation() && !this.atRunRoll()) { const v = canRoll(this.st.s, target); return this.refuse(v.ok ? `Drive to the roll station (${ROLL_WINDOW_CM[0]} to ${ROLL_WINDOW_CM[1]} cm) first: the rolled sleeve must clear the track-joint rods.` : v.reason!); }
+    if (!this.atStation() && !this.atRunRoll()) { const v = canRoll(this.st.s, target); return this.refuse(v.ok ? `Drive to the roll station (${ROLL_WINDOW_CM[0]} to ${ROLL_WINDOW_CM[1]} cm) first: the cart only rolls there.` : v.reason!); }
     this.goal.roll = target; this.msg = ''; return true;
   }
   stop() { this.queue = []; this.current = null; this.goal = { ...this.st }; this.msg = 'Stopped.'; }
@@ -146,14 +141,14 @@ export class TransferRun {
     if (this.busy) return this.refuse('A transfer is already running.');
     if (this.rolling || this.rolled) return this.refuse('The cart is rolled: roll it back first.');
     const s = this.st, F = this.free, k = this.key(F), top = s.s > S_MAX_CM + EPS;
-    const trip = (R: Hand): { name: StepName; goal: Partial<Goal> }[] => [{ name: 'toStation', goal: { s: ROLL_STATION_CM } }, { name: 'release', goal: { [this.key(R)]: 1 } }, { name: 'roll', goal: { roll: rollPlan(this.variant, other(R)).roll } },
+    const trip = (R: Hand): { name: StepName; goal: Partial<Goal> }[] => [{ name: 'toStation', goal: { s: ROLL_STATION_CM } }, { name: 'release', goal: { [this.key(R)]: 1 } }, { name: 'roll', goal: { roll: rollPlan(other(R)).roll } },
       { name: 'move', goal: { s: S_FLAT_CM } }, { name: 'rollBack', goal: { roll: 0 } }, { name: 'moveTop', goal: { s: P_TOP_CM } }];
     const R: Hand = top ? other(F) : (release ?? 'B');
     if (top && !(this.open(F) >= 1 - EPS && this.goal[k] >= 1 - EPS && this.open(other(F)) <= EPS)) return this.refuse('Press Reset: the cart is not on a top bar with one hand clamped.');
     if (!top && (s.openB > EPS || s.openC > EPS || this.goal.openB > EPS || this.goal.openC > EPS)) return this.refuse('Clamp both hands first (on the leg), or press Reset.');
     const tripOf = top ? F : R;                       // the hand whose pipe is being left or rejoined
-    const p = rollPlan(this.variant, other(tripOf));
-    if (p.dir === null) return this.refuse(`${p.reason} Jaw wedge ${JAW_A1_DEG[this.variant]} degrees: the free hand cannot leave its pipe in either roll direction.`);
+    const p = rollPlan(other(tripOf));
+    if (p.dir === null) return this.refuse(`${p.reason} The free hand cannot leave its pipe in either roll direction.`);
     if (top) {
       this.queue = [{ name: 'moveFlat', goal: { s: S_FLAT_CM } }, { name: 'roll', goal: { roll: p.roll } }, { name: 'moveBack', goal: { s: ROLL_STATION_CM } }, { name: 'rollBack', goal: { roll: 0 } }, { name: 'clamp', goal: { [k]: 0 } }];
       const next = other(F);
