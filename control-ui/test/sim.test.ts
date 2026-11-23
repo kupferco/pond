@@ -72,8 +72,10 @@ check('real mode refuses, stays on sim', msg.includes('not connected') && cmd.mo
 
 check('ten scenes, two groups, Transplant seedling, Reach test and Water sample under the Tests', SCENE_INFOS.length === 10 && SCENE_INFOS.filter((s) => s.group === 'Tests').length === 8 && SCENE_INFOS.some((s) => s.id === 'water-sample' && s.group === 'Tests') && SCENE_INFOS.some((s) => s.id === 'transplant' && s.group === 'Tests') && SCENE_INFOS.some((s) => s.id === 'reach-test' && s.group === 'Tests'));
 check('scene default is arm', resolveSceneId('', null) === 'arm');
-check('scene URL wins over stored', resolveSceneId('?scene=cart', 'pillar') === 'cart');
-check('stored scene used without URL', resolveSceneId('', 'pillar') === 'pillar');
+check('scene URL wins over stored', resolveSceneId('?scene=cart', 'transplant') === 'cart');
+check('old pillar URL goes to transplant', resolveSceneId('?scene=pillar', null) === 'transplant');
+check('old pillar stored choice goes to transplant', resolveSceneId('', 'pillar') === 'transplant');
+check('stored scene used without URL', resolveSceneId('', 'transplant') === 'transplant');
 check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
 
 // --- Arm scene: kinematics, placement, scripted task, trajectory ---------------------------------
