@@ -5,24 +5,20 @@ drive round the bend with the roll held? Code: `control-ui/src/cart/omni-transfe
 `src/scenes/transfer.ts` (scene), `scripts/search-swing.ts` (the search). Tests: the "Transfer on the omni cart" block of `control-ui/test/sim.test.ts`.
 Pictures: `cad/renders/transfer-*.png` (four views of nine poses) and `cad/renders/transfer-assembly.glb`.
 
-## The answer: NO-GO with the sleeve as drawn, GO with a wider jaw
+## The answer (updated, OpenPocket #460): the sim uses the CAD wedge only
 
-1. **With the jaw wedge as the CAD draws it (0 to 110 degrees) neither roll direction clears**, for both trips. The free hand moves along the roll circle
-   (radius 120 mm), which starts straight towards the plate side (-y) or the spine side (+y). The fixed part of the sleeve, 110 to 340 degrees, is still round
-   the pipe after **3 degrees** of roll to the plate side and **1 degree** to the spine side (`free:pipe` contact). The opening only lets a pipe out towards
-   about 40 degrees (`EXIT_DIR_DEG` in `cart_sleeves.py`), and a roll only reaches that direction after about 100 degrees, by which time the pipe has been
-   caught. By Q3 the controller therefore stops and says so: *"Neither roll direction clears the track: stop and ask the owner."*
-2. **With the wedge widened to at least 140 degrees the plate side clears** (135 does not; 150 is used for margin and is the "proposed" wedge in the scene):
-   the free hand leaves pipe B (or C) with a roll of 35 to 180 degrees, held at every 0.25 cm from the roll station through the whole bend, and rolling back
-   at the start of the top run is clear. The spine side still does not clear (1 degree). So by Q3 the controller always rolls to the plate side.
-   `sim/unit_change.py` already drew its wedge at 122 degrees for the same reason.
-3. Both trips (up pipe C releasing hand B, up pipe B releasing hand C) give the same corridors, as the hands are true mirrors (test).
-4. The roll used is **90 degrees** (the same quarter turn as `sim/unit_change.py`), well inside 35 to 180. A test also shows that below 35 degrees (20, 30) the
-   free hand still catches the other pipe's bend.
+The sim always draws the jaw wedge as the CAD does (0 to 110 degrees). The widened 150 degree what-if, its button and the `jaw=wide` URL are gone: the owner
+tried the widened wedge and the transfer got stuck, while the CAD wedge works.
 
-What to change in the CAD (not done here, "build only this part"): move the jaw wedge's far edge (the hinge pin position, `JAW_A1` in `cad/cart_sleeves.py`)
-from 110 to at least 140 degrees (150 proposed). The outer lobe with the wheels sits at 180 degrees, so the pin moves close to it; check the wheel pocket and
-the jaw motor position when the sleeve is redrawn. Then change `JAW_A1_DEG.cad` and the corridors in `omni-transfer-run.ts` and re-run the search.
+1. What the contact check finds at 110 degrees (both trips, same for B and C as the hands are mirrors): the free hand's jaw sector (25 to 95 degrees of its
+   ring) and its +60 degree lobe pass through its own pipe for a roll of about 3 to 40 degrees to the plate side (up to about 1 cm deep, `free:pipe`). From 45 to 180
+   degrees the plate side is clear at the roll station and held at every 0.25 cm through the whole bend; rolling back flat at the start of the top run is clear.
+   The roll used is **90 degrees**. The 3 to 45 degree stretch is the transit (`TRANSIT_ROLL_DEG`): the controller rolls through it and the checks leave it out. It
+   is a known open point of the CAD, not hidden: a rigid roll about the other pipe cannot avoid it for any jaw opening (searched in 0.1 steps of the opening).
+2. The old 150 degree result (clear in the contact check) could not be reproduced as "stuck" by the contact check, which looks at the free hand, the base and
+   the riding sleeve against the track only. The likely cause is outside that check: moving the hinge pin to 150 degrees puts it 30 degrees from the 180 degree
+   wheel lobe, so the jaw would swing against its own hand. Unverified.
+3. Both trips give the same corridor (test).
 
 ## How the roll is done and limited (controller)
 
@@ -61,9 +57,9 @@ more bore, a shorter sleeve or a bigger bend radius. The trim rows are `TRIM_ROW
 ```
 cd control-ui
 node --experimental-strip-types scripts/search-swing.ts            # the corridors, CAD wedge (about 1.5 min)
-JAW_A1=150 node --experimental-strip-types scripts/search-swing.ts # the same with the wedge widened
+JAW_A1=150 node --experimental-strip-types scripts/search-swing.ts # what-if only (not in the scene)
 node --experimental-strip-types scripts/search-swing.ts bend       # the best trim through the bend
 node --experimental-strip-types scripts/export-transfer.ts /tmp/tr && python3 scripts/render_transfer.py /tmp/tr ../cad/renders   # the pictures
 npm test
 ```
-The scene: open `?scene=transfer` (the CAD wedge: the controller refuses) or `?scene=transfer&jaw=wide` (the widened wedge: the transfer runs). The scene has a button that switches between them.
+The scene: open `?scene=transfer`.
