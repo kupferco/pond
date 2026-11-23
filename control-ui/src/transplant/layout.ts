@@ -160,8 +160,8 @@ export interface DrawingOpts { psi: number; free?: 'B' | 'C' }
 /** A tray socket's centre in the unit frame of these drawings (x to the front, y along the tank, as in the front view from the front): the Pod grab frame (x along the tank, y front = -y) turned a quarter turn. */
 export const drawingSocket = (row: number, col: number): [number, number] => [-trayY(row), trayX(col)];
 export const DRAWING_TRAY_HX = TRAY_HY, DRAWING_TRAY_HY = TRAY_HX, DRAWING_TRAY_YC = trayX((TRAY_COLS - 1) / 2);
-/** The socket the picked seedling comes from: row A (front), column 3 (the one in line with the cart). */
-export const DRAWING_PICK: [number, number] = [0, 2];
+/** The socket the picked seedling comes from: row A (front), column 1 (the one nearest the cart's arm). */
+export const DRAWING_PICK: [number, number] = [0, 0];
 export const DRAWING_COLLAR_RIN = mm(13), DRAWING_COLLAR_H = mm(18);
 
 function pipeAndCollar(dw?: DrawingOpts): string[] {

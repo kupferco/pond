@@ -76,7 +76,7 @@ def main():
     names = {"step0": "start", "step1": "step1-pick", "step2": "step2-drive", "step3": "step3-plug", "step4": "step4-seat"}
     for st in stages:
         tris = json.load(open(os.path.join(src, st["id"] + ".json")))
-        base = "transplant-seedling-" + names[st["id"]] + "-v10"
+        base = "transplant-seedling-" + names[st["id"]] + "-v11"
         for v, box in FULL.items():
             draw(tris, v, box, os.path.join(out, f"{base}-{v}.png"))
         close = TRAY if st["id"] in ("step0", "step1") else HOLE
@@ -91,7 +91,7 @@ def main():
             p = os.path.join(out, f"_f{i}_{k}.png")
             draw(tris, view, box, p, px=640)
             imgs.append(Image.open(p).convert("P", palette=Image.ADAPTIVE, colors=64))
-        imgs[0].save(os.path.join(out, f"transplant-seedling-{names['step' + str(i)]}-v10-clip.gif"), save_all=True, append_images=imgs[1:], duration=250, loop=0, optimize=True)
+        imgs[0].save(os.path.join(out, f"transplant-seedling-{names['step' + str(i)]}-v11-clip.gif"), save_all=True, append_images=imgs[1:], duration=250, loop=0, optimize=True)
         for k in range(len(frames)):
             os.remove(os.path.join(out, f"_f{i}_{k}.png"))
 

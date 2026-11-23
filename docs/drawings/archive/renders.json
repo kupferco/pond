@@ -1027,6 +1027,71 @@
       "comment": "The pod was taken from the holder (out of reach, known gap), the cart went back up to the hole stop and the arm pushed the pod into the hole. Hole open for about 10 s of simulated time. Sim scene (control-ui, OpenPocket #230), drawn from the MuJoCo model by a software renderer. The arm is the SO-101 stand-in. v9 (OpenPocket #459, owner review): the cart and its SO-101 arm now face the FRONT of the unit (turned 180 degrees), so the seedling tray, the arm and the hole are all at the front; only one insertion is shown, the seedling pod in the collar at the front (the plug holder and the parked plug are left out); the FRONT view looks at the unit from the front, so the insertion is visible whatever height the cart is at (the cart rides behind the pipe in this drawing, so it does not hide it). The collar seat is now drawn where the pod sits (it was drawn 96 degrees round). The sim itself is unchanged. Views: -iso, -front, -side, -top, -closeup, -collar. Clip: transplant-seedling-step4-seat-v6-clip.gif.",
       "viewer": "viewer.html?src=archive/renders/transplant-seedling-step4-seat-v9.glb&title=Transplant%20seedling%3A%20Step%204%3A%20seedling%20seated%2C%20hole%20closed",
       "thumb": "archive/renders/transplant-seedling-step4-seat-v9-line.png"
+    },
+    {
+      "id": "transplant-seedling-start-v10",
+      "date": "2026-11-23",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "archived",
+      "version": 10,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Start: arm folded over the 4 x 4 seedling tray at the front left",
+      "comment": "Cart on the left-hand leg over the seedling tray, arm facing the front and folded over the tray, all 16 sockets filled, pod holder empty. v10 (OpenPocket #459, owner review): the cart and its SO-101 arm are turned about the track leg they ride, so for the pick the ARM FACES THE FRONT of the unit (the cart on the left-hand leg, over the tray) and for the insertion the cart is on the RIGHT-hand leg with the arm facing the central spine (turned 120 degrees from the front, a little towards the front); the seedling pod sits in the collar on the FRONT of the spine, visible in the front view (one insertion only: no plug holder, no parked plug); the seedling tray is the 4 x 4 tray of the sim's Pod grab scene (16 silicone sockets, rows A to D from the front, 0.24 m to the left of the pipe, 190 x 370 mm), at the FRONT LEFT of the lid, position and size read from control-ui/src/podgrab/layout.ts. Drawing only: the sim is unchanged; the arm poses are solved with the sim's own inverse kinematics. Compromise: for the pick the cart is 20 mm behind the track plane and 0.60 m high (the arm cannot reach the front row from the track plane otherwise). Views: -iso, -front, -side, -top, -closeup.",
+      "viewer": "viewer.html?src=archive/renders/transplant-seedling-start-v10.glb&title=Transplant%20seedling%3A%20Start%3A%20arm%20folded%20over%20the%20seedling%20tray%20inside%20the%20tank",
+      "thumb": "archive/renders/transplant-seedling-start-v10-line.png"
+    },
+    {
+      "id": "transplant-seedling-step1-pick-v10",
+      "date": "2026-11-23",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "archived",
+      "version": 10,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 1: seedling picked and put in the cart holder",
+      "comment": "The arm picked a seedling pod from the tray (front row A, third socket from the left) and put it in the pod holder on the cart; the arm is folded over the tray again. v10 (OpenPocket #459, owner review): the cart and its SO-101 arm are turned about the track leg they ride, so for the pick the ARM FACES THE FRONT of the unit (the cart on the left-hand leg, over the tray) and for the insertion the cart is on the RIGHT-hand leg with the arm facing the central spine (turned 120 degrees from the front, a little towards the front); the seedling pod sits in the collar on the FRONT of the spine, visible in the front view (one insertion only: no plug holder, no parked plug); the seedling tray is the 4 x 4 tray of the sim's Pod grab scene (16 silicone sockets, rows A to D from the front, 0.24 m to the left of the pipe, 190 x 370 mm), at the FRONT LEFT of the lid, position and size read from control-ui/src/podgrab/layout.ts. Drawing only: the sim is unchanged; the arm poses are solved with the sim's own inverse kinematics. Compromise: for the pick the cart is 20 mm behind the track plane and 0.60 m high (the arm cannot reach the front row from the track plane otherwise). Views: -iso, -front, -side, -top, -closeup. Clip: transplant-seedling-step1-pick-v10-clip.gif.",
+      "viewer": "viewer.html?src=archive/renders/transplant-seedling-step1-pick-v10.glb&title=Transplant%20seedling%3A%20Step%201%3A%20seedling%20picked%20and%20put%20in%20the%20cart%20holder",
+      "thumb": "archive/renders/transplant-seedling-step1-pick-v10-line.png"
+    },
+    {
+      "id": "transplant-seedling-step2-drive-v10",
+      "date": "2026-11-23",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "archived",
+      "version": 10,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 2: cart at the hole",
+      "comment": "The cart drove up the track to the hole stop, now on the right-hand leg with the arm facing the central spine, the seedling pod in the holder. v10 (OpenPocket #459, owner review): the cart and its SO-101 arm are turned about the track leg they ride, so for the pick the ARM FACES THE FRONT of the unit (the cart on the left-hand leg, over the tray) and for the insertion the cart is on the RIGHT-hand leg with the arm facing the central spine (turned 120 degrees from the front, a little towards the front); the seedling pod sits in the collar on the FRONT of the spine, visible in the front view (one insertion only: no plug holder, no parked plug); the seedling tray is the 4 x 4 tray of the sim's Pod grab scene (16 silicone sockets, rows A to D from the front, 0.24 m to the left of the pipe, 190 x 370 mm), at the FRONT LEFT of the lid, position and size read from control-ui/src/podgrab/layout.ts. Drawing only: the sim is unchanged; the arm poses are solved with the sim's own inverse kinematics. Compromise: for the pick the cart is 20 mm behind the track plane and 0.60 m high (the arm cannot reach the front row from the track plane otherwise). Views: -iso, -front, -side, -top, -closeup. -collar. Clip: transplant-seedling-step2-drive-v10-clip.gif.",
+      "viewer": "viewer.html?src=archive/renders/transplant-seedling-step2-drive-v10.glb&title=Transplant%20seedling%3A%20Step%202%3A%20cart%20at%20the%20hole",
+      "thumb": "archive/renders/transplant-seedling-step2-drive-v10-line.png"
+    },
+    {
+      "id": "transplant-seedling-step3-plug-v10",
+      "date": "2026-11-23",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "archived",
+      "version": 10,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 3: hole open, hand waiting",
+      "comment": "The hole on the front of the spine is open (the plug is out) and the hand waits in front of it. v10 (OpenPocket #459, owner review): the cart and its SO-101 arm are turned about the track leg they ride, so for the pick the ARM FACES THE FRONT of the unit (the cart on the left-hand leg, over the tray) and for the insertion the cart is on the RIGHT-hand leg with the arm facing the central spine (turned 120 degrees from the front, a little towards the front); the seedling pod sits in the collar on the FRONT of the spine, visible in the front view (one insertion only: no plug holder, no parked plug); the seedling tray is the 4 x 4 tray of the sim's Pod grab scene (16 silicone sockets, rows A to D from the front, 0.24 m to the left of the pipe, 190 x 370 mm), at the FRONT LEFT of the lid, position and size read from control-ui/src/podgrab/layout.ts. Drawing only: the sim is unchanged; the arm poses are solved with the sim's own inverse kinematics. Compromise: for the pick the cart is 20 mm behind the track plane and 0.60 m high (the arm cannot reach the front row from the track plane otherwise). Views: -iso, -front, -side, -top, -closeup. -collar. Clip: transplant-seedling-step3-plug-v10-clip.gif.",
+      "viewer": "viewer.html?src=archive/renders/transplant-seedling-step3-plug-v10.glb&title=Transplant%20seedling%3A%20Step%203%3A%20hole%20open%2C%20hand%20waiting",
+      "thumb": "archive/renders/transplant-seedling-step3-plug-v10-line.png"
+    },
+    {
+      "id": "transplant-seedling-step4-seat-v10",
+      "date": "2026-11-23",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "archived",
+      "version": 10,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 4: seedling seated, hole closed",
+      "comment": "The arm seated the seedling pod in the collar on the front of the spine; the hand is just above it. v10 (OpenPocket #459, owner review): the cart and its SO-101 arm are turned about the track leg they ride, so for the pick the ARM FACES THE FRONT of the unit (the cart on the left-hand leg, over the tray) and for the insertion the cart is on the RIGHT-hand leg with the arm facing the central spine (turned 120 degrees from the front, a little towards the front); the seedling pod sits in the collar on the FRONT of the spine, visible in the front view (one insertion only: no plug holder, no parked plug); the seedling tray is the 4 x 4 tray of the sim's Pod grab scene (16 silicone sockets, rows A to D from the front, 0.24 m to the left of the pipe, 190 x 370 mm), at the FRONT LEFT of the lid, position and size read from control-ui/src/podgrab/layout.ts. Drawing only: the sim is unchanged; the arm poses are solved with the sim's own inverse kinematics. Compromise: for the pick the cart is 20 mm behind the track plane and 0.60 m high (the arm cannot reach the front row from the track plane otherwise). Views: -iso, -front, -side, -top, -closeup. -collar. Clip: transplant-seedling-step4-seat-v10-clip.gif.",
+      "viewer": "viewer.html?src=archive/renders/transplant-seedling-step4-seat-v10.glb&title=Transplant%20seedling%3A%20Step%204%3A%20seedling%20seated%2C%20hole%20closed",
+      "thumb": "archive/renders/transplant-seedling-step4-seat-v10-line.png"
     }
   ]
 }

@@ -15,6 +15,7 @@ import { join } from 'node:path';
 import {
   BODIES, CAP_T, CUP_CAP_TOP_REL, D_CUP, DRAWING_PICK, JAW_CAP_DEG, JAW_OPEN_DEG, LEG, PIPE_RP, POD_BODY_L, S, TRAY_TOP, U_CAP, XT, YC, ZH, drawingSocket, transplantMjcf, type V3,
 } from '../src/transplant/layout.ts';
+import { HX } from '../src/cart/omni.ts';
 import { Binder } from '../src/transplant/apply.ts';
 import { handDir, ikTool, stowTool, toolFromJoints, toolOf, type Joints } from '../src/transplant/task.ts';
 import { quatZ } from '../src/transplant/layout.ts';
@@ -31,7 +32,7 @@ mkdirSync(out, { recursive: true });
 /** Where the collar faces, round the pipe from +x (the front) towards +y (the cart's side): on the FRONT of the spine, a little to the cart's side so that the cart's arm, pointing at the spine, lies in the plane of the pod's axis. */
 const PSI_DEG = Number(process.env.PSI_DEG ?? 0);
 const PSI = PSI_DEG * RAD;
-const THETA_PICK = 180 * RAD;     // the arm faces the front (+x)
+const THETA_PICK = Number(process.env.THETA_PICK_DEG ?? 200) * RAD;     // the arm faces the front (+x)
 const THETA_INSERT = Number(process.env.THETA_DEG ?? 120) * RAD;   // the arm faces the spine (-y, from the right-hand leg)
 
 const mj = await loadMujoco();
@@ -40,11 +41,12 @@ const mkScene = (free: 'B' | 'C') => { const model = mj.MjModel.from_xml_string(
 const scenes = { B: mkScene('B'), C: mkScene('C') };
 
 // --- the cart's turn: about the vertical axis of the leg it rides (sim frame: the leg at y = -LEG), then moved to the right-hand leg (dy = 2 LEG) or not
-interface Turn { theta: number; dy: number; dx?: number }
-const L: [number, number] = [XT, -LEG];
+// v11: the cart is turned about the pipe-axis of the sleeve that CLAMPS the leg. `free` is the hand that hangs open (sim scene); the clamping hand is the other one. Hand C's pipe is on the leg in the sim frame (x = XT, y = -LEG), hand B's 0.12 m further +y.
+interface Turn { theta: number; dy: number; dx?: number; free?: 'B' | 'C' }
+const pivot = (t: Turn): [number, number] => (t.free ?? 'B') === 'B' ? [XT, -LEG] : [XT, -LEG + 2 * HX / 1000];
 const rot = (v: [number, number], a: number): [number, number] => [v[0] * Math.cos(a) - v[1] * Math.sin(a), v[0] * Math.sin(a) + v[1] * Math.cos(a)];
-const toDrawing = (p: V3, t: Turn): V3 => { const r = rot([p[0] - L[0], p[1] - L[1]], t.theta); return [L[0] + r[0] + (t.dx ?? 0), L[1] + r[1] + t.dy, p[2]]; };
-const toSim = (p: V3, t: Turn): V3 => { const r = rot([p[0] - L[0] - (t.dx ?? 0), p[1] - L[1] - t.dy], -t.theta); return [L[0] + r[0], L[1] + r[1], p[2]]; };
+const toDrawing = (p: V3, t: Turn): V3 => { const L = pivot(t); const r = rot([p[0] - L[0], p[1] - L[1]], t.theta); return [L[0] + r[0] + (t.dx ?? 0), L[1] + r[1] + t.dy, p[2]]; };
+const toSim = (p: V3, t: Turn): V3 => { const L = pivot(t); const r = rot([p[0] - L[0] - (t.dx ?? 0), p[1] - L[1] - t.dy], -t.theta); return [L[0] + r[0], L[1] + r[1], p[2]]; };
 const dirToSim = (d: V3, t: Turn): V3 => { const r = rot([d[0], d[1]], -t.theta); return [r[0], r[1], d[2]]; };
 
 // --- the static places, in the drawing frame
@@ -62,8 +64,8 @@ const neg = (a: V3): V3 => [-a[0], -a[1], -a[2]];
 // --- a pose
 type Place = 'tray' | 'hand' | 'cup' | 'seat';
 interface Pose { turn: Turn; cartZ: number; j: Joints; jaw: number; pod: Place }
-const PICK_TURN: Turn = { theta: THETA_PICK, dy: 0.12, dx: Number(process.env.DX ?? -0.02) };   // 180 degrees about the cart's own centre (= about the leg, then 0.12 back): the cart stays at the leg, its arm faces the front
-const INS_TURN: Turn = { theta: THETA_INSERT, dy: 2 * LEG };
+const PICK_TURN: Turn = { free: 'B', theta: THETA_PICK, dy: 0, dx: Number(process.env.DX ?? -0.04) };   // 180 degrees about the cart's own centre (= about the leg, then 0.12 back): the cart stays at the leg, its arm faces the front
+const INS_TURN: Turn = { free: 'C', theta: THETA_INSERT, dy: 2 * LEG - 2 * HX / 1000 };
 let problems = 0;
 /** The hand pose that puts the cap-top point p (drawing frame) on a part axis `axisIn` (into the part), for a cart in `turn` at cartZ: the sim's IK in the sim frame. */
 function grip(p: V3, axisIn: V3, turn: Turn, cartZ: number, what: string): Joints {
@@ -87,10 +89,15 @@ function holeHeight(): number {
   return best;
 }
 if (process.env.PROBE2) {
-  for (const z of [0.58, 0.6, 0.62, 0.64, 0.66]) for (const dx of [-0.01, -0.02, -0.03, -0.04, -0.05]) {
-    const th: Turn = { theta: Math.PI, dy: 0.12, dx };
-    const rs = [DRAWING_PICK[0]].flatMap(() => [0.07, 0].map((u) => { const t = toolOf(toSim(along(TRAY_CAP, [0, 0, 1], u), th), DOWN, z); return ikTool(t, z) ? t.err.toFixed(1) : 'x'; }));
-    console.log(`z ${z} dx ${dx}: ${rs.join(' ')}`);
+  for (let r = 0; r < 1; r++) for (let c = 0; c < 2; c++) for (const thd of [150, 160, 170, 180, 190, 200, 210]) {
+    const [qx, qy] = drawingSocket(r, c); let best = 1e9, bz = 0, bdx = 0;
+    for (let z = 0.4; z < 0.8; z += 0.02) for (let dx = 0.1; dx > -0.25; dx -= 0.02) {
+      const th: Turn = { free: 'B', theta: thd * RAD, dy: 0, dx };
+      const cc: V3 = [qx, qy, POD_CAP_Z];
+      const e = Math.max(...[0.07, 0].map((u) => { const t = toolOf(toSim(along(cc, [0, 0, 1], u), th), DOWN, z); return ikTool(t, z) ? t.err : 1e6; }));
+      if (e < best) { best = e; bz = z; bdx = dx; }
+    }
+    console.log(`th ${thd} row ${'ABCD'[r]} col ${c + 1}: err ${best.toFixed(1)} z ${bz} dx ${bdx}`);
   }
   process.exit(0);
 }
@@ -139,7 +146,7 @@ const tcol = (t: Tri[], turn: Turn): Tri[] => t.map((r) => {
   return [...a, ...b, ...c, ...r.slice(9)];
 });
 function render(p: Pose): Tri[] {
-  const { model, data, bind } = p.turn.theta > 150 * RAD ? scenes.C : scenes.B;   // turned for the pick: hand C is the open one, hand B rides the leg
+  const { model, data, bind } = scenes[p.turn.free ?? 'B'];   // the free hand hangs open; the other one clamps the leg
   const setFree = (name: string, pos: V3, quat: number[]) => { const q = bind.free[name]; for (let k = 0; k < 3; k++) data.qpos[q + k] = pos[k]; for (let k = 0; k < 4; k++) data.qpos[q + 3 + k] = quat[k]; };
   const cartBody = model.body('cart').id, podBody = model.body(BODIES.pod).id;
   const j = p.j as unknown as Record<string, number>;
@@ -164,7 +171,7 @@ function render(p: Pose): Tri[] {
 }
 const round = (t: Tri[]) => t.map((r) => r.map((v, i) => (i < 9 ? +v.toFixed(4) : v)));
 const lerpPose = (a: Pose, b: Pose, w: number, pod: Place): Pose => ({
-  turn: { theta: a.turn.theta + (b.turn.theta - a.turn.theta) * w, dy: a.turn.dy + (b.turn.dy - a.turn.dy) * w, dx: (a.turn.dx ?? 0) + ((b.turn.dx ?? 0) - (a.turn.dx ?? 0)) * w },
+  turn: { free: a.turn.free, theta: a.turn.theta + (b.turn.theta - a.turn.theta) * w, dy: a.turn.dy + (b.turn.dy - a.turn.dy) * w, dx: (a.turn.dx ?? 0) + ((b.turn.dx ?? 0) - (a.turn.dx ?? 0)) * w },
   cartZ: a.cartZ + (b.cartZ - a.cartZ) * w,
   j: Object.fromEntries((['A', 'B', 'C', 'D', 'E'] as const).map((k) => [k, a.j[k] + (b.j[k] - a.j[k]) * w])) as unknown as Joints,
   jaw: a.jaw + (b.jaw - a.jaw) * w, pod,
