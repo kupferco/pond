@@ -3,12 +3,12 @@ import type { MainModule, MjData, MjModel } from '@mujoco/mujoco';
 
 export type Tri = number[];   // x0 y0 z0 x1 y1 z1 x2 y2 z2 r g b a
 /** All visible geoms of the current pose as triangles (world coordinates). Planes are left out (the floor is drawn by the renderer). */
-export function triangles(mj: MainModule, model: MjModel, data: MjData): Tri[] {
+export function triangles(mj: MainModule, model: MjModel, data: MjData, skip?: (geom: number) => boolean): Tri[] {
   const T = mj.mjtGeom;
   const tris: Tri[] = [];
   for (let g = 0; g < model.ngeom; g++) {
     const type = model.geom_type[g], a = model.geom_rgba[4 * g + 3];
-    if (a === 0 || type === T.mjGEOM_PLANE.value) continue;
+    if (a === 0 || type === T.mjGEOM_PLANE.value || skip?.(g)) continue;
     const s = [model.geom_size[3 * g], model.geom_size[3 * g + 1], model.geom_size[3 * g + 2]];
     const p = [data.geom_xpos[3 * g], data.geom_xpos[3 * g + 1], data.geom_xpos[3 * g + 2]];
     if (p[2] < -5) continue;   // parked helper geoms (a hidden marker at z = -50 m) are not part of the picture
