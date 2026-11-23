@@ -10,10 +10,11 @@ Pictures: `cad/renders/podgrab-omni-*` and `cad/renders/transplant-omni-*` (four
 
 - **Transplant seedling works on the new cart.** All four steps run, every frame is in reach with at least 5 degrees of joint margin, and nothing touches (arm, cart, track,
   tank, pipe). The cart stops are unchanged (0.64 m at the tray, 1.073 m at the hole, 0.756 m at the plug holder).
-- **Pod grab works on the new cart, but the cart cannot get from the tray to the store.** The sleeves do not fit past the spine and its track bracket. The scene still runs
-  (the whole 4 x 4 tray is filled, 16 pods, nothing teleported, the arm hits nothing) because the cart is measured against the spine, not simulated against it; the screen says
-  "the sleeves touch the spine" while that happens. Everywhere else on the bottom run the cart is clear, including at the tray end and at the store end.
-- **This breaks the plan's rule that the cart works along the whole bottom run (owner answer Q6).** It needs a CAD decision, see below.
+- **Pod grab works on the new cart, and the cart can ride the whole bottom run, past the spine (#461).** The sleeves are turned 90 degrees about their pipes (`HAND_TURN` in `podgrab/layout.ts`)
+  so the 18 mm slot of each sleeve faces the spine; the spine-to-track bracket (CAD saddle 16 x 10 x 30 mm, 16 mm along the pipe, 10 mm across) passes through the slot. Checked on the CAD
+  triangles (`podgrab/clearance.ts`) at every 5 mm from -33 to +28 cm: nothing intersects the spine, the bracket plate, its rod or the pipe, for both hands and the open hand's jaw and motors.
+  The spine is 46 mm thick, not 70: the sleeve ring is 34.5 mm out from the pipe axis and the spine surface is 60 mm minus the spine radius from it, so 46 mm is the thickest that leaves 2.5 mm clear.
+  The whole 4 x 4 tray is filled, 16 pods, the arm never touches the spine, the bracket or the pipe.
 
 ## What changed in the scenes
 
@@ -37,25 +38,12 @@ Pictures: `cad/renders/podgrab-omni-*` and `cad/renders/transplant-omni-*` (four
   in the physics throws the parts about and teleported a pod in the store (found and fixed in this part).
 - Result: the first pick (store row 3 to socket A1), a full 16 pod fill, and the 8 mm perception error test all behave as before.
 
-## Finding: the sleeves do not fit past the spine and the track bracket (plan section 7, Q6)
+## Resolved (#461): the sleeves cross the spine through their slot
 
-Cart at the spine, from `probeCart` (negative = into it):
-
-| Cart centre | Into the spine | Into the track bracket |
-|---|---|---|
-| within 10 cm of the spine | 7 mm at 9 cm, 17 mm at 8 cm, 27 mm at 7 cm, up to 53 mm at 4 cm to 0 | 10 mm at the spine |
-| 10 cm or more away (tray end -0.33 to -0.145 m, store end 0.105 to 0.28 m) | none | none |
-
-Why: how far each part reaches towards the spine from the pipe axis (measured on the model): the riding hand's jaw lobe **45 mm**, the free hand's open jaw **78 mm**, the sleeve ring 34 mm.
-The spine surface is 25 mm from the track tube centre in the CAD (growing pipe R37.5 on the spine axis, track 60 mm in front, plan section 7), 21 mm in this scene. The bracket sits on
-the spine side too, but the sleeve's gap faces the other hand, not the spine, so it does not pass the bracket either.
-
-The tray (x = -0.335 to -0.145) and the store (x from 0.105) are on opposite sides of the spine, so a real cart could not drive from one to the other. Options for the owner (none built):
-1. Move the track plane further in front of the spine: at least 45 mm of sleeve reach plus clearance (about 55 mm from the pipe axis to the spine surface), more if the free jaw opens towards the spine.
-   With a 70 mm spine that means the track about 90 mm in front of the spine axis instead of 60 mm.
-2. Open the free hand's jaw towards the plate side (-y), not the spine side, so the 78 mm reach goes away, and still do 1.
-3. Cut the jaw lobe and the ring at the spine side, or put the bracket on the sleeve's gap side. That changes `hand_sleeve.py` and the free hand's room.
-4. Give up working across the middle: separate the tray and the store by hand or with two carts.
+Earlier finding (#284): with the sleeves' C gap facing the other hand, the cart hit the spine (up to 53 mm) and the track bracket (10 mm) within 10 cm of the spine. Owner decision: the bracket
+is MEANT to pass through the slot, the sleeves were oriented wrongly. Both sleeves (with their jaws, wheels and motors) are now turned about their pipes so the slot faces the spine
+(hand B +90 deg, its mirror C -90 deg); the bracket's thin sides go through the slot (16 mm along the pipe, 10 mm across; the 30 mm side points from the pipe to the spine).
+`control-ui/src/podgrab/clearance.ts` samples the CAD triangles (mj_geomDistance would use convex hulls, which fill the slot and report a false clash).
 
 The Transplant scene is not affected (it rides a leg: no bracket, no growing-pipe crossing).
 

@@ -24,8 +24,8 @@ export const CART = {
  * free: the hand that is NOT on the track; its jaw is open. col: collision attributes for every cart geom, colBattery for the battery alone. The cart is built as plain jointless bodies, so wrap it in a
  * body that has a (locked) joint if the scene has to test it against the static parts.
  */
-export function staticOmniCart(o: { free: Hand; col: string; colBattery?: string; jawOpenRad?: number; batteryX?: number }): string {
-  const x = omniCartBody({ jawOpen: { [o.free]: o.jawOpenRad ?? JAW_OPEN_RAD } });
+export function staticOmniCart(o: { free: Hand; col: string; colBattery?: string; jawOpenRad?: number; batteryX?: number; handTurn?: Partial<Record<Hand, number>> }): string {
+  const x = omniCartBody({ jawOpen: { [o.free]: o.jawOpenRad ?? JAW_OPEN_RAD }, handTurn: o.handTurn });
   const noArm = x
     .replace(/<joint [^>]*\/>/g, '')
     .replace(/<geom name="armbase"[^>]*\/>/, '')

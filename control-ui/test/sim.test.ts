@@ -25,6 +25,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { ARM_Y, BASE_BOTTOM, CART_Z, LID_Z, PIPE_Y, PIPE_Z, TRACK_RISE, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
 import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
+import { cartCloud, clashesAt } from '../src/podgrab/clearance.ts';
 import * as LAYOUT from '../src/layout.ts';
 
 import { HOLD_DEG, POD_D, REACH } from '../src/arm/dims.ts';
@@ -331,7 +332,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   }
   {
     const names = podGrabMjcf();
-    check('spine is at least double the 33.7 mm tube', SPINE_R * 2 >= 2 * 0.0337);
+    check('spine is thicker than the 33.7 mm tube of the drawings, but no thicker than the sleeves allow (60 mm from the pipe axis minus the 34.5 mm sleeve ring)', SPINE_R * 2 > 0.0337 && SPINE_R < 0.06 - 0.0345);
     check('end effector is a two-finger claw (no pin)', pg.model.nu === 8 && names.includes('claw_l') && names.includes('claw_r') && !names.includes('name="pin"'));
     check('collars are collision geometry the arm can hit (named collar_*, arm bit set)', names.includes('name="collar_0_0"') && names.split('\n').filter((l) => l.includes('name="collar_') && l.includes('conaffinity="3"')).length >= 8 * (STORE_ROWS + TRAY_SLOTS));
     check('each store row has an end gate at the back', names.split('\n').filter((l) => l.includes('rgba="0.95 0.75 0.2 1"')).length >= STORE_ROWS);
@@ -376,11 +377,17 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     const nmz = podGrabMjcf();
     check('pod grab: no hinge, worm, tongue or second hand below the pipe: the one plate carries the battery and the arm (cartbase), the arm base is the arm\'s own', !/hinge|worm|tongue/i.test(nmz.replace(/type="hinge"/g, '')) && nmz.includes('name="battery"') && nmz.includes('name="cartbase"') && !nmz.includes('name="armbase"'));
     check('pod grab: the arm base is 106 mm out of the pipe plane (plate 6 + battery 50 on the 50 mm pads) and 60 mm BELOW the pipe it clamps with the top sleeve', Math.abs(PIPE_Y - ARM_Y - 0.0975) < 1e-9 && Math.abs(CART_Z - PIPE_Z + 0.06) < 1e-9);
-    // spine and bracket: the finding of the plan's section 7 (Q6). Clear everywhere but within 95 mm of the spine.
-    const xs = [-0.33, -0.2, -0.15, 0.15, 0.2, 0.28], depths = xs.map((x) => world.probeCart(x).depth);
-    check('pod grab: the cart is clear of the spine and the track bracket along the bottom run outside 14 cm of the spine (the CAD jaw motors reach 104 mm along the pipe), at the tray end, the store end and in between', depths.every((d) => d === 0), depths.join());
-    const inZone = [-0.09, -0.05, 0, 0.05, 0.09].map((x) => world.probeCart(x));
-    check('FINDING pod grab: the rigid sleeves hit the spine (53 mm deep at the cart centre) and the track bracket (10 mm) with the cart centre within 9 cm of the spine: the cart cannot cross between the tray and the store', inZone.every((r) => r.depth < -0.001) && inZone[2].depth < -0.03 && inZone.every((r) => r.by.track_bracket < 0 || r.by.spine_tube < 0) && inZone[2].by.track_bracket < -0.005 && inZone[2].by.spine_tube < -0.03, JSON.stringify(inZone));
+    // spine and bracket (#461): the sleeves are turned so the 18 mm slot faces the bracket, which passes through it. Exact check on the CAD triangles (src/podgrab/clearance.ts), the whole run of the pipe.
+    {
+      const cloud = cartCloud(pg);
+      const pipe = clashesAt(cloud, 0, ['pipe'], 0.002);
+      check('pod grab: the cart\'s CAD parts do not cut into the track pipe (2 mm tolerance for the wheels resting on it)', pipe.length === 0, JSON.stringify(pipe));
+      const clashes: string[] = []; let n = 0;
+      for (let x = -0.33; x <= 0.2801; x += 0.005) { n++; for (const c of clashesAt(cloud, x)) clashes.push(`${(x * 100).toFixed(1)} cm ${c.obstacle} ${(c.depth * 1000).toFixed(1)} mm`); }
+      check(`pod grab: no part of the cart intersects the spine, the bracket plate or its rod at any of ${n} stops from -33 to +28 cm`, clashes.length === 0, clashes.slice(0, 4).join('; '));
+      const cut = 0.0005, near = [-0.1, -0.06, -0.03, 0, 0.03, 0.06, 0.1].map((x) => world.probeCart(x).depth);
+      check('pod grab: the runtime scan agrees (no spine/bracket hit at the spine crossing)', near.every((d) => d === 0) && cut > 0, near.join());
+    }
   }
 
   // Settled store: every pod rests on its channel, none above the roof or out of its row.
@@ -418,7 +425,16 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   // Fill the whole tray from several rows.
   world.reset();
   task = new PodTask(world, pgCmd, { jobs: fillJobs(world), seed: 7 });
+  // every 4th step of the run: the arm's shapes against the spine, the bracket, its rod and the track pipe, and the cart's against the spine and bracket (PodWorld.tick scans the cart's CAD triangles in the spine zone each step)
+  const hitIds = ['spine_tube', 'track_bracket', 'bracket_rod', 'track_pipe'].map((n) => { const g = pg.model.geom(n), id = g.id; g.delete(); return id; });
+  const armB = pg.model.body('base'), armBody = armB.id; armB.delete();
+  const armGeoms = Array.from({ length: pg.model.ngeom }, (_, g) => g).filter((g) => { for (let b = pg.model.geom_bodyid[g]; b > 0; b = pg.model.body_parentid[b]) if (b === armBody) return true; return false; });
+  let armMin = 1, nStep = 0; const ftmp = new Float64Array(6), origStep = pg.step.bind(pg);
+  pg.step = () => { origStep(); if (++nStep % 4) return; for (const g of armGeoms) for (const h of hitIds) armMin = Math.min(armMin, mj.mj_geomDistance(pg.model, pg.data, g, h, 0.01, ftmp)); };
   while (!task.done) task.advance(0.5);
+  pg.step = origStep;
+  check(`full run: the arm never touches the spine, the bracket or the pipe (closest approach over ${Math.floor(nStep / 4)} samples ${(armMin * 1000).toFixed(1)} mm)`, armMin >= -0.0005, String(armMin));
+  check('full run: the cart never touched the spine or the bracket (0 steps with a hit)', world.cartHit.ticks === 0, JSON.stringify(world.cartHit));
   const rowsUsed = new Set(task.cfg.jobs.map((j) => j.row)).size;
   check('whole 4 x 4 tray filled', task.failReason === '' && world.trayCount === TRAY_SLOTS, `${world.trayCount}/${TRAY_SLOTS} ${task.failReason}`);
   check('pods came from several rows', rowsUsed >= 2, String(rowsUsed));

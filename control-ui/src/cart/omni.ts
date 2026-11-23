@@ -199,9 +199,10 @@ const INERTIAL = '<inertial pos="0 0 0" mass="0.1" diaginertia="0.001 0.001 0.00
  * rollB and rollC. Only the STATIC hand's joint turns; the other holds zero (the controller's interlock, as the old hinge). Everything below the
  * second joint is rigid: sleeves, wheels, plate, battery, arm base. Wrap it in a mocap body to place it in a scene.
  */
-export function omniCartBody(o: { jawA1?: number; jawOpen?: Partial<Record<Hand, number>> } = {}): string {
+export function omniCartBody(o: { jawA1?: number; jawOpen?: Partial<Record<Hand, number>>; handTurn?: Partial<Record<Hand, number>> } = {}): string {
   const jnt = (n: string, x: number) => `<joint name="${n}" type="hinge" pos="${n3(x, 0, 0)}" axis="0 0 1" range="-6.4 6.4"/>`;
-  const hand = (h: Hand) => `<body name="hand${h}" pos="${n3(PIPE_X[h], 0, 0)}">
+  // handTurn (rad, about the hand's own pipe axis z): the whole sleeve (jaw, wheels, motors, cups) turned on the plate, so the C gap points where the scene needs it (Pod grab: at the track bracket, #461).
+  const hand = (h: Hand) => `<body name="hand${h}" pos="${n3(PIPE_X[h], 0, 0)}"${o.handTurn?.[h] ? ` quat="${f(Math.cos(o.handTurn[h]! / 2))} 0 0 ${f(Math.sin(o.handTurn[h]! / 2))}"` : ''}>
       ${handInner(h, o.jawA1, o.jawOpen?.[h] ?? 0)}
     </body>`;
   return `<body name="rollB">${INERTIAL}${jnt('rollB', PIPE_X.B)}

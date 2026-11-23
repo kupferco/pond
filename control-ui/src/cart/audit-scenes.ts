@@ -31,9 +31,9 @@ export function auditScenes(mj: MainModule): Row[] {
   { const { m, d } = make(transplantMjcf()); mj.mj_forward(m, d);
     const leg: Leg = { point: [XT, -CAD_UNIT.TX / 1000, CART_Z0], dir: [0, 0, 1], toUnit: [-1, 0, 0], outward: [0, -1, 0] };
     add('transplant (leg -y)', placementOf(m as never, d as never, leg, 'C'), 180, 'inner'); void YC; }
-  // 4. Pod grab: rides the bottom run (along world x) of the loop at y = PIPE_Y, z = PIPE_Z; the unit towards -y (growing pipe at y = 0), the loop's middle above the run; the TOP hand C clamps the pipe and hand B hangs open below it (outer side).
+  // 4. Pod grab: rides the bottom run (along world x) of the loop at y = PIPE_Y, z = PIPE_Z; the unit towards -y (growing pipe at y = 0), the loop's middle above the run; the TOP hand C clamps the pipe and hand B hangs open below it (outer side); both sleeves are turned 90 deg about their pipes so the C gap faces the spine bracket (#461).
   { const { m, d } = make(podGrabMjcf()); mj.mj_forward(m, d);
     const leg: Leg = { point: [CART_HOME_X, PIPE_Y, PIPE_Z], dir: [1, 0, 0], toUnit: [0, -1, 0], outward: [0, 0, -1] };
-    add('pod grab (bottom run, top hand C on the pipe)', placementOf(m as never, d as never, leg, 'C'), 180, 'outer'); }
+    add('pod grab (bottom run, top hand C on the pipe, sleeves turned 90 deg: slot at the bracket)', placementOf(m as never, d as never, leg, 'C'), 90, 'outer'); }
   return rows;
 }

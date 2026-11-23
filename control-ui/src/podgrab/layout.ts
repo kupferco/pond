@@ -61,9 +61,12 @@ export const CART_X_MIN = -0.33, CART_X_MAX = 0.28;   // arm plane = the cart ce
 export const CART_HOME_X = -0.1;
 export const CART_SPINE_ZONE = 0.14;           // the cart touches the spine and its bracket only with its centre within about 13 cm of x = 0 (sleeve half length 62, the jaw motors on the CAD sleeve reach z +/-104 mm, spine radius 35; OpenPocket #447: the CAD cart's own parts are in the scan now, was 0.11 with the old stand-in shapes); only this zone is scanned
 // spine and brackets
-export const SPINE_R = 0.070 / 2, SPINE_TOP = 0.86;   // 70 mm: more than double the 33.7 mm tube of unit_v3_dimensioned.py (follow-up request)
+export const SPINE_R = 0.023, SPINE_TOP = 0.86;   // 46 mm: 1.4 times the 33.7 mm tube of unit_v3_dimensioned.py. It was 70 mm (an owner request), but the sleeves' 34.5 mm outer ring cannot pass a spine whose surface is closer than that to the pipe axis (60 mm CAD distance minus the radius): 46 mm is the thickest that leaves 2.5 mm clear (#461)
 export const SPINE_Y = PIPE_Y + 0.06;           // the spine axis is 60 mm behind the track plane (CAD: LOOP_Y = -60; the scene had 75 mm before the omni cart), so its back surface is just inside the tank's back wall
 export const BRACKET_T = 0.004;
+// The spine-to-track bracket (cad/bottom_bracket.py bracket_saddle 16 x 10 x 30 mm, unit_v3_dimensioned.py): 16 mm along the track, 10 mm in the other direction across the pipe, 30 mm out from the pipe towards the spine. The sleeves' C gap (18 mm narrow, hand_sleeve.py OPENING_W) faces the spine (HAND_TURN) and the bracket passes through it with its thin sides: 16 along the pipe, 10 across.
+export const BRACKET_HX = 0.008, BRACKET_HZ = 0.005;   // half the 16 mm along the track, half the 10 mm across
+export const BRACKET_PLATE_Y = PIPE_Y + PIPE_R + 0.0015;   // the plate starts on the clamp ring (R + 1.5 mm)
 export const ROD_R = 0.004;                     // M8 rod (track_joint.py)
 export const SHELF_CAP_T = 0.004, SHELF_CAP_H = 0.03;   // ASSUMED shelf end caps
 // cart (the omni cart of cad/cart_dims.py, hand_sleeve.py v5; src/cart/omni-scene.ts, Pond #284). The cart body (mocap) rides the bottom run on its TOP hand C; hand B, its mirror, hangs open below the pipe.
@@ -75,6 +78,7 @@ export const SHELF_CAP_T = 0.004, SHELF_CAP_H = 0.03;   // ASSUMED shelf end cap
 export const CART_ROLL = 0;                      // deg: the cart stays flat on the runs
 export const CART_DZ = -HX / 1000;               // cart centre height relative to the pipe it rides: the cart rides on its TOP hand (C, cart x = +60), so the centre is 60 mm BELOW the pipe (owner, Pod grab clamp, #461)
 export const ARM_SLIDE = 0.04;                  // the battery and the arm base are slid 40 mm UP the plate (towards the riding top hand, cart x +40; the plate is 168 wide, the 70 mm battery then ends 5 mm from its edge). With the cart hanging 60 mm under the pipe the arm base would be 120 mm lower than before and could not fold in close enough to carry a pod over the lid; this gets 40 mm of it back (ASSUMED, no CAD change: the other scenes keep the battery in the middle)
+export const HAND_TURN: Record<'B' | 'C', number> = { B: Math.PI / 2, C: -Math.PI / 2 };   // sleeves turned about their pipes so the 18 mm C gap faces the spine bracket (world +y)
 export const CART_Z = PIPE_Z + CART_DZ;          // world z of the cart centre = the arm base height
 export const CART_QUAT: [number, number, number, number] = [Math.SQRT1_2, 0, -Math.SQRT1_2, 0];   // cart frame -> world: x up, y = world y, z = world -x
 export const PLATE_FACE_Y = m(CART.battFaceY);   // cart frame y of the battery's front face, the plane the arm base is bolted to (the plate's own face is at -56)
@@ -171,7 +175,7 @@ const CART_COL = 'contype="4" conaffinity="2"';   // the cart's parts: they coll
  *  except the battery, which the arm base sits flush on. Against the spine and the track bracket the cart is measured, not simulated: see PodWorld.scanCart. */
 function cartMount(): { open: string; close: string; baseAttrs: string } {
   const open = `<body name="cart" mocap="true" pos="${CART_HOME_X} ${PIPE_Y} ${f(CART_Z)}" quat="${CART_QUAT.map(f).join(' ')}">
-      ${staticOmniCart({ free: 'B', batteryX: ARM_SLIDE * 1000, col: CART_COL, colBattery: SOLID })}`;
+      ${staticOmniCart({ free: 'B', handTurn: HAND_TURN, batteryX: ARM_SLIDE * 1000, col: CART_COL, colBattery: SOLID })}`;
   // no joint and no extra base: the arm's own base body is a fixed child of the cart, its underside flat on the battery face
   const baseAttrs = `pos="${f(ARM_SLIDE)} ${f(PLATE_FACE_Y + BASE_BOTTOM)} 0" xyaxes="${BASE_XYAXES}"`;
   return { open, close: '</body>', baseAttrs };
@@ -187,8 +191,8 @@ function spineGeoms(): string[] {
   const collar = (z0: number, z1: number) => out.push(`<geom type="cylinder" fromto="0 ${SPINE_Y} ${f(z0)} 0 ${SPINE_Y} ${f(z1)}" size="${f(SPINE_R + 0.005)}" ${OBST} ${brk}/>`);
   // Pillar-to-track bracket (unit_v3_dimensioned.py: 16 x 30 x 30 on the spine side of the pipe): a plate on the spine and an M8 rod
   // (track_joint.py) from it to a clamp ring on the pipe. The hands have a C-gap facing the spine, so the cart passes it.
-  const yPlate = PIPE_Y + PIPE_R + 0.0015;                      // the bracket's plate starts on the clamp ring (R17.5), 9 mm from the spine's surface
-  box(-0.008, 0.008, yPlate, SPINE_Y - SPINE_R - 0.001, PIPE_Z - 0.015, PIPE_Z + 0.015, brk, 'track_bracket');
+  const yPlate = BRACKET_PLATE_Y;                      // the bracket's plate starts on the clamp ring (R17.5), 9 mm from the spine's surface
+  box(-BRACKET_HX, BRACKET_HX, yPlate, SPINE_Y - SPINE_R - 0.001, PIPE_Z - BRACKET_HZ, PIPE_Z + BRACKET_HZ, brk, 'track_bracket');
   out.push(`<geom name="bracket_rod" type="cylinder" fromto="0 ${f(yPlate)} ${PIPE_Z} 0 ${f(PIPE_Y + PIPE_R)} ${PIPE_Z}" size="${ROD_R}" ${OBST} ${rgba(0.75, 0.75, 0.78)}/>`);
   out.push(`<geom name="bracket_ring" type="cylinder" fromto="-0.01 ${PIPE_Y} ${PIPE_Z} 0.01 ${PIPE_Y} ${PIPE_Z}" size="${f(PIPE_R + 0.0015)}" ${OBST} ${brk}/>`);
   // Shelf brackets: a collar on the spine and a flat bar under the shelf to each side, up to the edge of the tray / the store.
@@ -313,7 +317,7 @@ export function podGrabMjcf(): string {
   const world = [
     `<geom name="floor" type="plane" size="1.2 0.9 0.01" pos="0 0 0" ${SOLID} ${rgba(0.82, 0.86, 0.9)}/>`,
     // the bottom track pipe: floating in the track plane, no supports
-    `<geom type="cylinder" fromto="${PIPE_X0} ${PIPE_Y} ${PIPE_Z} ${PIPE_X1} ${PIPE_Y} ${PIPE_Z}" size="${PIPE_R}" ${OBST} ${rgba(0.62, 0.66, 0.7)}/>`,
+    `<geom name="track_pipe" type="cylinder" fromto="${PIPE_X0} ${PIPE_Y} ${PIPE_Z} ${PIPE_X1} ${PIPE_Y} ${PIPE_Z}" size="${PIPE_R}" ${OBST} ${rgba(0.62, 0.66, 0.7)}/>`,
     // tank: floor, four walls, the shelf at 155 mm
     wall(0, 0, t / 2, hx, hy, t / 2, 0.5),
     wall(0, -hy + t / 2, TANK_H / 2, hx, t / 2, TANK_H / 2),

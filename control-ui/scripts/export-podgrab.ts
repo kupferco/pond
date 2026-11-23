@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { SimDriver } from '../src/drivers/simDriver.ts';
 import { RealDriver } from '../src/drivers/realDriver.ts';
 import { CommandLayer } from '../src/commands.ts';
-import { CART_QUAT, CART_Z, PIPE_Y, podGrabMjcf } from '../src/podgrab/layout.ts';
+import { CART_QUAT, CART_Z, PIPE_Y, PIPE_Z, podGrabMjcf } from '../src/podgrab/layout.ts';
 import { PodTask, PodWorld } from '../src/podgrab/task.ts';
 import { glb, triangles, type Tri } from './tri-export.ts';
 
@@ -21,12 +21,12 @@ const world = new PodWorld(sim);
 for (let i = 0; i < 1500; i++) sim.step();   // let the store settle
 const round = (t: Tri[]) => t.map((r) => r.map((v, i) => (i < 9 ? +v.toFixed(4) : v)));
 const list: object[] = [];
-const snap = (id: string, label: string, note = '') => {
+const snap = (id: string, label: string, note = '', centre = [0, 0.0, 0.42], half = 0.5) => {
   mj.mj_forward(sim.model, sim.data);
   const tris = triangles(mj, sim.model, sim.data);
   writeFileSync(join(out, id + '.json'), JSON.stringify(round(tris)));
   writeFileSync(join(out, id + '.glb'), glb(tris, 'pond control-ui export-podgrab'));
-  list.push({ id, label, note, centre: [0, 0.0, 0.42], half: 0.5 });
+  list.push({ id, label, note, centre, half });
   console.log(id, label, note);
 };
 snap('1-start', 'Start: cart on the bottom pipe, arm raised, over the tank', `cart x ${world.cartX.toFixed(2)} m`);
@@ -47,8 +47,11 @@ while (!task.done) {
   }
 }
 snap('5-done', 'Done: pod seated in the tray', task.failReason === '' ? 'seated' : task.failReason);
-// the finding: the cart at the spine (arm at its ready pose), the sleeves inside the spine and the track bracket
-world.reset(); sim.setMocap('cart', [0, PIPE_Y, CART_Z], CART_QUAT);
-const probe = world.probeCart(0);
-snap('6-spine', 'Finding: the cart stands at the spine; the sleeves are inside it (53 mm) and the track bracket (10 mm)', `spine ${(-probe.by.spine_tube * 1000).toFixed(0)} mm, bracket ${(-probe.by.track_bracket * 1000).toFixed(0)} mm`);
+// the spine crossing (#461): the sleeves are turned so their 18 mm slot faces the bracket; the cart at three stops across the spine (arm at its ready pose), close up
+world.reset();
+for (const [id, x] of [['6-spine-m10', -0.1], ['7-spine-0', 0], ['8-spine-p10', 0.1]] as const) {
+  sim.setMocap('cart', [x, PIPE_Y, CART_Z], CART_QUAT);
+  const probe = world.probeCart(x);
+  snap(id, `The cart at ${x * 100} cm: the bracket goes through the slot of the sleeves`, `spine ${(-probe.by.spine_tube * 1000).toFixed(1)} mm, bracket ${(-probe.by.track_bracket * 1000).toFixed(1)} mm`, [0, PIPE_Y, PIPE_Z - 0.06], 0.26);
+}
 writeFileSync(join(out, 'stages.json'), JSON.stringify(list));
