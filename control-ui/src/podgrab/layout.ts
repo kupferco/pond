@@ -28,7 +28,7 @@ import { staticOmniCart, CART } from '../cart/omni-scene.ts';
 import { withCartAssets } from '../cart/cad-cart.ts';
 import { HX } from '../cart/omni.ts';
 import { armMjcf } from '../model.ts';
-import { CAD_CONSTANTS } from '../generated/cad-sim.ts';
+import { CAD_CONSTANTS, CAD_UNIT } from '../generated/cad-sim.ts';
 import * as LAYOUT from '../layout.ts';   // the ONE shared layout (cad/layout.json): tank, lid and bottom track heights
 
 const m = (mm: number) => mm / 1000;
@@ -52,16 +52,20 @@ export const CLAW_ACT = ['claw_l', 'claw_r'];
 export const TANK_W = 0.7, TANK_D = 0.4, TANK_H = LAYOUT.TANK_H, SHELF_Z = CAD_CONSTANTS.unit_dims.SHELF_Z / 1000, SHELF_T = CAD_CONSTANTS.unit_dims.SHELF_T / 1000;   // shelf slab z 155..159 (cad/parts/shelf.py, #447)
 export const SHELF_TOP = SHELF_Z + SHELF_T;
 export const LID_Z = TANK_H, LID_T = LAYOUT.LID_T;
-export const PIPE_Y = 0.104;                    // the track plane. CAD: -60 mm. MOVED 179 mm towards the back (was 115 mm: the omni cart's battery puts the arm base 50 mm further out of the plate, Pond #284) so that all 16 sockets are in front of the cart plate and the arm, mounted on the battery, reaches them (ASSUMED, see the PR)
+export const PIPE_Y = CAD_UNIT.LOOP_Y / 1000;   // the track plane, CAD LOOP_Y = -60 mm (cad/parts/unit_dims.py): the unit's own number, no sim-only offset (#461: it was moved 164 mm to the back, which put the spine off the tank's centre)
 export const PIPE_Z = LAYOUT.TRACK_BOTTOM_Z;   // bottom run of the track, 275 mm over the lid top (cad/layout.json: the cart's 165 mm under the track plus 110 mm of air, ASSUMED: the smallest that lets the arm, hanging under the pipe on the top sleeve, reach tray rows B to D; no sim-only offset, #461; the CAD guessed 150 before and the sim 210 over the tank). The omni cart centre is 60 mm BELOW the pipe it rides (the TOP hand C clamps the pipe, hand B hangs open below it), and the arm base is on the cart centre. OpenPocket #364: one number for CAD and sim
 export const PIPE_R = m(PIPE_D_MM) / 2;
+// the track loop (cad/parts/unit_dims.py, the same numbers as the Transplant scene's track()): a portrait rounded rectangle in the plane y = PIPE_Y, legs 580 mm apart, corner radius 150, bottom run at PIPE_Z, top run at ZT
+export const LOOP_TX = CAD_UNIT.TX / 1000, LOOP_R = CAD_UNIT.R / 1000, LOOP_ZT = CAD_UNIT.ZT / 1000, LOOP_TR = CAD_UNIT.TR / 1000;
 export const PIPE_X0 = -0.40, PIPE_X1 = 0.42;
-export const CART_X_MIN = -0.33, CART_X_MAX = 0.28;   // arm plane = the cart centre (the cart is symmetric about it)
+export const CART_X_MIN = -(LOOP_TX - LOOP_R), CART_X_MAX = LOOP_TX - LOOP_R;   // the straight bottom run of the unit's loop (CAD: legs 580 apart, corner radius 150: x = -/+ 140 mm); beyond it the pipe turns up into the corners. Arm plane = the cart centre
 export const CART_HOME_X = -0.1;
-export const CART_SPINE_ZONE = 0.14;           // the cart touches the spine and its bracket only with its centre within about 13 cm of x = 0 (sleeve half length 62, the jaw motors on the CAD sleeve reach z +/-104 mm, spine radius 35; OpenPocket #447: the CAD cart's own parts are in the scan now, was 0.11 with the old stand-in shapes); only this zone is scanned
+export const CART_SPINE_ZONE = 0.16;           // the cart touches the spine and its bracket only with its centre within about 13 cm of x = 0 (sleeve half length 62, the jaw motors on the CAD sleeve reach z +/-104 mm, spine radius 35; OpenPocket #447: the CAD cart's own parts are in the scan now, was 0.11 with the old stand-in shapes); only this zone is scanned
 // spine and brackets
 export const SPINE_R = CAD_CONSTANTS.unit_dims.SP / 2000, SPINE_TOP = 0.86;   // the CAD spine tube, 33.7 mm OD (cad/parts/unit_dims.py SP): no sim-only thickening (#461)
-export const SPINE_Y = PIPE_Y + 0.06;           // the spine axis is 60 mm behind the track plane (CAD: LOOP_Y = -60; the scene had 75 mm before the omni cart), so its back surface is just inside the tank's back wall
+export const SPINE_Y = 0;                        // the spine and the growing pipe stand on the tank's centre line (CAD: x = y = 0)
+export const COLUMN_R = CAD_CONSTANTS.unit_dims.GP / 2000;   // the big central column: the 75 mm growing pipe (cad/parts/unit_dims.py GP) with the 33.7 mm spine tube inside it, as in the Transplant drawings
+export const SOCKET_R = COLUMN_R + 0.01, SOCKET_H = 0.025;   // its 95 mm socket on the lid
 export const BRACKET_T = 0.004;
 // The spine-to-track bracket (cad/bottom_bracket.py bracket_saddle 16 x 10 x 30 mm, unit_v3_dimensioned.py): 16 mm along the track, 10 mm in the other direction across the pipe, 30 mm out from the pipe towards the spine. The sleeves' C gap (18 mm narrow, hand_sleeve.py OPENING_W) faces the spine (HAND_TURN) and the bracket passes through it with its thin sides: 16 along the pipe, 10 across.
 export const BRACKET_HX = 0.008, BRACKET_HZ = 0.005;   // half the 16 mm along the track, half the 10 mm across
@@ -184,14 +188,17 @@ function cartMount(): { open: string; close: string; baseAttrs: string } {
 function spineGeoms(): string[] {
   const out: string[] = [];
   const dark = rgba(0.35, 0.35, 0.38), brk = rgba(0.2, 0.2, 0.22), shelf = rgba(0.5, 0.52, 0.58);
-  out.push(`<geom name="spine_tube" type="cylinder" fromto="0 ${SPINE_Y} ${f(SHELF_Z - 0.03)} 0 ${SPINE_Y} ${SPINE_TOP}" size="${SPINE_R}" ${OBST} ${dark}/>`);
+  // the central column of the unit (cad/unit_v3_dimensioned.py): the 75 mm growing pipe on its 95 mm socket on the lid, and the 33.7 mm spine tube inside it, both on the tank's centre line up to the top run
+  out.push(`<geom name="spine_tube" type="cylinder" fromto="0 ${SPINE_Y} ${f(SHELF_Z - 0.03)} 0 ${SPINE_Y} ${f(LOOP_ZT)}" size="${SPINE_R}" ${OBST} ${dark}/>`);
+  out.push(`<geom name="column" type="cylinder" fromto="0 ${SPINE_Y} ${f(LID_Z)} 0 ${SPINE_Y} ${f(LOOP_ZT)}" size="${COLUMN_R}" ${OBST} ${rgba(0.93, 0.95, 0.97, 0.3)}/>`);
+  out.push(`<geom name="column_socket" type="cylinder" fromto="0 ${SPINE_Y} ${f(LID_Z)} 0 ${SPINE_Y} ${f(LID_Z + SOCKET_H)}" size="${SOCKET_R}" ${OBST} ${rgba(0.95, 0.6, 0.2)}/>`);
   const box = (x0: number, x1: number, y0: number, y1: number, z0: number, z1: number, c = brk, name = '') =>
     out.push(`<geom ${name ? `name="${name}" ` : ''}type="box" pos="${f((x0 + x1) / 2)} ${f((y0 + y1) / 2)} ${f((z0 + z1) / 2)}" size="${f((x1 - x0) / 2)} ${f((y1 - y0) / 2)} ${f((z1 - z0) / 2)}" ${OBST} ${c}/>`);
   const collar = (z0: number, z1: number) => out.push(`<geom type="cylinder" fromto="0 ${SPINE_Y} ${f(z0)} 0 ${SPINE_Y} ${f(z1)}" size="${f(SPINE_R + 0.005)}" ${OBST} ${brk}/>`);
   // Pillar-to-track bracket (unit_v3_dimensioned.py: 16 x 30 x 30 on the spine side of the pipe): a plate on the spine and an M8 rod
   // (track_joint.py) from it to a clamp ring on the pipe. The hands have a C-gap facing the spine, so the cart passes it.
   const yPlate = BRACKET_PLATE_Y;                      // the bracket's plate starts on the clamp ring (R17.5), 9 mm from the spine's surface
-  box(-BRACKET_HX, BRACKET_HX, yPlate, SPINE_Y - SPINE_R - 0.001, PIPE_Z - BRACKET_HZ, PIPE_Z + BRACKET_HZ, brk, 'track_bracket');
+  box(-BRACKET_HX, BRACKET_HX, yPlate, SPINE_Y - COLUMN_R - 0.001, PIPE_Z - BRACKET_HZ, PIPE_Z + BRACKET_HZ, brk, 'track_bracket');
   out.push(`<geom name="bracket_rod" type="cylinder" fromto="0 ${f(yPlate)} ${PIPE_Z} 0 ${f(PIPE_Y + PIPE_R)} ${PIPE_Z}" size="${ROD_R}" ${OBST} ${rgba(0.75, 0.75, 0.78)}/>`);
   out.push(`<geom name="bracket_ring" type="cylinder" fromto="-0.01 ${PIPE_Y} ${PIPE_Z} 0.01 ${PIPE_Y} ${PIPE_Z}" size="${f(PIPE_R + 0.0015)}" ${OBST} ${brk}/>`);
   // Shelf brackets: a collar on the spine and a flat bar under the shelf to each side, up to the edge of the tray / the store.
@@ -307,6 +314,24 @@ function trayGeoms(): string[] {
   return out;
 }
 
+/** The unit's ONE track loop: bottom run (the pipe the cart rides, 'track_pipe'), two legs, top run and four quarter-circle corners, in the plane y = PIPE_Y. */
+function loopGeoms(): string[] {
+  const out: string[] = [], grey = rgba(0.62, 0.66, 0.7);
+  const seg = (name: string, a: [number, number], b: [number, number]) =>
+    out.push(`<geom name="${name}" type="cylinder" fromto="${f(a[0])} ${PIPE_Y} ${f(a[1])} ${f(b[0])} ${PIPE_Y} ${f(b[1])}" size="${LOOP_TR}" ${OBST} ${grey}/>`);
+  const zb = PIPE_Z, zl = zb + LOOP_R, zh = LOOP_ZT - LOOP_R;
+  seg('track_pipe', [-LOOP_TX + LOOP_R, zb], [LOOP_TX - LOOP_R, zb]);
+  seg('tracktop', [-LOOP_TX + LOOP_R, LOOP_ZT], [LOOP_TX - LOOP_R, LOOP_ZT]);
+  for (const e of [-1, 1]) seg(`trackleg${e}`, [e * LOOP_TX, zl], [e * LOOP_TX, zh]);
+  const N = 10;
+  for (const [ex, ez] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+    const cx = ex * (LOOP_TX - LOOP_R), cz = ez > 0 ? zh : zl;
+    const pt = (k: number): [number, number] => [cx + ex * LOOP_R * Math.sin(k / N * Math.PI / 2), cz + ez * LOOP_R * Math.cos(k / N * Math.PI / 2)];
+    for (let k = 0; k < N; k++) seg(`trackc${ex}${ez}_${k}`, pt(k), pt(k + 1));
+  }
+  return out;
+}
+
 /** MJCF: the arm on its cart, the track, the tank with lid, store and tray, and all pods. */
 export function podGrabMjcf(): string {
   collarNo = 0;
@@ -315,8 +340,7 @@ export function podGrabMjcf(): string {
   const hx = TANK_W / 2, hy = TANK_D / 2, t = 0.004;
   const world = [
     `<geom name="floor" type="plane" size="1.2 0.9 0.01" pos="0 0 0" ${SOLID} ${rgba(0.82, 0.86, 0.9)}/>`,
-    // the bottom track pipe: floating in the track plane, no supports
-    `<geom name="track_pipe" type="cylinder" fromto="${PIPE_X0} ${PIPE_Y} ${PIPE_Z} ${PIPE_X1} ${PIPE_Y} ${PIPE_Z}" size="${PIPE_R}" ${OBST} ${rgba(0.62, 0.66, 0.7)}/>`,
+    ...loopGeoms(),
     // tank: floor, four walls, the shelf at 155 mm
     wall(0, 0, t / 2, hx, hy, t / 2, 0.5),
     wall(0, -hy + t / 2, TANK_H / 2, hx, t / 2, TANK_H / 2),

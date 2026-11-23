@@ -29,7 +29,7 @@ const snap = (id: string, label: string, note = '', centre = [0, 0.0, 0.42], hal
   list.push({ id, label, note, centre, half });
   console.log(id, label, note);
 };
-snap('1-start', 'Start: cart on the bottom pipe, arm raised, over the tank', `cart x ${world.cartX.toFixed(2)} m`);
+snap('1-start', 'Start: the whole unit as in the Transplant drawings: spine on the tank centre, the unit loop, the cart on its bottom run', `cart x ${world.cartX.toFixed(2)} m`, [0, 0, 0.95], 1.1);
 const task = new PodTask(world, cmd, { jobs: [{ row: 2, slot: 0 }], seed: 1 });
 const want = new Map<string, [string, string]>([
   ['Closing the claw on the pod', ['2-pick', 'Pick: the claw is down through the lid hole round the pod, cart at store row 3']],
@@ -46,7 +46,7 @@ while (!task.done) {
     snap(hit[0], hit[1], `cart x ${world.cartX.toFixed(2)} m`);
   }
 }
-snap('5-done', 'Done: pod seated in the tray', task.failReason === '' ? 'seated' : task.failReason);
+snap('5-done', 'End of the run: the arm cannot reach the store from the real unit', task.failReason === '' ? 'seated' : task.failReason, [0, 0, 0.5], 0.6);
 // the spine crossing (#461): the sleeves are turned so their 18 mm slot faces the bracket; the cart at three stops across the spine (arm at its ready pose), close up
 world.reset();
 for (const [id, x] of [['6-spine-m10', -0.1], ['7-spine-0', 0], ['8-spine-p10', 0.1]] as const) {

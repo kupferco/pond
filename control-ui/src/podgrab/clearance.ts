@@ -2,7 +2,7 @@
 // MuJoCo's mj_geomDistance on a mesh geom uses its CONVEX HULL, which fills the sleeve's C gap and the jaw cut-outs, so it cannot say whether the bracket really passes through the slot.
 // Here the CAD triangles themselves are sampled (every point at most STEP apart) in the cart frame once, and each point is tested against the obstacle solids.
 import type { SimDriver } from '../drivers/simDriver.ts';
-import { PIPE_R, PIPE_Y, PIPE_Z, SPINE_R, SPINE_Y, BRACKET_PLATE_Y, BRACKET_HX, BRACKET_HZ, ROD_R } from './layout.ts';
+import { PIPE_R, PIPE_Y, PIPE_Z, COLUMN_R, SPINE_Y, BRACKET_PLATE_Y, BRACKET_HX, BRACKET_HZ, ROD_R } from './layout.ts';
 
 const STEP = 0.0025;                        // m: sample spacing on the CAD surfaces
 export type Obstacle = 'spine' | 'bracket' | 'rod' | 'pipe';
@@ -42,10 +42,10 @@ const dist = (a: number[], b: number[]) => Math.hypot(a[0] - b[0], a[1] - b[1], 
 
 /** Penetration depth (m, > 0 inside) of a world point into one obstacle solid (the solids of spineGeoms() in layout.ts). */
 export function depthIn(o: Obstacle, px: number, py: number, pz: number): number {
-  if (o === 'spine') return SPINE_R - Math.hypot(px, py - SPINE_Y);
+  if (o === 'spine') return COLUMN_R - Math.hypot(px, py - SPINE_Y);
   if (o === 'pipe') return PIPE_R - Math.hypot(py - PIPE_Y, pz - PIPE_Z);
   if (o === 'rod') return Math.min(ROD_R - Math.hypot(px, pz - PIPE_Z), py - (PIPE_Y + PIPE_R), BRACKET_PLATE_Y - py);
-  return Math.min(BRACKET_HX - Math.abs(px), BRACKET_HZ - Math.abs(pz - PIPE_Z), py - BRACKET_PLATE_Y, SPINE_Y - SPINE_R - 0.001 - py);   // the bracket plate
+  return Math.min(BRACKET_HX - Math.abs(px), BRACKET_HZ - Math.abs(pz - PIPE_Z), py - BRACKET_PLATE_Y, SPINE_Y - COLUMN_R - 0.001 - py);   // the bracket plate
 }
 
 export interface Clash { obstacle: Obstacle; depth: number; part: string; x: number }
