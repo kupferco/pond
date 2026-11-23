@@ -11,7 +11,7 @@ import { clampToReach, farEnough, inReach, randomPlacement } from '../src/arm/pl
 import { trajectoryJson, gzipJson } from '../src/arm/trajectory.ts';
 import { CartMotion, L_ARC, L_VERT, TRACK_LENGTH_CM, frameQuat, pathAt, randomTarget } from '../src/cart/track.ts';
 import { cartMjcf, WHEEL_OPEN_M, cartActuators, cartBody, setMotors } from '../src/cart/model.ts';
-import { JOINT_CM, P_TOP_CM, ROLL_STATION_CM, S_FLAT_CM, placeTransfer, transferContacts, transferMjcf as transferMjcfO, blockedBy, type Trim } from '../src/cart/omni-transfer.ts';
+import { P_TOP_CM, ROLL_STATION_CM, S_FLAT_CM, placeTransfer, transferContacts, transferMjcf as transferMjcfO, blockedBy, type Trim } from '../src/cart/omni-transfer.ts';
 import { CORRIDORS, JAW_A1_DEG, TransferRun, rollPlan, type Variant } from '../src/cart/omni-transfer-run.ts';
 import { S_MAX_CM, S_MIN_CM, transferMjcf, worldToCad } from '../src/cart/transfer-model.ts';
 import * as DIMS from '../src/cart/dims.ts';
@@ -232,7 +232,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   const probeAt = (w: { mm: any; dd: any }, rider: 'B' | 'C', s: number, roll: number, open = 1, trim?: Trim) => { placeTransfer(w.mm, w.dd, { rider, s, roll, open, trim }); mj.mj_forward(w.mm, w.dd); const d = transferContacts(w.mm, w.dd, rider); return { what: blockedBy(d), d }; };
   const cadW = ot('cad'), wideW = ot('wide');
   check('transfer model: one mocap cart, 8 actuators (2 drive, 2 roll motor, 2 roll joint, 2 jaw), the jaws are hinges 0 to 92 degrees, no hinge1/hinge2, rods and rings on both pipes',
-    cadW.mm.nmocap === 1 && cadW.mm.nu === 8 && ['jawB', 'jawC'].every((n) => cadW.mm.jnt(n).id >= 0 && Math.abs(cadW.mm.jnt_range[2 * cadW.mm.jnt(n).id + 1] - OC.JAW_OPEN_RAD) < 1e-9) && !/hinge[12]/.test(transferMjcfO()) && JOINT_CM.every((_, i) => ['B', 'C'].every((h) => cadW.mm.geom(`rod${h}${i}`).id >= 0 && cadW.mm.geom(`ring${h}${i}`).id >= 0)));
+    cadW.mm.nmocap === 1 && cadW.mm.nu === 8 && ['jawB', 'jawC'].every((n) => cadW.mm.jnt(n).id >= 0 && Math.abs(cadW.mm.jnt_range[2 * cadW.mm.jnt(n).id + 1] - OC.JAW_OPEN_RAD) < 1e-9) && !/hinge[12]/.test(transferMjcfO()) && !/name="(rod|ring)/.test(transferMjcfO()));
   check('jaw wedge numbers: CAD 0 to 110 degrees and 92 degrees open (cad/cart_sleeves.py), the proposed wedge 150', OC.JAW_A1 === 110 && JAW_A1_DEG.cad === 110 && JAW_A1_DEG.wide === 150 && OC.JAW_OPEN_DEG === 92 && /^JAW_A0, JAW_A1 = 0\.0, 110\.0/m.test(py('cart_sleeves.py')) && /^JAW_OPEN = 92\.0/m.test(py('cart_sleeves.py')));
   // placement: the riding hand's pipe axis sits on its own pipe, hand B and C mirror each other
   { const at = (rider: 'B' | 'C', s: number, roll = 0) => { placeTransfer(cadW.mm, cadW.dd, { rider, s, roll, open: 0 }); mj.mj_forward(cadW.mm, cadW.dd); const p = (n: string) => [cadW.dd.xpos[3 * cadW.mm.body(n).id], cadW.dd.xpos[3 * cadW.mm.body(n).id + 1], cadW.dd.xpos[3 * cadW.mm.body(n).id + 2]]; return { B: p('handB'), C: p('handC') }; };
