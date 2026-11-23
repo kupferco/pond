@@ -78,6 +78,7 @@ export const podGrabScene: Scene = {
       </div>
       <div class="row wrap">
         <button class="lock big grow" id="g-fill">Fill the whole tray</button>
+        <button class="big grow" id="g-stop" disabled>Stop</button>
       </div>
       <p><strong>Or move one pod.</strong></p>
       <div class="xy stepbar">
@@ -149,6 +150,7 @@ export const podGrabScene: Scene = {
     const setBusy = (busy: boolean) => {
       panel.querySelectorAll<HTMLInputElement | HTMLButtonElement | HTMLSelectElement>('.lock').forEach((el) => { el.disabled = busy; });
       panel.classList.toggle('busy', busy);
+      $<HTMLButtonElement>('g-stop').disabled = !busy;   // Stop is not a .lock button: it is the one control that works while a run is going
     };
     const start = (jobs: { row: number; slot: number }[]) => {
       say('');
@@ -166,6 +168,13 @@ export const podGrabScene: Scene = {
       rowSel.value = String(rows[Math.floor(r() * rows.length)]);
       slotSel.value = String(slots[Math.floor(r() * slots.length)]);
       start([{ row: Number(rowSel.value), slot: Number(slotSel.value) }]);
+    });
+    $('g-stop').addEventListener('click', () => {
+      if (!task) return;
+      const n = task.results.length;
+      task = null; setBusy(false); showCounts();
+      stateEl.textContent = 'Stopped';
+      say(`Stopped after ${n} pod${n === 1 ? '' : 's'} seated. Press Reset scene before starting a new run (the arm may be mid-move).`);
     });
     $('g-reset').addEventListener('click', () => { world.reset(); cmd.home(); result.hidden = true; stateEl.textContent = 'Idle'; say(''); showCounts(); });
 
