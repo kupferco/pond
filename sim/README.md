@@ -56,4 +56,6 @@ plus `climb_m` (height gained) and `max_contacts`.
   on the riding pipe (no hinge) to take the free hand off its pipe. The jaw wedge is drawn to 150 degrees: with the CAD's 110 no roll direction clears (control-ui `scripts/search-swing.ts`).
   `bend_test.py` and `guide_test.py` still model the old 20 x 8 wheels (they read the old constants in `constants.py`, kept for them) and are not updated yet.
 
+- `pod_grab.py` — the real SO-101 (URDF link lengths, limits, masses; 116 / 135 / 160 mm, not 120 / 130 / 100) on the cart, reaching the 4 x 4 tray rows and the pod store, with the water station as an obstacle (OpenPocket #522). Params `tray_shift_mm` (0 or 10), `tilt_deg`, `battery`, `station_y0_mm`, `stall_nm`. `pod_grab_check.py` prints the reach table, `pod_grab_render.py` the PNGs and GLB. Results and recommendation: `docs/pod-grab-reach.md`.
+
 Tests 2–5 (curve, handover, corner, arm reach) come later.

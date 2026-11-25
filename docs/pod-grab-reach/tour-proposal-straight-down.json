@@ -1,0 +1,23 @@
+{
+ "proposal-straight-down": {
+  "closest_to_target_mm": {
+   "A": 1.6,
+   "B": 2.1,
+   "C": 2.8,
+   "D": 2.6,
+   "S": 1.8
+  },
+  "peak_servo_nm": {
+   "shoulder_lift": 1.9,
+   "elbow_flex": 1.9,
+   "wrist_flex": 1.9
+  },
+  "saturated_samples": {
+   "shoulder_lift": 207,
+   "elbow_flex": 184,
+   "wrist_flex": 112
+  },
+  "arm_contacts_with_scene": {},
+  "seconds": 37.3
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "today-tilt-10": {
+  "closest_to_target_mm": {
+   "A": 1.8,
+   "B": 0.5,
+   "C": 2.3,
+   "D": 2.9,
+   "S": 1.8
+  },
+  "peak_servo_nm": {
+   "shoulder_lift": 1.9,
+   "elbow_flex": 1.9,
+   "wrist_flex": 1.9
+  },
+  "saturated_samples": {
+   "shoulder_lift": 184,
+   "elbow_flex": 133,
+   "wrist_flex": 116
+  },
+  "arm_contacts_with_scene": {},
+  "seconds": 37.3
+ }
+}
