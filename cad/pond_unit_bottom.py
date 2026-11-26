@@ -1,8 +1,10 @@
 import cadquery as cq
 import math
-# POND UNIT, BOTTOM ONLY (cropped at z 750), detailed cart (26 Nov 2026, v4: NO TILT, both carts upright, real 160 mm SO-101 claw).
-# Decision: cart stays upright and the track stays where it is (v3 check: upright reaches 9/9 tray cells and the store front row, lid clear).
-# Left cart shown reaching the HARDEST tray cell (far-left, back row x -290 y -100); right cart at the pod store front row.
+# POND UNIT, BOTTOM ONLY (cropped at z 750), detailed cart (26 Nov 2026, v5).
+# v5: the DRY POD STORE is a gravity-feed tray: 7 lanes sloping down toward the front, so when the arm lifts the front pod the next one
+# slides forward into the pick spot. Each lane ends in a short FLAT landing at the front row (y -165) so the pod being picked stands vertical,
+# with a stop lip in front. Slope 15 deg (ASSUMED: enough for a dry plastic net pot to slide; test with the real pots).
+# Both carts upright, real 160 mm SO-101 claw (no tilt: v4 check, 18/18 tray cells and the store front row reachable, lid clear).
 ZCROP = 750.0
 TW, TD, TH, WALL, LID_T = 700.0, 400.0, 300.0, 4.0, 4.0
 LID = TH + LID_T
@@ -13,6 +15,7 @@ ZB = 514.0
 ZC1, FOOT_X = 1215.0, 340.0
 SHELF_Z, SHELF_T = 155.0, 4.0; SHELF_TOP = SHELF_Z + SHELF_T
 L1, L2, CLAW = 116.0, 135.0, 160.0
+SLOPE = 15.0
 
 def box(sx, sy, sz, cx, cy, z0):
     return cq.Workplane("XY").box(sx, sy, sz, centered=(True, True, False)).translate((cx, cy, z0))
@@ -50,10 +53,41 @@ for x in STORE_XS:
     lid = lid.cut(cyl(16, 10, x, STORE_Y, TH - 1))
 lid = lid.cut(cyl(RP + 1, 10, 0, 0, TH - 1))
 tray = U([box(240, 110, 6, -190, -125, SHELF_TOP)] + [box(25, 18, 24, x, y, SHELF_TOP + 6) for x in TRAY_XS for y in TRAY_YS])
-storage = U([box(240, 110, 12, 190, -125, SHELF_TOP)] + [box(230, 14, 36, 190, -165 + 20 * k, SHELF_TOP + 12) for k in range(5)])
-POD_TOP_T, POD_TOP_S = SHELF_TOP + 46, SHELF_TOP + 48
-pods = U([cyl(12.5, 40, x, y, POD_TOP_T - 40) for x in TRAY_XS for y in TRAY_YS] +
-         [cyl(12.5, 40, x, STORE_Y, POD_TOP_S - 40) for x in STORE_XS])
+POD_TOP_T = SHELF_TOP + 46
+tray_pods = U([cyl(12.5, 40, x, y, POD_TOP_T - 40) for x in TRAY_XS for y in TRAY_YS])
+
+# ---------- gravity-feed dry pod store ----------
+BASE_T = 12.0
+LAND_Y0, LAND_Y1 = -180.0, -152.0          # flat landing (front pick spot centred at y -165)
+RAMP_Y1 = -62.0                            # back of the ramp
+t15 = math.tan(math.radians(SLOPE))
+ZL = SHELF_TOP + BASE_T                    # landing floor height (171)
+ramp_len = RAMP_Y1 - LAND_Y1
+ramp_rise = ramp_len * t15
+X0, X1 = 80.0, 300.0
+base = bxx(X0, X1, LAND_Y0 - 6, RAMP_Y1, SHELF_TOP, ZL)
+# ramp: a wedge from the landing back edge rising to the back
+wedge = (cq.Workplane("YZ").polyline([(LAND_Y1, ZL), (RAMP_Y1, ZL), (RAMP_Y1, ZL + ramp_rise)]).close()
+         .extrude(X1 - X0).translate((X0, 0, 0)))
+stop_lip = bxx(X0, X1, LAND_Y0 - 6, LAND_Y0, ZL, ZL + 14)
+rails = []
+for i in range(len(STORE_XS) + 1):
+    xr = STORE_XS[0] - 15 + 30 * i
+    r = (cq.Workplane("YZ").polyline([(LAND_Y0, ZL), (LAND_Y1, ZL), (RAMP_Y1, ZL + ramp_rise), (RAMP_Y1, ZL + ramp_rise + 22),
+                                       (LAND_Y1, ZL + 22), (LAND_Y0, ZL + 22)]).close().extrude(3).translate((xr - 1.5, 0, 0)))
+    rails.append(r)
+store = U([base, wedge, stop_lip] + rails)
+# pods: the front one stands vertical on the landing, the queue behind it leans with the 15 deg ramp
+store_pods = []
+for x in STORE_XS:
+    store_pods.append(cyl(12.5, 40, x, STORE_Y, ZL))
+    for k in range(1, 4):
+        yc = LAND_Y1 + 12.5 + (k - 1) * 26 + 2
+        zf = ZL + (yc - LAND_Y1) * t15
+        p = cq.Workplane("XY").circle(12.5).extrude(40).rotate((0, 0, 0), (1, 0, 0), SLOPE).translate((x, yc, zf))
+        store_pods.append(p)
+store_pods = U(store_pods)
+POD_TOP_S = ZL + 40
 
 pillar = tube(RP, RP - 3, ZCROP - LID, 0, 0, LID)
 socket = tube(RP + 10, RP + 1, 25, 0, 0, LID)
@@ -120,24 +154,22 @@ def arm(x0, grip):
     return base_plate, servos, links, claw, fingers, d, E, W
 
 lim = L1 + L2
-ok_all = 0
-for y in TRAY_YS:
-    for x in TRAY_XS:
-        _, _, links, claw, fingers, d, E, W = arm(-130.0, (x, y, POD_TOP_T))
-        moving = links.union(claw).union(fingers).union(servo_at(E, "x")).union(servo_at(W, "z"))
-        ok = d <= lim and links.intersect(cart_body(-130.0)).val().Volume() < 1 and moving.intersect(lid).val().Volume() < 1
-        ok_all += ok
-print("upright, real 160 mm claw: %d of %d tray cells reachable with no cart or lid hit" % (ok_all, len(TRAY_XS) * len(TRAY_YS)))
-_, _, _, _, _, d_hard, E_h, W_h = arm(-130.0, (-290.0, -100.0, POD_TOP_T))
-_, _, _, _, _, d_s, E_s, W_s = arm(130.0, (190.0, STORE_Y, POD_TOP_S))
-print("hardest tray cell (x -290, y -100): reach %.0f of %.0f, wrist %.0f mm above the lid" % (d_hard, lim, W_h[2] - LID))
-print("store front row middle: reach %.0f, wrist %.0f mm above the lid" % (d_s, W_s[2] - LID))
+ok = 0
+for x in STORE_XS:
+    _, _, links, claw, fingers, d, E, W = arm(130.0, (x, STORE_Y, POD_TOP_S))
+    moving = links.union(claw).union(fingers).union(servo_at(E, "x")).union(servo_at(W, "z"))
+    ok += d <= lim and links.intersect(cart_body(130.0)).val().Volume() < 1 and moving.intersect(lid).val().Volume() < 1
+print("gravity store: slope %.0f deg, ramp %.0f mm long rising %.0f mm; back pod top z %.0f vs lid underside %.0f" % (
+    SLOPE, ramp_len, ramp_rise, ZL + ramp_rise + 40 * math.cos(math.radians(SLOPE)), TH))
+print("store front (pick) row: %d of %d lanes reachable upright, lid and cart clear" % (ok, len(STORE_XS)))
+print("each lane holds 4 pods (1 on the landing + 3 queued) = %d pods" % (4 * len(STORE_XS)))
 
 C = cq.Color
 assy = cq.Assembly()
 for obj, name, col in [
-    (tank, "tank", C(0.75, 0.75, 0.8, 0.25)), (shelf, "shelf", C(0.5, 0.5, 0.55, 0.4)), (lid, "lid_with_pick_holes", C(0.6, 0.6, 0.65, 0.5)),
-    (tray, "seedling_tray", C(0.59, 0.43, 0.27)), (storage, "pod_storage", C(0.35, 0.5, 0.75)), (pods, "pods", C(0.24, 0.67, 0.31)),
+    (tank, "tank", C(0.75, 0.75, 0.8, 0.25)), (shelf, "shelf", C(0.5, 0.5, 0.55, 0.4)), (lid, "lid_with_pick_holes", C(0.6, 0.6, 0.65, 0.45)),
+    (tray, "seedling_tray", C(0.59, 0.43, 0.27)), (tray_pods, "seedling_pods", C(0.24, 0.67, 0.31)),
+    (store, "gravity_pod_store", C(0.35, 0.5, 0.75)), (store_pods, "dry_pods", C(0.85, 0.75, 0.5)),
     (pillar, "growing_pipe", C(0.95, 0.95, 0.95, 0.8)), (socket, "pillar_socket", C(0.95, 0.6, 0.2)), (spine, "spine", C(0.35, 0.35, 0.35)),
     (bracket, "pillar_to_track_bracket", C(0.95, 0.6, 0.2)), (legs, "a_frame_legs", C(0.55, 0.57, 0.6)), (lid_plates, "lid_plates", C(0.55, 0.57, 0.6)),
     (feet, "feet", C(0.4, 0.4, 0.42)), (track, "track", C(0.75, 0.75, 0.77)),
