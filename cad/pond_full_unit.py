@@ -1,12 +1,12 @@
 import cadquery as cq
 import math
-# FULL POND UNIT, one assembly (26 Nov 2026). Every number copied from main: cad/layout.json, cad/parts/unit_dims.py, unit_frame.py,
-# track.py, tank.py, shelf.py, shelf_items.py, water_station.py (the render sandbox cannot import them; keep in sync).
+# FULL POND UNIT, one assembly (26 Nov 2026, v2: elbow OUT, away from the cart; clash check arm vs cart).
+# Every number copied from main: cad/layout.json, cad/parts/unit_dims.py, unit_frame.py, track.py, tank.py, shelf.py, shelf_items.py,
+# water_station.py (the render sandbox cannot import them; keep in sync).
 # Cart: upright (the pod grab sim #522 rejected the 45 deg roll). Cart/arm simplified to cart_assembly.py sizes: plate 166 x 112 x 6,
 # two 90 mm sleeves (R34) on the track, battery 70x50x70, SO-101 arm L1 116 / L2 135 (ASSUMED shoulder 144 out, 60 under the track axis).
 # Shown twice on the bottom run: over the seedling tray (x -130) and at the pod store (x +130), the ends of the straight run.
 
-# ---------------- shared numbers ----------------
 TW, TD, TH, WALL, LID_T = 700.0, 400.0, 300.0, 4.0, 4.0
 LID = TH + LID_T
 GP, SP, LR = 75.0, 33.7, 8.0
@@ -34,7 +34,6 @@ def U(ps):
         o = p if o is None else o.union(p)
     return o
 
-# ---------------- tank, lid, shelf ----------------
 tank = box(TW, TD, TH, 0, 0, 0).cut(box(TW - 2 * WALL, TD - 2 * WALL, TH, 0, 0, WALL))
 shelf = box(TW - 2 * WALL, TD - 2 * WALL, SHELF_T, 0, 0, SHELF_Z).cut(cyl(SP / 2 + 1, SHELF_T + 2, 0, 0, SHELF_Z - 1))
 TRAY_XS = list(range(-290, -80, 35)); TRAY_YS = (-150, -125, -100)
@@ -52,11 +51,10 @@ POD_TOP_T, POD_TOP_S = SHELF_TOP + 46, SHELF_TOP + 48
 pods = U([cyl(12.5, 40, x, y, POD_TOP_T - 40) for x in TRAY_XS for y in TRAY_YS] +
          [cyl(12.5, 40, x, STORE_Y, POD_TOP_S - 40) for x in STORE_XS])
 
-# ---------------- frame (unit_frame.py) ----------------
 pillar = tube(RP, RP - 3, ZT - LID, 0, 0, LID)
 socket = tube(RP + 10, RP + 1, 25, 0, 0, LID)
 spine = tube(SP / 2, SP / 2 - 2, ZT, 0, 0, 0)
-brackets = box(16, 30, 30, 0, -45, ZT - 15).union(box(16, 30, 30, 0, -45, ZB - 15))   # pillar/spine -> track, top and bottom run
+brackets = box(16, 30, 30, 0, -45, ZT - 15).union(box(16, 30, 30, 0, -45, ZB - 15))
 
 def collar(zc, ends):
     c = tube(RC, RP, 50, 0, 0, zc - 25); legs = []
@@ -80,7 +78,6 @@ for x in (-150.0, 150.0):
         mounts.append(box(15, 15, max(zu - (ZBAR + 30) + 2, 4), x, y, ZBAR + 30))
 mounts = U(mounts)
 
-# ---------------- track loop (track.py) ----------------
 def corner(cx, cz, qx, qz):
     tor = cq.Workplane("XY").add(cq.Solid.makeTorus(R, TR, pnt=cq.Vector(cx, LOOP_Y, cz), dir=cq.Vector(0, 1, 0)))
     clip = box(R + TR + 2, 4 * TR, R + TR + 2, cx + qx * (R + TR + 2) / 2, LOOP_Y, cz if qz > 0 else cz - (R + TR + 2))
@@ -92,7 +89,6 @@ for z in (ZT, ZB):
 for cx, cz, qx, qz in [(-TX + R, ZT - R, -1, 1), (TX - R, ZT - R, 1, 1), (TX - R, ZB + R, 1, -1), (-TX + R, ZB + R, -1, -1)]:
     track = track.union(corner(cx, cz, qx, qz))
 
-# ---------------- water station (water_station.py, behind the pillar) ----------------
 station = bxx(60, 260, 14, 108, 394, 504)
 st_roof = bxx(52, 268, 14, 116, 504, 507)
 st_legs = U([bxx(x0, x0 + 20, y0, y0 + 20, LID, 394) for x0 in (60, 240) for y0 in (22, 80)])
@@ -108,22 +104,39 @@ def cart(x0):
     return sleeves.union(pads).union(plate).union(batt).union(base)
 
 def arm(x0, grip):
+    """2-link IK in the vertical plane through shoulder and wrist; elbow chosen on the side AWAY from the cart (most negative y)."""
     S = (x0, LOOP_Y - 144, ZB - 60)
     W = (grip[0], grip[1], grip[2] + CLAW)
     hx, hy = W[0] - S[0], W[1] - S[1]; hu = math.hypot(hx, hy); dz = W[2] - S[2]; d = math.hypot(hu, dz)
     a = math.atan2(dz, hu); b = math.acos(max(-1, min(1, (L1**2 + d**2 - L2**2) / (2 * L1 * d))))
-    u, z = max([(L1 * math.cos(a + s * b), L1 * math.sin(a + s * b)) for s in (1, -1)], key=lambda e: e[1])
-    E = (S[0] + hx / hu * u, S[1] + hy / hu * u, S[2] + z)
-    shp = rod(S, E, 12).union(rod(E, W, 10)).union(rod(W, grip, 7))
+    cands = []
+    for s in (1, -1):
+        u, z = L1 * math.cos(a + s * b), L1 * math.sin(a + s * b)
+        cands.append((S[0] + hx / hu * u, S[1] + hy / hu * u, S[2] + z))
+    E = min(cands, key=lambda e: e[1])
+    links = rod(S, E, 12).union(rod(E, W, 10))
+    shp = links.union(rod(W, grip, 7))
     for p in (S, E, W):
         shp = shp.union(cq.Workplane("XY").sphere(15).translate(p))
-    return shp, d
+    return shp, links, d, E, W
 
-arm_t, d_t = arm(-130.0, (-185.0, -125.0, POD_TOP_T + 5))
-arm_s, d_s = arm(130.0, (190.0, STORE_Y, POD_TOP_S + 5))
-print("shoulder->wrist: tray middle cell %.0f mm, store front row %.0f mm (limit %.0f)" % (d_t, d_s, L1 + L2))
-lowest_cart = ZB - 60 - 56
-print("cart lowest point z %.0f, lid top %.0f, clearance %.0f mm" % (lowest_cart, LID, lowest_cart - LID))
+cart_t, cart_s = cart(-130.0), cart(130.0)
+# cart solids the arm must not pass through (its own base, where the shoulder sits, is excluded)
+def body(x0):
+    return box(166, 6, 112, x0, LOOP_Y - 53, ZB - 60 - 56).union(box(70, 50, 70, x0, LOOP_Y - 81, ZB - 60 - 35))
+lim = L1 + L2
+for label, x0, grip in [("tray middle cell", -130.0, (-185.0, -125.0, POD_TOP_T + 5)),
+                        ("tray near row", -130.0, (-115.0, -100.0, POD_TOP_T + 5)),
+                        ("tray far corner", -130.0, (-290.0, -150.0, POD_TOP_T + 5)),
+                        ("store front row", 130.0, (190.0, STORE_Y, POD_TOP_S + 5))]:
+    _, links, d, E, W = arm(x0, grip)
+    clash = links.intersect(body(x0)).val().Volume() if True else 0
+    lidhit = links.intersect(lid).val().Volume()
+    print("%-17s reach %4.0f/%.0f  elbow y %5.0f z %4.0f  wrist z %4.0f  clash with cart %6.0f mm3  with lid %6.0f mm3" %
+          (label, d, lim, E[1], E[2], W[2], clash, lidhit))
+
+arm_t, *_ = arm(-130.0, (-185.0, -125.0, POD_TOP_T + 5))
+arm_s, *_ = arm(130.0, (190.0, STORE_Y, POD_TOP_S + 5))
 
 C = cq.Color
 assy = cq.Assembly()
@@ -136,7 +149,7 @@ for obj, name, col in [
     (top_bar, "top_bar", C(0.55, 0.57, 0.6)), (feet, "feet", C(0.4, 0.4, 0.42)), (panel, "solar_panel", C(0.15, 0.2, 0.4)),
     (mounts, "panel_mount", C(0.55, 0.57, 0.6)), (track, "track_loop", C(0.7, 0.7, 0.72)),
     (station, "water_station", C(0.93, 0.93, 0.9)), (st_roof, "water_station_roof", C(0.82, 0.82, 0.78)), (st_legs, "water_station_legs", C(0.55, 0.57, 0.6)),
-    (cart(-130.0), "cart_over_tray", C(0.25, 0.25, 0.3)), (arm_t, "arm_over_tray", C(0.9, 0.15, 0.15)),
-    (cart(130.0), "cart_at_store", C(0.25, 0.25, 0.3)), (arm_s, "arm_at_store", C(0.9, 0.15, 0.15))]:
+    (cart_t, "cart_over_tray", C(0.25, 0.25, 0.3)), (arm_t, "arm_over_tray", C(0.9, 0.15, 0.15)),
+    (cart_s, "cart_at_store", C(0.25, 0.25, 0.3)), (arm_s, "arm_at_store", C(0.9, 0.15, 0.15))]:
     assy.add(obj, name=name, color=col)
 result = assy
