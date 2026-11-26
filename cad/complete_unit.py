@@ -11,6 +11,7 @@ import cadquery as cq
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import layout as LAY   # the ONE layout (cad/layout.json): the track offset, the climbing sleeve
 from parts.unit import unit_parts
 from parts.unit_dims import TX, LOOP_Y
 from parts.pods import pods_and_caps
@@ -19,7 +20,7 @@ from parts.cart import add_cart
 import water_sampler as wsa
 
 CART_Z = 1000.0                  # cart centre height on the right run (ASSUMED: mid-height)
-CART_SHIFT = (TX + 60.0, LOOP_Y, CART_Z)   # cart pipe B (x -60, y 0) onto the track (x TX, y LOOP_Y): a plain translation, no rotation, plate on the front (-Y) side
+CART_SHIFT = (TX + LAY.CART_PIPE_SPACING / 2, LOOP_Y, CART_Z)   # cart pipe B (x -60, y 0) onto the track (x TX, y LOOP_Y): a plain translation, no rotation, plate on the front (-Y) side
 
 
 def to_unit(shape):

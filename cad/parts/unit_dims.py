@@ -7,15 +7,17 @@ import layout as LAY   # OpenPocket #364: tank, lid and bottom track heights com
 TW, TD, TH = 700.0, 400.0, LAY.TANK_H        # tank width (x), depth (y), height (z)
 TANK_WALL = 4.0
 LID_T = LAY.LID_T
-GP = 75.0                                # growing pipe OD
-SP = 33.7                                # spine tube OD
+GP = LAY.GROWING_PIPE_OD                 # growing pipe OD (the central pipe, on x = y = 0)
+SP = LAY.SPINE_OD                        # spine tube OD
 LR = 8.0                                 # 16 mm leg rod radius
-TX = 290.0                               # track loop half width
-TR = 16.0                                # track pipe radius (32 mm OD)
-R = 150.0                                # track corner radius
-LOOP_Y = -60.0                           # track loop plane (y)
+TX = LAY.TRACK_HALF_WIDTH                # track loop half width
+TR = LAY.TRACK_PIPE_R                    # track pipe radius (32 mm OD)
+R = LAY.TRACK_CORNER_R                   # track corner radius
+LOOP_Y = LAY.TRACK_LOOP_Y                # track loop plane (y): 66 mm in front of the central pipe (16 tube radius + 50 rod, track_joint.py ROD_OUT); was -60 (#537)
+TRACK_OFFSET = LAY.TRACK_OFFSET          # track axis to central pipe axis
+CENTRAL_X, CENTRAL_Y = LAY.CENTRAL_PIPE_XY   # the central pipe: never moves
 ZB = LAY.TRACK_BOTTOM_Z                          # bottom run axis height
-ZT = 1900.0 - TR                         # top run axis height
+ZT = LAY.TRACK_TOP_Z                     # top run axis height (1900 top bar - 16)
 ZC1, ZC2 = 1215.0, 1547.5                # lower / upper clamp collar heights
 FOOT_X = 340.0
 LID = TH + LID_T                         # lid top

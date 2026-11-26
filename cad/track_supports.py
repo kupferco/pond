@@ -9,10 +9,11 @@
 #    solar panel) straight down to a block on the same rod stub, at x = +-125. The orange top triangle legs stay as they were.
 # Numbers: docs/bench-test/track_support_sag.py (output in track_support_sag.txt). The unit's track loop is a solid
 # cylinder in the unit scripts; here each support gets a local bore for its nut plate (the loop is a 32 x 1.8 pipe in reality).
-import math, os, runpy
+import math, os, runpy, sys
 import cadquery as cq
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
 unit = runpy.run_path(os.path.join(HERE, "unit_v3_aframe.py"))
 TH, TX, TR, R, LOOP_Y, ZB, ZT = (unit[k] for k in ("TH", "TX", "TR", "R", "LOOP_Y", "ZB", "ZT"))
 ZC2, LID = unit["ZC2"], unit["LID"]
@@ -24,8 +25,10 @@ ROD_D = 8.0; HOLE_D = 8.5
 PLATE_T = 3.0; PLATE_ANG = 50.0; PLATE_L = 30.0
 NUT_BOSS_D = 14.0; NUT_BOSS_H = 6.5
 LOCKNUT_AF = 13.0; LOCKNUT_H = 6.5
-FACE_Y = -10.0                      # face of the post / block (towards the spine side), 34 mm of free rod from the pipe surface
-STUB = FACE_Y - (LOOP_Y + TR)       # 34 mm
+import layout as LAY                 # OpenPocket #537: the ONE layout (cad/layout.json)
+STUB = LAY.TRACK_STUB               # 50 mm of free rod from the pipe surface: track_joint.py ROD_OUT (it was a 34 mm stub here, which disagreed with the joint)
+FACE_Y = LOOP_Y + TR + STUB         # face of the post / block (towards the spine side): on the central pipe's axis (y = 0)
+TRACK_OFFSET = LAY.TRACK_OFFSET     # 66: track axis to central pipe axis, stated on the two close-up drawings
 POST_W, POST_D = 20.0, 16.0
 BASE_X, BASE_Y, BASE_T = 44.0, 36.0, 4.0
 
@@ -95,4 +98,13 @@ hangers = []
 for sx in SX:
     hangers.append(box(POST_W, POST_D, unit["ZBAR"] - (ZT - 10), sx * SUP_X, yc, ZT - 10))
 add(many(hangers), "top_hangers_from_crossbar", (0.95, 0.6, 0.2, 1))
+
+# the track offset, stated on the drawings (#537): blue dimension from the track pipe axis to the central pipe axis, at each support, with the label
+def hdim_y(x, z, label):
+    g = box(4, -LOOP_Y, 4, x, LOOP_Y / 2, z).union(box(40, 4, 4, x, LOOP_Y, z)).union(box(40, 4, 4, x, 0, z))
+    t = cq.Workplane("XY").text(label, 14, 2).translate((x - 70, LOOP_Y / 2 + 4, z + 4))
+    return g.union(t)
+DIMS = ("track %d mm from the central pipe" % round(TRACK_OFFSET))
+dims = many([hdim_y(sx * SUP_X, z + dz, DIMS) for sx in SX for z, dz in ((ZB, -34.0), (ZT, 34.0))])
+add(dims, "track_offset_dimension", (0.1, 0.35, 0.85, 1))
 result = assy

@@ -54,7 +54,7 @@ OFF_Y = 50.0                     # v2: the whole station is moved 40 mm inboard 
                                  # at 50 the box front is 8 mm clear of the post and the front legs (y 22) 6 mm clear of the base plate. Found by water_station_position.py.
 SOCKET_Z_TOP = BOX["z1"]         # 19 Nov follow-up: the female socket is FLUSH with the top of the roof (443). It used to be a raised funnel up to 462. See water_connector.py
 SAMPLE_ML = 70.0                 # ASSUMED sample size metered by pump turns (owner: about 50 to 100 ml)
-UNIT_SOCKET = (20.0, -105.0)     # the unit's own passive socket on the lid (x, y): 80 mm from the dock centre, 45 mm OUTBOARD of the track axis (y -60), so its 20 mm mouth radius leaves the track's footprint 8 mm clear (it used to sit at y -48, right under the track); clear of the pipe (y +-17), lid bar (y +-10), seedling storage (x >= 70) and the station box (x >= 60)
+UNIT_SOCKET = (20.0, TRACK_Y - 45.0)     # the unit's own passive socket on the lid (x, y): 80 mm from the dock centre, 45 mm OUTBOARD of the track axis (y -60), so its 20 mm mouth radius leaves the track's footprint 8 mm clear (it used to sit at y -48, right under the track); clear of the pipe (y +-17), lid bar (y +-10), seedling storage (x >= 70) and the station box (x >= 60)
 UNIT_INSERT_D = 8.0              # depth of the round insert let into the lid
 DRAIN_Y_OUT = 215.0              # the drain tube leaves over the back lid edge (lid edge y = 200)
 DRAIN_Z_RUN = 324.0              # the drain tube runs between lid bar top (319) and the floor (330)

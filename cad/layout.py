@@ -16,3 +16,19 @@ TRACK_BOTTOM_ABOVE_LID = CART_BELOW_TRACK + CART_CLEARANCE          # 210: botto
 TRACK_BOTTOM_Z = LID_TOP + TRACK_BOTTOM_ABOVE_LID                   # 514: bottom track run axis (was guessed as 450 = lid + 146)
 OLD_TRACK_BOTTOM_Z = TANK_H + 150.0                                 # what unit_v3_aframe.py used before (the water station was drawn against it)
 TRACK_RISE = TRACK_BOTTOM_Z - OLD_TRACK_BOTTOM_Z                    # how far everything that is positioned off the track moved up
+
+# ---- OpenPocket #537: the rest of the unit's layout, also from layout.json and nowhere else ----
+CENTRAL_PIPE_XY = (float(_D["central_pipe_x_mm"]), float(_D["central_pipe_y_mm"]))   # (0, 0): the central pipe never moves
+GROWING_PIPE_OD = float(_D["growing_pipe_od_mm"])                   # 75
+SPINE_OD = float(_D["spine_od_mm"])                                 # 33.7: the spine tube, on the same axis inside the growing pipe
+TRACK_PIPE_OD = float(_D["track_pipe_od_mm"])                       # 32
+TRACK_PIPE_R = TRACK_PIPE_OD / 2                                    # 16
+TRACK_ROD_OUT = float(_D["track_rod_out_mm"])                       # 50: track_joint.py ROD_OUT, tube surface to the central pipe's axis
+TRACK_OFFSET = TRACK_PIPE_R + TRACK_ROD_OUT                         # 66: track pipe axis to the central pipe axis (tube radius + rod reach)
+TRACK_LOOP_Y = CENTRAL_PIPE_XY[1] - TRACK_OFFSET                    # -66: the track loop plane (y), in FRONT of the central pipe
+TRACK_STUB = TRACK_ROD_OUT                                          # free rod from the tube surface to the post / block face (track_supports.py); the same 50 as the joint
+TRACK_HALF_WIDTH = float(_D["track_half_width_mm"])                 # 290
+TRACK_CORNER_R = float(_D["track_corner_r_mm"])                     # 150
+TRACK_TOP_Z = float(_D["track_top_z_mm"])                           # 1884
+CART_PIPE_SPACING = float(_D["cart_pipe_spacing_mm"])               # 120
+CART_CLIMB_SLEEVE = str(_D["cart_climb_sleeve"])                    # "B": the TOP sleeve rides the track, the body hangs below it

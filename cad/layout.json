@@ -1,15 +1,32 @@
 {
-  "_about": "ONE shared layout for the unit (OpenPocket #364). Read by cad/layout.py (every part, assembly, render and GLB script) and by control-ui/src/layout.ts (the sim). mm, Z up, tank floor at z = 0. Anything marked ASSUMED is not given by the owner.",
+  "_about": "ONE shared layout for the unit (OpenPocket #364, extended in #537). Read by cad/layout.py (every part, assembly, render and GLB script) and by control-ui/src/layout.ts (the sim scenes and the MuJoCo models). mm, Z up, tank floor at z = 0, the central pipe on the x = 0, y = 0 axis. Anything marked ASSUMED is not given by the owner. If a number changes here it changes in every drawing, render and sim scene; cad/check_single_source.py fails if any of them uses a different value.",
   "tank_h_mm": 300,
   "lid_t_mm": 4,
   "water_level_mm": 150,
   "cart_below_track_mm": 165,
   "cart_clearance_mm": 45,
+  "central_pipe_x_mm": 0,
+  "central_pipe_y_mm": 0,
+  "growing_pipe_od_mm": 75,
+  "spine_od_mm": 33.7,
+  "track_pipe_od_mm": 32,
+  "track_rod_out_mm": 50,
+  "track_half_width_mm": 290,
+  "track_corner_r_mm": 150,
+  "track_top_z_mm": 1884,
+  "cart_pipe_spacing_mm": 120,
+  "cart_climb_sleeve": "B",
   "_notes": {
     "tank_h_mm": "given (30 cm tank, unit_v3_aframe.py)",
     "lid_t_mm": "given (4 mm lid)",
     "water_level_mm": "owner: normal water level about 15 cm above the tank floor",
     "cart_below_track_mm": "MEASURED from the CAD: the cart (plate, battery, sampler coil, silicone link, parking socket) reaches 165 mm past the track axis on the lid side when the top sleeve is closed on the track (parking socket x 105 vs track axis x -60 in cart_assembly.py). water_assembly.check() recomputes it and fails if the real cart is deeper than this number.",
-    "cart_clearance_mm": "ASSUMED: 45 mm of air between the lowest cart part and the tank lid (the sim already put the bottom run 210 mm over the lid, 165 + 45)"
+    "cart_clearance_mm": "ASSUMED: 45 mm of air between the lowest cart part and the tank lid (the sim already put the bottom run 210 mm over the lid, 165 + 45)",
+    "central_pipe_x_mm / central_pipe_y_mm": "the central pipe (growing pipe 75 mm OD, with the 33.7 mm spine tube on the same axis) stands on the tank centre and NEVER moves: no drawing or scene may shift it (OpenPocket #537: the pod-grab scene had moved it 164 mm to the back).",
+    "track_rod_out_mm": "from cad/track_joint.py (the flush track joint, the defining drawing): one M8 rod from a captive nut inside the track pipe, lock nut, reaches ROD_OUT = 50 mm from the tube surface to the central pipe's axis. So the track pipe axis is track_pipe_od / 2 + 50 = 66 mm in front of the central pipe axis (y = -66). cad/track_supports.py had a 34 mm free stub and the unit had the track 60 mm out: both disagreed (#537). ASSUMPTION: 'to the spine' is read as to the central pipe's axis; if the owner means its surface, change only this number (or the derivation in layout.py).",
+    "track_half_width_mm": "track loop legs at x = -/+290 (v2, Viber #97: pipes 60 mm in from the tank edge, so two touching tanks put pipe B and pipe C 120 mm apart)",
+    "track_top_z_mm": "top run axis (1900 top bar - 16 pipe radius)",
+    "cart_pipe_spacing_mm": "cart_dims.py PIPE_SPACING: the cart's two pipes, centre to centre",
+    "cart_climb_sleeve": "the cart rides the track with its TOP sleeve, hand B (pipe B at cart x = -60), and its body (plate, battery, arm, coil: 165 mm) hangs BELOW the track pipe on a horizontal run, towards the lid / outside the loop on a leg. The other sleeve (C) is the lower one and hangs free. The bottom sleeve never climbs (OpenPocket #461 / #537)."
   }
 }
