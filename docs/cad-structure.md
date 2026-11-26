@@ -14,7 +14,8 @@ copied the cart's track pipe and drew it twice.)
 | Frame: growing pipe, spine, collars, legs, lid plates, panel, feet, sandbags | `cad/parts/unit_frame.py` | via `cad/parts/unit.py` (`unit_parts()`, the whole unit as a list) |
 | Pods | `cad/parts/pods.py` | complete unit, water station |
 | **Shelf** (4 mm plate at z 155..159, 5 mm over the 150 water, under the lid, hole for the spine tube) | `cad/parts/shelf.py` (`SHELF_Z`/`SHELF_T` in `unit_dims.py`) | `unit_parts()`, so every unit drawing |
-| Seedling tray and seedling storage (the blue part), standing ON the shelf under the lid | `cad/parts/shelf_items.py` | complete unit, dimensioned unit, water station |
+| Seedling tray (6 x 3 cells), **gravity-feed dry pod store** (7 lanes, sloping `SLOPE_DEG`, flat landing, stop lip) and their pods, standing ON the shelf under the lid | `cad/parts/shelf_items.py`, numbers in `cad/pod_layout.py` (also read by `sim/pod_grab.py`) | full unit, complete unit, dimensioned unit, water station |
+| **Lid with pick slots** (one over every tray cell and store landing, at least 70 x 50, sized to the claw by the sim: `cad/pod_slots.json`) | `cad/parts/tank.py` | every drawing that draws the lid |
 | Unit numbers (tank size, track, heights, water level) | `cad/parts/unit_dims.py` | everything above |
 | **Cart** (plate, two hands with the motors inward, battery, arm) | `cad/cart_assembly.py` (with `cart_sleeves.py`, `cart_omni.py`, `cart_base.py`, `cart_arm.py`, shared numbers in `cart_dims.py`) | `cad/parts/cart.py` is the one way to reuse it (`add_cart`) |
 | Track pipe | the cart has **none** (#447). Only `cad/parts/track.py` draws track. `cart_geom.track_pipe()` is a gauge for clash/gap checks, never drawn | water assembly and sampler checks |
@@ -22,6 +23,8 @@ copied the cart's track pipe and drew it twice.)
 | Sampling connector (male nozzle, female socket) | `cad/parts/water_connector.py` | sampler, station |
 | Track supports (#315) | `cad/track_supports.py` | track supports renders, water assembly |
 | Water testing station | `cad/water_station.py` | water assembly, renders |
+
+**The full unit** is `cad/pond_full_unit.py`: the ONE assembly renders and sims import (unit + pods + tray + store + station + two upright carts with the real SO-101 in its pick pose). `cad/render_full_unit.py` makes its pictures and GLBs, `cad/check_pod_layout.py` checks it against the sim. See `docs/pod-grab.md`.
 
 Assemblies (they only place parts, never draw them): `cad/unit_v3_aframe.py`, `cad/unit_v3_dimensioned.py`, `cad/track_supports.py`,
 `cad/complete_unit.py` (unit + pods + shelf items + the real cart on the right track run), `cad/water_assembly.py` (cart at the water testing station).

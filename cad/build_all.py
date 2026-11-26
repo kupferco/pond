@@ -12,6 +12,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 STEPS_CHECK = [
     ("single-source check (fails if two scripts define the same part)", ["check_single_source.py"]),
     ("sim matches the CAD (control-ui/src/generated vs the cart, track and unit sources; fails on drift)", ["check_sim_matches_cad.py"]),
+    ("pod-grab layout: CAD lid slots, tray, store and the sim's slots agree (cad/pod_layout.py)", ["check_pod_layout.py"]),
     ("water assembly clash check (cart, sampler, station, unit supports)", ["water_assembly.py"]),
     ("complete unit: cart and sample coil vs every unit part (writes complete-unit.glb)", ["complete_unit.py"]),
 ]
@@ -21,6 +22,7 @@ STEPS_BUILD = [
     ("track supports renders + GLBs", ["render_track_supports.py"]),
     ("unit renders + GLBs (complete unit, unit with water, tank with water, sample coil)", ["render_unit.py"]),
     ("water station + water assembly renders + assembly.glb", ["render_water_station.py"]),
+    ("full unit (cad/pond_full_unit.py) renders + GLBs: whole unit and bottom section, carts upright, arms in their pick poses", ["render_full_unit.py"]),
     ("publish to the Drawings page and the 3D Models page", ["publish_drawings.py"]),
 ]
 

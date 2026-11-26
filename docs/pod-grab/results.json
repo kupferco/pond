@@ -1,0 +1,2737 @@
+{
+ "params": {
+  "slope_deg": 15.0,
+  "stall_nm": 1.9,
+  "load_kg": 0.42,
+  "tilt_tol_deg": 3.0,
+  "max_tilt_deg": 45.0
+ },
+ "tray": [
+  {
+   "cell": "A1",
+   "target_mm": [
+    -115.0,
+    -138.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": 3.6,
+   "collision_free": true,
+   "tilt_deg": 12.5,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": 3.6,
+    "shoulder_lift": 33.9,
+    "elbow_flex": 71.2,
+    "wrist_flex": -93.1
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 106.4,
+    "shoulder_lift": 66.1,
+    "elbow_flex": 25.6,
+    "wrist_flex": 1.9
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 1.9,
+   "reach_mm": 78.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 55.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.1,
+    "shoulder_lift": 0.45,
+    "elbow_flex": 1.06,
+    "wrist_flex": 0.19
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.04,
+    "shoulder_lift": 0.06,
+    "elbow_flex": 0.35,
+    "wrist_flex": 0.02
+   },
+   "max_torque_nm": 1.06,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.56,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 39.4,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 42.3,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 3.8,
+     "between": "wrist_housing / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 3.7,
+     "between": "wrist_housing / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 139.6,
+     "between": "wrist_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 9.8,
+     "between": "gripper_tip / cell_A1"
+    },
+    "arm_to_other_pods": {
+     "mm": 10.3,
+     "between": "gripper_tip / pod_A2"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 3.7,
+   "arm_worst_between": "tank_wall: wrist_housing / lid_wall_front",
+   "slot_mm": [
+    -152,
+    -80,
+    -197,
+    -113
+   ]
+  },
+  {
+   "cell": "A2",
+   "target_mm": [
+    -150.0,
+    -138.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": -4.8,
+   "collision_free": true,
+   "tilt_deg": 12.9,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -4.8,
+    "shoulder_lift": 33.8,
+    "elbow_flex": 71.1,
+    "wrist_flex": -92.9
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 105.2,
+    "shoulder_lift": 66.2,
+    "elbow_flex": 25.7,
+    "wrist_flex": 2.1
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 2.1,
+   "reach_mm": 78.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 55.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.11,
+    "shoulder_lift": 0.45,
+    "elbow_flex": 1.06,
+    "wrist_flex": 0.19
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.03,
+    "shoulder_lift": 0.06,
+    "elbow_flex": 0.35,
+    "wrist_flex": 0.02
+   },
+   "max_torque_nm": 1.06,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.56,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 39.2,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 40.8,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 3.9,
+     "between": "wrist_housing / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 3.8,
+     "between": "wrist_housing / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 150.0,
+     "between": "shoulder_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 9.6,
+     "between": "gripper_tip / cell_A2"
+    },
+    "arm_to_other_pods": {
+     "mm": 10.2,
+     "between": "gripper_tip / pod_A3"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 3.8,
+   "arm_worst_between": "tank_wall: wrist_housing / lid_wall_front",
+   "slot_mm": [
+    -185,
+    -115,
+    -197,
+    -113
+   ]
+  },
+  {
+   "cell": "A3",
+   "target_mm": [
+    -185.0,
+    -138.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": -12.9,
+   "collision_free": true,
+   "tilt_deg": 16.9,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -12.9,
+    "shoulder_lift": 35.2,
+    "elbow_flex": 68.5,
+    "wrist_flex": -92.7
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 97.1,
+    "shoulder_lift": 64.8,
+    "elbow_flex": 28.4,
+    "wrist_flex": 2.3
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 2.3,
+   "reach_mm": 83.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 52.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.33,
+    "shoulder_lift": 0.45,
+    "elbow_flex": 1.03,
+    "wrist_flex": 0.17
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.1,
+    "shoulder_lift": 0.07,
+    "elbow_flex": 0.34,
+    "wrist_flex": 0.02
+   },
+   "max_torque_nm": 1.03,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.54,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 36.4,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 35.0,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 5.0,
+     "between": "wrist_housing / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 4.8,
+     "between": "wrist_housing / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 150.0,
+     "between": "shoulder_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 8.3,
+     "between": "gripper_tip / cell_A3"
+    },
+    "arm_to_other_pods": {
+     "mm": 10.1,
+     "between": "gripper_tip / pod_A2"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 4.8,
+   "arm_worst_between": "tank_wall: wrist_housing / lid_wall_front",
+   "slot_mm": [
+    -220,
+    -135,
+    -196,
+    -113
+   ]
+  },
+  {
+   "cell": "A4",
+   "target_mm": [
+    -220.0,
+    -138.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": -20.6,
+   "collision_free": true,
+   "tilt_deg": 22.0,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -20.6,
+    "shoulder_lift": 40.1,
+    "elbow_flex": 62.6,
+    "wrist_flex": -94.7
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 89.4,
+    "shoulder_lift": 59.9,
+    "elbow_flex": 34.2,
+    "wrist_flex": 0.3
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 0.3,
+   "reach_mm": 95.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 48.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.55,
+    "shoulder_lift": 0.45,
+    "elbow_flex": 0.95,
+    "wrist_flex": 0.13
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.18,
+    "shoulder_lift": 0.09,
+    "elbow_flex": 0.32,
+    "wrist_flex": 0.01
+   },
+   "max_torque_nm": 0.95,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.5,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 28.4,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 29.4,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 9.9,
+     "between": "wrist_housing / lid_1"
+    },
+    "arm_to_tank_wall": {
+     "mm": 9.7,
+     "between": "wrist_housing / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 150.0,
+     "between": "shoulder_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 7.9,
+     "between": "gripper_tip / cell_A4"
+    },
+    "arm_to_other_pods": {
+     "mm": 9.3,
+     "between": "gripper_tip / pod_A3"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 7.9,
+   "arm_worst_between": "tray_and_store: gripper_tip / cell_A4",
+   "slot_mm": [
+    -255,
+    -162,
+    -191,
+    -113
+   ]
+  },
+  {
+   "cell": "A5",
+   "target_mm": [
+    -255.0,
+    -138.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": -27.5,
+   "collision_free": true,
+   "tilt_deg": 27.9,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -27.5,
+    "shoulder_lift": 44.2,
+    "elbow_flex": 55.0,
+    "wrist_flex": -94.2
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 82.5,
+    "shoulder_lift": 55.8,
+    "elbow_flex": 41.9,
+    "wrist_flex": 0.8
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 0.8,
+   "reach_mm": 110.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 41.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.77,
+    "shoulder_lift": 0.45,
+    "elbow_flex": 0.87,
+    "wrist_flex": 0.09
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.25,
+    "shoulder_lift": 0.1,
+    "elbow_flex": 0.3,
+    "wrist_flex": 0.01
+   },
+   "max_torque_nm": 0.87,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.46,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 21.9,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 24.3,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 10.8,
+     "between": "wrist_housing / lid_7"
+    },
+    "arm_to_tank_wall": {
+     "mm": 14.9,
+     "between": "wrist_housing / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 150.0,
+     "between": "shoulder_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 7.6,
+     "between": "gripper_tip / cell_A5"
+    },
+    "arm_to_other_pods": {
+     "mm": 8.2,
+     "between": "gripper_tip / pod_A4"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 7.6,
+   "arm_worst_between": "tray_and_store: gripper_tip / cell_A5",
+   "slot_mm": [
+    -290,
+    -183,
+    -186,
+    -113
+   ]
+  },
+  {
+   "cell": "A6",
+   "target_mm": [
+    -290.0,
+    -138.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": -33.7,
+   "collision_free": true,
+   "tilt_deg": 33.7,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -33.7,
+    "shoulder_lift": 48.4,
+    "elbow_flex": 45.4,
+    "wrist_flex": -91.8
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 76.3,
+    "shoulder_lift": 51.6,
+    "elbow_flex": 51.5,
+    "wrist_flex": 3.2
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 3.2,
+   "reach_mm": 128.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 33.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.99,
+    "shoulder_lift": 0.44,
+    "elbow_flex": 0.79,
+    "wrist_flex": 0.05
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.33,
+    "shoulder_lift": 0.11,
+    "elbow_flex": 0.28,
+    "wrist_flex": 0.0
+   },
+   "max_torque_nm": 0.99,
+   "max_torque_joint": "shoulder_pan",
+   "torque_vs_stall_7v4": 0.52,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 26.3,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 19.9,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 11.5,
+     "between": "wrist_housing / lid_10"
+    },
+    "arm_to_tank_wall": {
+     "mm": 20.8,
+     "between": "wrist_housing / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 150.0,
+     "between": "shoulder_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 7.5,
+     "between": "gripper_tip / cell_A6"
+    },
+    "arm_to_other_pods": {
+     "mm": 6.9,
+     "between": "gripper_tip / pod_A5"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 6.9,
+   "arm_worst_between": "other_pods: gripper_tip / pod_A5",
+   "slot_mm": [
+    -325,
+    -202,
+    -180,
+    -113
+   ]
+  },
+  {
+   "cell": "B1",
+   "target_mm": [
+    -115.0,
+    -100.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": 3.6,
+   "collision_free": true,
+   "tilt_deg": 17.4,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": 3.6,
+    "shoulder_lift": 51.2,
+    "elbow_flex": 60.6,
+    "wrist_flex": -94.8
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 106.4,
+    "shoulder_lift": 48.8,
+    "elbow_flex": 36.2,
+    "wrist_flex": 0.2
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 0.2,
+   "reach_mm": 99.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 51.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.1,
+    "shoulder_lift": 0.71,
+    "elbow_flex": 1.09,
+    "wrist_flex": 0.26
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.04,
+    "shoulder_lift": 0.16,
+    "elbow_flex": 0.35,
+    "wrist_flex": 0.03
+   },
+   "max_torque_nm": 1.09,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.57,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 16.9,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 42.3,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 11.4,
+     "between": "forearm / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 15.1,
+     "between": "forearm / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 115.1,
+     "between": "gripper_body / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 8.3,
+     "between": "gripper_tip / cell_B1"
+    },
+    "arm_to_other_pods": {
+     "mm": 6.5,
+     "between": "gripper_tip / pod_A1"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 6.5,
+   "arm_worst_between": "other_pods: gripper_tip / pod_A1",
+   "slot_mm": [
+    -152,
+    -80,
+    -169,
+    -75
+   ]
+  },
+  {
+   "cell": "B2",
+   "target_mm": [
+    -150.0,
+    -100.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": -4.8,
+   "collision_free": true,
+   "tilt_deg": 17.6,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -4.8,
+    "shoulder_lift": 51.1,
+    "elbow_flex": 60.5,
+    "wrist_flex": -94.6
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 105.2,
+    "shoulder_lift": 48.9,
+    "elbow_flex": 36.4,
+    "wrist_flex": 0.4
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 0.4,
+   "reach_mm": 99.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 51.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.12,
+    "shoulder_lift": 0.71,
+    "elbow_flex": 1.09,
+    "wrist_flex": 0.26
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.03,
+    "shoulder_lift": 0.16,
+    "elbow_flex": 0.35,
+    "wrist_flex": 0.03
+   },
+   "max_torque_nm": 1.09,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.57,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 16.5,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 40.8,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 13.9,
+     "between": "forearm / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 17.7,
+     "between": "forearm / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 132.3,
+     "between": "gripper_body / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 8.1,
+     "between": "gripper_tip / cell_B2"
+    },
+    "arm_to_other_pods": {
+     "mm": 6.5,
+     "between": "gripper_tip / pod_A2"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 6.5,
+   "arm_worst_between": "other_pods: gripper_tip / pod_A2",
+   "slot_mm": [
+    -185,
+    -115,
+    -169,
+    -75
+   ]
+  },
+  {
+   "cell": "B3",
+   "target_mm": [
+    -185.0,
+    -100.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": -12.9,
+   "collision_free": true,
+   "tilt_deg": 20.5,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -12.9,
+    "shoulder_lift": 51.9,
+    "elbow_flex": 58.0,
+    "wrist_flex": -93.9
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 97.1,
+    "shoulder_lift": 48.1,
+    "elbow_flex": 38.8,
+    "wrist_flex": 1.1
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 1.1,
+   "reach_mm": 104.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 48.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.34,
+    "shoulder_lift": 0.7,
+    "elbow_flex": 1.07,
+    "wrist_flex": 0.24
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.11,
+    "shoulder_lift": 0.17,
+    "elbow_flex": 0.34,
+    "wrist_flex": 0.03
+   },
+   "max_torque_nm": 1.07,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.56,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 13.6,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 35.0,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 15.5,
+     "between": "forearm / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 19.3,
+     "between": "forearm / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 148.2,
+     "between": "gripper_body / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 6.9,
+     "between": "gripper_tip / cell_B3"
+    },
+    "arm_to_other_pods": {
+     "mm": 6.6,
+     "between": "gripper_tip / pod_A3"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 6.6,
+   "arm_worst_between": "other_pods: gripper_tip / pod_A3",
+   "slot_mm": [
+    -220,
+    -136,
+    -169,
+    -75
+   ]
+  },
+  {
+   "cell": "B4",
+   "target_mm": [
+    -220.0,
+    -100.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": -20.6,
+   "collision_free": true,
+   "tilt_deg": 24.2,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -20.6,
+    "shoulder_lift": 55.3,
+    "elbow_flex": 52.4,
+    "wrist_flex": -94.7
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 89.4,
+    "shoulder_lift": 44.7,
+    "elbow_flex": 44.5,
+    "wrist_flex": 0.3
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 0.3,
+   "reach_mm": 115.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 45.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.56,
+    "shoulder_lift": 0.69,
+    "elbow_flex": 1.0,
+    "wrist_flex": 0.19
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.18,
+    "shoulder_lift": 0.18,
+    "elbow_flex": 0.33,
+    "wrist_flex": 0.02
+   },
+   "max_torque_nm": 1.0,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.53,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 7.6,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 29.4,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 15.3,
+     "between": "forearm / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 19.1,
+     "between": "forearm / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 150.0,
+     "between": "shoulder_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 6.4,
+     "between": "gripper_tip / cell_B4"
+    },
+    "arm_to_other_pods": {
+     "mm": 6.9,
+     "between": "gripper_tip / pod_A4"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 6.4,
+   "arm_worst_between": "tray_and_store: gripper_tip / cell_B4",
+   "slot_mm": [
+    -255,
+    -163,
+    -163,
+    -75
+   ]
+  },
+  {
+   "cell": "B5",
+   "target_mm": [
+    -255.0,
+    -100.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": -27.5,
+   "collision_free": true,
+   "tilt_deg": 28.8,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -27.5,
+    "shoulder_lift": 59.9,
+    "elbow_flex": 44.0,
+    "wrist_flex": -94.9
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 82.5,
+    "shoulder_lift": 40.1,
+    "elbow_flex": 52.8,
+    "wrist_flex": 0.1
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 0.1,
+   "reach_mm": 131.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 39.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.78,
+    "shoulder_lift": 0.68,
+    "elbow_flex": 0.91,
+    "wrist_flex": 0.14
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.26,
+    "shoulder_lift": 0.19,
+    "elbow_flex": 0.31,
+    "wrist_flex": 0.02
+   },
+   "max_torque_nm": 0.91,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.48,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 7.7,
+     "between": "forearm / plate"
+    },
+    "arm_to_battery": {
+     "mm": 24.3,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 15.0,
+     "between": "forearm / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 18.9,
+     "between": "forearm / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 150.0,
+     "between": "shoulder_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 6.5,
+     "between": "gripper_tip / cell_B5"
+    },
+    "arm_to_other_pods": {
+     "mm": 7.3,
+     "between": "gripper_tip / pod_A5"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 6.5,
+   "arm_worst_between": "tray_and_store: gripper_tip / cell_B5",
+   "slot_mm": [
+    -290,
+    -183,
+    -156,
+    -75
+   ]
+  },
+  {
+   "cell": "B6",
+   "target_mm": [
+    -290.0,
+    -100.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": -33.7,
+   "collision_free": true,
+   "tilt_deg": 33.9,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -33.7,
+    "shoulder_lift": 65.8,
+    "elbow_flex": 32.6,
+    "wrist_flex": -94.4
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 76.3,
+    "shoulder_lift": 34.2,
+    "elbow_flex": 64.3,
+    "wrist_flex": 0.6
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 0.6,
+   "reach_mm": 151.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 33.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 1.0,
+    "shoulder_lift": 0.67,
+    "elbow_flex": 0.81,
+    "wrist_flex": 0.07
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.34,
+    "shoulder_lift": 0.21,
+    "elbow_flex": 0.28,
+    "wrist_flex": 0.01
+   },
+   "max_torque_nm": 1.0,
+   "max_torque_joint": "shoulder_pan",
+   "torque_vs_stall_7v4": 0.53,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 10.8,
+     "between": "forearm / plate"
+    },
+    "arm_to_battery": {
+     "mm": 19.9,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 15.5,
+     "between": "forearm / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 19.5,
+     "between": "forearm / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 150.0,
+     "between": "shoulder_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 7.0,
+     "between": "gripper_tip / cell_B6"
+    },
+    "arm_to_other_pods": {
+     "mm": 6.9,
+     "between": "gripper_tip / pod_B5"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 6.9,
+   "arm_worst_between": "other_pods: gripper_tip / pod_B5",
+   "slot_mm": [
+    -325,
+    -202,
+    -146,
+    -75
+   ]
+  },
+  {
+   "cell": "C1",
+   "target_mm": [
+    -115.0,
+    -62.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": 3.6,
+   "collision_free": true,
+   "tilt_deg": 29.2,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": 3.6,
+    "shoulder_lift": 53.5,
+    "elbow_flex": 52.7,
+    "wrist_flex": -77.2
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 106.4,
+    "shoulder_lift": 46.5,
+    "elbow_flex": 44.1,
+    "wrist_flex": 17.8
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 17.8,
+   "reach_mm": 114.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 36.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.1,
+    "shoulder_lift": 0.91,
+    "elbow_flex": 1.26,
+    "wrist_flex": 0.4
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.04,
+    "shoulder_lift": 0.21,
+    "elbow_flex": 0.38,
+    "wrist_flex": 0.05
+   },
+   "max_torque_nm": 1.26,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.66,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 19.6,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 42.3,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 1.1,
+     "between": "forearm / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 5.0,
+     "between": "forearm / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 99.6,
+     "between": "gripper_body / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 5.0,
+     "between": "gripper_tip / cell_C1"
+    },
+    "arm_to_other_pods": {
+     "mm": 4.4,
+     "between": "gripper_tip / pod_B1"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C2"
+    }
+   },
+   "arm_worst_mm": 1.1,
+   "arm_worst_between": "lid: forearm / lid_0",
+   "slot_mm": [
+    -152,
+    -80,
+    -147,
+    -37
+   ]
+  },
+  {
+   "cell": "C2",
+   "target_mm": [
+    -150.0,
+    -62.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": -4.8,
+   "collision_free": true,
+   "tilt_deg": 25.4,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -4.8,
+    "shoulder_lift": 59.9,
+    "elbow_flex": 50.4,
+    "wrist_flex": -85.4
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 105.2,
+    "shoulder_lift": 40.1,
+    "elbow_flex": 46.4,
+    "wrist_flex": 9.6
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 9.6,
+   "reach_mm": 119.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 42.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.12,
+    "shoulder_lift": 0.94,
+    "elbow_flex": 1.2,
+    "wrist_flex": 0.35
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.04,
+    "shoulder_lift": 0.24,
+    "elbow_flex": 0.37,
+    "wrist_flex": 0.05
+   },
+   "max_torque_nm": 1.2,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.63,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 11.2,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 40.8,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 1.2,
+     "between": "forearm / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 5.0,
+     "between": "forearm / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 115.9,
+     "between": "gripper_body / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 5.9,
+     "between": "gripper_tip / cell_C2"
+    },
+    "arm_to_other_pods": {
+     "mm": 5.2,
+     "between": "gripper_tip / pod_B2"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 1.2,
+   "arm_worst_between": "lid: forearm / lid_0",
+   "slot_mm": [
+    -185,
+    -115,
+    -140,
+    -37
+   ]
+  },
+  {
+   "cell": "C3",
+   "target_mm": [
+    -185.0,
+    -62.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": -12.9,
+   "collision_free": true,
+   "tilt_deg": 24.5,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -12.9,
+    "shoulder_lift": 65.4,
+    "elbow_flex": 45.9,
+    "wrist_flex": -90.3
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 97.1,
+    "shoulder_lift": 34.6,
+    "elbow_flex": 50.9,
+    "wrist_flex": 4.7
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 4.7,
+   "reach_mm": 127.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 43.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.34,
+    "shoulder_lift": 0.95,
+    "elbow_flex": 1.12,
+    "wrist_flex": 0.3
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.11,
+    "shoulder_lift": 0.26,
+    "elbow_flex": 0.35,
+    "wrist_flex": 0.04
+   },
+   "max_torque_nm": 1.12,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.59,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 5.0,
+     "between": "forearm / plate"
+    },
+    "arm_to_battery": {
+     "mm": 35.0,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 1.3,
+     "between": "forearm / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 5.1,
+     "between": "forearm / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 131.2,
+     "between": "gripper_body / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 5.5,
+     "between": "gripper_tip / cell_C3"
+    },
+    "arm_to_other_pods": {
+     "mm": 5.9,
+     "between": "gripper_tip / pod_B3"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 1.3,
+   "arm_worst_between": "lid: forearm / lid_0",
+   "slot_mm": [
+    -220,
+    -136,
+    -136,
+    -37
+   ]
+  },
+  {
+   "cell": "C4",
+   "target_mm": [
+    -220.0,
+    -62.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": -20.6,
+   "collision_free": true,
+   "tilt_deg": 25.8,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -20.6,
+    "shoulder_lift": 71.3,
+    "elbow_flex": 38.5,
+    "wrist_flex": -93.7
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 89.4,
+    "shoulder_lift": 28.7,
+    "elbow_flex": 58.4,
+    "wrist_flex": 1.3
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 1.3,
+   "reach_mm": 141.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 42.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.56,
+    "shoulder_lift": 0.94,
+    "elbow_flex": 1.02,
+    "wrist_flex": 0.23
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.19,
+    "shoulder_lift": 0.28,
+    "elbow_flex": 0.33,
+    "wrist_flex": 0.03
+   },
+   "max_torque_nm": 1.02,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.54,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 1.2,
+     "between": "forearm / plate"
+    },
+    "arm_to_battery": {
+     "mm": 29.4,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 2.2,
+     "between": "forearm / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 6.1,
+     "between": "forearm / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 137.9,
+     "between": "wrist_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 5.6,
+     "between": "gripper_tip / cell_C4"
+    },
+    "arm_to_other_pods": {
+     "mm": 6.6,
+     "between": "gripper_tip / pod_B4"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 1.2,
+   "arm_worst_between": "plate_and_pipe: forearm / plate",
+   "slot_mm": [
+    -255,
+    -164,
+    -132,
+    -37
+   ]
+  },
+  {
+   "cell": "C5",
+   "target_mm": [
+    -255.0,
+    -62.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": -27.5,
+   "collision_free": true,
+   "tilt_deg": 29.5,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -27.5,
+    "shoulder_lift": 76.5,
+    "elbow_flex": 28.8,
+    "wrist_flex": -94.3
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 82.5,
+    "shoulder_lift": 23.5,
+    "elbow_flex": 68.0,
+    "wrist_flex": 0.7
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 0.7,
+   "reach_mm": 158.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 38.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.78,
+    "shoulder_lift": 0.92,
+    "elbow_flex": 0.93,
+    "wrist_flex": 0.16
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.27,
+    "shoulder_lift": 0.3,
+    "elbow_flex": 0.31,
+    "wrist_flex": 0.02
+   },
+   "max_torque_nm": 0.93,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.49,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 4.7,
+     "between": "forearm / plate"
+    },
+    "arm_to_battery": {
+     "mm": 24.3,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 5.6,
+     "between": "forearm / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 9.5,
+     "between": "forearm / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 146.1,
+     "between": "wrist_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 6.0,
+     "between": "gripper_tip / cell_C5"
+    },
+    "arm_to_other_pods": {
+     "mm": 7.1,
+     "between": "gripper_tip / pod_B5"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 4.7,
+   "arm_worst_between": "plate_and_pipe: forearm / plate",
+   "slot_mm": [
+    -290,
+    -183,
+    -123,
+    -37
+   ]
+  },
+  {
+   "cell": "C6",
+   "target_mm": [
+    -290.0,
+    -62.0,
+    205.0
+   ],
+   "park_x_mm": -130.0,
+   "reachable": true,
+   "pan_deg": -33.7,
+   "collision_free": true,
+   "tilt_deg": 33.9,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -33.7,
+    "shoulder_lift": 84.7,
+    "elbow_flex": 13.9,
+    "wrist_flex": -94.6
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 76.3,
+    "shoulder_lift": 15.3,
+    "elbow_flex": 82.9,
+    "wrist_flex": 0.4
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 0.4,
+   "reach_mm": 181.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 33.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": false,
+   "torque_loaded_nm": {
+    "shoulder_pan": 1.0,
+    "shoulder_lift": 0.91,
+    "elbow_flex": 0.81,
+    "wrist_flex": 0.07
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.34,
+    "shoulder_lift": 0.32,
+    "elbow_flex": 0.28,
+    "wrist_flex": 0.01
+   },
+   "max_torque_nm": 1.0,
+   "max_torque_joint": "shoulder_pan",
+   "torque_vs_stall_7v4": 0.53,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 13.7,
+     "between": "forearm / plate"
+    },
+    "arm_to_battery": {
+     "mm": 19.9,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 11.7,
+     "between": "forearm / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 15.7,
+     "between": "forearm / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 150.0,
+     "between": "shoulder_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 7.0,
+     "between": "gripper_tip / cell_C6"
+    },
+    "arm_to_other_pods": {
+     "mm": 6.9,
+     "between": "gripper_tip / pod_C5"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 32.1,
+     "between": "sleeve / pillar"
+    },
+    "cart_to_station": {
+     "mm": 131.2,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 144.0,
+     "between": "sleeve_b / pod_C1"
+    }
+   },
+   "arm_worst_mm": 6.9,
+   "arm_worst_between": "other_pods: gripper_tip / pod_C5",
+   "slot_mm": [
+    -325,
+    -202,
+    -108,
+    -37
+   ]
+  }
+ ],
+ "store": [
+  {
+   "cell": "S1",
+   "target_mm": [
+    100.0,
+    -137.0,
+    211.0
+   ],
+   "park_x_mm": 135.0,
+   "reachable": true,
+   "pan_deg": -8.5,
+   "collision_free": true,
+   "tilt_deg": 15.5,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -8.5,
+    "shoulder_lift": 33.1,
+    "elbow_flex": 72.9,
+    "wrist_flex": -93.0
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 101.5,
+    "shoulder_lift": 66.9,
+    "elbow_flex": 23.9,
+    "wrist_flex": 2.0
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 2.0,
+   "reach_mm": 74.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 59.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.21,
+    "shoulder_lift": 0.45,
+    "elbow_flex": 1.06,
+    "wrist_flex": 0.2
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.06,
+    "shoulder_lift": 0.06,
+    "elbow_flex": 0.35,
+    "wrist_flex": 0.03
+   },
+   "max_torque_nm": 1.06,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.56,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 39.5,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 38.2,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 3.9,
+     "between": "wrist_housing / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 3.9,
+     "between": "wrist_housing / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 129.3,
+     "between": "wrist_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 2.7,
+     "between": "gripper_tip / store_pod_1_1"
+    },
+    "arm_to_other_pods": {
+     "mm": 5.5,
+     "between": "gripper_tip / pod_S2"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 37.0,
+     "between": "sleeve_b / pillar"
+    },
+    "cart_to_station": {
+     "mm": 29.0,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 118.4,
+     "between": "sleeve_b / store_pod_4_3"
+    }
+   },
+   "arm_worst_mm": 2.7,
+   "arm_worst_between": "tray_and_store: gripper_tip / store_pod_1_1",
+   "slot_mm": [
+    65,
+    140,
+    -197,
+    -112
+   ]
+  },
+  {
+   "cell": "S2",
+   "target_mm": [
+    130.0,
+    -137.0,
+    211.0
+   ],
+   "park_x_mm": 135.0,
+   "reachable": true,
+   "pan_deg": -1.2,
+   "collision_free": true,
+   "tilt_deg": 13.1,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": -1.2,
+    "shoulder_lift": 33.7,
+    "elbow_flex": 73.8,
+    "wrist_flex": -94.5
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 108.8,
+    "shoulder_lift": 66.3,
+    "elbow_flex": 23.0,
+    "wrist_flex": 0.5
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 0.5,
+   "reach_mm": 72.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 60.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.02,
+    "shoulder_lift": 0.46,
+    "elbow_flex": 1.07,
+    "wrist_flex": 0.2
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.0,
+    "shoulder_lift": 0.06,
+    "elbow_flex": 0.35,
+    "wrist_flex": 0.03
+   },
+   "max_torque_nm": 1.07,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.56,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 39.9,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 43.0,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 4.6,
+     "between": "wrist_housing / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 4.5,
+     "between": "wrist_housing / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 139.2,
+     "between": "wrist_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 2.7,
+     "between": "gripper_tip / store_pod_2_1"
+    },
+    "arm_to_other_pods": {
+     "mm": 5.3,
+     "between": "gripper_tip / pod_S1"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 37.0,
+     "between": "sleeve_b / pillar"
+    },
+    "cart_to_station": {
+     "mm": 29.0,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 118.4,
+     "between": "sleeve_b / store_pod_4_3"
+    }
+   },
+   "arm_worst_mm": 2.7,
+   "arm_worst_between": "tray_and_store: gripper_tip / store_pod_2_1",
+   "slot_mm": [
+    95,
+    165,
+    -197,
+    -112
+   ]
+  },
+  {
+   "cell": "S3",
+   "target_mm": [
+    160.0,
+    -137.0,
+    211.0
+   ],
+   "park_x_mm": 135.0,
+   "reachable": true,
+   "pan_deg": 6.1,
+   "collision_free": true,
+   "tilt_deg": 14.3,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": 6.1,
+    "shoulder_lift": 33.4,
+    "elbow_flex": 73.3,
+    "wrist_flex": -93.7
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 103.9,
+    "shoulder_lift": 66.6,
+    "elbow_flex": 23.5,
+    "wrist_flex": 1.3
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 1.3,
+   "reach_mm": 73.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 60.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.16,
+    "shoulder_lift": 0.45,
+    "elbow_flex": 1.06,
+    "wrist_flex": 0.2
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.06,
+    "shoulder_lift": 0.06,
+    "elbow_flex": 0.35,
+    "wrist_flex": 0.03
+   },
+   "max_torque_nm": 1.06,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.56,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 39.9,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 41.2,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 3.9,
+     "between": "wrist_housing / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 3.8,
+     "between": "wrist_housing / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 150.0,
+     "between": "shoulder_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 2.7,
+     "between": "gripper_tip / store_pod_3_1"
+    },
+    "arm_to_other_pods": {
+     "mm": 5.2,
+     "between": "gripper_tip / pod_S2"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 37.0,
+     "between": "sleeve_b / pillar"
+    },
+    "cart_to_station": {
+     "mm": 29.0,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 118.4,
+     "between": "sleeve_b / store_pod_4_3"
+    }
+   },
+   "arm_worst_mm": 2.7,
+   "arm_worst_between": "tray_and_store: gripper_tip / store_pod_3_1",
+   "slot_mm": [
+    119,
+    195,
+    -197,
+    -112
+   ]
+  },
+  {
+   "cell": "S4",
+   "target_mm": [
+    190.0,
+    -137.0,
+    211.0
+   ],
+   "park_x_mm": 135.0,
+   "reachable": true,
+   "pan_deg": 13.2,
+   "collision_free": true,
+   "tilt_deg": 17.8,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": 13.2,
+    "shoulder_lift": 34.8,
+    "elbow_flex": 70.9,
+    "wrist_flex": -93.7
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 96.8,
+    "shoulder_lift": 65.2,
+    "elbow_flex": 25.9,
+    "wrist_flex": 1.3
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 1.3,
+   "reach_mm": 78.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 57.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.34,
+    "shoulder_lift": 0.45,
+    "elbow_flex": 1.03,
+    "wrist_flex": 0.19
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.12,
+    "shoulder_lift": 0.07,
+    "elbow_flex": 0.34,
+    "wrist_flex": 0.02
+   },
+   "max_torque_nm": 1.03,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.54,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 37.5,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 38.2,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 4.6,
+     "between": "wrist_housing / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 4.5,
+     "between": "wrist_housing / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 150.0,
+     "between": "shoulder_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 2.7,
+     "between": "gripper_tip / store_pod_4_1"
+    },
+    "arm_to_other_pods": {
+     "mm": 4.8,
+     "between": "gripper_tip / pod_S3"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 37.0,
+     "between": "sleeve_b / pillar"
+    },
+    "cart_to_station": {
+     "mm": 29.0,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 118.4,
+     "between": "sleeve_b / store_pod_4_3"
+    }
+   },
+   "arm_worst_mm": 2.7,
+   "arm_worst_between": "tray_and_store: gripper_tip / store_pod_4_1",
+   "slot_mm": [
+    136,
+    225,
+    -196,
+    -112
+   ]
+  },
+  {
+   "cell": "S5",
+   "target_mm": [
+    220.0,
+    -137.0,
+    211.0
+   ],
+   "park_x_mm": 135.0,
+   "reachable": true,
+   "pan_deg": 20.0,
+   "collision_free": true,
+   "tilt_deg": 22.2,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": 20.0,
+    "shoulder_lift": 37.7,
+    "elbow_flex": 66.4,
+    "wrist_flex": -94.2
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 90.0,
+    "shoulder_lift": 62.3,
+    "elbow_flex": 30.4,
+    "wrist_flex": 0.8
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 0.8,
+   "reach_mm": 87.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 53.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.53,
+    "shoulder_lift": 0.45,
+    "elbow_flex": 0.98,
+    "wrist_flex": 0.16
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.18,
+    "shoulder_lift": 0.08,
+    "elbow_flex": 0.33,
+    "wrist_flex": 0.02
+   },
+   "max_torque_nm": 0.98,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.52,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 32.8,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 35.3,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 7.3,
+     "between": "wrist_housing / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 7.1,
+     "between": "wrist_housing / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 150.0,
+     "between": "shoulder_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 2.8,
+     "between": "gripper_tip / store_pod_5_1"
+    },
+    "arm_to_other_pods": {
+     "mm": 4.2,
+     "between": "gripper_tip / pod_S4"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 37.0,
+     "between": "sleeve_b / pillar"
+    },
+    "cart_to_station": {
+     "mm": 29.0,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 118.4,
+     "between": "sleeve_b / store_pod_4_3"
+    }
+   },
+   "arm_worst_mm": 2.8,
+   "arm_worst_between": "tray_and_store: gripper_tip / store_pod_5_1",
+   "slot_mm": [
+    153,
+    255,
+    -194,
+    -112
+   ]
+  },
+  {
+   "cell": "S6",
+   "target_mm": [
+    250.0,
+    -137.0,
+    211.0
+   ],
+   "park_x_mm": 135.0,
+   "reachable": true,
+   "pan_deg": 26.2,
+   "collision_free": true,
+   "tilt_deg": 27.3,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": 26.2,
+    "shoulder_lift": 40.3,
+    "elbow_flex": 60.7,
+    "wrist_flex": -92.9
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 83.8,
+    "shoulder_lift": 59.7,
+    "elbow_flex": 36.2,
+    "wrist_flex": 2.1
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 2.1,
+   "reach_mm": 99.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 48.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.72,
+    "shoulder_lift": 0.44,
+    "elbow_flex": 0.92,
+    "wrist_flex": 0.12
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.24,
+    "shoulder_lift": 0.09,
+    "elbow_flex": 0.31,
+    "wrist_flex": 0.01
+   },
+   "max_torque_nm": 0.92,
+   "max_torque_joint": "elbow_flex",
+   "torque_vs_stall_7v4": 0.48,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 28.3,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 32.7,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 10.3,
+     "between": "wrist_housing / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 9.9,
+     "between": "wrist_housing / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 150.0,
+     "between": "shoulder_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 150.0,
+     "between": "shoulder_housing / station_box"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 2.8,
+     "between": "gripper_tip / store_pod_6_1"
+    },
+    "arm_to_other_pods": {
+     "mm": 3.5,
+     "between": "gripper_tip / pod_S5"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 37.0,
+     "between": "sleeve_b / pillar"
+    },
+    "cart_to_station": {
+     "mm": 29.0,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 118.4,
+     "between": "sleeve_b / store_pod_4_3"
+    }
+   },
+   "arm_worst_mm": 2.8,
+   "arm_worst_between": "tray_and_store: gripper_tip / store_pod_6_1",
+   "slot_mm": [
+    170,
+    285,
+    -191,
+    -112
+   ]
+  },
+  {
+   "cell": "S7",
+   "target_mm": [
+    280.0,
+    -137.0,
+    211.0
+   ],
+   "park_x_mm": 135.0,
+   "reachable": true,
+   "pan_deg": 31.8,
+   "collision_free": true,
+   "tilt_deg": 32.0,
+   "vertical_claw": false,
+   "joints_deg": {
+    "shoulder_pan": 31.8,
+    "shoulder_lift": 46.2,
+    "elbow_flex": 52.0,
+    "wrist_flex": -94.2
+   },
+   "joint_margin_deg": {
+    "shoulder_pan": 78.2,
+    "shoulder_lift": 53.8,
+    "elbow_flex": 44.8,
+    "wrist_flex": 0.8
+   },
+   "tightest_joint": "wrist_flex",
+   "tightest_joint_margin_deg": 0.8,
+   "reach_mm": 116.0,
+   "reach_limit_mm": 251,
+   "wrist_above_lid_mm": 42.0,
+   "grip_point_error_mm": 0.0,
+   "hover_reachable": true,
+   "hover_collision_free": true,
+   "torque_loaded_nm": {
+    "shoulder_pan": 0.91,
+    "shoulder_lift": 0.44,
+    "elbow_flex": 0.83,
+    "wrist_flex": 0.07
+   },
+   "torque_unloaded_nm": {
+    "shoulder_pan": 0.31,
+    "shoulder_lift": 0.11,
+    "elbow_flex": 0.29,
+    "wrist_flex": 0.01
+   },
+   "max_torque_nm": 0.91,
+   "max_torque_joint": "shoulder_pan",
+   "torque_vs_stall_7v4": 0.48,
+   "clearance": {
+    "arm_to_plate_and_pipe": {
+     "mm": 21.8,
+     "between": "wrist_housing / plate"
+    },
+    "arm_to_battery": {
+     "mm": 30.4,
+     "between": "shoulder_housing / battery"
+    },
+    "arm_to_lid": {
+     "mm": 7.9,
+     "between": "forearm / lid_0"
+    },
+    "arm_to_tank_wall": {
+     "mm": 11.9,
+     "between": "forearm / lid_wall_front"
+    },
+    "arm_to_pillar": {
+     "mm": 150.0,
+     "between": "shoulder_housing / pillar"
+    },
+    "arm_to_station": {
+     "mm": 148.6,
+     "between": "wrist_housing / station_leg_230_22"
+    },
+    "arm_to_tray_and_store": {
+     "mm": 2.9,
+     "between": "gripper_tip / store_pod_7_1"
+    },
+    "arm_to_other_pods": {
+     "mm": 2.7,
+     "between": "gripper_tip / pod_S6"
+    },
+    "cart_to_lid": {
+     "mm": 45.0,
+     "between": "sleeve_b / lid_57"
+    },
+    "cart_to_pillar": {
+     "mm": 37.0,
+     "between": "sleeve_b / pillar"
+    },
+    "cart_to_station": {
+     "mm": 29.0,
+     "between": "sleeve_b / station_box"
+    },
+    "cart_to_tray_store_pods": {
+     "mm": 118.4,
+     "between": "sleeve_b / store_pod_4_3"
+    }
+   },
+   "arm_worst_mm": 2.7,
+   "arm_worst_between": "other_pods: gripper_tip / pod_S6",
+   "slot_mm": [
+    186,
+    315,
+    -183,
+    -112
+   ]
+  }
+ ],
+ "cart": {
+  "tray_park_-130": {
+   "cart_to_lid": {
+    "mm": 45.0,
+    "between": "sleeve_b / lid_57"
+   },
+   "cart_to_pillar": {
+    "mm": 32.1,
+    "between": "sleeve / pillar"
+   },
+   "cart_to_station": {
+    "mm": 131.2,
+    "between": "sleeve_b / station_box"
+   },
+   "cart_to_tray_store_pods": {
+    "mm": 144.0,
+    "between": "sleeve_b / pod_C1"
+   }
+  },
+  "store_park_+135": {
+   "cart_to_lid": {
+    "mm": 45.0,
+    "between": "sleeve_b / lid_57"
+   },
+   "cart_to_pillar": {
+    "mm": 37.0,
+    "between": "sleeve_b / pillar"
+   },
+   "cart_to_station": {
+    "mm": 29.0,
+    "between": "sleeve_b / station_box"
+   },
+   "cart_to_tray_store_pods": {
+    "mm": 118.4,
+    "between": "sleeve_b / store_pod_4_3"
+   }
+  }
+ },
+ "summary": {
+  "targets": 25,
+  "reachable": 25,
+  "collision_free": 25,
+  "vertical_claw": 0,
+  "max_tilt_deg": 33.9,
+  "max_reach_mm": 181.0,
+  "max_torque_nm": 1.26,
+  "hover_reachable": 25,
+  "min_arm_clearance_mm": 1.1
+ }
+}
