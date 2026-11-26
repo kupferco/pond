@@ -1,9 +1,8 @@
 import cadquery as cq
 import math
-# POND UNIT, BOTTOM ONLY (cropped at z 750), detailed cart (26 Nov 2026, v3: REAL SO-101 claw, 160 mm wrist to grip, per the #522 sim).
-# LEFT cart (over the seedling tray) ROLLED 45 deg about the track axis, RIGHT cart (at the pod store) upright.
-# Checks every tray cell in both poses (rolled and upright) and the store front row: reach, and whether the arm (links, wrist, claw) hits
-# the cart plate/battery or the lid. Track NOT raised (bottom run axis z 514).
+# POND UNIT, BOTTOM ONLY (cropped at z 750), detailed cart (26 Nov 2026, v4: NO TILT, both carts upright, real 160 mm SO-101 claw).
+# Decision: cart stays upright and the track stays where it is (v3 check: upright reaches 9/9 tray cells and the store front row, lid clear).
+# Left cart shown reaching the HARDEST tray cell (far-left, back row x -290 y -100); right cart at the pod store front row.
 ZCROP = 750.0
 TW, TD, TH, WALL, LID_T = 700.0, 400.0, 300.0, 4.0, 4.0
 LID = TH + LID_T
@@ -13,7 +12,6 @@ TX, TR, R, LOOP_Y = 290.0, 16.0, 150.0, -60.0
 ZB = 514.0
 ZC1, FOOT_X = 1215.0, 340.0
 SHELF_Z, SHELF_T = 155.0, 4.0; SHELF_TOP = SHELF_Z + SHELF_T
-ROLL_LEFT = 45.0
 L1, L2, CLAW = 116.0, 135.0, 160.0
 
 def box(sx, sy, sz, cx, cy, z0):
@@ -38,11 +36,6 @@ def U(ps):
     for p in ps:
         o = p if o is None else o.union(p)
     return o
-def roll(shape, deg):
-    return shape.rotate((0, LOOP_Y, ZB), (1, LOOP_Y, ZB), deg) if deg else shape
-def roll_pt(p, deg):
-    a = math.radians(deg); dy, dz = p[1] - LOOP_Y, p[2] - ZB
-    return (p[0], LOOP_Y + dy * math.cos(a) - dz * math.sin(a), ZB + dy * math.sin(a) + dz * math.cos(a))
 CROP = box(2000, 2000, ZCROP, 0, 0, -1)
 
 tank = box(TW, TD, TH, 0, 0, 0).cut(box(TW - 2 * WALL, TD - 2 * WALL, TH, 0, 0, WALL))
@@ -83,25 +76,25 @@ for sx in (-1, 1):
 station = bxx(60, 260, 14, 108, 394, 504).union(bxx(52, 268, 14, 116, 504, 507))
 st_legs = U([bxx(x0, x0 + 20, y0, y0 + 20, LID, 394) for x0 in (60, 240) for y0 in (22, 80)])
 
-def hand(xc, deg):
+def hand(xc):
     body = xcyl(34, 90, xc, LOOP_Y, ZB).cut(xcyl(TR + 2, 92, xc, LOOP_Y, ZB)).cut(box(92, 30, 40, xc, LOOP_Y + 24, ZB - 20))
     jaw = xcyl(10, 90, xc, LOOP_Y + 30, ZB + 18)
     wheels = U([xcyl(9, 14, xc + s, LOOP_Y + dy, ZB + dz) for s in (-30, 30)
                 for dy, dz in ((0, -TR - 9 + 2), (-14, TR + 4), (14, TR + 4))]).cut(xcyl(TR, 200, xc, LOOP_Y, ZB))
     motor = ycyl(14, 55, xc, LOOP_Y - 34 - 27, ZB + 8)
     pad = box(40, 14, 40, xc, LOOP_Y - 41, ZB - 20)
-    return roll(body, deg), roll(jaw.union(wheels), deg), roll(motor, deg), roll(pad, deg)
+    return body, jaw.union(wheels), motor, pad
 
-def cart(x0, deg):
-    parts = [hand(x0 + s, deg) for s in (-60, 60)]
-    hinge = roll(xcyl(5, 166, x0, LOOP_Y - 50, ZB - 4), deg)
-    plate = roll(box(166, 6, 112, x0, LOOP_Y - 53, ZB - 120), deg)
-    batt = roll(box(70, 50, 70, x0, LOOP_Y - 81, ZB - 60 - 35), deg)
+def cart(x0):
+    parts = [hand(x0 + s) for s in (-60, 60)]
+    hinge = xcyl(5, 166, x0, LOOP_Y - 50, ZB - 4)
+    plate = box(166, 6, 112, x0, LOOP_Y - 53, ZB - 120)
+    batt = box(70, 50, 70, x0, LOOP_Y - 81, ZB - 60 - 35)
     return (U([p[0] for p in parts]), U([p[1] for p in parts]), U([p[2] for p in parts]),
             U([p[3] for p in parts]).union(hinge), plate, batt)
 
-def cart_body(x0, deg):
-    return roll(box(166, 6, 112, x0, LOOP_Y - 53, ZB - 120).union(box(70, 50, 70, x0, LOOP_Y - 81, ZB - 60 - 35)), deg)
+def cart_body(x0):
+    return box(166, 6, 112, x0, LOOP_Y - 53, ZB - 120).union(box(70, 50, 70, x0, LOOP_Y - 81, ZB - 60 - 35))
 
 def servo_at(p, along):
     return bxc(*({"x": (45, 35, 24), "y": (24, 45, 35), "z": (24, 35, 45)}[along]), p)
@@ -112,39 +105,33 @@ def ik(S, W):
     cands = [(S[0] + hx / hu * L1 * math.cos(a + s * b), S[1] + hy / hu * L1 * math.cos(a + s * b), S[2] + L1 * math.sin(a + s * b)) for s in (1, -1)]
     return min(cands, key=lambda e: e[1]), d
 
-def arm(x0, grip, deg):
-    S = roll_pt((x0, LOOP_Y - 144, ZB - 60), deg)
+def arm(x0, grip):
+    S = (x0, LOOP_Y - 144, ZB - 60)
     W = (grip[0], grip[1], grip[2] + CLAW)
     E, d = ik(S, W)
-    base_plate = roll(box(70, 8, 70, x0, LOOP_Y - 110, ZB - 95), deg)
-    base_servo = roll(bxc(35, 26, 45, (x0, LOOP_Y - 127, ZB - 60)), deg)
-    shoulder = roll(bxc(50, 18, 40, (x0, LOOP_Y - 149, ZB - 60)), deg).union(servo_at(S, "x"))
-    # real SO-101 claw, 160 mm wrist to grip: wrist flex + roll servos, then a slim gripper body and two fingers through the pick hole
+    base_plate = box(70, 8, 70, x0, LOOP_Y - 110, ZB - 95)
+    base_servo = bxc(35, 26, 45, (x0, LOOP_Y - 127, ZB - 60))
+    shoulder = bxc(50, 18, 40, (x0, LOOP_Y - 149, ZB - 60)).union(servo_at(S, "x"))
     wristp = U([servo_at(W, "z"), servo_at((W[0], W[1], W[2] - 32), "x")])
     claw = rod((W[0], W[1], W[2] - 44), (grip[0], grip[1], grip[2] + 60), 9).union(bxc(26, 22, 40, (grip[0], grip[1], grip[2] + 40)))
     fingers = U([bxc(5, 16, 45, (grip[0] + s, grip[1], grip[2] + 2)) for s in (-11, 11)])
     servos = U([base_servo, shoulder, servo_at(E, "x"), wristp])
     links = rod(S, E, 11).union(rod(E, W, 9))
-    return base_plate, servos, links, claw, fingers, d, S, E, W
+    return base_plate, servos, links, claw, fingers, d, E, W
 
 lim = L1 + L2
-print("real claw %d mm; reach limit %.0f; checks the arm links + wrist servos + claw against the cart plate/battery and the lid" % (CLAW, lim))
-def check(tag, x0, deg, cells, top):
-    res = []
-    for (x, y) in cells:
-        _, servos, links, claw, fingers, d, S, E, W = arm(x0, (x, y, top), deg)
-        moving = links.union(claw).union(fingers).union(servo_at(E, "x")).union(servo_at(W, "z")).union(servo_at((W[0], W[1], W[2] - 32), "x"))
-        hit_cart = links.intersect(cart_body(x0, deg)).val().Volume()
-        hit_lid = moving.intersect(lid).val().Volume()
-        ok = d <= lim and hit_cart < 1 and hit_lid < 1
-        res.append(ok)
-        print("  %-18s x %4d y %4d: reach %4.0f  elbow z %4.0f  wrist z %4.0f  %s" % (
-            tag, x, y, d, E[2], W[2], "ok" if ok else ("TOO FAR" if d > lim else ("hits lid" if hit_lid >= 1 else "hits cart"))))
-    print("  -> %s: %d of %d cells ok" % (tag, sum(res), len(res)))
-cells_t = [(x, y) for y in TRAY_YS for x in (TRAY_XS[0], -185, TRAY_XS[-1])]
-check("tray rolled 45", -130.0, ROLL_LEFT, cells_t, POD_TOP_T)
-check("tray upright", -130.0, 0.0, cells_t, POD_TOP_T)
-check("store upright", 130.0, 0.0, [(x, STORE_Y) for x in (STORE_XS[0], 190, STORE_XS[-1])], POD_TOP_S)
+ok_all = 0
+for y in TRAY_YS:
+    for x in TRAY_XS:
+        _, _, links, claw, fingers, d, E, W = arm(-130.0, (x, y, POD_TOP_T))
+        moving = links.union(claw).union(fingers).union(servo_at(E, "x")).union(servo_at(W, "z"))
+        ok = d <= lim and links.intersect(cart_body(-130.0)).val().Volume() < 1 and moving.intersect(lid).val().Volume() < 1
+        ok_all += ok
+print("upright, real 160 mm claw: %d of %d tray cells reachable with no cart or lid hit" % (ok_all, len(TRAY_XS) * len(TRAY_YS)))
+_, _, _, _, _, d_hard, E_h, W_h = arm(-130.0, (-290.0, -100.0, POD_TOP_T))
+_, _, _, _, _, d_s, E_s, W_s = arm(130.0, (190.0, STORE_Y, POD_TOP_S))
+print("hardest tray cell (x -290, y -100): reach %.0f of %.0f, wrist %.0f mm above the lid" % (d_hard, lim, W_h[2] - LID))
+print("store front row middle: reach %.0f, wrist %.0f mm above the lid" % (d_s, W_s[2] - LID))
 
 C = cq.Color
 assy = cq.Assembly()
@@ -156,10 +143,9 @@ for obj, name, col in [
     (feet, "feet", C(0.4, 0.4, 0.42)), (track, "track", C(0.75, 0.75, 0.77)),
     (station, "water_station", C(0.93, 0.93, 0.9)), (st_legs, "water_station_legs", C(0.55, 0.57, 0.6))]:
     assy.add(obj, name=name, color=col)
-for tag, x0, grip, deg in (("tray_rolled45", -130.0, (-185.0, -125.0, POD_TOP_T), ROLL_LEFT),
-                           ("store_upright", 130.0, (190.0, STORE_Y, POD_TOP_S), 0.0)):
-    sleeves, jaws, motors, pads, plate, batt = cart(x0, deg)
-    bp, servos, links, claw, fingers, d, S, E, W = arm(x0, grip, deg)
+for tag, x0, grip in (("tray_far_corner", -130.0, (-290.0, -100.0, POD_TOP_T)), ("store_front", 130.0, (190.0, STORE_Y, POD_TOP_S))):
+    sleeves, jaws, motors, pads, plate, batt = cart(x0)
+    bp, servos, links, claw, fingers, d, E, W = arm(x0, grip)
     for obj, name, col in [(sleeves, "sleeves", C(0.18, 0.2, 0.26)), (jaws, "jaws_wheels", C(0.35, 0.37, 0.42)), (motors, "motors", C(0.75, 0.55, 0.2)),
                            (pads, "pads_hinge", C(0.45, 0.45, 0.5)), (plate, "plate", C(0.35, 0.35, 0.38)), (batt, "battery", C(0.2, 0.45, 0.85)),
                            (bp, "arm_base", C(0.85, 0.85, 0.88)), (servos, "arm_servos", C(0.12, 0.12, 0.14)), (links, "arm_links", C(0.92, 0.92, 0.94)),
