@@ -1,0 +1,137 @@
+{
+ "note": "depth below the pipe axis (mm) of the lowest vertex per roll angle; gap = 210 - depth. + roll turns the plate down and back, as in pod_grab.py layout roll",
+ "lowest_part_without_arm": {
+  "0": {
+   "part": "sampler_parking_socket",
+   "depth_mm": 165.0,
+   "gap_to_lid_mm": 45.0
+  },
+  "5": {
+   "part": "sampler_parking_socket",
+   "depth_mm": 172.2,
+   "gap_to_lid_mm": 37.8
+  },
+  "10": {
+   "part": "sampler_parking_socket",
+   "depth_mm": 178.1,
+   "gap_to_lid_mm": 31.9
+  },
+  "15": {
+   "part": "sampler_parking_socket",
+   "depth_mm": 182.7,
+   "gap_to_lid_mm": 27.3
+  },
+  "20": {
+   "part": "sampler_parking_socket",
+   "depth_mm": 185.8,
+   "gap_to_lid_mm": 24.2
+  },
+  "25": {
+   "part": "sampler_parking_socket",
+   "depth_mm": 187.6,
+   "gap_to_lid_mm": 22.4
+  },
+  "30": {
+   "part": "sampler_parking_socket",
+   "depth_mm": 187.9,
+   "gap_to_lid_mm": 22.1
+  },
+  "35": {
+   "part": "sampler_parking_socket",
+   "depth_mm": 186.8,
+   "gap_to_lid_mm": 23.2
+  },
+  "40": {
+   "part": "sampler_parking_socket",
+   "depth_mm": 184.2,
+   "gap_to_lid_mm": 25.8
+  },
+  "45": {
+   "part": "sampler_pu_coil",
+   "depth_mm": 181.3,
+   "gap_to_lid_mm": 28.7
+  },
+  "50": {
+   "part": "sampler_pu_coil",
+   "depth_mm": 178.3,
+   "gap_to_lid_mm": 31.7
+  },
+  "55": {
+   "part": "sampler_pu_coil",
+   "depth_mm": 174.1,
+   "gap_to_lid_mm": 35.9
+  },
+  "60": {
+   "part": "sampler_pu_coil",
+   "depth_mm": 168.8,
+   "gap_to_lid_mm": 41.2
+  }
+ },
+ "arm_envelope_depth": {
+  "0": {
+   "part": "cart_so101_arm_envelope",
+   "depth_mm": 95.0,
+   "gap_to_lid_mm": 115.0
+  },
+  "5": {
+   "part": "cart_so101_arm_envelope",
+   "depth_mm": 107.9,
+   "gap_to_lid_mm": 102.1
+  },
+  "10": {
+   "part": "cart_so101_arm_envelope",
+   "depth_mm": 137.5,
+   "gap_to_lid_mm": 72.5
+  },
+  "15": {
+   "part": "cart_so101_arm_envelope",
+   "depth_mm": 166.1,
+   "gap_to_lid_mm": 43.9
+  },
+  "20": {
+   "part": "cart_so101_arm_envelope",
+   "depth_mm": 193.4,
+   "gap_to_lid_mm": 16.6
+  },
+  "25": {
+   "part": "cart_so101_arm_envelope",
+   "depth_mm": 219.2,
+   "gap_to_lid_mm": -9.2
+  },
+  "30": {
+   "part": "cart_so101_arm_envelope",
+   "depth_mm": 243.4,
+   "gap_to_lid_mm": -33.4
+  },
+  "35": {
+   "part": "cart_so101_arm_envelope",
+   "depth_mm": 265.7,
+   "gap_to_lid_mm": -55.7
+  },
+  "40": {
+   "part": "cart_so101_arm_envelope",
+   "depth_mm": 286.0,
+   "gap_to_lid_mm": -76.0
+  },
+  "45": {
+   "part": "cart_so101_arm_envelope",
+   "depth_mm": 304.1,
+   "gap_to_lid_mm": -94.1
+  },
+  "50": {
+   "part": "cart_so101_arm_envelope",
+   "depth_mm": 319.8,
+   "gap_to_lid_mm": -109.8
+  },
+  "55": {
+   "part": "cart_so101_arm_envelope",
+   "depth_mm": 333.2,
+   "gap_to_lid_mm": -123.2
+  },
+  "60": {
+   "part": "cart_so101_arm_envelope",
+   "depth_mm": 344.0,
+   "gap_to_lid_mm": -134.0
+  }
+ }
+}

@@ -4,6 +4,7 @@ Sim model: `sim/pod_grab.py` (MuJoCo, run it as `run_sim(model="pod_grab", durat
 Check script and tables: `sim/pod_grab_check.py` (writes `docs/pod-grab-reach/results.json`, `--clip <name>` writes the clips).
 Pictures: `cad/renders/pod-grab-reach-{iso,front,top,side}.png`, 3D model `cad/renders/pod-grab-reach.glb`.
 No CAD file was changed.
+**Follow-up of 26 Nov (cart rolled 45 degrees over the tray, pods vertical, store front row): `docs/pod-grab-roll.md`.**
 
 ## The answer, in plain words
 
