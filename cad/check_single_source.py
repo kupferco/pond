@@ -11,6 +11,9 @@
 #     files (cart_*.py, cad/parts/cart.py); every other assembly adds the cart with add_cart(). And add_cart(..., drop_hand=True), which leaves a sleeve out, is allowed
 #     only in the listed scripts (CART_HAND_DROPPED): everywhere else the cart has BOTH sleeves (a dropped sleeve made "Complete unit v2" show one).
 #  6. (#447) The cart source carries no track pipe, and no assembly adds a child called track_pipe*; the seedling tray and storage stand on the shelf (cad/parts/shelf.py), under the lid.
+#  7. (#537) ONE layout: cad/layout.json holds the central pipe position, the track offset (track pipe axis to central pipe axis = 16 + the 50 mm M8 rod of track_joint.py),
+#     the pipe spacing and the sleeve that climbs (the TOP one, hand B). check_layout() fails if a script or sim scene defines such a number itself, or if any drawing's
+#     real geometry (central pipe, track loop, track supports, cart on the track, generated sim numbers, sim/constants.py) differs from it.
 #  5. (#447) The cart source itself still has both sleeves (hand_on_pipe_B_sleeve and hand_on_pipe_C_sleeve), when cadquery is available.
 import ast
 import collections
@@ -73,8 +76,110 @@ def child_names(tree):
     return out
 
 
+# ---------------- (#537) the one layout ----------------
+LAYOUT_NAMES = {"LOOP_Y", "TRACK_Y", "TRACK_LOOP_Y", "ROD_OUT", "STUB", "TRACK_STUB", "TRACK_OFFSET", "TRACK_ROD_OUT", "CENTRAL_X", "CENTRAL_Y", "CENTRAL_PIPE_XY",
+                "PIPE_SPACING", "CART_PIPE_SPACING", "CART_CLIMB_SLEEVE", "FACE_Y"}
+# the one place each is allowed to be a bare number: layout.json (read by layout.py), cart_dims.py's PIPE_SPACING is checked by value below
+LAYOUT_TS_NAMES = ("PIPE_Y", "SPINE_Y", "TRACK_LOOP_Y", "TRACK_OFFSET", "TRACK_ROD_OUT", "CENTRAL_PIPE_Y", "CENTRAL_PIPE_X", "LOOP_Y", "XT")
+
+
+def _number(node):
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
+        return True
+    return isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)) and _number(node.operand)
+
+
+def check_layout(problems, notes):
+    import json
+    import re
+    root = os.path.abspath(os.path.join(HERE, ".."))
+    lay = json.load(open(os.path.join(HERE, "layout.json")))
+    sys.path.insert(0, HERE)
+    import layout as LAY
+    near = lambda a, b, t=1e-6: abs(a - b) < t
+    # 1. the numbers themselves are consistent: offset = tube radius + the track joint's rod, climbing sleeve is the top one
+    if not near(LAY.TRACK_OFFSET, lay["track_pipe_od_mm"] / 2 + lay["track_rod_out_mm"]) or not near(LAY.TRACK_LOOP_Y, lay["central_pipe_y_mm"] - LAY.TRACK_OFFSET):
+        problems.append("layout.py derives the track offset differently from layout.json (track pipe radius + rod out)")
+    if LAY.CART_CLIMB_SLEEVE != "B":
+        problems.append("layout.json cart_climb_sleeve must be \"B\" (hand B, pipe B at cart x = -60: the TOP sleeve climbs and clamps, the bottom sleeve never does); it is %r" % LAY.CART_CLIMB_SLEEVE)
+    if LAY.CENTRAL_PIPE_XY != (0.0, 0.0):
+        problems.append("the central pipe must stay on the tank centre (0, 0); layout.json has %r" % (LAY.CENTRAL_PIPE_XY,))
+    # 2. no script (drawing, render, assembly) or sim scene defines such a number again: they must derive it from the layout
+    for f in sorted(glob.glob(os.path.join(HERE, "*.py")) + glob.glob(os.path.join(HERE, "parts", "*.py"))):
+        b = os.path.basename(f)
+        if b in STUDIES or b in ("layout.py", os.path.basename(__file__)):
+            continue
+        tree = ast.parse(open(f).read())
+        for n in tree.body:
+            if isinstance(n, ast.Assign):
+                for t in n.targets:
+                    names = [t.id] if isinstance(t, ast.Name) else [e.id for e in getattr(t, "elts", []) if isinstance(e, ast.Name)]
+                    for nm in names:
+                        if nm in LAYOUT_NAMES and (_number(n.value) or (isinstance(n.value, (ast.Tuple, ast.List)) and all(_number(e) for e in n.value.elts))) and not (b == "cart_dims.py" and nm == "PIPE_SPACING"):
+                            problems.append("%s defines %s as a bare number; take it from cad/layout.py (cad/layout.json)" % (b, nm))
+    for f in sorted(glob.glob(os.path.join(root, "control-ui", "src", "**", "*.ts"), recursive=True)):
+        rel = os.path.relpath(f, root)
+        if "/generated/" in rel or rel.endswith("src/layout.ts"):
+            continue
+        for ln, line in enumerate(open(f), 1):
+            m = re.match(r"\s*export const (%s)\b[^=]*=\s*(-?[0-9][0-9.]*)\s*[;,]" % "|".join(LAYOUT_TS_NAMES), line)
+            if m:
+                problems.append("%s:%d defines %s as the bare number %s; take it from control-ui/src/layout.ts (cad/layout.json)" % (rel, ln, m.group(1), m.group(2)))
+    # 3. the real geometry of every drawing uses them
+    try:
+        from parts import unit_dims as ud
+        from parts import unit_frame as uf
+        from parts.track import track_loop
+        import cart_dims
+        import track_joint
+        import water_station as ws
+        import complete_unit as cu
+        import water_assembly as wa
+        import runpy
+        if not near(ud.LOOP_Y, LAY.TRACK_LOOP_Y) or not near(ws.TRACK_Y, LAY.TRACK_LOOP_Y):
+            problems.append("the unit's track plane is at y = %.2f (water station %.2f) but the layout says %.2f" % (ud.LOOP_Y, ws.TRACK_Y, LAY.TRACK_LOOP_Y))
+        if not near(track_joint.ROD_OUT, LAY.TRACK_ROD_OUT):
+            problems.append("track_joint.py ROD_OUT is %.1f, layout.json says %.1f" % (track_joint.ROD_OUT, LAY.TRACK_ROD_OUT))
+        if not near(cart_dims.PIPE_SPACING, LAY.CART_PIPE_SPACING):
+            problems.append("cart_dims.PIPE_SPACING is %.1f, layout.json cart_pipe_spacing_mm is %.1f" % (cart_dims.PIPE_SPACING, LAY.CART_PIPE_SPACING))
+        for nm, fn in (("growing_pipe", uf.growing_pipe), ("spine_tube", uf.spine_tube)):
+            bb = fn().val().BoundingBox()
+            cx, cy = (bb.xmin + bb.xmax) / 2, (bb.ymin + bb.ymax) / 2
+            if not near(cx, LAY.CENTRAL_PIPE_XY[0], 1e-3) or not near(cy, LAY.CENTRAL_PIPE_XY[1], 1e-3):
+                problems.append("the central pipe (%s) is centred at (%.2f, %.2f) instead of %r" % (nm, cx, cy, LAY.CENTRAL_PIPE_XY))
+        bb = track_loop().val().BoundingBox()
+        cy = (bb.ymin + bb.ymax) / 2
+        if not near(cy, LAY.TRACK_LOOP_Y, 1e-3) or not near(cy - LAY.CENTRAL_PIPE_XY[1], -LAY.TRACK_OFFSET, 1e-3):
+            problems.append("the track loop is centred at y = %.3f, the layout puts it %.1f mm in front of the central pipe (y = %.1f)" % (cy, LAY.TRACK_OFFSET, LAY.TRACK_LOOP_Y))
+        sx = (-1, 1)
+        if not near(cu.CART_SHIFT[1], LAY.TRACK_LOOP_Y) or not near(cu.CART_SHIFT[0], ud.TX + LAY.CART_PIPE_SPACING / 2):
+            problems.append("complete_unit.CART_SHIFT %r does not put the climbing sleeve (pipe B) on the track (x %.1f, y %.1f)" % (tuple(cu.CART_SHIFT), ud.TX, LAY.TRACK_LOOP_Y))
+        if not near(wa.TRACK_X, -LAY.CART_PIPE_SPACING / 2) or not near(wa.MOVE["shift"][1], -LAY.TRACK_LOOP_Y):
+            problems.append("water_assembly puts the track at cart x %.1f / y shift %.1f; the layout says the climbing (top) sleeve B at %.1f, track %.1f from the central pipe" % (wa.TRACK_X, wa.MOVE["shift"][1], -LAY.CART_PIPE_SPACING / 2, LAY.TRACK_OFFSET))
+        ts = runpy.run_path(os.path.join(HERE, "track_supports.py"))
+        if not near(ts["STUB"], LAY.TRACK_ROD_OUT) or not near(ts["LOOP_Y"], LAY.TRACK_LOOP_Y) or not near(ts["FACE_Y"], LAY.TRACK_LOOP_Y + LAY.TRACK_PIPE_R + LAY.TRACK_ROD_OUT):
+            problems.append("track_supports.py has a free rod stub of %.1f mm (the track joint's ROD_OUT is %.1f) and the track at y = %.1f" % (ts["STUB"], LAY.TRACK_ROD_OUT, ts["LOOP_Y"]))
+    except ImportError as e:
+        notes.append("layout geometry check skipped (%s)" % e)
+    # 4. the sim: generated numbers, shared layout.ts, MuJoCo constants
+    gen = open(os.path.join(root, "control-ui", "src", "generated", "cad-sim.ts")).read()
+    m = re.search(r'"LOOP_Y":\s*(-?[0-9.]+)', gen)
+    if not m or not near(float(m.group(1)), LAY.TRACK_LOOP_Y):
+        problems.append("control-ui/src/generated/cad-sim.ts has LOOP_Y %s, the layout says %.1f: run python cad/export_sim_model.py" % (m.group(1) if m else "missing", LAY.TRACK_LOOP_Y))
+    pg = open(os.path.join(root, "control-ui", "src", "podgrab", "layout.ts")).read()
+    for need in ("LAYOUT.TRACK_LOOP_Y", "LAYOUT.CENTRAL_PIPE_Y", "CART_DZ = -HX"):
+        if need not in pg:
+            problems.append("control-ui/src/podgrab/layout.ts no longer takes %s from the shared layout (the pod-grab scene must use the one layout, the central pipe centred, the cart on its top sleeve under the pipe)" % need)
+    sc = open(os.path.join(root, "sim", "constants.py")).read()
+    mt = re.search(r"^TRACK_ROD_OUT = ([0-9.]+) \* MM", sc, re.M)
+    ms = re.search(r"^PIPE_SPACING = ([0-9.]+) \* MM", sc, re.M)
+    if not mt or not near(float(mt.group(1)), LAY.TRACK_ROD_OUT) or not ms or not near(float(ms.group(1)), LAY.CART_PIPE_SPACING):
+        problems.append("sim/constants.py (MuJoCo models) has a different track rod / pipe spacing than cad/layout.json")
+
+
 def main():
     problems, notes = [], []
+    check_layout(problems, notes)
     part_files = sorted(glob.glob(os.path.join(HERE, "parts", "*.py")))
     part_defs = {}
     for f in part_files:

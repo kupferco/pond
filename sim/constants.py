@@ -52,6 +52,10 @@ BALL_FRICTION = 0.05  # a printed cup with a steel or Delrin ball: rolls both wa
 JAW_A1_DEG = 110.0  # the jaw wedge as drawn (cad/cart_sleeves.py JAW_A1); the transfer needs at least 140 (control-ui/scripts/search-swing.ts), 150 proposed
 JAW_A1_PROPOSED_DEG = 150.0
 SWING_DEG = 90.0  # roll of the whole cart about the riding pipe in a transfer (control-ui TRANSFER_ROLL_DEG), plate side
-PIPE_SPACING = 120 * MM  # the two hands (cad/cart_dims.py PIPE_SPACING)
+PIPE_SPACING = 120 * MM  # the two hands (cad/cart_dims.py PIPE_SPACING = cad/layout.json cart_pipe_spacing_mm; cad/check_single_source.py fails if this differs)
+# Unit layout (OpenPocket #537): the track pipe axis is TRACK_OFFSET from the central pipe axis = track tube radius 16 + the 50 mm M8 rod of cad/track_joint.py (ROD_OUT).
+# Copied here only because render-server sends this file to a sandbox that cannot read cad/layout.json; cad/check_single_source.py fails if it differs from the JSON.
+TRACK_ROD_OUT = 50 * MM
+TRACK_OFFSET = PIPE_R + TRACK_ROD_OUT  # 0.066
 SLEEVE_BORE_R = 20 * MM  # hand_sleeve.py R_BORE
 SLEEVE_OUT_R = 34.5 * MM  # hand_sleeve.py TUBE_R_MIN

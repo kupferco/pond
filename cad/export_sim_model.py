@@ -117,7 +117,8 @@ def cart_parts():
 def unit_placement():
     import complete_unit as cu
     from parts import unit_dims as ud
-    return dict(CART_SHIFT=list(cu.CART_SHIFT), CART_Z=cu.CART_Z, TX=ud.TX, TR=ud.TR, R=ud.R, LOOP_Y=ud.LOOP_Y, ZB=ud.ZB, ZT=ud.ZT,
+    import layout as LAY
+    return dict(CART_SHIFT=list(cu.CART_SHIFT), CART_Z=cu.CART_Z, TX=ud.TX, TR=ud.TR, R=ud.R, LOOP_Y=ud.LOOP_Y, ZB=ud.ZB, ZT=ud.ZT, TRACK_OFFSET=LAY.TRACK_OFFSET, CLIMB_SLEEVE=LAY.CART_CLIMB_SLEEVE, CENTRAL_PIPE_XY=list(LAY.CENTRAL_PIPE_XY),
                 note="sim world (x, y, z) = (-cad_y, cad_x, cad_z): the sim's track plane is x = -LOOP_Y, its two legs stand at y = -TX and +TX; the cart origin of the Complete unit is CART_SHIFT (hand B on the leg at TX)")
 
 
