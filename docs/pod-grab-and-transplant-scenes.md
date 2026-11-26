@@ -60,6 +60,18 @@ The Transplant scene is not affected (it rides a leg: no bracket, no growing-pip
 - Reach (`scripts/check-podgrab-reach.ts`): the arm does NOT reach with the claw upright. Lifting a pod out of the store needs +52 mm of track height, the carry over the lid +104 (store) to +149 (row D),
   seating in rows B, C, D needs +32, +46, +47. With the claw allowed to tilt while it carries (not implemented), the window is +55 to +80 mm of track height (clearance 100..125). Nothing was changed in the CAD for this.
 
+## Round 10 (#461): the owner's drawing layout (`cad/pond_unit_bottom.py`, 26 Nov)
+
+The pod-grab scene now follows `cad/pond_unit_bottom.py` (brought over from `claude/drafts`; it imports `parts/unit_dims.py` and `parts/pod_store_dims.py` instead of copying their numbers):
+cart upright (roll 0, track NOT raised, z 514), real 160 mm claw, a gravity-feed pod store of 7 lanes (pitch 30 mm from x 100) with a 15 degree ramp and a flat landing with a stop lip at the front row (y -165),
+a 6 x 3 seedling tray (35 x 25 mm pitch, x -290..-115, y -150..-100, pods vertical) and slots in the lid. `STORE_SLOPE_DEG` is 15 in the CAD and the sim reads it from the generated constants.
+
+- The arm now pans: the cart's straight run is x +/-140 mm, the store reaches to x 280 and the tray to x -290, so the pan joint takes the rest (`task.ts`, `reach.ts`).
+- With the claw straight down the SO-101 cannot hold the claw tip higher than about 225 mm, the lid is at 304: over the lid the claw is tilted (`TRANSIT_PITCH` 70 degrees) and straightens as it goes down through the slot.
+- Lid slots 70 x 50 mm (50 along x): at 35 mm (tray) and 30 mm (store) pitch they overlap, so the lid over the tray is one window 225 x 135 mm (its front edge is opened out to the lid edge, because the tilted claw cuts the 15 mm strip in front of the slots) and over the store one window 230 x 70 mm: there are NO webs between the cells. For webs the pitch would have to be above 50 mm (x) or 70 mm (y) or the slots smaller than the 31 mm claw allows.
+- No silicone collars (a 25 mm pod at 25 mm pitch leaves no room for a ring). Low 12 mm guide walls between the lanes (the open claw, 31 mm across, does not fit beside a pod between 3 mm rails at a 30 mm pitch).
+- Reach and cycle results: see the pull request (`scripts/check-podgrab-reach.ts`, `scripts/check-podgrab.ts`).
+
 ## Other points to know
 - Hand C on the loop interior (above the pipe) matches the Transplant scene (free hand on the interior side). The plate is on the spine side in the Transplant scene (the arm works towards the pipe) and on
   the front, away from the spine, in the Pod grab scene (the arm works into the tank). Both are as the scenes were; the plan does not say which side the real cart uses.

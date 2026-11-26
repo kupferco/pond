@@ -4,7 +4,7 @@ import loadMujoco from '@mujoco/mujoco';
 import { SimDriver } from '../src/drivers/simDriver.ts';
 import { RealDriver } from '../src/drivers/realDriver.ts';
 import { CommandLayer } from '../src/commands.ts';
-import { podGrabMjcf, TRAY_SLOTS, slotLabel } from '../src/podgrab/layout.ts';
+import { podGrabMjcf, TRAY_SLOTS, STORE_ROWS, slotLabel } from '../src/podgrab/layout.ts';
 import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
 import { cartCloud, clashesAt } from '../src/podgrab/clearance.ts';
 
@@ -24,10 +24,10 @@ if (process.argv[2] !== 'nofill') {
   let ok = 0;
   for (let s = 0; s < TRAY_SLOTS; s++) {
     world.reset();
-    const task = new PodTask(world, cmd, { jobs: [{ row: s % 6, slot: s }], seed: 1 });
+    const task = new PodTask(world, cmd, { jobs: [{ row: s % STORE_ROWS, slot: s }], seed: 1 });
     while (!task.done) task.advance(0.5);
     const r = task.results[0];
-    console.log(`socket ${slotLabel(s)} (store row ${s % 6 + 1}): ${task.failReason === '' && r?.success ? 'ok' : 'FAIL ' + task.failReason}`);
+    console.log(`socket ${slotLabel(s)} (store lane ${s % STORE_ROWS + 1}): ${task.failReason === '' && r?.success ? 'ok' : 'FAIL ' + task.failReason}`);
     if (task.failReason === '' && r?.success) ok++;
   }
   console.log(`single picks reaching their socket: ${ok}/${TRAY_SLOTS}`);

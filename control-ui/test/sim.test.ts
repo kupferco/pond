@@ -23,7 +23,7 @@ import { LOAD_N, PIPES, maxCantileverMm, sagTable } from '../src/cart/track-sag.
 import * as TS from '../src/cart/track-supports.ts';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { LID_T, RAIL_H, slopePoint, SLOPE, ARM_Y, ARM_X, STATION, TRAY_CY, trayY, CART_ROLL, PIPE_R, BASE_BOTTOM, CART_Z, LID_Z, PIPE_Y, PIPE_Z, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
+import { LID_T, RAIL_H, RAMP_Y0, RAMP_Y1, lidSlots, slopePoint, SLOPE, ARM_Y, ARM_X, STATION, TRAY_CY, trayY, CART_ROLL, PIPE_R, BASE_BOTTOM, CART_Z, LID_Z, PIPE_Y, PIPE_Z, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
 import { CAD_CONSTANTS } from '../src/generated/cad-sim.ts';
 import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
 import { cartCloud, clashesAt } from '../src/podgrab/clearance.ts';
@@ -48,7 +48,7 @@ const KNOWN_CLASH = ['transplant: rest pose is clear and reachable', 'transplant
 // OpenPocket #461 (round 8): the Pod grab scene is now built on the real unit (spine and 75 mm growing pipe on the tank centre, track plane 60 mm in front of it, the unit's own loop). On that unit the cart cannot pass the growing pipe
 // (sleeves cut into it by up to 11.5 mm for x -8.5 to +8.5 cm). Round 9 (CAD v4 cart: arm straight on the plate, battery beside it, track at the CAD height 45 mm clearance): the arm cannot fold in far enough at the lift and the carry, so the cycle does not complete: 0/16 (reach table: scripts/check-podgrab-reach.ts). These checks stay as they were, are printed as KNOWN-CLASH and reported in the pull request.
 KNOWN_CLASH.push('pod grab: no part of the cart intersects the spine', 'pod grab: the runtime scan agrees', 'first pick: gripper never touched a collar', 'one pod is seated in collar A1', 'row 3 slid down one position', 'pods conserved over the first pick',
-  'whole 4 x 4 tray filled', 'pod count conserved: 16 in the tray', '8 mm of perception error misses the hole', 'every seated pod stands', 'full run:');
+  'whole 6 x 3 tray filled', 'pod count conserved: 18 in the tray', '8 mm of perception error misses the hole', 'every seated pod stands', 'full run:');
 let knownClash = 0;
 const check = (name: string, ok: boolean, info = '') => {
   if (!ok && KNOWN_CLASH.some(k => name.startsWith(k))) { console.log('KNOWN-CLASH', name, info); knownClash++; return; }
@@ -317,7 +317,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   cadW.mm.delete(); cadW.dd.delete();
 }
 
-// Pod grab: the arm on the cart takes pods out of the sloped store rows and lowers them into the silicone collars of the 4 x 4 tray.
+// Pod grab: the arm on the cart takes pods from the gravity-feed store lanes and lowers them onto the 6 x 3 tray through the lid slots.
 {
   const pg = new SimDriver(mj, podGrabMjcf());
   check('pod grab model has the cart as its one mocap body (the arm base is rigid in it); the pods are free bodies', pg.model.nmocap === 1 && pg.model.nbody > POD_COUNT, String(pg.model.nmocap));
@@ -325,7 +325,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('shared layout: sim tank, lid and bottom track height are the numbers of cad/layout.json, and the cart hangs clear of the lid',
     LID_Z === LAYOUT.TANK_H && PIPE_Z === LAYOUT.TRACK_BOTTOM_Z && PIPE_Z - (LAYOUT.LID_TOP + LAYOUT.CART_BELOW_TRACK) >= LAYOUT.CART_CLEARANCE - 1e-9 && LAYOUT.CART_CLEARANCE > 0,
     `track ${(PIPE_Z * 1000).toFixed(0)} mm, lid ${(LAYOUT.LID_TOP * 1000).toFixed(0)}, cart ${(LAYOUT.CART_BELOW_TRACK * 1000).toFixed(0)} under the track, air ${(LAYOUT.CART_CLEARANCE * 1000).toFixed(0)} mm (ASSUMED)`);
-  check('store holds enough pods for the tray', STORE_ROWS * STORE_START >= TRAY_SLOTS && STORE_START < STORE_CAP);
+  check('store holds enough pods for the tray', STORE_ROWS * STORE_START >= TRAY_SLOTS && STORE_START <= STORE_CAP && STORE_ROWS === 7 && TRAY_SLOTS === 18);
   check('unit layout: track 150 mm over the lid, store slopes down to the pick line, tray flat and left of the store',
     PIPE_Z - LID_Z > 0.14 && storePos(0, 1)[2] > storePos(0, 0)[2] && storePos(0, 1)[1] > storePos(0, 0)[1] && seatPos(0)[2] === seatPos(TRAY_SLOTS - 1)[2] && seatPos(TRAY_SLOTS - 1)[0] < ROW_X0);
   check('trays clear of the spine: seedling tray left of it, store right of it, neither touching',
@@ -340,12 +340,12 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   {
     const names = podGrabMjcf();
     {
-      const sBack = (STORE_CAP - 0.5) * POD_PITCH + 0.008, top = Math.max(slopePoint(STORE_ROWS - 1, sBack, RAIL_H + 0.004)[2], slopePoint(0, sBack, RAIL_H + 0.004)[2]);
-      check('pod store: the whole store (back end gate and roof, the highest point) sits under the lid, with the slope from the CAD (7 degrees)', top < LID_Z - LID_T - 0.003 && Math.abs(SLOPE * 180 / Math.PI - 7) < 1e-9, `top ${(top * 1000).toFixed(1)} mm, lid underside ${((LID_Z - LID_T) * 1000).toFixed(1)} mm`);
+      const sEnd = (RAMP_Y1 - RAMP_Y0) / Math.cos(SLOPE), top = slopePoint(STORE_ROWS - 1, sEnd + 0.004, RAIL_H + 0.004)[2];
+      check('pod store: the whole store (back end gate, the highest point) sits under the lid, with the 15 degree slope from the CAD and a flat landing at the front', top < LID_Z - LID_T - 0.003 && Math.abs(SLOPE * 180 / Math.PI - 15) < 1e-9 && storePos(0, 0)[1] === -0.165 && storePos(3, 0)[0] === 0.19, `top ${(top * 1000).toFixed(1)} mm, lid underside ${((LID_Z - LID_T) * 1000).toFixed(0)}`);
     }
     check('spine is the CAD 33.7 mm tube (no sim-only thickening), 60 mm behind the pipe axis', Math.abs(SPINE_R * 2 - 0.0337) < 1e-9 && Math.abs(SPINE_Y - PIPE_Y - 0.06) < 1e-9);
     check('end effector is a two-finger claw (no pin)', pg.model.nu === 8 && names.includes('claw_l') && names.includes('claw_r') && !names.includes('name="pin"'));
-    check('collars are collision geometry the arm can hit (named collar_*, arm bit set)', names.includes('name="collar_0_0"') && names.split('\n').filter((l) => l.includes('name="collar_') && l.includes('conaffinity="3"')).length >= 8 * (STORE_ROWS + TRAY_SLOTS));
+    { const sl = lidSlots(); check('lid slots: 70 x 50 mm, one per tray cell (18) and store lane (7); the lid keeps its webs between the tray columns only if the pitch is above the slot width (it is not: 35 < 50), so each group runs together into one window', sl.length === TRAY_SLOTS + STORE_ROWS && sl.every((q) => Math.abs(q.x1 - q.x0 - 0.05) < 1e-9)); }
     check('each store row has an end gate at the back', names.split('\n').filter((l) => l.includes('rgba="0.95 0.75 0.2 1"')).length >= STORE_ROWS);
     pg.step();
     const b = pg.model.body('base'), id = b.id; b.delete();
@@ -391,7 +391,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     check('pod grab: the battery stands on its 50 mm edge beside the arm, on the riding-hand side, flush with the plate edge and 4 mm from the arm base (CAD v4)', (() => { const D = CAD_CONSTANTS.cart_dims; return D.BATT[0] === 50 && D.BATT[1] === 70 && D.BATT_X > D.ARM_X && Math.abs(D.BATT_X + D.BATT[0] / 2 - D.PLATE_X1) < 1e-9 && Math.abs(D.BATT_X - D.BATT[0] / 2 - D.ARM_X - D.ARM_BASE_W / 2 - 4) < 1e-9; })());
     check('pod grab: the water testing station is a solid block of the CAD size (about 200 x 94 x 113 mm, x 60..260, from 74 mm behind the track axis) that the arm collides with, on four legs on the lid', nmz.includes('name="water_station"') && (nmz.match(/name="water_station_leg\d\d"/g) ?? []).length === 4 && Math.abs((STATION.x1 - STATION.x0) - 0.2) < 1e-9 && Math.abs((STATION.y0 - PIPE_Y) - 0.074) < 1e-9 && Math.abs((STATION.z1 - STATION.z0) - 0.113) < 1e-9 && STATION.z1 < PIPE_Z + PIPE_R);
     check('pod grab: the cart stays flat (roll 0) and rides ONE pipe, the bottom run: no second track pipe below it', CART_ROLL === 0 && (nmz.match(/name="track_pipe"/g) ?? []).length === 1);
-    check('pod grab: the seedling tray is 10 mm nearer the cart (TRAY_CY -0.108, rows A to D at y -165, -127, -89, -51 mm)', Math.abs(TRAY_CY + 0.108) < 1e-12 && [0, 1, 2, 3].every((r, i) => Math.abs(trayY(r) * 1000 - [-165, -127, -89, -51][i]) < 1e-6));
+    check('pod grab: the seedling tray is the drawing 6 x 3 (cad/pond_unit_bottom.py: rows A to C at y -150, -125, -100 mm, 35 mm column pitch)', Math.abs(TRAY_CY + 0.125) < 1e-12 && [0, 1, 2].every((r, i) => Math.abs(trayY(r) * 1000 - [-150, -125, -100][i]) < 1e-6));
     // spine and bracket (#461): the sleeves are turned so the 18 mm slot faces the bracket, which passes through it. Exact check on the CAD triangles (src/podgrab/clearance.ts), the whole run of the pipe.
     {
       const cloud = cartCloud(pg);
@@ -418,8 +418,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check('one pod is seated in collar A1', task.failReason === '' && world.trayPod(0) >= 0, task.failReason);
   check('roof: the second pod is not lifted or dragged while the first is picked', zMax < 0.002, String(zMax));
   for (let i = 0; i < 1000; i++) pg.step();
-  const row2 = world.rowPods(2).map((i) => Math.round(world.slopePos(i) / POD_PITCH));
-  check('row 3 slid down one position', row2.join() === Array.from({ length: STORE_START - 1 }, (_, k) => k).join() && world.frontPod(2) === second, row2.join());
+  check('row 3 slid down one position: the next pod is on the landing', world.frontPod(2) === second, String(world.frontPod(2)));
 
   check('pods conserved over the first pick', world.violation === '' && world.pods.length === POD_COUNT, world.violation);
 
@@ -451,11 +450,11 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
   check(`full run: the arm never touches the spine, the bracket or the pipe (closest approach over ${Math.floor(nStep / 4)} samples ${(armMin * 1000).toFixed(1)} mm)`, armMin >= -0.0005, String(armMin));
   check('full run: the cart never touched the spine or the bracket (0 steps with a hit)', world.cartHit.ticks === 0, JSON.stringify(world.cartHit));
   const rowsUsed = new Set(task.cfg.jobs.map((j) => j.row)).size;
-  check('whole 4 x 4 tray filled', task.failReason === '' && world.trayCount === TRAY_SLOTS, `${world.trayCount}/${TRAY_SLOTS} ${task.failReason}`);
+  check('whole 6 x 3 tray filled', task.failReason === '' && world.trayCount === TRAY_SLOTS, `${world.trayCount}/${TRAY_SLOTS} ${task.failReason}`);
   check('pods came from several rows', rowsUsed >= 2, String(rowsUsed));
   check('full run: no pod appeared, disappeared or teleported, and the arm hit nothing', world.violation === '', world.violation);
   check('full run: no gripper geom touched any silicone collar', world.collarHits === 0 && !/collar/.test(world.violation), world.collarHit);
-  check('pod count conserved: 16 in the tray, the rest in the store', world.trayCount === TRAY_SLOTS && world.storeCount === POD_COUNT - TRAY_SLOTS, `${world.trayCount} ${world.storeCount}`);
+  check('pod count conserved: 18 in the tray, the rest in the store', world.trayCount === TRAY_SLOTS && world.storeCount === POD_COUNT - TRAY_SLOTS, `${world.trayCount} ${world.storeCount}`);
   check('every seated pod stands in its collar', task.results.every((r) => r.success && r.posErrMm <= 4), JSON.stringify(task.results.map((r) => r.posErrMm)));
 
   // A pin that misses the hole fails the job instead of faking success.

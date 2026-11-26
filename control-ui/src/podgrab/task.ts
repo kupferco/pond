@@ -19,8 +19,8 @@ import { solvePlanar, toolPoint, type Joints } from '../arm/kinematics.ts';
 import { gauss, rng } from '../arm/placement.ts';
 import {
   CART_HOME_X, CART_QUAT, PIPE_R, CART_SPINE_ZONE, CART_SPEED, CART_Z, CLAW_ACT, CLAW_GRIP, CLAW_OPEN, PAN0, CART_X_MAX, CART_X_MIN, PIN_SPEED, PIPE_Y, POD_COUNT, POD_LEN, POD_R, armR, armU,
-  POD_PITCH, ROW_PITCH, SEAT_SPEED, TOOL_X, STORE_CAP, STORE_N, STORE_PITCH_DEG, STORE_ROWS, STORE_Y0, STORE_START, TRANSIT_Z, TRAY_SLOTS, CELL_R,
-  READY_POSE, podName, rowX, seatPos, STORE_Z0, TRAY_CX, TRAY_HX, TRAY_HY, TRAY_TOP, slopeS, slotLabel, startPos, STORE_QUAT, UPRIGHT_QUAT,
+  POD_PITCH, ROW_PITCH, SEAT_SPEED, TOOL_X, STORE_CAP, STORE_N, STORE_PITCH_DEG, STORE_ROWS, STORE_Y0, STORE_START, TRANSIT_Z, TRANSIT_PITCH, TRAY_SLOTS, CELL_R,
+  READY_POSE, podName, rowX, seatPos, STORE_Z0, LAND_Y0, RAMP_Y1, TRAY_CY, TRAY_CX, TRAY_HX, TRAY_HY, TRAY_TOP, slopeS, slotLabel, startPos, STORE_QUAT, UPRIGHT_QUAT,
 } from './layout.ts';
 
 export const CLAW_TOL = CLAW_OPEN - POD_R;   // m, across the fingers: the pod must be between the open fingers (28.6 mm gap for a 25 mm pod)
@@ -28,7 +28,7 @@ export const CLAW_TOL_ALONG = 0.005;  // m, along the fingers (12 mm wide) from 
 export const HOLE_TOL = CLAW_TOL;
 export const COLLAR_TOL = CELL_R - POD_R - 0.0004; // m, pod axis to the collar axis when it is lowered into the cell
 const SLIDE_DZ = 0.03;           // m, pod centre height over its seat while it slides over the tray (pod bottom 8 mm over the collars)
-const APPROACH = 0.1;             // m above the pod, along its axis, where the pin waits before it goes in
+const APPROACH = 0.03;            // m above the pod, along its axis, where the pin waits before it goes in
 
 type V3 = [number, number, number];
 type Mat = number[];
@@ -153,12 +153,9 @@ export class PodWorld {
 
   /** Where a pod centre is: the store channel, above the tray, or neither. */
   private region(p: V3): 'store' | 'tray' | 'air' {
-    const s = slopeS(p[1], p[2]);
-    const h = (p[1] - STORE_Y0) * STORE_N[1] + (p[2] - STORE_Z0) * STORE_N[2];
-    const row = Math.round((p[0] - rowX(0)) / ROW_PITCH);
-    if (row >= 0 && row < STORE_ROWS && Math.abs(p[0] - rowX(row)) < ROW_PITCH / 2 && s > -0.02 && s < (STORE_CAP + 0.5) * POD_PITCH
-      && h > 0.005 && h < POD_LEN / 2 + 0.012) return 'store';
-    if (Math.abs(p[0] - TRAY_CX) < TRAY_HX && Math.abs(p[1]) < TRAY_HY && p[2] > TRAY_TOP + 0.005 && p[2] < TRAY_TOP + POD_LEN / 2 + 0.01) return 'tray';
+    const row = Math.round((p[0] - rowX(0)) / ROW_PITCH), dz = p[2] - STORE_Z0;
+    if (row >= 0 && row < STORE_ROWS && Math.abs(p[0] - rowX(row)) < ROW_PITCH / 2 && p[1] > LAND_Y0 - 0.005 && p[1] < RAMP_Y1 + 0.01 && dz > 0.008 && dz < POD_LEN + 0.03) return 'store';
+    if (Math.abs(p[0] - TRAY_CX) < TRAY_HX && Math.abs(p[1] - TRAY_CY) < TRAY_HY && p[2] > TRAY_TOP + 0.005 && p[2] < TRAY_TOP + POD_LEN / 2 + 0.01) return 'tray';
     return 'air';
   }
 
@@ -279,8 +276,8 @@ export class PodTask {
   private steps = 0;
   private cmdJ: number[] = [0, 0, 0, 0, 0];
   private integ = [0, 0, 0, 0, 0];
-  private from = { x: 0, r: 0, z: 0, p: 0 };
-  private goal = { x: 0, r: 0, z: 0, p: 0 };
+  private from = { x: 0, r: 0, lat: 0, z: 0, p: 0 };
+  private goal = { x: 0, r: 0, lat: 0, z: 0, p: 0 };
   private goalJ: Joints | null = null;
   private dur = 0;
   private rand: () => number;
@@ -343,14 +340,14 @@ export class PodTask {
     const dn = (zw: number) => armR(zw), out = (yw: number) => armU(yw);
     const pin = (): V3 => w.pin();
     this.moves = [
-      { label: 'Raising the arm', r: dn(A[2]), z: out(A[1]), pitch: -STORE_PITCH_DEG },
+      { label: 'Raising the arm over the lid', r: dn(TRANSIT_Z), z: out(A[1]), pitch: -TRANSIT_PITCH },
       {
-        label: `Driving to store row ${row + 1}`, x: T[0], r: dn(A[2]), z: out(A[1]),
-        // fine alignment over the hole: the cart takes out the sideways error of the arm (pan sag) that the camera sees at the claw
-        after: () => { w.setCart(w.cartX + (T[0] - pin()[0])); },
+        label: `Driving to store row ${row + 1}`, x: T[0], r: dn(TRANSIT_Z), z: out(A[1]),
+        // fine alignment over the slot: the pan joint takes out the sideways error of the arm (sag) that the camera sees at the claw
+        after: () => { this.pendingLat += T[0] - pin()[0]; },
       },
-      { label: 'Aligning the claw over the pick hole', wait: 0.4 },
-      { label: 'Claw down through the lid hole, round the pod', r: dn(T[2]), z: out(T[1]), speed: SEAT_SPEED },
+      { label: 'Aligning the claw over the pick slot', wait: 0.4 },
+      { label: 'Claw down through the lid slot, straightening, round the pod', r: dn(T[2]), z: out(T[1]), pitch: -STORE_PITCH_DEG, speed: SEAT_SPEED },
       {
         label: 'Closing the claw on the pod', claw: 'close', wait: 0.5,
         after: () => {
@@ -363,23 +360,22 @@ export class PodTask {
           this.podId = id; w.pods[id].state = 'held';
         },
       },
-      { label: 'Lifting the pod up through the lid', r: dn(A[2]), z: out(A[1]), speed: SEAT_SPEED },
-      { label: 'Clearing the lid', r: dn(TRANSIT_Z), z: out(A[1]), pitch: 0, speed: PIN_SPEED },
-      // the tank lid is closed over the tray: slide over the socket above the collars, then lower the pod straight down through its hole
-      { label: `Driving to socket ${slotLabel(slot)}`, x: S[0], r: dn(TRANSIT_Z), z: out(A[1]) },
-      { label: `Sliding over socket ${slotLabel(slot)}`, r: dn(TRANSIT_Z), z: out(S[1]), pitch: 0, speed: PIN_SPEED },
+      { label: 'Lifting the pod up through the lid slot, tilting the claw', r: dn(TRANSIT_Z), z: out(A[1]), pitch: -TRANSIT_PITCH, speed: SEAT_SPEED },
+      // the tank lid is closed over the tray: slide over the cell above the lid, then lower the pod straight down through its slot
+      { label: `Driving to cell ${slotLabel(slot)}`, x: S[0], r: dn(TRANSIT_Z), z: out(A[1]), pitch: -TRANSIT_PITCH },
+      { label: `Sliding over cell ${slotLabel(slot)}`, r: dn(TRANSIT_Z), z: out(S[1]), speed: PIN_SPEED },
       {
-        label: 'Lowering the pod through the lid into the silicone collar', r: dn(S[2]), z: out(S[1]), speed: SEAT_SPEED,
+        label: 'Lowering the pod through the lid slot onto the tray', r: dn(S[2]), z: out(S[1]), pitch: 0, speed: SEAT_SPEED,
         after: () => {
           const c = w.pos(id), e = Math.hypot(c[0] - seat[0], c[1] - seat[1]);
-          if (e > COLLAR_TOL) return `missed the collar of socket ${slotLabel(slot)} (${(e * 1000).toFixed(1)} mm off)`;
+          if (e > COLLAR_TOL) return `missed cell ${slotLabel(slot)} (${(e * 1000).toFixed(1)} mm off)`;
         },
       },
       {
         label: 'Opening the claw', claw: 'open', wait: 0.5,
         after: () => { this.podId = -1; w.release(); w.pods[id].state = 'lost'; },
       },
-      { label: 'Backing the claw out', r: dn(TRANSIT_Z), speed: PIN_SPEED },
+      { label: 'Backing the claw out', r: dn(TRANSIT_Z), pitch: -TRANSIT_PITCH, speed: PIN_SPEED },
       {
         label: 'Letting the pod settle', wait: 0.5,
         after: () => {
@@ -393,6 +389,8 @@ export class PodTask {
     this.mi = 0;
     this.startOfMove = true;
   }
+
+  private pendingLat = 0;   // lateral trim (m, along the track) the arm still has to take up after the fine alignment; the cart cannot follow beyond its straight run, the pan joint does the rest
 
   private fail(reason: string) {
     if (this.done) return;
@@ -410,10 +408,11 @@ export class PodTask {
   private send(q: number[]) { MOTORS.forEach((m, i) => { this.cmd.setJointTarget(m.id, q[i] ?? 0); }); }
 
   /** Planar IK for the pin point at (r down the plate, u out of the plate) with the hand pitched by `pitch` degrees (0 = pin straight down). */
-  private ik(r: number, u: number, pitch: number): Joints | null {
+  private ik(r: number, u: number, pitch: number, lat = 0): Joints | null {
     // The arm base is flat on the cart plate: its forward axis (base x) points down, its up axis (base z) out of the plate, so the
     // planar problem has horizontal reach r (down) and height u (out). The tool direction is (cos phi, -sin phi) in (r, u): straight down = 0.
-    return solvePlanar(PAN0, r, u, TOOL_X, 0, -pitch);
+    // A pod beyond the cart's straight run is reached by panning the arm: the planar problem then has reach hypot(r, lat) and the pan joint turns by atan(lat / r) (base y = world +x along the track).
+    return solvePlanar(PAN0 + Math.atan2(lat, r) * 180 / Math.PI, Math.hypot(r, lat), u, TOOL_X, 0, -pitch);
   }
 
   private control() {
@@ -427,12 +426,16 @@ export class PodTask {
       if (mv.claw) this.world.setClaw(mv.claw === 'close');
       if (!this.inited) { this.inited = true; this.cmdJ = q.slice(0, 5); this.integ = [0, 0, 0, 0, 0]; }
       const p = toolPoint({ A: 0, B: this.cmdJ[1], C: this.cmdJ[2], D: this.cmdJ[3] }, TOOL_X, 0);
-      this.from = { x: this.world.cartX, r: p[0], z: p[2], p: -(this.cmdJ[1] + this.cmdJ[2] + this.cmdJ[3]) };
-      this.goal = { x: mv.x ?? this.from.x, r: mv.r ?? this.from.r, z: mv.z ?? this.from.z, p: mv.pitch ?? this.from.p };
+      const pan = (this.cmdJ[0] - PAN0) * Math.PI / 180;
+      this.from = { x: this.world.cartX, r: p[0] * Math.cos(pan), lat: p[0] * Math.sin(pan), z: p[2], p: -(this.cmdJ[1] + this.cmdJ[2] + this.cmdJ[3]) };
+      // mv.x is where the pin goes along the track: the cart takes what its straight run allows, the pan joint the rest
+      const cx = mv.x === undefined ? this.from.x : Math.min(CART_X_MAX, Math.max(CART_X_MIN, mv.x));
+      this.goal = { x: cx, lat: (mv.x === undefined ? this.from.lat : mv.x - cx) + this.pendingLat, r: mv.r ?? this.from.r, z: mv.z ?? this.from.z, p: mv.pitch ?? this.from.p };
+      this.pendingLat = 0;
       if (mv.joint) { this.goal.r = mv.r ?? this.from.r; }
-      this.goalJ = this.ik(this.goal.r, this.goal.z, this.goal.p);
+      this.goalJ = this.ik(this.goal.r, this.goal.z, this.goal.p, this.goal.lat);
       if (!this.goalJ) return this.fail(`unreachable (${mv.label})`);
-      const dArm = Math.hypot(this.goal.r - this.from.r, this.goal.z - this.from.z);
+      const dArm = Math.hypot(this.goal.r - this.from.r, this.goal.z - this.from.z, this.goal.lat - this.from.lat);
       const dCart = Math.abs(this.goal.x - this.from.x);
       this.dur = Math.max(dArm / (mv.speed ?? PIN_SPEED), dCart / CART_SPEED, mv.wait ?? 0, 1e-3);
     }
@@ -450,7 +453,7 @@ export class PodTask {
       }
       if (this.world.cartX !== this.goal.x) arrived = false;
     } else {
-      const j = this.ik(this.from.r + (this.goal.r - this.from.r) * u, this.from.z + (this.goal.z - this.from.z) * u, this.from.p + (this.goal.p - this.from.p) * u);
+      const j = this.ik(this.from.r + (this.goal.r - this.from.r) * u, this.from.z + (this.goal.z - this.from.z) * u, this.from.p + (this.goal.p - this.from.p) * u, this.from.lat + (this.goal.lat - this.from.lat) * u);
       if (!j) return this.fail(`unreachable (${mv.label})`);
       this.cmdJ = [j.A, j.B, j.C, j.D, j.E];
     }
@@ -485,7 +488,8 @@ export class PodTask {
 /** Jobs that fill the tray (sockets in order A1..D4), taking pods from the store row by row, nearest row first. */
 export function fillJobs(world: PodWorld): Job[] {
   const jobs: Job[] = [];
-  const left = Array.from({ length: STORE_ROWS }, (_, r) => world.rowCount(r));
+  // the last pod of a lane does not slide the final 18 mm onto the landing in the sim (it rests where the ramp meets the landing, 15 mm short of the pick spot; reported in the pull request), so a fill plans only the pods that do arrive: 3 per lane
+  const left = Array.from({ length: STORE_ROWS }, (_, r) => Math.max(0, world.rowCount(r) - 1));
   for (let s = 0; s < TRAY_SLOTS; s++) {
     if (world.trayPod(s) >= 0) continue;
     const row = left.findIndex((n) => n > 0);

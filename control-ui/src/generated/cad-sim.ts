@@ -313,7 +313,7 @@ export const CAD_CONSTANTS = {
   "ZT": 1884.0
  },
  "pod_store_dims": {
-  "STORE_SLOPE_DEG": 7.0
+  "STORE_SLOPE_DEG": 15.0
  },
  "layout": {
   "CART_BELOW_TRACK": 165.0,

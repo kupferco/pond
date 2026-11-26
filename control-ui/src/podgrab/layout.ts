@@ -98,46 +98,51 @@ export const PAN0 = 0;                          // pan angle (deg): the arm work
 export const armR = (z: number) => ARM_BASE_Z - z;
 export const armU = (y: number) => ARM_Y - y;
 
-// --- store: rows along y; the pods slide down the slope to the pick line at y = 0
-export const STORE_ROWS = 6;
-export const STORE_CAP = 13;                     // pod positions per row: the channels run all the way to the back wall of the tank (end stop at y = 183 mm)
-export const STORE_START = 10;                  // pods per row at the start
-export const POD_PITCH = POD_R * 2 + 0.0005;    // pods rest against each other on the slope
-export const ROW_PITCH = 0.035;
-export const ROW_X0 = 0.07 + ROW_PITCH / 2;
-export const SLOPE = CAD_CONSTANTS.pod_store_dims.STORE_SLOPE_DEG * Math.PI / 180;   // cad/parts/pod_store_dims.py: 7 degrees, so the whole store (back end included) stays under the lid (#461)
-export const STORE_Z0 = 0.205;                  // floor of the channel under position 0 (the store stands on legs on the shelf, under the lid)
-export const STORE_Y0 = -0.145;                 // y of the channel under position 0 (the pick line)
+// --- store (cad/pond_unit_bottom.py v5, gravity feed): 7 lanes, pitch 30 mm from x = 100; each lane is a ramp rising to the back at SLOPE and ends in a FLAT landing at the front row
+// (y = -165, floor 12 mm over the shelf, stop lip at the front) so the pod being picked stands vertical; the pods behind it lean with the ramp, and the next one slides forward onto the landing when the front one is lifted.
+export const STORE_ROWS = 7;
+export const STORE_CAP = 4;                      // pod positions per lane: the landing and three on the ramp (28 pods in all)
+export const STORE_START = 4;                    // pods per lane at the start
+export const POD_PITCH = POD_R * 2 + 0.0005;    // pods rest against each other on the ramp
+export const ROW_PITCH = 0.03;
+export const ROW_X0 = 0.1;
+export const SLOPE = CAD_CONSTANTS.pod_store_dims.STORE_SLOPE_DEG * Math.PI / 180;   // cad/parts/pod_store_dims.py: 15 degrees (ASSUMED: test with the real dry pots)
+export const STORE_Y0 = -0.165;                 // the front row: the pick spot on the landing (y of the pod axis)
+export const STORE_Z0 = SHELF_TOP + 0.012;      // the landing floor (the store stands on a 12 mm base on the shelf)
+export const LAND_Y0 = -0.178, RAMP_Y0 = -0.152, RAMP_Y1 = -0.062;   // landing front edge, where the ramp starts, back of the ramp
 export const LOAD_CLEAR = 0.5;                  // clear floor needed behind the unit to load the store from the back
-export const LIP_H = 0.018;                     // front stop above the channel floor
-export const GUIDE_H = 0.017;                   // low guide walls between the rows: the pod stands within 0.5 mm of the row centre, below the fingertips
-export const GUIDE_HALF = ROW_PITCH / 2 - (POD_R + 0.0005);   // half thickness of a guide wall on a row boundary
-export const RAIL_H = POD_LEN + 0.0015;         // side rails and roof underside above the channel floor
+export const LIP_H = 0.014;                     // front stop above the landing floor
+export const GUIDE_H = 0.012;                   // low guide walls between the lanes
+export const GUIDE_HALF = ROW_PITCH / 2 - (POD_R + 0.0005);   // half thickness of a guide wall on a lane boundary
+export const RAIL_H = POD_LEN + 0.0015;         // side rails and roof underside above the lane floor
 export const rowX = (row: number) => ROW_X0 + row * ROW_PITCH;
 const sinT = Math.sin(SLOPE), cosT = Math.cos(SLOPE);
-/** Slope frame: s up the slope (away from the pick line, towards the back), h along the channel normal. */
+/** Ramp frame: s up the ramp from where it leaves the landing, h along the ramp normal. */
 export const slopePoint = (row: number, s: number, h: number): [number, number, number] =>
-  [rowX(row), STORE_Y0 + s * cosT - h * sinT, STORE_Z0 + s * sinT + h * cosT];
-export const storePos = (row: number, k: number) => slopePoint(row, k * POD_PITCH, POD_LEN / 2);
-/** Position along the slope of a point, in the slope frame of any row. */
-export const slopeS = (y: number, z: number) => (y - STORE_Y0) * cosT + (z - STORE_Z0) * sinT;
-/** The channel normal (pod axis in the store), in world coordinates. */
-export const STORE_N: [number, number, number] = [0, -sinT, cosT];
-export const STORE_PITCH_DEG = SLOPE * 180 / Math.PI;      // hand pitch (0 = pin straight down) with the pin along -STORE_N
+  [rowX(row), RAMP_Y0 + s * cosT - h * sinT, STORE_Z0 + s * sinT + h * cosT];
+/** Pod centre at position k of a lane: 0 is the pick spot on the landing (vertical), k >= 1 are on the ramp. */
+export const storePos = (row: number, k: number): [number, number, number] =>
+  k === 0 ? [rowX(row), STORE_Y0, STORE_Z0 + POD_LEN / 2] : slopePoint(row, POD_R + 0.002 + (k - 1) * POD_PITCH, POD_LEN / 2);
+/** Distance of a point behind the pick spot, along y (the order of the pods in a lane). */
+export const slopeS = (y: number, _z: number) => y - STORE_Y0;
+/** The pod axis at the pick spot (the pod stands vertical on the landing), in world coordinates. */
+export const STORE_N: [number, number, number] = [0, 0, 1];
+export const STORE_PITCH_DEG = 0;               // hand pitch (0 = pin straight down)
 
-// --- lid pick holes, over position 0 of every row
-export const HOLE_HALF = 0.017;
-export const COLLAR_H = 0.004;
-export const COLLAR_IN = 0.017;                 // inner radius of a lid collar (apothem of the 8-sided ring): the open claw (fingers 31.2 mm across, 8 mm wide, corner radius 16.1 mm) passes with ~0.9 mm to spare
+// --- lid slots over the store lanes and the tray cells: 70 mm along y (the arm's direction) x 50 mm along x, one per hole, merged where they overlap (see lidSlots)
+export const SLOT_X = 0.05, SLOT_Y = 0.07;
+export const HOLE_HALF = SLOT_X / 2;
+export const COLLAR_H = 0;                       // no silicone collars: the 35 x 25 mm cell pitch has no room for a ring round a 25 mm pod
+export const COLLAR_IN = 0.017;
 export const lidMid = LID_Z - LID_T / 2;
-export const pickHoleY = storePos(0, 0)[1] - (lidMid - storePos(0, 0)[2]) * Math.tan(SLOPE);
+export const pickHoleY = STORE_Y0;
 
 // --- seedling tray: horizontal, 4 x 4 silicone collars
-export const TRAY_COLS = 4, TRAY_ROWS = 4;
-export const TRAY_CX = -0.24, TRAY_HX = 0.095, TRAY_HY = 0.185;
-export const TRAY_Z0 = 0.2, TRAY_T = 0.004;   // thin flat tray on two side rails over the shelf: a seated pod stands as deep under the tank lid as a pod at the pick position of the store (ASSUMED; the tank top is now closed over the tray)
+export const TRAY_COLS = 6, TRAY_ROWS = 3;   // cad/pond_unit_bottom.py: 6 x 3 = 18 cells, pitch 35 mm along x and 25 mm along y, x -290..-115, y -150..-100
+export const TRAY_CX = -0.2025, TRAY_HX = 0.12, TRAY_HY = 0.055;
+export const TRAY_Z0 = SHELF_TOP, TRAY_T = 0.006;   // thin flat tray on two side rails over the shelf: a seated pod stands as deep under the tank lid as a pod at the pick position of the store (ASSUMED; the tank top is now closed over the tray)
 export const TRAY_TOP = TRAY_Z0 + TRAY_T;
-export const TRAY_COL_PITCH = 0.045, TRAY_ROW_PITCH = 0.038, TRAY_CY = -0.108;
+export const TRAY_COL_PITCH = 0.035, TRAY_ROW_PITCH = 0.025, TRAY_CY = -0.125;
 export const CELL_R = 0.016;                    // inner radius of a silicone collar (pod radius 12.5)
 export const CELL_H = 0.016;
 // lid over the seedling tray: a plate just above the collars of the cells, a silicone collar round each hole (same as the tank-top lid)
@@ -155,7 +160,8 @@ export const slotLabel = (slot: number) => `${String.fromCharCode(65 + Math.floo
 
 /** Ready pose of the arm (deg): claw straight down, pod point 160 mm down the plate from the arm base and 200 mm out of it (an IK pose, so cartesian moves start on the right branch): in front of the tank, over the lid. */
 export const READY_POSE: Record<string, number> = { A: PAN0, B: -75.6, C: 41.1, D: 34.4, E: 0, F: 0 };
-export const TRANSIT_Z = 0.326;                 // pin point height while driving with a pod
+export const TRANSIT_Z = 0.326;                 // pin point height while driving (pod bottom 2 mm over the lid top)
+export const TRANSIT_PITCH = 70;                // hand pitch (deg, reach-probe sign) while the claw is over the lid: with the claw straight down the SO-101 cannot hold the pin higher than about 225 mm (the wrist would sit 40 mm from the shoulder, inside the elbow limit), the lid is at 304, so the claw is tilted over the lid and straightens as it goes down through the slot
 export const PIN_SPEED = 0.1, SEAT_SPEED = 0.04, CART_SPEED = 0.25; // m/s
 
 export const podName = (i: number) => `pod_${i}`;
@@ -217,19 +223,17 @@ function spineGeoms(): string[] {
   const hx = TANK_W / 2 - 0.004, hy = TANK_D / 2 - 0.004;
   box(-hx, hx, -hy, hy, SHELF_Z, SHELF_TOP, shelf);
   for (const sx of [-1, 1]) box(sx > 0 ? hx - SHELF_CAP_T : -hx, sx > 0 ? hx : -hx + SHELF_CAP_T, -hy, hy, SHELF_TOP, SHELF_TOP + SHELF_CAP_H, rgba(0.42, 0.44, 0.5));
-  // Store legs: cross bars from the shelf up to the channel floor at the front and back ends.
-  for (const s of [-POD_R - 0.003, (STORE_CAP - 0.5) * POD_PITCH + 0.004]) {
-    const [, y, z] = slopePoint(0, s, -0.004);
-    box(rowX(0) - ROW_PITCH / 2, rowX(STORE_ROWS - 1) + ROW_PITCH / 2, y - 0.004, y + 0.004, SHELF_TOP, z, brk);
-  }
+  // The store's 12 mm base on the shelf (cad/pond_unit_bottom.py), under the landing and the ramp.
+  box(ROW_X0 - ROW_PITCH / 2, rowX(STORE_ROWS - 1) + ROW_PITCH / 2, LAND_Y0 - 0.006, RAMP_Y1, SHELF_TOP, STORE_Z0 - 0.004, brk);
   return out;
 }
 
 function podMjcf(i: number): string {
-  const [x, y, z] = startPos(i);
+  const k = i % STORE_START, [x, y, z] = startPos(i);
   const lift = 0.0004;                                 // start just above the floor so the pods do not begin in contact
-  const q = STORE_QUAT.map(f).join(' ');
-  return `<body name="${podName(i)}" pos="${f(x)} ${f(y - lift * sinT)} ${f(z + lift * cosT)}" quat="${q}">
+  const q = (k === 0 ? UPRIGHT_QUAT : STORE_QUAT).map(f).join(' ');   // the front pod stands vertical on the landing, the others lean with the ramp
+  const n = k === 0 ? [0, 0, 1] : [0, -sinT, cosT];
+  return `<body name="${podName(i)}" pos="${f(x + n[0] * lift)} ${f(y + n[1] * lift)} ${f(z + n[2] * lift)}" quat="${q}">
       <joint type="free" damping="0.01"/>
       <geom type="cylinder" size="${POD_R} ${POD_LEN / 2}" mass="0.012" friction="0.02 0.005 0.0001" condim="1" ${SOLID} ${rgba(0.93, 0.93, 0.9)}/>
       <geom type="cylinder" size="${HOLE_R} ${POD_LEN / 2 + 0.0002}" contype="0" conaffinity="0" ${rgba(0.12, 0.12, 0.14)}/>
@@ -242,83 +246,56 @@ function slopeBox(row: number, s: number, h: number, hx: number, hs: number, hh:
   return `<geom type="box" pos="${f(x)} ${f(y)} ${f(z)}" size="${f(hx)} ${f(hs)} ${f(hh)}" euler="${f(SLOPE)} 0 0" ${extra} ${color}/>`;
 }
 
-/** Store rows: channel floor, a front stop, side rails and a roof over every position but the first. */
+/** Store lanes (gravity feed): a flat landing with a stop lip at the front, a ramp rising to the back, low guide walls between the lanes (17 mm: the claw's fingertips stay above them, and there is no roof or tall rail, the 30 mm lane pitch leaves the open 31 mm claw no room beside a pod for one) and an end gate. */
 function storeGeoms(): string[] {
   const out: string[] = [];
   const hw = ROW_PITCH / 2 - 0.0006;
-  const sEnd = (STORE_CAP - 0.5) * POD_PITCH + 0.004, sFront = -POD_R - 0.003;
-  const blue = rgba(0.35, 0.55, 0.85), red = rgba(0.9, 0.3, 0.25), amber = rgba(0.95, 0.75, 0.2);
+  const sEnd = (RAMP_Y1 - RAMP_Y0) / cosT;          // length of the ramp
+  const blue = rgba(0.35, 0.55, 0.85), amber = rgba(0.95, 0.75, 0.2), wallC = rgba(0.28, 0.45, 0.75);
+  const flat = (x: number, y0: number, y1: number, z0: number, z1: number, hx: number, c: string, extra = SLICK) =>
+    out.push(`<geom type="box" pos="${f(x)} ${f((y0 + y1) / 2)} ${f((z0 + z1) / 2)}" size="${f(hx)} ${f((y1 - y0) / 2)} ${f((z1 - z0) / 2)}" ${extra} ${c}/>`);
   for (let r = 0; r < STORE_ROWS; r++) {
-    out.push(slopeBox(r, (sEnd + sFront) / 2, -0.002, hw, (sEnd - sFront) / 2, 0.002, blue));
-    out.push(slopeBox(r, -POD_R - 0.0015, LIP_H / 2, hw, 0.0015, LIP_H / 2, blue));
-    // the back end: a full-height end gate under the roof, so no pod can roll off the end of the row (the gate is taken out to load the row from behind)
-    out.push(slopeBox(r, sEnd + 0.002, (RAIL_H + 0.004) / 2, hw, 0.002, (RAIL_H + 0.004) / 2, amber));
-    // the roof: from just behind position 0 to the back end, 1.5 mm over the top of the pods
-    const s0 = POD_PITCH / 2;
-    out.push(slopeBox(r, (s0 + sEnd) / 2, RAIL_H + 0.001, hw, (sEnd - s0) / 2, 0.001, red));
+    const x = rowX(r);
+    flat(x, LAND_Y0 - 0.006, RAMP_Y0 + 0.001, STORE_Z0 - 0.004, STORE_Z0, hw, blue);                  // landing floor
+    flat(x, LAND_Y0 - 0.006, LAND_Y0, STORE_Z0, STORE_Z0 + LIP_H, hw, blue);                            // stop lip at the front
+    out.push(slopeBox(r, sEnd / 2, -0.002, hw, sEnd / 2, 0.002, blue));                                  // ramp floor
+    out.push(slopeBox(r, sEnd + 0.002, (RAIL_H + 0.004) / 2, hw, 0.002, (RAIL_H + 0.004) / 2, amber));   // end gate (taken out to load the lane from behind)
   }
   for (let r = 0; r <= STORE_ROWS; r++) {
-    const x = rowX(0) - ROW_PITCH / 2 + r * ROW_PITCH;
-    const [, gy, gz] = slopePoint(0, (sEnd + sFront) / 2, GUIDE_H / 2);
-    out.push(`<geom type="box" pos="${f(x)} ${f(gy)} ${f(gz)}" size="${f(GUIDE_HALF)} ${f((sEnd - sFront) / 2)} ${f(GUIDE_H / 2)}" euler="${f(SLOPE)} 0 0" ${SLICK} ${rgba(0.28, 0.45, 0.75)}/>`);
-    const [, y, z] = slopePoint(0, (sEnd + sFront) / 2, (RAIL_H + 0.002) / 2);
-    out.push(`<geom type="box" pos="${f(x)} ${f(y)} ${f(z)}" size="0.001 ${f((sEnd - sFront) / 2)} ${f((RAIL_H + 0.002) / 2)}" euler="${f(SLOPE)} 0 0" ${SLICK} ${rgba(0.28, 0.45, 0.75)}/>`);
+    const x = ROW_X0 - ROW_PITCH / 2 + r * ROW_PITCH;
+    flat(x, LAND_Y0, RAMP_Y0 + 0.001, STORE_Z0, STORE_Z0 + GUIDE_H, GUIDE_HALF, wallC);                 // low guide walls along the landing
+    const [, gy, gz] = slopePoint(0, sEnd / 2, GUIDE_H / 2);
+    out.push(`<geom type="box" pos="${f(x)} ${f(gy)} ${f(gz)}" size="${f(GUIDE_HALF)} ${f(sEnd / 2)} ${f(GUIDE_H / 2)}" euler="${f(SLOPE)} 0 0" ${SLICK} ${wallC}/>`);
   }
   return out;
 }
 
-/** A ring of boxes (a silicone collar) round a vertical axis. */
-let collarNo = 0;
-function ring(cx: number, cy: number, z0: number, rIn: number, thick: number, h: number, color: string, n = 8): string[] {
-  const out: string[] = [], id = collarNo++;
-  const half = (rIn + thick) * Math.tan(Math.PI / n) + 0.0005;
-  for (let k = 0; k < n; k++) {
-    const a = 2 * Math.PI * k / n, rc = rIn + thick / 2;
-    out.push(`<geom name="collar_${id}_${k}" type="box" pos="${f(cx + rc * Math.cos(a))} ${f(cy + rc * Math.sin(a))} ${f(z0 + h / 2)}" size="${f(half)} ${f(thick / 2)} ${f(h / 2)}" euler="0 0 ${f(a + Math.PI / 2)}" ${SOFT} ${color}/>`);
-  }
-  return out;
+/** The lid slots (mm-exact CAD numbers of cad/pond_unit_bottom.py, widened to 70 x 50 mm): x0, x1, y0, y1 in m. One slot per tray cell and per store lane, 50 mm along x and 70 mm along y;
+ *  at the 35 mm (tray) and 30 mm (store) pitch they overlap along x or y, so the result is a set of slots: one per tray column (50 x 120 mm, 15 mm webs between them) and one window over the whole store (the 30 mm pitch is smaller than the 50 mm slot). */
+export function lidSlots(): { x0: number; x1: number; y0: number; y1: number }[] {
+  const raw: { x0: number; x1: number; y0: number; y1: number }[] = [];
+  for (let c = 0; c < TRAY_COLS; c++) for (let r = 0; r < TRAY_ROWS; r++) raw.push({ x0: trayX(c) - SLOT_X / 2, x1: trayX(c) + SLOT_X / 2, y0: r === 0 ? -TANK_D / 2 : trayY(r) - SLOT_Y / 2, y1: trayY(r) + SLOT_Y / 2 });   // the front slots run out to the lid's front edge: the claw is tilted outwards over the lid and would otherwise cut the 15 mm strip in front of them
+  for (let r = 0; r < STORE_ROWS; r++) raw.push({ x0: rowX(r) - SLOT_X / 2, x1: rowX(r) + SLOT_X / 2, y0: STORE_Y0 - SLOT_Y / 2, y1: STORE_Y0 + SLOT_Y / 2 });
+  return raw;
 }
-
-/** The lid over the store: a plate with a pick hole over position 0 of each row, each with a silicone collar. */
+/** The lid (4 mm plate over the whole tank) cut by the slots: a grid of boxes, each cell not inside a slot. */
 function lidGeoms(): string[] {
-  const out: string[] = [];
-  const grey = rgba(0.6, 0.62, 0.66, 0.55);
-  const x0 = TRAY_CX + TRAY_HX + 0.005, x1 = TANK_W / 2, y0 = -TANK_D / 2, y1 = TANK_D / 2;
-  const plate = (xa: number, xb: number, ya: number, yb: number) => out.push(
-    `<geom type="box" pos="${f((xa + xb) / 2)} ${f((ya + yb) / 2)} ${f(lidMid)}" size="${f((xb - xa) / 2)} ${f((yb - ya) / 2)} ${LID_T / 2}" ${OBST} ${grey}/>`);
-  plate(x0, x1, y0, pickHoleY - HOLE_HALF);
-  plate(x0, x1, pickHoleY + HOLE_HALF, y1);
-  plate(x0, rowX(0) - HOLE_HALF, pickHoleY - HOLE_HALF, pickHoleY + HOLE_HALF);
-  for (let r = 0; r < STORE_ROWS; r++) plate(rowX(r) + HOLE_HALF, r + 1 < STORE_ROWS ? rowX(r + 1) - HOLE_HALF : x1, pickHoleY - HOLE_HALF, pickHoleY + HOLE_HALF);
-  for (let r = 0; r < STORE_ROWS; r++) out.push(...ring(rowX(r), pickHoleY, LID_Z, COLLAR_IN, 0.0005, COLLAR_H, SILICONE));
+  const out: string[] = [], grey = rgba(0.6, 0.62, 0.66, 0.55), slots = lidSlots();
+  const hx = TANK_W / 2, hy = TANK_D / 2;
+  const xs = [...new Set([-hx, hx, ...slots.flatMap((s) => [s.x0, s.x1])].map((v) => +v.toFixed(6)))].sort((a, b) => a - b);
+  const ys = [...new Set([-hy, hy, ...slots.flatMap((s) => [s.y0, s.y1])].map((v) => +v.toFixed(6)))].filter((v) => v >= -hy && v <= hy).sort((a, b) => a - b);
+  for (let i = 0; i + 1 < xs.length; i++) for (let j = 0; j + 1 < ys.length; j++) {
+    const cx = (xs[i] + xs[i + 1]) / 2, cy = (ys[j] + ys[j + 1]) / 2;
+    if (slots.some((s) => cx > s.x0 && cx < s.x1 && cy > s.y0 && cy < s.y1)) continue;
+    out.push(`<geom type="box" pos="${f(cx)} ${f(cy)} ${f(lidMid)}" size="${f((xs[i + 1] - xs[i]) / 2)} ${f((ys[j + 1] - ys[j]) / 2)} ${LID_T / 2}" ${OBST} ${grey}/>`);
+  }
   return out;
 }
 
 function trayGeoms(): string[] {
   const out: string[] = [];
-  const box = (xa: number, xb: number, ya: number, yb: number, zc: number, t: number, c: string) => xb - xa > 1e-4 && yb - ya > 1e-4 && out.push(
-    `<geom type="box" pos="${f((xa + xb) / 2)} ${f((ya + yb) / 2)} ${f(zc)}" size="${f((xb - xa) / 2)} ${f((yb - ya) / 2)} ${f(t / 2)}" ${OBST} ${c}/>`);
-  // the flat tray lies on the shelf
-  box(TRAY_CX - TRAY_HX, TRAY_CX + TRAY_HX, -TRAY_HY, TRAY_HY, TRAY_Z0 + TRAY_T / 2, TRAY_T, rgba(0.2, 0.62, 0.38));
-  for (const sx of [-1, 1]) box(TRAY_CX + sx * (TRAY_HX - 0.01) - 0.01, TRAY_CX + sx * (TRAY_HX - 0.01) + 0.01, -TRAY_HY, TRAY_HY, (SHELF_TOP + TRAY_Z0) / 2, TRAY_Z0 - SHELF_TOP, rgba(0.42, 0.44, 0.5));
-  for (let s = 0; s < TRAY_SLOTS; s++) {
-    const [x, y] = seatPos(s);
-    out.push(...ring(x, y, TRAY_TOP, CELL_R, 0.002, CELL_H, SILICONE));
-  }
-  // the lid over the whole tray: a plate with a hole over every cell and a silicone collar round each hole (as the tank-top lid)
-  const grey = rgba(0.6, 0.62, 0.66, 0.55);
-  const xa = -TANK_W / 2, xb = TRAY_CX + TRAY_HX + 0.005;   // the lid runs from the left wall of the tank to the store lid
-  const ys = Array.from({ length: TRAY_ROWS }, (_, r) => trayY(r)), xs = Array.from({ length: TRAY_COLS }, (_, c) => trayX(c));
-  let y0 = -TANK_D / 2;
-  for (const y of ys) {
-    box(xa, xb, y0, y - HOLE_HALF, TLID_Z, TLID_T, grey);
-    let x0 = xa;
-    for (const x of xs) { box(x0, x - HOLE_HALF, y - HOLE_HALF, y + HOLE_HALF, TLID_Z, TLID_T, grey); x0 = x + HOLE_HALF; }
-    box(x0, xb, y - HOLE_HALF, y + HOLE_HALF, TLID_Z, TLID_T, grey);
-    y0 = y + HOLE_HALF;
-  }
-  box(xa, xb, y0, TANK_D / 2, TLID_Z, TLID_T, grey);
-  for (let s = 0; s < TRAY_SLOTS; s++) { const [x, y] = seatPos(s); out.push(...ring(x, y, TLID_TOP, COLLAR_IN, 0.0005, TCOLLAR_H, SILICONE)); }
+  // the flat seedling tray lies on the shelf under the lid (CAD: 240 x 110 x 6 mm plate); a seated pod stands on it, the lid slots are over the cells
+  out.push(`<geom type="box" pos="${f(TRAY_CX)} ${f(TRAY_CY)} ${f(TRAY_Z0 + TRAY_T / 2)}" size="${f(TRAY_HX)} ${f(TRAY_HY)} ${f(TRAY_T / 2)}" ${OBST} ${rgba(0.2, 0.62, 0.38)}/>`);
   return out;
 }
 
@@ -342,7 +319,6 @@ function loopGeoms(): string[] {
 
 /** MJCF: the arm on its cart, the track, the tank with lid, store and tray, and all pods. */
 export function podGrabMjcf(): string {
-  collarNo = 0;
   const wall = (x: number, y: number, z: number, sx: number, sy: number, sz: number, a = 0.22) =>
     `<geom type="box" pos="${f(x)} ${f(y)} ${f(z)}" size="${f(sx)} ${f(sy)} ${f(sz)}" ${rgba(0.72, 0.8, 0.86, a)}/>`;
   const hx = TANK_W / 2, hy = TANK_D / 2, t = 0.004;
