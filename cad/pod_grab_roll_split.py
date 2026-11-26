@@ -57,19 +57,16 @@ def pods(xs, ys):
 
 pipe = cq.Workplane("YZ").circle(PR).extrude(800).translate((-400, PY, PZ))
 lid = cq.Workplane("XY").box(760, 260, 4, centered=(True, True, False)).translate((0, -90, LID_Z - 4))
-tray = cq.Workplane("XY").box(TRAY_X[1] - TRAY_X[0], 150, 30, centered=(False, True, False)).translate((TRAY_X[0], -98, LID_Z))
+tray = cq.Workplane("XY").box(TRAY_X[1] - TRAY_X[0], 150, 30, centered=(False, True, False)).translate((TRAY_X[0], -98, LID_Z - 34))
 tray_pods = pods([TRAY_X[0] + 30 + 40 * i for i in range(5)], [-155, -117, -79, -41])
-store = cq.Workplane("XY").box(STORE_X[1] - STORE_X[0], 120, 30, centered=(False, True, False)).translate((STORE_X[0], -120, LID_Z))
+store = cq.Workplane("XY").box(STORE_X[1] - STORE_X[0], 120, 30, centered=(False, True, False)).translate((STORE_X[0], -120, LID_Z - 34))
 store_pods = pods([STORE_X[0] + 20 + 28 * i for i in range(7)], [-147, -112, -77])
 station = cq.Workplane("XY").box(200, 100, 113, centered=(False, True, False)).translate((STORE_X[0] + 10, -30, 300))
 
 grip_z = POD_TOP + 5
-arm_t, d_t = arm(CART_TRAY_X, 45.0, (-41.0, grip_z))      # rolled cart reaching the far tray row D
-arm_s, d_s = arm(CART_STORE_X, 0.0, (-147.0, grip_z))     # upright cart at the store front row
+arm_t, d_t = arm(CART_TRAY_X, 45.0, (-41.0, grip_z))
+arm_s, d_s = arm(CART_STORE_X, 0.0, (-147.0, grip_z))
 print(f"shoulder to wrist: rolled 45 over tray row D {d_t:.0f} mm, upright at store front row {d_s:.0f} mm (limit {L1 + L2:.0f})")
-for row, y in zip("ABCD", (-155, -117, -79, -41)):
-    sh = roll(-204.0, 519.0, 45.0)
-    print(f"  rolled, row {row}: {math.hypot(y - sh[0], grip_z + CLAW - sh[1]):.0f} mm")
 
 assy = cq.Assembly()
 assy.add(pipe, name="track_pipe", color=cq.Color(0.7, 0.7, 0.72))
