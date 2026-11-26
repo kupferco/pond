@@ -10,10 +10,12 @@ Pictures: `cad/renders/podgrab-omni-*` and `cad/renders/transplant-omni-*` (four
 
 - **Transplant seedling works on the new cart.** All four steps run, every frame is in reach with at least 5 degrees of joint margin, and nothing touches (arm, cart, track,
   tank, pipe). The cart stops are unchanged (0.64 m at the tray, 1.073 m at the hole, 0.756 m at the plug holder).
-- **Pod grab works on the new cart, but the cart cannot get from the tray to the store.** The sleeves do not fit past the spine and its track bracket. The scene still runs
-  (the whole 4 x 4 tray is filled, 16 pods, nothing teleported, the arm hits nothing) because the cart is measured against the spine, not simulated against it; the screen says
-  "the sleeves touch the spine" while that happens. Everywhere else on the bottom run the cart is clear, including at the tray end and at the store end.
-- **This breaks the plan's rule that the cart works along the whole bottom run (owner answer Q6).** It needs a CAD decision, see below.
+- **Pod grab is built on the real unit (#461, round 8) and the real unit does NOT work for it.** No pod-grab spine, tank or track of its own: the scene takes the unit from the CAD (`cad/parts/unit_dims.py`, `cad/layout.json`, same numbers as the Transplant drawings): the 75 mm growing pipe on its 95 mm socket at the tank centre (x = y = 0) with the 33.7 mm spine tube inside it, the track plane at LOOP_Y = -60 mm, the loop (legs 580 apart, corner radius 150, top run at 1884) and the spine-to-track bracket (16 x 10 mm through the 18 mm sleeve slot). The old sim-only +164 mm move of the track and spine to the back is gone.
+  Measured (`node --experimental-strip-types scripts/check-podgrab.ts`):
+  * Cart against the column: the sleeves cut into the 75 mm growing pipe by up to **11.5 mm**, for cart centre x from **-8.5 to +8.5 cm** (2.7 mm at -8.5, 11.5 mm at 0). The slot passes the bracket (0 mm) but not the wider pipe. So the cart cannot cross the centre; the store (right) and the tray (left) are on opposite sides.
+  * Reach: the arm base is 157.5 mm in front of the tank centre (y = -157.5 mm), the pick holes are at y = -145 mm, **12.5 mm BEHIND the base plane** (tray rows A to D at y = -155 to +16 mm: 2 to 174 mm behind it). The arm works only out of the plate, towards the front, and needs the targets about 150 mm in front of its base (that is how far they were when it worked, with the track moved back 164 mm). So every store row misses by about 163 mm and the tray rows A to D by 154 to 326 mm: **0/16 sockets, 0/60 pods** (single picks to each of A1..D4 all report unreachable; "Fill the whole tray" 0/16).
+  * The straight bottom run is only -14 to +14 cm (the loop corners start there); the old scene drew a straight pipe from -40 to +42 cm. The tray (-33.5 to -14.5 cm) and the store (+5 to +26 cm) are mostly out on or past the corners, so the cart would also have to roll up the corners.
+  Options (not done, the owner said not to shrink or move the spine): (a) move the pick line and the tray in the CAD towards the back of the tank so the targets are in front of the arm base (about 160 mm, only possible by moving the base: the tank is 400 deep); (b) a longer straight bottom run (loop legs wider, which changes every drawing); (c) a cart with the plate on the spine side and the arm base on the tank side of the pipe (needs the slot and the cart to pass the 75 mm column, or a narrower column at the track height); (d) a different arm mount. `control-ui/test/sim.test.ts` lists the failing pod-grab checks as KNOWN-CLASH (they are not loosened).
 
 ## What changed in the scenes
 
@@ -37,27 +39,38 @@ Pictures: `cad/renders/podgrab-omni-*` and `cad/renders/transplant-omni-*` (four
   in the physics throws the parts about and teleported a pod in the store (found and fixed in this part).
 - Result: the first pick (store row 3 to socket A1), a full 16 pod fill, and the 8 mm perception error test all behave as before.
 
-## Finding: the sleeves do not fit past the spine and the track bracket (plan section 7, Q6)
+## Resolved (#461): the sleeves cross the spine through their slot
 
-Cart at the spine, from `probeCart` (negative = into it):
-
-| Cart centre | Into the spine | Into the track bracket |
-|---|---|---|
-| within 10 cm of the spine | 7 mm at 9 cm, 17 mm at 8 cm, 27 mm at 7 cm, up to 53 mm at 4 cm to 0 | 10 mm at the spine |
-| 10 cm or more away (tray end -0.33 to -0.145 m, store end 0.105 to 0.28 m) | none | none |
-
-Why: how far each part reaches towards the spine from the pipe axis (measured on the model): the riding hand's jaw lobe **45 mm**, the free hand's open jaw **78 mm**, the sleeve ring 34 mm.
-The spine surface is 25 mm from the track tube centre in the CAD (growing pipe R37.5 on the spine axis, track 60 mm in front, plan section 7), 21 mm in this scene. The bracket sits on
-the spine side too, but the sleeve's gap faces the other hand, not the spine, so it does not pass the bracket either.
-
-The tray (x = -0.335 to -0.145) and the store (x from 0.105) are on opposite sides of the spine, so a real cart could not drive from one to the other. Options for the owner (none built):
-1. Move the track plane further in front of the spine: at least 45 mm of sleeve reach plus clearance (about 55 mm from the pipe axis to the spine surface), more if the free jaw opens towards the spine.
-   With a 70 mm spine that means the track about 90 mm in front of the spine axis instead of 60 mm.
-2. Open the free hand's jaw towards the plate side (-y), not the spine side, so the 78 mm reach goes away, and still do 1.
-3. Cut the jaw lobe and the ring at the spine side, or put the bracket on the sleeve's gap side. That changes `hand_sleeve.py` and the free hand's room.
-4. Give up working across the middle: separate the tray and the store by hand or with two carts.
+Earlier finding (#284): with the sleeves' C gap facing the other hand, the cart hit the spine (up to 53 mm) and the track bracket (10 mm) within 10 cm of the spine. Owner decision: the bracket
+is MEANT to pass through the slot, the sleeves were oriented wrongly. Both sleeves (with their jaws, wheels and motors) are now turned about their pipes so the slot faces the spine
+(hand B +90 deg, its mirror C -90 deg); the bracket's thin sides go through the slot (16 mm along the pipe, 10 mm across; the 30 mm side points from the pipe to the spine).
+`control-ui/src/podgrab/clearance.ts` samples the CAD triangles (mj_geomDistance would use convex hulls, which fill the slot and report a false clash).
 
 The Transplant scene is not affected (it rides a leg: no bracket, no growing-pipe crossing).
+
+## Round 9 (#461): CAD v4 cart, water station, tray 10 mm nearer
+
+- `cad/cart_dims.py` v4 (kupferco/pond commit 30b8e2d, 25 Nov): the SO-101 base is bolted straight on the plate (`ARM_Y0` = -56, no battery under it) and the 70 x 50 x 70 battery stands on its 50 mm edge beside it
+  on the riding-hand side (`BATT_X` +59, flush with the plate edge, 4 mm from the arm base). `ARM_X` is -5 in that file (the arm base is 5 mm off the plate centre, so that the 4 mm gap and the flush battery both hold); the brief
+  said "centred", the file is followed. The sim reads all of it from the generated constants (no `ARM_SLIDE` any more; `batteryX` removed from `staticOmniCart`).
+  The same cart is the cart of the Transplant scene, whose arm base is therefore 50 mm closer to the plate too: its step 4 reach check now fails (listed as KNOWN-CLASH in the tests) and needs its own re-plan.
+- Water testing station: a solid block on four legs, from `cad/water_station.py` (exported by `export_sim_model.py`): x 60..260, y 14..108 (74 mm behind the track axis), z 394..507; the arm collides with it in the physics
+  and `clearance.ts` tests the cart's CAD triangles against it and against the lid.
+- Seedling tray `TRAY_CY` -0.098 -> -0.108 (rows A..D at y -165, -127, -89, -51 mm), still ASSUMED. The layout stays `cart_clearance_mm` 45 (the CAD value); the 110 of the earlier rounds is gone.
+- Reach (`scripts/check-podgrab-reach.ts`): the arm does NOT reach with the claw upright. Lifting a pod out of the store needs +52 mm of track height, the carry over the lid +104 (store) to +149 (row D),
+  seating in rows B, C, D needs +32, +46, +47. With the claw allowed to tilt while it carries (not implemented), the window is +55 to +80 mm of track height (clearance 100..125). Nothing was changed in the CAD for this.
+
+## Round 10 (#461): the owner's drawing layout (`cad/pond_unit_bottom.py`, 26 Nov)
+
+The pod-grab scene now follows `cad/pond_unit_bottom.py` (brought over from `claude/drafts`; it imports `parts/unit_dims.py` and `parts/pod_store_dims.py` instead of copying their numbers):
+cart upright (roll 0, track NOT raised, z 514), real 160 mm claw, a gravity-feed pod store of 7 lanes (pitch 30 mm from x 100) with a 15 degree ramp and a flat landing with a stop lip at the front row (y -165),
+a 6 x 3 seedling tray (35 x 25 mm pitch, x -290..-115, y -150..-100, pods vertical) and slots in the lid. `STORE_SLOPE_DEG` is 15 in the CAD and the sim reads it from the generated constants.
+
+- The arm now pans: the cart's straight run is x +/-140 mm, the store reaches to x 280 and the tray to x -290, so the pan joint takes the rest (`task.ts`, `reach.ts`).
+- With the claw straight down the SO-101 cannot hold the claw tip higher than about 225 mm, the lid is at 304: over the lid the claw is tilted (`TRANSIT_PITCH` 70 degrees) and straightens as it goes down through the slot.
+- Lid slots 70 x 50 mm (50 along x): at 35 mm (tray) and 30 mm (store) pitch they overlap, so the lid over the tray is one window 225 x 135 mm (its front edge is opened out to the lid edge, because the tilted claw cuts the 15 mm strip in front of the slots) and over the store one window 230 x 70 mm: there are NO webs between the cells. For webs the pitch would have to be above 50 mm (x) or 70 mm (y) or the slots smaller than the 31 mm claw allows.
+- No silicone collars (a 25 mm pod at 25 mm pitch leaves no room for a ring). Low 12 mm guide walls between the lanes (the open claw, 31 mm across, does not fit beside a pod between 3 mm rails at a 30 mm pitch).
+- Reach and cycle results: see the pull request (`scripts/check-podgrab-reach.ts`, `scripts/check-podgrab.ts`).
 
 ## Other points to know
 - Hand C on the loop interior (above the pipe) matches the Transplant scene (free hand on the interior side). The plate is on the spine side in the Transplant scene (the arm works towards the pipe) and on

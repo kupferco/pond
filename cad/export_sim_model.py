@@ -23,7 +23,7 @@ sys.path.insert(0, HERE)
 OUT_DIR = os.path.join(HERE, "..", "control-ui", "src", "generated")
 CLUSTER_MM = 0.9            # vertex clustering cell: the finest thinning tolerance
 MAX_TRIS = 1200             # most triangles kept per part: the cell grows until a part fits
-MODULES = ["hand_sleeve", "cart_dims", "cart_omni", "cart_sleeves", "cart_base", "cart_geom", "parts.unit_dims", "layout"]
+MODULES = ["hand_sleeve", "cart_dims", "cart_omni", "cart_sleeves", "cart_base", "cart_geom", "parts.unit_dims", "parts.pod_store_dims", "layout"]
 
 
 def _num(v):
@@ -48,6 +48,11 @@ def constants():
                 if v is not None:
                     d[k] = v
         out[name.split(".")[-1]] = d
+    # the water testing station as a solid obstacle block (OpenPocket #461): outer box and the four legs on the lid, unit frame, mm, from cad/water_station.py (box, OFF_Y, DZ, legs)
+    import water_station as ws
+    b = ws.BOX
+    out["water_station"] = {"X0": b["x0"], "X1": b["x1"], "Y0": b["y0"] + ws.OFF_Y, "Y1": b["y1"] + ws.OFF_Y, "Z0": b["z0"] + ws.DZ, "Z1": b["z1"] + ws.DZ,
+                            "LEG": ws.LEG, "LEG_XS": list(ws.LEG_XS), "LEG_YS": [y + ws.OFF_Y for y in ws.LEG_YS]}
     return out
 
 

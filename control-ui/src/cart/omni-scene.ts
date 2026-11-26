@@ -4,13 +4,15 @@
 // the track with ONE hand, the other hangs open, as the Transfer scene shows it).
 // Two things differ from the cart in omni.ts: the arm base block ('armbase') is left out, because these scenes bolt the real SO-101 base to the battery themselves, and
 // the plate body is called 'cartbase', because the arm's own first body is 'base'.
-import { omniCartBody, JAW_OPEN_RAD, BATT, PLATE_Y0, PLATE_Y1, PLATE_X0, PLATE_X1, PLATE_ZH, PLATE_T, ARM_BASE_W, type Hand } from './omni.ts';
+import { meshName } from './cad-cart.ts';
+import { omniCartBody, JAW_OPEN_RAD, ARM_X, ARM_Y0, PLATE_Y0, PLATE_Y1, PLATE_X0, PLATE_X1, PLATE_ZH, PLATE_T, ARM_BASE_W, type Hand } from './omni.ts';
 
 /** Where things are on the cart, cart frame (mm): x across the pipes, y out of the pipe plane (the plate is on -y), z along the pipes. From cad/cart_dims.py. */
 export const CART = {
   plateFaceY: PLATE_Y0,                        // -56: front face of the plate
   plateBackY: PLATE_Y1,                        // -50: on the sleeve pads
-  battFaceY: PLATE_Y0 - BATT[1],               // -106: front face of the battery, where the arm base is bolted (cart_dims.py ARM_Y0)
+  battFaceY: ARM_Y0,                           // -56 (v4): the arm base is bolted straight on the plate's front face (cart_dims.py ARM_Y0; the battery stands beside it)
+  armX: ARM_X,                                 // cart_dims.py ARM_X: arm base centre across the plate (v4: -5 mm)
   plateX: [PLATE_X0, PLATE_X1] as const,       // -80 .. 80
   plateZH: PLATE_ZH,                           // 73: the plate is 146 mm along the pipes
   plateT: PLATE_T,
@@ -22,8 +24,8 @@ export const CART = {
  * free: the hand that is NOT on the track; its jaw is open. col: collision attributes for every cart geom, colBattery for the battery alone. The cart is built as plain jointless bodies, so wrap it in a
  * body that has a (locked) joint if the scene has to test it against the static parts.
  */
-export function staticOmniCart(o: { free: Hand; col: string; colBattery?: string; jawOpenRad?: number }): string {
-  const x = omniCartBody({ jawOpen: { [o.free]: o.jawOpenRad ?? JAW_OPEN_RAD } });
+export function staticOmniCart(o: { free: Hand; col: string; colBattery?: string; jawOpenRad?: number; handTurn?: Partial<Record<Hand, number>> }): string {
+  const x = omniCartBody({ jawOpen: { [o.free]: o.jawOpenRad ?? JAW_OPEN_RAD }, handTurn: o.handTurn });
   const noArm = x
     .replace(/<joint [^>]*\/>/g, '')
     .replace(/<geom name="armbase"[^>]*\/>/, '')

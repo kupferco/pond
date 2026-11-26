@@ -5,7 +5,7 @@
 //  - tank 700 x 400 x 300 centred on x = 0, y = 0; lid at z = 300; shelf at z = 155 (unit_v3_dimensioned.py)
 //  - bottom track pipe at z = the shared layout height (cad/layout.json: 514 = lid 304 + 210), in the track plane y = -60 (unit_v3_dimensioned.py)
 //  - store rows under the lid, row pitch 35, first row at x = -140 (pod_store_reach.py); the rows slope DOWN towards
-//    the pick line y = 0, where the pick holes in the lid are; 12 degrees (pod_store_reach.py)
+//    the pick line y = 0, where the pick holes in the lid are; 7 degrees (cad/parts/pod_store_dims.py, used by pod_store_reach.py): the whole store, back end included, stays under the lid
 //  - seedling tray 190 x 360 x 35 at x = -245, z 230..265, horizontal, under an access opening in the lid (cart_arm.py, 5)
 //  - pod 25 mm diameter, 40 mm tall, 28 mm pitch (pod_store.py ASSUMED)
 //  - spine: 33.7 mm tube on the tank centre x = 0, y = 0 (unit_v3_dimensioned.py); track bracket 16 x 30 x 30 on the spine
@@ -28,7 +28,7 @@ import { staticOmniCart, CART } from '../cart/omni-scene.ts';
 import { withCartAssets } from '../cart/cad-cart.ts';
 import { HX } from '../cart/omni.ts';
 import { armMjcf } from '../model.ts';
-import { CAD_CONSTANTS } from '../generated/cad-sim.ts';
+import { CAD_CONSTANTS, CAD_UNIT } from '../generated/cad-sim.ts';
 import * as LAYOUT from '../layout.ts';   // the ONE shared layout (cad/layout.json): tank, lid and bottom track heights
 
 const m = (mm: number) => mm / 1000;
@@ -52,79 +52,97 @@ export const CLAW_ACT = ['claw_l', 'claw_r'];
 export const TANK_W = 0.7, TANK_D = 0.4, TANK_H = LAYOUT.TANK_H, SHELF_Z = CAD_CONSTANTS.unit_dims.SHELF_Z / 1000, SHELF_T = CAD_CONSTANTS.unit_dims.SHELF_T / 1000;   // shelf slab z 155..159 (cad/parts/shelf.py, #447)
 export const SHELF_TOP = SHELF_Z + SHELF_T;
 export const LID_Z = TANK_H, LID_T = LAYOUT.LID_T;
-export const PIPE_Y = 0.104;                    // the track plane. CAD: -60 mm. MOVED 179 mm towards the back (was 115 mm: the omni cart's battery puts the arm base 50 mm further out of the plate, Pond #284) so that all 16 sockets are in front of the cart plate and the arm, mounted on the battery, reaches them (ASSUMED, see the PR)
-export const PIPE_Z = LAYOUT.TRACK_BOTTOM_Z;   // bottom run of the track, 210 mm over the lid top (cad/layout.json: the cart's 165 mm under the track plus 45 mm of air, ASSUMED; the CAD guessed 150 before and the sim 210 over the tank). The omni cart centre is 60 mm ABOVE the pipe it rides (hand B on the pipe, hand C hanging open above it), and the arm base is on the cart centre. OpenPocket #364: one number for CAD and sim
+export const PIPE_Y = CAD_UNIT.LOOP_Y / 1000;   // the track plane, CAD LOOP_Y = -60 mm (cad/parts/unit_dims.py): the unit's own number, no sim-only offset (#461: it was moved 164 mm to the back, which put the spine off the tank's centre)
+export const PIPE_Z = LAYOUT.TRACK_BOTTOM_Z;   // bottom run of the track, 210 mm over the lid top (cad/layout.json: the cart's 165 mm under the track plus 45 mm of air; the CAD value, no sim-only offset; the earlier rounds' 110 mm of air is gone). The omni cart centre is 60 mm BELOW the pipe it rides (the TOP hand C clamps the pipe, hand B hangs open below it), and the arm base is on the cart centre. OpenPocket #364: one number for CAD and sim
 export const PIPE_R = m(PIPE_D_MM) / 2;
+// the track loop (cad/parts/unit_dims.py, the same numbers as the Transplant scene's track()): a portrait rounded rectangle in the plane y = PIPE_Y, legs 580 mm apart, corner radius 150, bottom run at PIPE_Z, top run at ZT
+export const LOOP_TX = CAD_UNIT.TX / 1000, LOOP_R = CAD_UNIT.R / 1000, LOOP_ZT = CAD_UNIT.ZT / 1000, LOOP_TR = CAD_UNIT.TR / 1000;
 export const PIPE_X0 = -0.40, PIPE_X1 = 0.42;
-export const CART_X_MIN = -0.33, CART_X_MAX = 0.28;   // arm plane = the cart centre (the cart is symmetric about it)
+export const CART_X_MIN = -(LOOP_TX - LOOP_R), CART_X_MAX = LOOP_TX - LOOP_R;   // the straight bottom run of the unit's loop (CAD: legs 580 apart, corner radius 150: x = -/+ 140 mm); beyond it the pipe turns up into the corners. Arm plane = the cart centre
 export const CART_HOME_X = -0.1;
-export const CART_SPINE_ZONE = 0.14;           // the cart touches the spine and its bracket only with its centre within about 13 cm of x = 0 (sleeve half length 62, the jaw motors on the CAD sleeve reach z +/-104 mm, spine radius 35; OpenPocket #447: the CAD cart's own parts are in the scan now, was 0.11 with the old stand-in shapes); only this zone is scanned
+export const CART_SPINE_ZONE = 0.16;           // the cart touches the spine and its bracket only with its centre within about 13 cm of x = 0 (sleeve half length 62, the jaw motors on the CAD sleeve reach z +/-104 mm, spine radius 35; OpenPocket #447: the CAD cart's own parts are in the scan now, was 0.11 with the old stand-in shapes); only this zone is scanned
 // spine and brackets
-export const SPINE_R = 0.070 / 2, SPINE_TOP = 0.86;   // 70 mm: more than double the 33.7 mm tube of unit_v3_dimensioned.py (follow-up request)
-export const SPINE_Y = PIPE_Y + 0.06;           // the spine axis is 60 mm behind the track plane (CAD: LOOP_Y = -60; the scene had 75 mm before the omni cart), so its back surface is just inside the tank's back wall
+export const SPINE_R = CAD_CONSTANTS.unit_dims.SP / 2000, SPINE_TOP = 0.86;   // the CAD spine tube, 33.7 mm OD (cad/parts/unit_dims.py SP): no sim-only thickening (#461)
+export const SPINE_Y = 0;                        // the spine and the growing pipe stand on the tank's centre line (CAD: x = y = 0)
+export const COLUMN_R = CAD_CONSTANTS.unit_dims.GP / 2000;   // the big central column: the 75 mm growing pipe (cad/parts/unit_dims.py GP) with the 33.7 mm spine tube inside it, as in the Transplant drawings
+export const SOCKET_R = COLUMN_R + 0.01, SOCKET_H = 0.025;   // its 95 mm socket on the lid
 export const BRACKET_T = 0.004;
+// The spine-to-track bracket (cad/bottom_bracket.py bracket_saddle 16 x 10 x 30 mm, unit_v3_dimensioned.py): 16 mm along the track, 10 mm in the other direction across the pipe, 30 mm out from the pipe towards the spine. The sleeves' C gap (18 mm narrow, hand_sleeve.py OPENING_W) faces the spine (HAND_TURN) and the bracket passes through it with its thin sides: 16 along the pipe, 10 across.
+export const BRACKET_HX = 0.008, BRACKET_HZ = 0.005;   // half the 16 mm along the track, half the 10 mm across
+export const BRACKET_PLATE_Y = PIPE_Y + PIPE_R + 0.0015;   // the plate starts on the clamp ring (R + 1.5 mm)
 export const ROD_R = 0.004;                     // M8 rod (track_joint.py)
+// The water testing station (cad/water_station.py + OFF_Y, DZ; exported by cad/export_sim_model.py): a SOLID obstacle block, about 200 x 94 x 113 mm, on four legs on the lid, x 60..260 along the track (over the pod store),
+// from 74 mm behind the track axis to the back, its roof just under the track pipe. The arm and the cart collide with it.
+const WS = CAD_CONSTANTS.water_station;
+export const STATION = { x0: m(WS.X0), x1: m(WS.X1), y0: m(WS.Y0), y1: m(WS.Y1), z0: m(WS.Z0), z1: m(WS.Z1), leg: m(WS.LEG), legXs: WS.LEG_XS.map(m), legYs: WS.LEG_YS.map(m) };
 export const SHELF_CAP_T = 0.004, SHELF_CAP_H = 0.03;   // ASSUMED shelf end caps
-// cart (the omni cart of cad/cart_dims.py, hand_sleeve.py v5; src/cart/omni-scene.ts, Pond #284). The cart body (mocap) rides the bottom run on hand B; hand C, its mirror, hangs open on the inside of the loop (above the pipe).
+// cart (the omni cart of cad/cart_dims.py, hand_sleeve.py v5; src/cart/omni-scene.ts, Pond #284). The cart body (mocap) rides the bottom run on its TOP hand C; hand B, its mirror, hangs open below the pipe.
 //  - cart frame: x across the pipes (hand B at -60, hand C at +60), y out of the pipe plane (the plate is on -y, the front), z along the pipes. In the world: cart x = up, cart y = world y, cart z = world -x.
-//    So the cart centre, the plate centre and the arm base are 60 mm ABOVE the pipe the cart rides.
+//    So the cart centre, the plate centre and the arm base are 60 mm BELOW the pipe the cart rides (top hand C on the pipe).
 //  - the plate is 146 mm along the track (z -73..73) and 168 across (x -84..84), 6 mm thick, bolted to both sleeve pads: nothing swings and nothing dangles below the pipe (the old cart hung a second hand 100 mm below it)
-//  - the battery (70 x 50 x 70) is on the plate's front face, the SO-101 base (its servo underside) on the battery's front face: 106 mm out of the pipe plane. The arm works in the vertical plane through the cart centre.
+//  - CAD v4 (cad/cart_dims.py): the SO-101 base (its servo underside) is bolted straight on the plate's front face, 56 mm out of the pipe plane, and the battery stands on its 50 mm edge beside it on the riding-hand side. The arm works in the vertical plane through the cart centre.
 //  - the cart does the x motion; the plate is flat, parallel to the track plane (roll 0): the roll is only for the legs (owner answers Q6, Q8)
 export const CART_ROLL = 0;                      // deg: the cart stays flat on the runs
-export const CART_DZ = HX / 1000;                // cart centre height above the pipe it rides: hand B's pipe is at cart x = -60
+export const CART_DZ = -HX / 1000;               // cart centre height relative to the pipe it rides: the cart rides on its TOP hand (C, cart x = +60), so the centre is 60 mm BELOW the pipe (owner, Pod grab clamp, #461)
+export const ARM_X = CART.armX / 1000;          // the SO-101 base centre across the plate, cad/cart_dims.py ARM_X (v4: bolted straight on the plate, 5 mm off its centre, the battery stands beside it on the riding-hand side); no sim-only slide
+export const HAND_TURN: Record<'B' | 'C', number> = { B: Math.PI / 2, C: -Math.PI / 2 };   // sleeves turned about their pipes so the 18 mm C gap faces the spine bracket (world +y)
 export const CART_Z = PIPE_Z + CART_DZ;          // world z of the cart centre = the arm base height
 export const CART_QUAT: [number, number, number, number] = [Math.SQRT1_2, 0, -Math.SQRT1_2, 0];   // cart frame -> world: x up, y = world y, z = world -x
-export const PLATE_FACE_Y = m(CART.battFaceY);   // cart frame y of the battery's front face, the plane the arm base is bolted to (the plate's own face is at -56)
+export const PLATE_FACE_Y = m(CART.battFaceY);   // cart frame y of the plane the arm base is bolted to: the plate's front face (-56)
 export const BASE_BOTTOM = 0.0085;               // the base servo's underside, in base coordinates (arm model: servo1 spans z 8.5..43.5 mm)
 export const ARM_Y = PIPE_Y + PLATE_FACE_Y + BASE_BOTTOM;   // arm base origin, world y: its underside (base z = 8.5 mm) is on the battery face, the arm axis (base z) is the plate normal, pointing out of the plate (-y)
-export const ARM_BASE_Z = CART_Z - 0.004;        // IK reference: the pick/place paths are planned with the points 4 mm above the real ones, so the claw runs a few mm high over the store walls (arm sag)
+export const ARM_BASE_Z = CART_Z + ARM_X - 0.004;        // IK reference: the pick/place paths are planned with the points 4 mm above the real ones, so the claw runs a few mm high over the store walls (arm sag)
 export const BASE_XYAXES = '-1 0 0 0 0 -1';      // in the CART frame: base x = cart -x = world down (pan 0 points down the plate), base y = cart -z = world +x along the track, base z = out of the plate (cart -y)
 export const PAN0 = 0;                          // pan angle (deg): the arm works in the vertical plane through the plate centre, pointing down the plate
 /** Arm planar IK frame: r = distance down from the base axis (the arm's "forward", base x), u = distance out of the plate along the base axis (base z, the plate normal). */
 export const armR = (z: number) => ARM_BASE_Z - z;
 export const armU = (y: number) => ARM_Y - y;
 
-// --- store: rows along y; the pods slide down the slope to the pick line at y = 0
-export const STORE_ROWS = 6;
-export const STORE_CAP = 13;                     // pod positions per row: the channels run all the way to the back wall of the tank (end stop at y = 183 mm)
-export const STORE_START = 10;                  // pods per row at the start
-export const POD_PITCH = POD_R * 2 + 0.0005;    // pods rest against each other on the slope
-export const ROW_PITCH = 0.035;
-export const ROW_X0 = 0.07 + ROW_PITCH / 2;
-export const SLOPE = 12 * Math.PI / 180;
-export const STORE_Z0 = 0.205;                  // floor of the channel under position 0 (the store stands on legs on the shelf, under the lid)
-export const STORE_Y0 = -0.145;                 // y of the channel under position 0 (the pick line)
+// --- store (cad/pond_unit_bottom.py v5, gravity feed): 7 lanes, pitch 30 mm from x = 100; each lane is a ramp rising to the back at SLOPE and ends in a FLAT landing at the front row
+// (y = -165, floor 12 mm over the shelf, stop lip at the front) so the pod being picked stands vertical; the pods behind it lean with the ramp, and the next one slides forward onto the landing when the front one is lifted.
+export const STORE_ROWS = 7;
+export const STORE_CAP = 4;                      // pod positions per lane: the landing and three on the ramp (28 pods in all)
+export const STORE_START = 4;                    // pods per lane at the start
+export const POD_PITCH = POD_R * 2 + 0.0005;    // pods rest against each other on the ramp
+export const ROW_PITCH = 0.03;
+export const ROW_X0 = 0.1;
+export const SLOPE = CAD_CONSTANTS.pod_store_dims.STORE_SLOPE_DEG * Math.PI / 180;   // cad/parts/pod_store_dims.py: 15 degrees (ASSUMED: test with the real dry pots)
+export const STORE_Y0 = -0.165;                 // the front row: the pick spot on the landing (y of the pod axis)
+export const STORE_Z0 = SHELF_TOP + 0.012;      // the landing floor (the store stands on a 12 mm base on the shelf)
+export const LAND_Y0 = -0.178, RAMP_Y0 = -0.152, RAMP_Y1 = -0.062;   // landing front edge, where the ramp starts, back of the ramp
 export const LOAD_CLEAR = 0.5;                  // clear floor needed behind the unit to load the store from the back
-export const LIP_H = 0.018;                     // front stop above the channel floor
-export const GUIDE_H = 0.017;                   // low guide walls between the rows: the pod stands within 0.5 mm of the row centre, below the fingertips
-export const GUIDE_HALF = ROW_PITCH / 2 - (POD_R + 0.0005);   // half thickness of a guide wall on a row boundary
-export const RAIL_H = POD_LEN + 0.0015;         // side rails and roof underside above the channel floor
+export const LIP_H = 0.014;                     // front stop above the landing floor
+export const GUIDE_H = 0.012;                   // low guide walls between the lanes
+export const GUIDE_HALF = ROW_PITCH / 2 - (POD_R + 0.0005);   // half thickness of a guide wall on a lane boundary
+export const RAIL_H = POD_LEN + 0.0015;         // side rails and roof underside above the lane floor
 export const rowX = (row: number) => ROW_X0 + row * ROW_PITCH;
 const sinT = Math.sin(SLOPE), cosT = Math.cos(SLOPE);
-/** Slope frame: s up the slope (away from the pick line, towards the back), h along the channel normal. */
+/** Ramp frame: s up the ramp from where it leaves the landing, h along the ramp normal. */
 export const slopePoint = (row: number, s: number, h: number): [number, number, number] =>
-  [rowX(row), STORE_Y0 + s * cosT - h * sinT, STORE_Z0 + s * sinT + h * cosT];
-export const storePos = (row: number, k: number) => slopePoint(row, k * POD_PITCH, POD_LEN / 2);
-/** Position along the slope of a point, in the slope frame of any row. */
-export const slopeS = (y: number, z: number) => (y - STORE_Y0) * cosT + (z - STORE_Z0) * sinT;
-/** The channel normal (pod axis in the store), in world coordinates. */
-export const STORE_N: [number, number, number] = [0, -sinT, cosT];
-export const STORE_PITCH_DEG = SLOPE * 180 / Math.PI;      // hand pitch (0 = pin straight down) with the pin along -STORE_N
+  [rowX(row), RAMP_Y0 + s * cosT - h * sinT, STORE_Z0 + s * sinT + h * cosT];
+/** Pod centre at position k of a lane: 0 is the pick spot on the landing (vertical), k >= 1 are on the ramp. */
+export const storePos = (row: number, k: number): [number, number, number] =>
+  k === 0 ? [rowX(row), STORE_Y0, STORE_Z0 + POD_LEN / 2] : slopePoint(row, POD_R + 0.002 + (k - 1) * POD_PITCH, POD_LEN / 2);
+/** Distance of a point behind the pick spot, along y (the order of the pods in a lane). */
+export const slopeS = (y: number, _z: number) => y - STORE_Y0;
+/** The pod axis at the pick spot (the pod stands vertical on the landing), in world coordinates. */
+export const STORE_N: [number, number, number] = [0, 0, 1];
+export const STORE_PITCH_DEG = 0;               // hand pitch (0 = pin straight down)
 
-// --- lid pick holes, over position 0 of every row
-export const HOLE_HALF = 0.017;
-export const COLLAR_H = 0.004;
-export const COLLAR_IN = 0.017;                 // inner radius of a lid collar (apothem of the 8-sided ring): the open claw (fingers 31.2 mm across, 8 mm wide, corner radius 16.1 mm) passes with ~0.9 mm to spare
+// --- lid slots over the store lanes and the tray cells: 70 mm along y (the arm's direction) x 50 mm along x, one per hole, merged where they overlap (see lidSlots)
+export const SLOT_X = 0.05, SLOT_Y = 0.07;
+export const HOLE_HALF = SLOT_X / 2;
+export const COLLAR_H = 0;                       // no silicone collars: the 35 x 25 mm cell pitch has no room for a ring round a 25 mm pod
+export const COLLAR_IN = 0.017;
 export const lidMid = LID_Z - LID_T / 2;
-export const pickHoleY = storePos(0, 0)[1] - (lidMid - storePos(0, 0)[2]) * Math.tan(SLOPE);
+export const pickHoleY = STORE_Y0;
 
 // --- seedling tray: horizontal, 4 x 4 silicone collars
-export const TRAY_COLS = 4, TRAY_ROWS = 4;
-export const TRAY_CX = -0.24, TRAY_HX = 0.095, TRAY_HY = 0.185;
-export const TRAY_Z0 = 0.2, TRAY_T = 0.004;   // thin flat tray on two side rails over the shelf: a seated pod stands as deep under the tank lid as a pod at the pick position of the store (ASSUMED; the tank top is now closed over the tray)
+export const TRAY_COLS = 6, TRAY_ROWS = 3;   // cad/pond_unit_bottom.py: 6 x 3 = 18 cells, pitch 35 mm along x and 25 mm along y, x -290..-115, y -150..-100
+export const TRAY_CX = -0.2025, TRAY_HX = 0.12, TRAY_HY = 0.055;
+export const TRAY_Z0 = SHELF_TOP, TRAY_T = 0.006;   // thin flat tray on two side rails over the shelf: a seated pod stands as deep under the tank lid as a pod at the pick position of the store (ASSUMED; the tank top is now closed over the tray)
 export const TRAY_TOP = TRAY_Z0 + TRAY_T;
-export const TRAY_COL_PITCH = 0.045, TRAY_ROW_PITCH = 0.038, TRAY_CY = -0.098;
+export const TRAY_COL_PITCH = 0.035, TRAY_ROW_PITCH = 0.025, TRAY_CY = -0.125;
 export const CELL_R = 0.016;                    // inner radius of a silicone collar (pod radius 12.5)
 export const CELL_H = 0.016;
 // lid over the seedling tray: a plate just above the collars of the cells, a silicone collar round each hole (same as the tank-top lid)
@@ -140,9 +158,10 @@ export const seatPos = (slot: number): [number, number, number] =>
 export const TRAY_SLOTS = TRAY_COLS * TRAY_ROWS;
 export const slotLabel = (slot: number) => `${String.fromCharCode(65 + Math.floor(slot / TRAY_COLS))}${(slot % TRAY_COLS) + 1}`;
 
-/** Ready pose of the arm (deg): claw straight down, pod point 200 mm down the plate from the arm base and 200 mm out of it (an IK pose, so cartesian moves start on the right branch): in front of the tank, over the lid. */
-export const READY_POSE: Record<string, number> = { A: PAN0, B: -52, C: 37.3, D: 14.7, E: 0, F: 0 };
-export const TRANSIT_Z = 0.326;                 // pin point height while driving with a pod
+/** Ready pose of the arm (deg): claw straight down, pod point 160 mm down the plate from the arm base and 200 mm out of it (an IK pose, so cartesian moves start on the right branch): in front of the tank, over the lid. */
+export const READY_POSE: Record<string, number> = { A: PAN0, B: -75.6, C: 41.1, D: 34.4, E: 0, F: 0 };
+export const TRANSIT_Z = 0.326;                 // pin point height while driving (pod bottom 2 mm over the lid top)
+export const TRANSIT_PITCH = 70;                // hand pitch (deg, reach-probe sign) while the claw is over the lid: with the claw straight down the SO-101 cannot hold the pin higher than about 225 mm (the wrist would sit 40 mm from the shoulder, inside the elbow limit), the lid is at 304, so the claw is tilted over the lid and straightens as it goes down through the slot
 export const PIN_SPEED = 0.1, SEAT_SPEED = 0.04, CART_SPEED = 0.25; // m/s
 
 export const podName = (i: number) => `pod_${i}`;
@@ -158,20 +177,20 @@ const rgba = (r: number, g: number, b: number, a = 1) => `rgba="${r} ${g} ${b} $
 const SOLID = 'contype="1" conaffinity="1"';
 // fixed unit parts: pods collide with them (bit 1) and so does the arm (bit 2)
 const OBST = 'contype="1" conaffinity="3"';
-const SLICK = `${OBST} friction="0.05 0.005 0.0001"`;   // store channel: pods slide (MuJoCo takes the larger friction of a pair)
+const SLICK = `${OBST} friction="0.02 0.005 0.0001" condim="1"`;   // store channel: pods slide (MuJoCo takes the larger friction of a pair)
 const SILICONE = rgba(0.95, 0.55, 0.2);
 // silicone collars: pods and the arm (bit 2) both collide with them, so a gripper contact can be detected (geoms named collar_*)
 const SOFT = 'contype="1" conaffinity="3"';
 const CART_COL = 'contype="4" conaffinity="2"';   // the cart's parts: they collide with the arm (contype 2), not with the unit or the pods
 
 /** The cart (a mocap body, cart frame turned into the world by CART_QUAT) with the arm base as a rigid child.
- *  Hand B rides the pipe, hand C hangs open above it; the plate, the battery and the two sleeves are static. The cart's parts collide with the arm only (contype 4, conaffinity 2: the arm's contype is 2),
+ *  Hand C (top) rides the pipe, hand B hangs open below it; the plate, the battery and the two sleeves are static. The cart's parts collide with the arm only (contype 4, conaffinity 2: the arm's contype is 2),
  *  except the battery, which the arm base sits flush on. Against the spine and the track bracket the cart is measured, not simulated: see PodWorld.scanCart. */
 function cartMount(): { open: string; close: string; baseAttrs: string } {
   const open = `<body name="cart" mocap="true" pos="${CART_HOME_X} ${PIPE_Y} ${f(CART_Z)}" quat="${CART_QUAT.map(f).join(' ')}">
-      ${staticOmniCart({ free: 'C', col: CART_COL, colBattery: SOLID })}`;
+      ${staticOmniCart({ free: 'B', jawOpenRad: 0, handTurn: HAND_TURN, col: CART_COL, colBattery: SOLID })}`;
   // no joint and no extra base: the arm's own base body is a fixed child of the cart, its underside flat on the battery face
-  const baseAttrs = `pos="0 ${f(PLATE_FACE_Y + BASE_BOTTOM)} 0" xyaxes="${BASE_XYAXES}"`;
+  const baseAttrs = `pos="${f(ARM_X)} ${f(PLATE_FACE_Y + BASE_BOTTOM)} 0" xyaxes="${BASE_XYAXES}"`;
   return { open, close: '</body>', baseAttrs };
 }
 
@@ -179,16 +198,23 @@ function cartMount(): { open: string; close: string; baseAttrs: string } {
 function spineGeoms(): string[] {
   const out: string[] = [];
   const dark = rgba(0.35, 0.35, 0.38), brk = rgba(0.2, 0.2, 0.22), shelf = rgba(0.5, 0.52, 0.58);
-  out.push(`<geom name="spine_tube" type="cylinder" fromto="0 ${SPINE_Y} ${f(SHELF_Z - 0.03)} 0 ${SPINE_Y} ${SPINE_TOP}" size="${SPINE_R}" ${OBST} ${dark}/>`);
+  // the central column of the unit (cad/unit_v3_dimensioned.py): the 75 mm growing pipe on its 95 mm socket on the lid, and the 33.7 mm spine tube inside it, both on the tank's centre line up to the top run
+  out.push(`<geom name="spine_tube" type="cylinder" fromto="0 ${SPINE_Y} ${f(SHELF_Z - 0.03)} 0 ${SPINE_Y} ${f(LOOP_ZT)}" size="${SPINE_R}" ${OBST} ${dark}/>`);
+  out.push(`<geom name="column" type="cylinder" fromto="0 ${SPINE_Y} ${f(LID_Z)} 0 ${SPINE_Y} ${f(LOOP_ZT)}" size="${COLUMN_R}" ${OBST} ${rgba(0.93, 0.95, 0.97, 0.3)}/>`);
+  out.push(`<geom name="column_socket" type="cylinder" fromto="0 ${SPINE_Y} ${f(LID_Z)} 0 ${SPINE_Y} ${f(LID_Z + SOCKET_H)}" size="${SOCKET_R}" ${OBST} ${rgba(0.95, 0.6, 0.2)}/>`);
   const box = (x0: number, x1: number, y0: number, y1: number, z0: number, z1: number, c = brk, name = '') =>
     out.push(`<geom ${name ? `name="${name}" ` : ''}type="box" pos="${f((x0 + x1) / 2)} ${f((y0 + y1) / 2)} ${f((z0 + z1) / 2)}" size="${f((x1 - x0) / 2)} ${f((y1 - y0) / 2)} ${f((z1 - z0) / 2)}" ${OBST} ${c}/>`);
   const collar = (z0: number, z1: number) => out.push(`<geom type="cylinder" fromto="0 ${SPINE_Y} ${f(z0)} 0 ${SPINE_Y} ${f(z1)}" size="${f(SPINE_R + 0.005)}" ${OBST} ${brk}/>`);
   // Pillar-to-track bracket (unit_v3_dimensioned.py: 16 x 30 x 30 on the spine side of the pipe): a plate on the spine and an M8 rod
   // (track_joint.py) from it to a clamp ring on the pipe. The hands have a C-gap facing the spine, so the cart passes it.
-  const yPlate = PIPE_Y + PIPE_R + 0.0015;                      // the bracket's plate starts on the clamp ring (R17.5), 9 mm from the spine's surface
-  box(-0.008, 0.008, yPlate, SPINE_Y - SPINE_R - 0.001, PIPE_Z - 0.015, PIPE_Z + 0.015, brk, 'track_bracket');
+  const yPlate = BRACKET_PLATE_Y;                      // the bracket's plate starts on the clamp ring (R17.5), 9 mm from the spine's surface
+  box(-BRACKET_HX, BRACKET_HX, yPlate, SPINE_Y - COLUMN_R - 0.001, PIPE_Z - BRACKET_HZ, PIPE_Z + BRACKET_HZ, brk, 'track_bracket');
   out.push(`<geom name="bracket_rod" type="cylinder" fromto="0 ${f(yPlate)} ${PIPE_Z} 0 ${f(PIPE_Y + PIPE_R)} ${PIPE_Z}" size="${ROD_R}" ${OBST} ${rgba(0.75, 0.75, 0.78)}/>`);
   out.push(`<geom name="bracket_ring" type="cylinder" fromto="-0.01 ${PIPE_Y} ${PIPE_Z} 0.01 ${PIPE_Y} ${PIPE_Z}" size="${f(PIPE_R + 0.0015)}" ${OBST} ${brk}/>`);
+  // The water testing station: the box and its four legs on the lid.
+  const ws = rgba(0.93, 0.93, 0.9);
+  box(STATION.x0, STATION.x1, STATION.y0, STATION.y1, STATION.z0, STATION.z1, ws, 'water_station');
+  STATION.legXs.forEach((lx, i) => STATION.legYs.forEach((ly, j) => box(lx, lx + STATION.leg, ly, ly + STATION.leg, LID_Z, STATION.z0, rgba(0.6, 0.6, 0.62), `water_station_leg${i}${j}`)));
   // Shelf brackets: a collar on the spine and a flat bar under the shelf to each side, up to the edge of the tray / the store.
   collar(SHELF_Z - 0.014, SHELF_Z - 0.002);
   box(TRAY_CX + TRAY_HX - 0.02, -SPINE_R - 0.005, SPINE_Y - 0.01, SPINE_Y + 0.01, SHELF_Z - BRACKET_T, SHELF_Z);
@@ -197,21 +223,19 @@ function spineGeoms(): string[] {
   const hx = TANK_W / 2 - 0.004, hy = TANK_D / 2 - 0.004;
   box(-hx, hx, -hy, hy, SHELF_Z, SHELF_TOP, shelf);
   for (const sx of [-1, 1]) box(sx > 0 ? hx - SHELF_CAP_T : -hx, sx > 0 ? hx : -hx + SHELF_CAP_T, -hy, hy, SHELF_TOP, SHELF_TOP + SHELF_CAP_H, rgba(0.42, 0.44, 0.5));
-  // Store legs: cross bars from the shelf up to the channel floor at the front and back ends.
-  for (const s of [-POD_R - 0.003, (STORE_CAP - 0.5) * POD_PITCH + 0.004]) {
-    const [, y, z] = slopePoint(0, s, -0.004);
-    box(rowX(0) - ROW_PITCH / 2, rowX(STORE_ROWS - 1) + ROW_PITCH / 2, y - 0.004, y + 0.004, SHELF_TOP, z, brk);
-  }
+  // The store's 12 mm base on the shelf (cad/pond_unit_bottom.py), under the landing and the ramp.
+  box(ROW_X0 - ROW_PITCH / 2, rowX(STORE_ROWS - 1) + ROW_PITCH / 2, LAND_Y0 - 0.006, RAMP_Y1, SHELF_TOP, STORE_Z0 - 0.004, brk);
   return out;
 }
 
 function podMjcf(i: number): string {
-  const [x, y, z] = startPos(i);
+  const k = i % STORE_START, [x, y, z] = startPos(i);
   const lift = 0.0004;                                 // start just above the floor so the pods do not begin in contact
-  const q = STORE_QUAT.map(f).join(' ');
-  return `<body name="${podName(i)}" pos="${f(x)} ${f(y - lift * sinT)} ${f(z + lift * cosT)}" quat="${q}">
-      <joint type="free" damping="0.002"/>
-      <geom type="cylinder" size="${POD_R} ${POD_LEN / 2}" mass="0.012" friction="0.05 0.005 0.0001" ${SOLID} ${rgba(0.93, 0.93, 0.9)}/>
+  const q = (k === 0 ? UPRIGHT_QUAT : STORE_QUAT).map(f).join(' ');   // the front pod stands vertical on the landing, the others lean with the ramp
+  const n = k === 0 ? [0, 0, 1] : [0, -sinT, cosT];
+  return `<body name="${podName(i)}" pos="${f(x + n[0] * lift)} ${f(y + n[1] * lift)} ${f(z + n[2] * lift)}" quat="${q}">
+      <joint type="free" damping="0.01"/>
+      <geom type="cylinder" size="${POD_R} ${POD_LEN / 2}" mass="0.012" friction="0.02 0.005 0.0001" condim="1" ${SOLID} ${rgba(0.93, 0.93, 0.9)}/>
       <geom type="cylinder" size="${HOLE_R} ${POD_LEN / 2 + 0.0002}" contype="0" conaffinity="0" ${rgba(0.12, 0.12, 0.14)}/>
     </body>`;
 }
@@ -222,96 +246,85 @@ function slopeBox(row: number, s: number, h: number, hx: number, hs: number, hh:
   return `<geom type="box" pos="${f(x)} ${f(y)} ${f(z)}" size="${f(hx)} ${f(hs)} ${f(hh)}" euler="${f(SLOPE)} 0 0" ${extra} ${color}/>`;
 }
 
-/** Store rows: channel floor, a front stop, side rails and a roof over every position but the first. */
+/** Store lanes (gravity feed): a flat landing with a stop lip at the front, a ramp rising to the back, low guide walls between the lanes (17 mm: the claw's fingertips stay above them, and there is no roof or tall rail, the 30 mm lane pitch leaves the open 31 mm claw no room beside a pod for one) and an end gate. */
 function storeGeoms(): string[] {
   const out: string[] = [];
   const hw = ROW_PITCH / 2 - 0.0006;
-  const sEnd = (STORE_CAP - 0.5) * POD_PITCH + 0.004, sFront = -POD_R - 0.003;
-  const blue = rgba(0.35, 0.55, 0.85), red = rgba(0.9, 0.3, 0.25), amber = rgba(0.95, 0.75, 0.2);
+  const sEnd = (RAMP_Y1 - RAMP_Y0) / cosT;          // length of the ramp
+  const blue = rgba(0.35, 0.55, 0.85), amber = rgba(0.95, 0.75, 0.2), wallC = rgba(0.28, 0.45, 0.75);
+  const flat = (x: number, y0: number, y1: number, z0: number, z1: number, hx: number, c: string, extra = SLICK) =>
+    out.push(`<geom type="box" pos="${f(x)} ${f((y0 + y1) / 2)} ${f((z0 + z1) / 2)}" size="${f(hx)} ${f((y1 - y0) / 2)} ${f((z1 - z0) / 2)}" ${extra} ${c}/>`);
   for (let r = 0; r < STORE_ROWS; r++) {
-    out.push(slopeBox(r, (sEnd + sFront) / 2, -0.002, hw, (sEnd - sFront) / 2, 0.002, blue));
-    out.push(slopeBox(r, -POD_R - 0.0015, LIP_H / 2, hw, 0.0015, LIP_H / 2, blue));
-    // the back end: a full-height end gate under the roof, so no pod can roll off the end of the row (the gate is taken out to load the row from behind)
-    out.push(slopeBox(r, sEnd + 0.002, (RAIL_H + 0.004) / 2, hw, 0.002, (RAIL_H + 0.004) / 2, amber));
-    // the roof: from just behind position 0 to the back end, 1.5 mm over the top of the pods
-    const s0 = POD_PITCH / 2;
-    out.push(slopeBox(r, (s0 + sEnd) / 2, RAIL_H + 0.001, hw, (sEnd - s0) / 2, 0.001, red));
+    const x = rowX(r);
+    flat(x, LAND_Y0 - 0.006, RAMP_Y0 + 0.001, STORE_Z0 - 0.004, STORE_Z0, hw, blue);                  // landing floor
+    flat(x, LAND_Y0 - 0.006, LAND_Y0, STORE_Z0, STORE_Z0 + LIP_H, hw, blue);                            // stop lip at the front
+    out.push(slopeBox(r, sEnd / 2, -0.002, hw, sEnd / 2, 0.002, blue));                                  // ramp floor
+    out.push(slopeBox(r, sEnd + 0.002, (RAIL_H + 0.004) / 2, hw, 0.002, (RAIL_H + 0.004) / 2, amber));   // end gate (taken out to load the lane from behind)
   }
   for (let r = 0; r <= STORE_ROWS; r++) {
-    const x = rowX(0) - ROW_PITCH / 2 + r * ROW_PITCH;
-    const [, gy, gz] = slopePoint(0, (sEnd + sFront) / 2, GUIDE_H / 2);
-    out.push(`<geom type="box" pos="${f(x)} ${f(gy)} ${f(gz)}" size="${f(GUIDE_HALF)} ${f((sEnd - sFront) / 2)} ${f(GUIDE_H / 2)}" euler="${f(SLOPE)} 0 0" ${SLICK} ${rgba(0.28, 0.45, 0.75)}/>`);
-    const [, y, z] = slopePoint(0, (sEnd + sFront) / 2, (RAIL_H + 0.002) / 2);
-    out.push(`<geom type="box" pos="${f(x)} ${f(y)} ${f(z)}" size="0.001 ${f((sEnd - sFront) / 2)} ${f((RAIL_H + 0.002) / 2)}" euler="${f(SLOPE)} 0 0" ${SLICK} ${rgba(0.28, 0.45, 0.75)}/>`);
+    const x = ROW_X0 - ROW_PITCH / 2 + r * ROW_PITCH;
+    flat(x, LAND_Y0, RAMP_Y0 + 0.001, STORE_Z0, STORE_Z0 + GUIDE_H, GUIDE_HALF, wallC);                 // low guide walls along the landing
+    const [, gy, gz] = slopePoint(0, sEnd / 2, GUIDE_H / 2);
+    out.push(`<geom type="box" pos="${f(x)} ${f(gy)} ${f(gz)}" size="${f(GUIDE_HALF)} ${f(sEnd / 2)} ${f(GUIDE_H / 2)}" euler="${f(SLOPE)} 0 0" ${SLICK} ${wallC}/>`);
   }
   return out;
 }
 
-/** A ring of boxes (a silicone collar) round a vertical axis. */
-let collarNo = 0;
-function ring(cx: number, cy: number, z0: number, rIn: number, thick: number, h: number, color: string, n = 8): string[] {
-  const out: string[] = [], id = collarNo++;
-  const half = (rIn + thick) * Math.tan(Math.PI / n) + 0.0005;
-  for (let k = 0; k < n; k++) {
-    const a = 2 * Math.PI * k / n, rc = rIn + thick / 2;
-    out.push(`<geom name="collar_${id}_${k}" type="box" pos="${f(cx + rc * Math.cos(a))} ${f(cy + rc * Math.sin(a))} ${f(z0 + h / 2)}" size="${f(half)} ${f(thick / 2)} ${f(h / 2)}" euler="0 0 ${f(a + Math.PI / 2)}" ${SOFT} ${color}/>`);
-  }
-  return out;
+/** The lid slots (mm-exact CAD numbers of cad/pond_unit_bottom.py, widened to 70 x 50 mm): x0, x1, y0, y1 in m. One slot per tray cell and per store lane, 50 mm along x and 70 mm along y;
+ *  at the 35 mm (tray) and 30 mm (store) pitch they overlap along x or y, so the result is a set of slots: one per tray column (50 x 120 mm, 15 mm webs between them) and one window over the whole store (the 30 mm pitch is smaller than the 50 mm slot). */
+export function lidSlots(): { x0: number; x1: number; y0: number; y1: number }[] {
+  const raw: { x0: number; x1: number; y0: number; y1: number }[] = [];
+  for (let c = 0; c < TRAY_COLS; c++) for (let r = 0; r < TRAY_ROWS; r++) raw.push({ x0: trayX(c) - SLOT_X / 2, x1: trayX(c) + SLOT_X / 2, y0: r === 0 ? -TANK_D / 2 : trayY(r) - SLOT_Y / 2, y1: trayY(r) + SLOT_Y / 2 });   // the front slots run out to the lid's front edge: the claw is tilted outwards over the lid and would otherwise cut the 15 mm strip in front of them
+  for (let r = 0; r < STORE_ROWS; r++) raw.push({ x0: rowX(r) - SLOT_X / 2, x1: rowX(r) + SLOT_X / 2, y0: STORE_Y0 - SLOT_Y / 2, y1: STORE_Y0 + SLOT_Y / 2 });
+  return raw;
 }
-
-/** The lid over the store: a plate with a pick hole over position 0 of each row, each with a silicone collar. */
+/** The lid (4 mm plate over the whole tank) cut by the slots: a grid of boxes, each cell not inside a slot. */
 function lidGeoms(): string[] {
-  const out: string[] = [];
-  const grey = rgba(0.6, 0.62, 0.66, 0.55);
-  const x0 = TRAY_CX + TRAY_HX + 0.005, x1 = TANK_W / 2, y0 = -TANK_D / 2, y1 = TANK_D / 2;
-  const plate = (xa: number, xb: number, ya: number, yb: number) => out.push(
-    `<geom type="box" pos="${f((xa + xb) / 2)} ${f((ya + yb) / 2)} ${f(lidMid)}" size="${f((xb - xa) / 2)} ${f((yb - ya) / 2)} ${LID_T / 2}" ${OBST} ${grey}/>`);
-  plate(x0, x1, y0, pickHoleY - HOLE_HALF);
-  plate(x0, x1, pickHoleY + HOLE_HALF, y1);
-  plate(x0, rowX(0) - HOLE_HALF, pickHoleY - HOLE_HALF, pickHoleY + HOLE_HALF);
-  for (let r = 0; r < STORE_ROWS; r++) plate(rowX(r) + HOLE_HALF, r + 1 < STORE_ROWS ? rowX(r + 1) - HOLE_HALF : x1, pickHoleY - HOLE_HALF, pickHoleY + HOLE_HALF);
-  for (let r = 0; r < STORE_ROWS; r++) out.push(...ring(rowX(r), pickHoleY, LID_Z, COLLAR_IN, 0.0005, COLLAR_H, SILICONE));
+  const out: string[] = [], grey = rgba(0.6, 0.62, 0.66, 0.55), slots = lidSlots();
+  const hx = TANK_W / 2, hy = TANK_D / 2;
+  const xs = [...new Set([-hx, hx, ...slots.flatMap((s) => [s.x0, s.x1])].map((v) => +v.toFixed(6)))].sort((a, b) => a - b);
+  const ys = [...new Set([-hy, hy, ...slots.flatMap((s) => [s.y0, s.y1])].map((v) => +v.toFixed(6)))].filter((v) => v >= -hy && v <= hy).sort((a, b) => a - b);
+  for (let i = 0; i + 1 < xs.length; i++) for (let j = 0; j + 1 < ys.length; j++) {
+    const cx = (xs[i] + xs[i + 1]) / 2, cy = (ys[j] + ys[j + 1]) / 2;
+    if (slots.some((s) => cx > s.x0 && cx < s.x1 && cy > s.y0 && cy < s.y1)) continue;
+    out.push(`<geom type="box" pos="${f(cx)} ${f(cy)} ${f(lidMid)}" size="${f((xs[i + 1] - xs[i]) / 2)} ${f((ys[j + 1] - ys[j]) / 2)} ${LID_T / 2}" ${OBST} ${grey}/>`);
+  }
   return out;
 }
 
 function trayGeoms(): string[] {
   const out: string[] = [];
-  const box = (xa: number, xb: number, ya: number, yb: number, zc: number, t: number, c: string) => xb - xa > 1e-4 && yb - ya > 1e-4 && out.push(
-    `<geom type="box" pos="${f((xa + xb) / 2)} ${f((ya + yb) / 2)} ${f(zc)}" size="${f((xb - xa) / 2)} ${f((yb - ya) / 2)} ${f(t / 2)}" ${OBST} ${c}/>`);
-  // the flat tray lies on the shelf
-  box(TRAY_CX - TRAY_HX, TRAY_CX + TRAY_HX, -TRAY_HY, TRAY_HY, TRAY_Z0 + TRAY_T / 2, TRAY_T, rgba(0.2, 0.62, 0.38));
-  for (const sx of [-1, 1]) box(TRAY_CX + sx * (TRAY_HX - 0.01) - 0.01, TRAY_CX + sx * (TRAY_HX - 0.01) + 0.01, -TRAY_HY, TRAY_HY, (SHELF_TOP + TRAY_Z0) / 2, TRAY_Z0 - SHELF_TOP, rgba(0.42, 0.44, 0.5));
-  for (let s = 0; s < TRAY_SLOTS; s++) {
-    const [x, y] = seatPos(s);
-    out.push(...ring(x, y, TRAY_TOP, CELL_R, 0.002, CELL_H, SILICONE));
+  // the flat seedling tray lies on the shelf under the lid (CAD: 240 x 110 x 6 mm plate); a seated pod stands on it, the lid slots are over the cells
+  out.push(`<geom type="box" pos="${f(TRAY_CX)} ${f(TRAY_CY)} ${f(TRAY_Z0 + TRAY_T / 2)}" size="${f(TRAY_HX)} ${f(TRAY_HY)} ${f(TRAY_T / 2)}" ${OBST} ${rgba(0.2, 0.62, 0.38)}/>`);
+  return out;
+}
+
+/** The unit's ONE track loop: bottom run (the pipe the cart rides, 'track_pipe'), two legs, top run and four quarter-circle corners, in the plane y = PIPE_Y. */
+function loopGeoms(): string[] {
+  const out: string[] = [], grey = rgba(0.62, 0.66, 0.7);
+  const seg = (name: string, a: [number, number], b: [number, number]) =>
+    out.push(`<geom name="${name}" type="cylinder" fromto="${f(a[0])} ${PIPE_Y} ${f(a[1])} ${f(b[0])} ${PIPE_Y} ${f(b[1])}" size="${LOOP_TR}" ${OBST} ${grey}/>`);
+  const zb = PIPE_Z, zl = zb + LOOP_R, zh = LOOP_ZT - LOOP_R;
+  seg('track_pipe', [-LOOP_TX + LOOP_R, zb], [LOOP_TX - LOOP_R, zb]);
+  seg('tracktop', [-LOOP_TX + LOOP_R, LOOP_ZT], [LOOP_TX - LOOP_R, LOOP_ZT]);
+  for (const e of [-1, 1]) seg(`trackleg${e}`, [e * LOOP_TX, zl], [e * LOOP_TX, zh]);
+  const N = 10;
+  for (const [ex, ez] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+    const cx = ex * (LOOP_TX - LOOP_R), cz = ez > 0 ? zh : zl;
+    const pt = (k: number): [number, number] => [cx + ex * LOOP_R * Math.sin(k / N * Math.PI / 2), cz + ez * LOOP_R * Math.cos(k / N * Math.PI / 2)];
+    for (let k = 0; k < N; k++) seg(`trackc${ex}${ez}_${k}`, pt(k), pt(k + 1));
   }
-  // the lid over the whole tray: a plate with a hole over every cell and a silicone collar round each hole (as the tank-top lid)
-  const grey = rgba(0.6, 0.62, 0.66, 0.55);
-  const xa = -TANK_W / 2, xb = TRAY_CX + TRAY_HX + 0.005;   // the lid runs from the left wall of the tank to the store lid
-  const ys = Array.from({ length: TRAY_ROWS }, (_, r) => trayY(r)), xs = Array.from({ length: TRAY_COLS }, (_, c) => trayX(c));
-  let y0 = -TANK_D / 2;
-  for (const y of ys) {
-    box(xa, xb, y0, y - HOLE_HALF, TLID_Z, TLID_T, grey);
-    let x0 = xa;
-    for (const x of xs) { box(x0, x - HOLE_HALF, y - HOLE_HALF, y + HOLE_HALF, TLID_Z, TLID_T, grey); x0 = x + HOLE_HALF; }
-    box(x0, xb, y - HOLE_HALF, y + HOLE_HALF, TLID_Z, TLID_T, grey);
-    y0 = y + HOLE_HALF;
-  }
-  box(xa, xb, y0, TANK_D / 2, TLID_Z, TLID_T, grey);
-  for (let s = 0; s < TRAY_SLOTS; s++) { const [x, y] = seatPos(s); out.push(...ring(x, y, TLID_TOP, COLLAR_IN, 0.0005, TCOLLAR_H, SILICONE)); }
   return out;
 }
 
 /** MJCF: the arm on its cart, the track, the tank with lid, store and tray, and all pods. */
 export function podGrabMjcf(): string {
-  collarNo = 0;
   const wall = (x: number, y: number, z: number, sx: number, sy: number, sz: number, a = 0.22) =>
     `<geom type="box" pos="${f(x)} ${f(y)} ${f(z)}" size="${f(sx)} ${f(sy)} ${f(sz)}" ${rgba(0.72, 0.8, 0.86, a)}/>`;
   const hx = TANK_W / 2, hy = TANK_D / 2, t = 0.004;
   const world = [
     `<geom name="floor" type="plane" size="1.2 0.9 0.01" pos="0 0 0" ${SOLID} ${rgba(0.82, 0.86, 0.9)}/>`,
-    // the bottom track pipe: floating in the track plane, no supports
-    `<geom type="cylinder" fromto="${PIPE_X0} ${PIPE_Y} ${PIPE_Z} ${PIPE_X1} ${PIPE_Y} ${PIPE_Z}" size="${PIPE_R}" ${OBST} ${rgba(0.62, 0.66, 0.7)}/>`,
+    ...loopGeoms(),
     // tank: floor, four walls, the shelf at 155 mm
     wall(0, 0, t / 2, hx, hy, t / 2, 0.5),
     wall(0, -hy + t / 2, TANK_H / 2, hx, t / 2, TANK_H / 2),

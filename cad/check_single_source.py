@@ -25,7 +25,10 @@ ORCHESTRATION = {"add", "scene", "check", "checks", "main", "draw", "views", "bu
 # superseded design studies: kept for the drawings they made, not built by build_all.py, not checked as sources (their copies are the reason this list exists)
 STUDIES = {"unit_v1_assembly.py", "pod_store_reach.py", "pod_store.py", "flatpack_tank.py", "flatpack_check.py", "charging_dock.py", "bottom_bracket.py",
            "base_module.py", "cart_wheel_pairs_v4.py", "hand_sleeve_v4.py", "so101_servo_layout.py", "aframe_pipe_joint.py", "spine_joint.py", "track_joint.py",
-           "cleanout_section.py", "cleanout_section_door.py", "pick_hole_cap.py", "pick_hole_membrane.py", "home_station.py"}
+           "cleanout_section.py", "cleanout_section_door.py", "pick_hole_cap.py", "pick_hole_membrane.py", "home_station.py",
+           # #461 (26 Nov): the owner's reference drawings of the pod grab layout, written to run in the render sandbox; they repeat each other's cart and helper code. pond_unit_bottom.py already imports the real
+           # parts/unit_dims.py and parts/pod_store_dims.py; pond_full_unit.py still carries copies. OPEN: move the cart and helpers into cad/parts/ and take both off this list.
+           "pond_unit_bottom.py", "pond_full_unit.py"}
 CART_NAMES = {"base_plate", "battery", "so101_arm_envelope"}
 TRACK_NAMES = {"track_pipe_B", "track_pipe_C", "track_pipe"}   # (#447) the cart carries no track pipe: nothing may add a child with these names to the cart
 CART_PREFIXES = ("hand_on_pipe_",)
