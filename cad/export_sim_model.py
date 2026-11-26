@@ -48,6 +48,11 @@ def constants():
                 if v is not None:
                     d[k] = v
         out[name.split(".")[-1]] = d
+    # the water testing station as a solid obstacle block (OpenPocket #461): outer box and the four legs on the lid, unit frame, mm, from cad/water_station.py (box, OFF_Y, DZ, legs)
+    import water_station as ws
+    b = ws.BOX
+    out["water_station"] = {"X0": b["x0"], "X1": b["x1"], "Y0": b["y0"] + ws.OFF_Y, "Y1": b["y1"] + ws.OFF_Y, "Z0": b["z0"] + ws.DZ, "Z1": b["z1"] + ws.DZ,
+                            "LEG": ws.LEG, "LEG_XS": list(ws.LEG_XS), "LEG_YS": [y + ws.OFF_Y for y in ws.LEG_YS]}
     return out
 
 

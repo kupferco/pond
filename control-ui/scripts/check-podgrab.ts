@@ -13,9 +13,9 @@ const sim = new SimDriver(mj, podGrabMjcf());
 const cmd = new CommandLayer(sim, new RealDriver());
 const world = new PodWorld(sim);
 for (let i = 0; i < 1500; i++) sim.step();
-const cloud = cartCloud(sim);
+const cloud = cartCloud(sim);   // all the cart's CAD points (also those on the tank side of the pipe: they are tested against the station and the lid)
 const bad: string[] = []; let n = 0;
-for (let x = -0.33; x <= 0.2801; x += 0.005) { n++; for (const c of clashesAt(cloud, x, ['spine', 'bracket', 'rod', 'pipe'], 0.0005)) bad.push(`${(x * 100).toFixed(1)} cm ${c.obstacle} ${(c.depth * 1000).toFixed(1)} mm (${c.part})`); }
+for (let x = -0.33; x <= 0.2801; x += 0.005) { n++; for (const c of clashesAt(cloud, x, ['spine', 'bracket', 'rod', 'pipe', 'station', 'lid'], 0.0005)) bad.push(`${(x * 100).toFixed(1)} cm ${c.obstacle} ${(c.depth * 1000).toFixed(1)} mm (${c.part})`); }
 console.log(`sweep: ${n} stops from -33 to +28 cm, ${bad.length} clashes`);
 const byObs = new Map<string, { n: number; max: number; x0: number; x1: number }>();
 for (const b of bad) { const [x, , o, d] = b.split(' '); const k = o; const e = byObs.get(k) ?? { n: 0, max: 0, x0: 9, x1: -9 }; e.n++; e.max = Math.max(e.max, +d); e.x0 = Math.min(e.x0, +x); e.x1 = Math.max(e.x1, +x); byObs.set(k, e); }

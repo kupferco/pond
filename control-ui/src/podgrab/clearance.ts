@@ -2,10 +2,10 @@
 // MuJoCo's mj_geomDistance on a mesh geom uses its CONVEX HULL, which fills the sleeve's C gap and the jaw cut-outs, so it cannot say whether the bracket really passes through the slot.
 // Here the CAD triangles themselves are sampled (every point at most STEP apart) in the cart frame once, and each point is tested against the obstacle solids.
 import type { SimDriver } from '../drivers/simDriver.ts';
-import { PIPE_R, PIPE_Y, PIPE_Z, COLUMN_R, SPINE_Y, BRACKET_PLATE_Y, BRACKET_HX, BRACKET_HZ, ROD_R } from './layout.ts';
+import { PIPE_R, PIPE_Y, PIPE_Z, COLUMN_R, SPINE_Y, BRACKET_PLATE_Y, BRACKET_HX, BRACKET_HZ, ROD_R, STATION, LID_Z, COLLAR_H } from './layout.ts';
 
 const STEP = 0.0025;                        // m: sample spacing on the CAD surfaces
-export type Obstacle = 'spine' | 'bracket' | 'rod' | 'pipe';
+export type Obstacle = 'spine' | 'bracket' | 'rod' | 'pipe' | 'station' | 'lid';
 export interface Cloud { pts: Float32Array; part: string[]; owner: Uint32Array }   // world points with the cart at x = 0, the geom name of each
 
 /** Surface samples (world frame, cart at x = 0) of every CAD mesh geom under the body `cart`, except those under the body `base` (the arm). */
@@ -43,6 +43,8 @@ const dist = (a: number[], b: number[]) => Math.hypot(a[0] - b[0], a[1] - b[1], 
 /** Penetration depth (m, > 0 inside) of a world point into one obstacle solid (the solids of spineGeoms() in layout.ts). */
 export function depthIn(o: Obstacle, px: number, py: number, pz: number): number {
   if (o === 'spine') return COLUMN_R - Math.hypot(px, py - SPINE_Y);
+  if (o === 'station') return Math.min(px - STATION.x0, STATION.x1 - px, py - STATION.y0, STATION.y1 - py, pz - STATION.z0, STATION.z1 - pz);   // the water testing station block (its four legs lie inside the same footprint below it)
+  if (o === 'lid') return LID_Z + COLLAR_H - pz;   // the lid top with its silicone collars
   if (o === 'pipe') return PIPE_R - Math.hypot(py - PIPE_Y, pz - PIPE_Z);
   if (o === 'rod') return Math.min(ROD_R - Math.hypot(px, pz - PIPE_Z), py - (PIPE_Y + PIPE_R), BRACKET_PLATE_Y - py);
   return Math.min(BRACKET_HX - Math.abs(px), BRACKET_HZ - Math.abs(pz - PIPE_Z), py - BRACKET_PLATE_Y, SPINE_Y - COLUMN_R - 0.001 - py);   // the bracket plate

@@ -48,6 +48,18 @@ is MEANT to pass through the slot, the sleeves were oriented wrongly. Both sleev
 
 The Transplant scene is not affected (it rides a leg: no bracket, no growing-pipe crossing).
 
+## Round 9 (#461): CAD v4 cart, water station, tray 10 mm nearer
+
+- `cad/cart_dims.py` v4 (kupferco/pond commit 30b8e2d, 25 Nov): the SO-101 base is bolted straight on the plate (`ARM_Y0` = -56, no battery under it) and the 70 x 50 x 70 battery stands on its 50 mm edge beside it
+  on the riding-hand side (`BATT_X` +59, flush with the plate edge, 4 mm from the arm base). `ARM_X` is -5 in that file (the arm base is 5 mm off the plate centre, so that the 4 mm gap and the flush battery both hold); the brief
+  said "centred", the file is followed. The sim reads all of it from the generated constants (no `ARM_SLIDE` any more; `batteryX` removed from `staticOmniCart`).
+  The same cart is the cart of the Transplant scene, whose arm base is therefore 50 mm closer to the plate too: its step 4 reach check now fails (listed as KNOWN-CLASH in the tests) and needs its own re-plan.
+- Water testing station: a solid block on four legs, from `cad/water_station.py` (exported by `export_sim_model.py`): x 60..260, y 14..108 (74 mm behind the track axis), z 394..507; the arm collides with it in the physics
+  and `clearance.ts` tests the cart's CAD triangles against it and against the lid.
+- Seedling tray `TRAY_CY` -0.098 -> -0.108 (rows A..D at y -165, -127, -89, -51 mm), still ASSUMED. The layout stays `cart_clearance_mm` 45 (the CAD value); the 110 of the earlier rounds is gone.
+- Reach (`scripts/check-podgrab-reach.ts`): the arm does NOT reach with the claw upright. Lifting a pod out of the store needs +52 mm of track height, the carry over the lid +104 (store) to +149 (row D),
+  seating in rows B, C, D needs +32, +46, +47. With the claw allowed to tilt while it carries (not implemented), the window is +55 to +80 mm of track height (clearance 100..125). Nothing was changed in the CAD for this.
+
 ## Other points to know
 - Hand C on the loop interior (above the pipe) matches the Transplant scene (free hand on the interior side). The plate is on the spine side in the Transplant scene (the arm works towards the pipe) and on
   the front, away from the spine, in the Pod grab scene (the arm works into the tank). Both are as the scenes were; the plan does not say which side the real cart uses.

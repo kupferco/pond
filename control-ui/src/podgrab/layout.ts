@@ -53,7 +53,7 @@ export const TANK_W = 0.7, TANK_D = 0.4, TANK_H = LAYOUT.TANK_H, SHELF_Z = CAD_C
 export const SHELF_TOP = SHELF_Z + SHELF_T;
 export const LID_Z = TANK_H, LID_T = LAYOUT.LID_T;
 export const PIPE_Y = CAD_UNIT.LOOP_Y / 1000;   // the track plane, CAD LOOP_Y = -60 mm (cad/parts/unit_dims.py): the unit's own number, no sim-only offset (#461: it was moved 164 mm to the back, which put the spine off the tank's centre)
-export const PIPE_Z = LAYOUT.TRACK_BOTTOM_Z;   // bottom run of the track, 275 mm over the lid top (cad/layout.json: the cart's 165 mm under the track plus 110 mm of air, ASSUMED: the smallest that lets the arm, hanging under the pipe on the top sleeve, reach tray rows B to D; no sim-only offset, #461; the CAD guessed 150 before and the sim 210 over the tank). The omni cart centre is 60 mm BELOW the pipe it rides (the TOP hand C clamps the pipe, hand B hangs open below it), and the arm base is on the cart centre. OpenPocket #364: one number for CAD and sim
+export const PIPE_Z = LAYOUT.TRACK_BOTTOM_Z;   // bottom run of the track, 210 mm over the lid top (cad/layout.json: the cart's 165 mm under the track plus 45 mm of air; the CAD value, no sim-only offset; the earlier rounds' 110 mm of air is gone). The omni cart centre is 60 mm BELOW the pipe it rides (the TOP hand C clamps the pipe, hand B hangs open below it), and the arm base is on the cart centre. OpenPocket #364: one number for CAD and sim
 export const PIPE_R = m(PIPE_D_MM) / 2;
 // the track loop (cad/parts/unit_dims.py, the same numbers as the Transplant scene's track()): a portrait rounded rectangle in the plane y = PIPE_Y, legs 580 mm apart, corner radius 150, bottom run at PIPE_Z, top run at ZT
 export const LOOP_TX = CAD_UNIT.TX / 1000, LOOP_R = CAD_UNIT.R / 1000, LOOP_ZT = CAD_UNIT.ZT / 1000, LOOP_TR = CAD_UNIT.TR / 1000;
@@ -71,23 +71,27 @@ export const BRACKET_T = 0.004;
 export const BRACKET_HX = 0.008, BRACKET_HZ = 0.005;   // half the 16 mm along the track, half the 10 mm across
 export const BRACKET_PLATE_Y = PIPE_Y + PIPE_R + 0.0015;   // the plate starts on the clamp ring (R + 1.5 mm)
 export const ROD_R = 0.004;                     // M8 rod (track_joint.py)
+// The water testing station (cad/water_station.py + OFF_Y, DZ; exported by cad/export_sim_model.py): a SOLID obstacle block, about 200 x 94 x 113 mm, on four legs on the lid, x 60..260 along the track (over the pod store),
+// from 74 mm behind the track axis to the back, its roof just under the track pipe. The arm and the cart collide with it.
+const WS = CAD_CONSTANTS.water_station;
+export const STATION = { x0: m(WS.X0), x1: m(WS.X1), y0: m(WS.Y0), y1: m(WS.Y1), z0: m(WS.Z0), z1: m(WS.Z1), leg: m(WS.LEG), legXs: WS.LEG_XS.map(m), legYs: WS.LEG_YS.map(m) };
 export const SHELF_CAP_T = 0.004, SHELF_CAP_H = 0.03;   // ASSUMED shelf end caps
 // cart (the omni cart of cad/cart_dims.py, hand_sleeve.py v5; src/cart/omni-scene.ts, Pond #284). The cart body (mocap) rides the bottom run on its TOP hand C; hand B, its mirror, hangs open below the pipe.
 //  - cart frame: x across the pipes (hand B at -60, hand C at +60), y out of the pipe plane (the plate is on -y, the front), z along the pipes. In the world: cart x = up, cart y = world y, cart z = world -x.
 //    So the cart centre, the plate centre and the arm base are 60 mm BELOW the pipe the cart rides (top hand C on the pipe).
 //  - the plate is 146 mm along the track (z -73..73) and 168 across (x -84..84), 6 mm thick, bolted to both sleeve pads: nothing swings and nothing dangles below the pipe (the old cart hung a second hand 100 mm below it)
-//  - the battery (70 x 50 x 70) is on the plate's front face, the SO-101 base (its servo underside) on the battery's front face: 106 mm out of the pipe plane. The arm works in the vertical plane through the cart centre.
+//  - CAD v4 (cad/cart_dims.py): the SO-101 base (its servo underside) is bolted straight on the plate's front face, 56 mm out of the pipe plane, and the battery stands on its 50 mm edge beside it on the riding-hand side. The arm works in the vertical plane through the cart centre.
 //  - the cart does the x motion; the plate is flat, parallel to the track plane (roll 0): the roll is only for the legs (owner answers Q6, Q8)
 export const CART_ROLL = 0;                      // deg: the cart stays flat on the runs
 export const CART_DZ = -HX / 1000;               // cart centre height relative to the pipe it rides: the cart rides on its TOP hand (C, cart x = +60), so the centre is 60 mm BELOW the pipe (owner, Pod grab clamp, #461)
-export const ARM_SLIDE = 0.04;                  // the battery and the arm base are slid 40 mm UP the plate (towards the riding top hand, cart x +40; the plate is 168 wide, the 70 mm battery then ends 5 mm from its edge). With the cart hanging 60 mm under the pipe the arm base would be 120 mm lower than before and could not fold in close enough to carry a pod over the lid; this gets 40 mm of it back (ASSUMED, no CAD change: the other scenes keep the battery in the middle)
+export const ARM_X = CART.armX / 1000;          // the SO-101 base centre across the plate, cad/cart_dims.py ARM_X (v4: bolted straight on the plate, 5 mm off its centre, the battery stands beside it on the riding-hand side); no sim-only slide
 export const HAND_TURN: Record<'B' | 'C', number> = { B: Math.PI / 2, C: -Math.PI / 2 };   // sleeves turned about their pipes so the 18 mm C gap faces the spine bracket (world +y)
 export const CART_Z = PIPE_Z + CART_DZ;          // world z of the cart centre = the arm base height
 export const CART_QUAT: [number, number, number, number] = [Math.SQRT1_2, 0, -Math.SQRT1_2, 0];   // cart frame -> world: x up, y = world y, z = world -x
-export const PLATE_FACE_Y = m(CART.battFaceY);   // cart frame y of the battery's front face, the plane the arm base is bolted to (the plate's own face is at -56)
+export const PLATE_FACE_Y = m(CART.battFaceY);   // cart frame y of the plane the arm base is bolted to: the plate's front face (-56)
 export const BASE_BOTTOM = 0.0085;               // the base servo's underside, in base coordinates (arm model: servo1 spans z 8.5..43.5 mm)
 export const ARM_Y = PIPE_Y + PLATE_FACE_Y + BASE_BOTTOM;   // arm base origin, world y: its underside (base z = 8.5 mm) is on the battery face, the arm axis (base z) is the plate normal, pointing out of the plate (-y)
-export const ARM_BASE_Z = CART_Z + ARM_SLIDE - 0.004;        // IK reference: the pick/place paths are planned with the points 4 mm above the real ones, so the claw runs a few mm high over the store walls (arm sag)
+export const ARM_BASE_Z = CART_Z + ARM_X - 0.004;        // IK reference: the pick/place paths are planned with the points 4 mm above the real ones, so the claw runs a few mm high over the store walls (arm sag)
 export const BASE_XYAXES = '-1 0 0 0 0 -1';      // in the CART frame: base x = cart -x = world down (pan 0 points down the plate), base y = cart -z = world +x along the track, base z = out of the plate (cart -y)
 export const PAN0 = 0;                          // pan angle (deg): the arm works in the vertical plane through the plate centre, pointing down the plate
 /** Arm planar IK frame: r = distance down from the base axis (the arm's "forward", base x), u = distance out of the plate along the base axis (base z, the plate normal). */
@@ -133,7 +137,7 @@ export const TRAY_COLS = 4, TRAY_ROWS = 4;
 export const TRAY_CX = -0.24, TRAY_HX = 0.095, TRAY_HY = 0.185;
 export const TRAY_Z0 = 0.2, TRAY_T = 0.004;   // thin flat tray on two side rails over the shelf: a seated pod stands as deep under the tank lid as a pod at the pick position of the store (ASSUMED; the tank top is now closed over the tray)
 export const TRAY_TOP = TRAY_Z0 + TRAY_T;
-export const TRAY_COL_PITCH = 0.045, TRAY_ROW_PITCH = 0.038, TRAY_CY = -0.098;
+export const TRAY_COL_PITCH = 0.045, TRAY_ROW_PITCH = 0.038, TRAY_CY = -0.108;
 export const CELL_R = 0.016;                    // inner radius of a silicone collar (pod radius 12.5)
 export const CELL_H = 0.016;
 // lid over the seedling tray: a plate just above the collars of the cells, a silicone collar round each hole (same as the tank-top lid)
@@ -178,9 +182,9 @@ const CART_COL = 'contype="4" conaffinity="2"';   // the cart's parts: they coll
  *  except the battery, which the arm base sits flush on. Against the spine and the track bracket the cart is measured, not simulated: see PodWorld.scanCart. */
 function cartMount(): { open: string; close: string; baseAttrs: string } {
   const open = `<body name="cart" mocap="true" pos="${CART_HOME_X} ${PIPE_Y} ${f(CART_Z)}" quat="${CART_QUAT.map(f).join(' ')}">
-      ${staticOmniCart({ free: 'B', jawOpenRad: 0, handTurn: HAND_TURN, batteryX: ARM_SLIDE * 1000, col: CART_COL, colBattery: SOLID })}`;
+      ${staticOmniCart({ free: 'B', jawOpenRad: 0, handTurn: HAND_TURN, col: CART_COL, colBattery: SOLID })}`;
   // no joint and no extra base: the arm's own base body is a fixed child of the cart, its underside flat on the battery face
-  const baseAttrs = `pos="${f(ARM_SLIDE)} ${f(PLATE_FACE_Y + BASE_BOTTOM)} 0" xyaxes="${BASE_XYAXES}"`;
+  const baseAttrs = `pos="${f(ARM_X)} ${f(PLATE_FACE_Y + BASE_BOTTOM)} 0" xyaxes="${BASE_XYAXES}"`;
   return { open, close: '</body>', baseAttrs };
 }
 
@@ -201,6 +205,10 @@ function spineGeoms(): string[] {
   box(-BRACKET_HX, BRACKET_HX, yPlate, SPINE_Y - COLUMN_R - 0.001, PIPE_Z - BRACKET_HZ, PIPE_Z + BRACKET_HZ, brk, 'track_bracket');
   out.push(`<geom name="bracket_rod" type="cylinder" fromto="0 ${f(yPlate)} ${PIPE_Z} 0 ${f(PIPE_Y + PIPE_R)} ${PIPE_Z}" size="${ROD_R}" ${OBST} ${rgba(0.75, 0.75, 0.78)}/>`);
   out.push(`<geom name="bracket_ring" type="cylinder" fromto="-0.01 ${PIPE_Y} ${PIPE_Z} 0.01 ${PIPE_Y} ${PIPE_Z}" size="${f(PIPE_R + 0.0015)}" ${OBST} ${brk}/>`);
+  // The water testing station: the box and its four legs on the lid.
+  const ws = rgba(0.93, 0.93, 0.9);
+  box(STATION.x0, STATION.x1, STATION.y0, STATION.y1, STATION.z0, STATION.z1, ws, 'water_station');
+  STATION.legXs.forEach((lx, i) => STATION.legYs.forEach((ly, j) => box(lx, lx + STATION.leg, ly, ly + STATION.leg, LID_Z, STATION.z0, rgba(0.6, 0.6, 0.62), `water_station_leg${i}${j}`)));
   // Shelf brackets: a collar on the spine and a flat bar under the shelf to each side, up to the edge of the tray / the store.
   collar(SHELF_Z - 0.014, SHELF_Z - 0.002);
   box(TRAY_CX + TRAY_HX - 0.02, -SPINE_R - 0.005, SPINE_Y - 0.01, SPINE_Y + 0.01, SHELF_Z - BRACKET_T, SHELF_Z);

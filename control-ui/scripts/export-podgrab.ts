@@ -7,7 +7,9 @@ import { join } from 'node:path';
 import { SimDriver } from '../src/drivers/simDriver.ts';
 import { RealDriver } from '../src/drivers/realDriver.ts';
 import { CommandLayer } from '../src/commands.ts';
-import { CART_QUAT, CART_Z, PIPE_Y, PIPE_Z, podGrabMjcf } from '../src/podgrab/layout.ts';
+import { CART_QUAT, CART_Z, PIPE_Y, PIPE_Z, podGrabMjcf, armR, armU, seatPos, storePos, trayX, TRANSIT_Z, STORE_PITCH_DEG } from '../src/podgrab/layout.ts';
+import { probe } from '../src/podgrab/reach.ts';
+import { MOTORS } from '../src/model.ts';
 import { PodTask, PodWorld } from '../src/podgrab/task.ts';
 import { glb, triangles, type Tri } from './tri-export.ts';
 
@@ -46,7 +48,26 @@ while (!task.done) {
     snap(hit[0], hit[1], `cart x ${world.cartX.toFixed(2)} m`);
   }
 }
-snap('5-done', 'End of the run: the arm cannot reach the store from the real unit', task.failReason === '' ? 'seated' : task.failReason, [0, 0, 0.5], 0.6);
+snap('5-done', 'End of the run (the cycle does not start: the arm cannot fold in far enough to lift a pod out of the store at the CAD track height)', task.failReason === '' ? 'seated' : task.failReason, [0, 0, 0.5], 0.6);
+// mid-reach to tray row D and the store pick (#461): the arm is put at the IK pose of the waypoint with every joint held inside its limit, so the picture shows how far it gets
+const reachPose = (id: string, label: string, x: number, z: number, y: number, pitch: number, centre: number[], half: number) => {
+  world.reset();
+  const p = probe(armR(z), armU(y), pitch);
+  const j = p.joints!;
+  const h = sim.model.opt.timestep;
+  world.setCart(x);
+  for (let k = 0; k < 4000; k++) {
+    for (const m of MOTORS.slice(0, 4)) cmd.setJointTarget(m.id, Math.max(m.min + 0.5, Math.min(m.max - 0.5, j[m.id])));
+    sim.step(); world.tick(h);
+  }
+  snap(id, label, `shoulder to wrist ${(p.d * 1000).toFixed(0)} mm, ${p.ok ? 'inside the joint limits' : 'joints held at their limit (the waypoint is out of reach)'}`, centre, half);
+};
+const D1 = seatPos(12);
+// the carry height over D1 with the claw upright is out of reach; show the nearest reachable carry pose instead: the claw tilted by the smallest angle that reaches (it must be straightened over the socket for the last 47 mm, which is what does not reach)
+let tilt = 0; while (tilt < 90 && !probe(armR(TRANSIT_Z), armU(D1[1]), tilt).ok) tilt++;
+reachPose('2-reach-row-d', `Mid-reach to tray row D (socket D1): the pod carried over the socket with the claw tilted ${tilt} degrees (upright does not reach at this track height)`, trayX(0), TRANSIT_Z, D1[1], tilt, [trayX(0), -0.1, 0.4], 0.4);
+const P0 = storePos(0, 0);
+reachPose('3-store-pick', 'The store pick: the claw down through the lid hole round the pod (this one is reached)', P0[0], P0[2], P0[1], STORE_PITCH_DEG, [P0[0], -0.1, 0.35], 0.3);
 // the spine crossing (#461): the sleeves are turned so their 18 mm slot faces the bracket; the cart at three stops across the spine (arm at its ready pose), close up
 world.reset();
 for (const [id, x] of [['6-spine-m10', -0.1], ['7-spine-0', 0], ['8-spine-p10', 0.1]] as const) {

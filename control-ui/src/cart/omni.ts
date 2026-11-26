@@ -47,7 +47,7 @@ export const PAD = { x0: HS.PAD_X0 as number, x1: HS.PAD_X1 as number, y0: HS.PA
 export const PLATE_T: number = CD.PLATE_T, PLATE_Y1: number = CD.PLATE_Y1, PLATE_Y0: number = CD.PLATE_Y0;   // plate front face -56
 export const PLATE_X0: number = CD.PLATE_X0, PLATE_X1: number = CD.PLATE_X1;                                    // -80 .. +80
 export const PLATE_ZH: number = CD.PLATE_ZH;        // 73
-export const ARM_BASE_W: number = CD.ARM_BASE_W, BATT = CD.BATT as readonly [number, number, number], ARM_BASE_T = 20;   // arm base 70 x 70 footprint (ARM_BASE_T ASSUMED, the sim's stand-in block)
+export const ARM_BASE_W: number = CD.ARM_BASE_W, BATT = CD.BATT as readonly [number, number, number], ARM_BASE_T = 20, ARM_X: number = CD.ARM_X, BATT_X: number = CD.BATT_X, BATT_Z: number = CD.BATT_Z, ARM_Y0: number = CD.ARM_Y0;   // arm base 70 x 70 footprint (ARM_BASE_T ASSUMED, the sim's stand-in block)
 export const MOTOR_R: number = CO.MOTOR_R, MOTOR_L: number = CO.MOTOR_L, GB_L: number = CO.GB_L, GB_T: number = CO.GB_T;   // worm motor placeholder
 export const DRIVE_MOTOR_FACE_Y = HS.DRIVE_MOTOR_WALL_Y + 1, ROLL_MOTOR_GAP_Z: number = HS.ROLL_MOTOR_WALL_Z;       // layout B standoffs
 export const MOTOR_RPM: number = CD.MOTOR_RPM, MOTOR_RATED_NM: number = CD.MOTOR_RATED_NM;
@@ -187,9 +187,9 @@ function baseGeoms(): string {
   const box = (name: string, x: number, y: number, z: number, hx: number, hy: number, hz: number, col: string) =>
     g.push(`<geom ${name ? `name="${name}" ` : ''}type="box" pos="${n3(x, y, z)}" size="${f(m(hx))} ${f(m(hy))} ${f(m(hz))}" ${col} ${CART_COL}/>`);
   box('plate', (PLATE_X0 + PLATE_X1) / 2, PLATE_Y0 + PLATE_T / 2, 0, (PLATE_X1 - PLATE_X0) / 2, PLATE_T / 2, PLATE_ZH, PLATEC);
-  box('battery', 0, PLATE_Y0 - BATT[1] / 2, 0, BATT[0] / 2, BATT[1] / 2, BATT[2] / 2, HIDDEN);
+  box('battery', BATT_X, PLATE_Y0 - BATT[1] / 2, BATT_Z, BATT[0] / 2, BATT[1] / 2, BATT[2] / 2, HIDDEN);
   g.push(cartMeshGeoms('base', 'static'));
-  box('armbase', 0, PLATE_Y0 - BATT[1] - ARM_BASE_T / 2, 0, ARM_BASE_W / 2, ARM_BASE_T / 2, ARM_BASE_W / 2, rgba([0.9, 0.65, 0.2]));
+  box('armbase', ARM_X, ARM_Y0 - ARM_BASE_T / 2, 0, ARM_BASE_W / 2, ARM_BASE_T / 2, ARM_BASE_W / 2, rgba([0.9, 0.65, 0.2]));
   return g.join('\n      ');
 }
 

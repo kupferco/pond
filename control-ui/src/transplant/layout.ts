@@ -66,8 +66,8 @@ export const XT = -CAD_UNIT.LOOP_Y / 1000;            // world x of the track pl
 export const LEG = CAD_UNIT.TX / 1000;                // the track's legs stand at world y = -/+ 0.29 (cad/parts/unit_dims.py TX = 290; sim y = CAD x)
 /** The cart rides the leg at SIDE * LEG with the hand on that side (hand B, cart x = -60 mm, on the +y leg; hand C, cart x = +60 mm, on the -y leg, see cart/omni.ts): the cart origin is 60 mm towards the pipe plane from it. */
 export const YC = SIDE * (LEG - HX / 1000);
-export const ARM_CX = 0;                              // arm base centre across the plate (cad/cart_dims.py ARM_X = 0)
-export const ARM_CY = mm(CART.battFaceY);             // arm base underside (on the battery front): cart y -106 (plate face -56, battery 50 thick; cad/cart_dims.py ARM_Y0)
+export const ARM_CX = mm(CART.armX);               // arm base centre across the plate (cad/cart_dims.py ARM_X, v4: -5 mm)
+export const ARM_CY = mm(CART.battFaceY);             // arm base underside (v4: bolted on the plate face): cart y -56 (cad/cart_dims.py ARM_Y0)
 export const BASE_BOTTOM = 0.0085;                    // the arm model's base origin is 8.5 mm out from the base underside (model.ts)
 export const XB = XT + ARM_CY - BASE_BOTTOM;          // world x of the arm base origin; the base axis (z) points along -x
 /** World offset (from the cart origin on the arm plane at the pipe plane) of a CART frame point (cx, cy, cz). */

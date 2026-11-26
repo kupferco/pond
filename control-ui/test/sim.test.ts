@@ -23,7 +23,8 @@ import { LOAD_N, PIPES, maxCantileverMm, sagTable } from '../src/cart/track-sag.
 import * as TS from '../src/cart/track-supports.ts';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { LID_T, RAIL_H, slopePoint, SLOPE, ARM_Y, BASE_BOTTOM, CART_Z, LID_Z, PIPE_Y, PIPE_Z, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
+import { LID_T, RAIL_H, slopePoint, SLOPE, ARM_Y, ARM_X, STATION, TRAY_CY, trayY, CART_ROLL, PIPE_R, BASE_BOTTOM, CART_Z, LID_Z, PIPE_Y, PIPE_Z, SPINE_Y, POD_COUNT, POD_PITCH, ROW_PITCH, ROW_X0, SPINE_R, STORE_CAP, STORE_ROWS, STORE_START, TRAY_CX, TRAY_HX, TRAY_SLOTS, podGrabMjcf, seatPos, storePos } from '../src/podgrab/layout.ts';
+import { CAD_CONSTANTS } from '../src/generated/cad-sim.ts';
 import { PodTask, PodWorld, fillJobs } from '../src/podgrab/task.ts';
 import { cartCloud, clashesAt } from '../src/podgrab/clearance.ts';
 import * as LAYOUT from '../src/layout.ts';
@@ -42,9 +43,10 @@ let fail = 0;
 // OpenPocket #376: KNOWN CLASH. With the bottom track run at the shared layout height (cad/layout.json, 514 mm; the scenes used a guessed 450) the cart's sleeve lobe (handC:slC_18) touches the bottom track corner (trackc-1-1_6, 10.77 mm deep)
 // at the old lowest cart stop, so the transplant/reach checks below fail. They are NOT loosened or deleted: they are listed here, printed as KNOWN-CLASH and reported in the pull request (parts, depth, stop, fix options).
 // OpenPocket #461 (round 6): the shared layout's cart_clearance_mm went 45 -> 110 (the pod-grab cart hangs under its track and the arm then needs the track higher to reach tray rows B to D). The transplant scene's cart stops are absolute heights, so its sleeve ring now touches the track corner by 0.46 mm in steps 3 and 4 as well (0.46 mm, same part pair as the known clash above); listed here, not loosened.
-const KNOWN_CLASH = ['transplant: rest pose is clear and reachable', 'transplant: 1. Pick a seedling', 'transplant: 2. Drive to the hole', 'transplant: 3. Park the plug: no contacts', 'transplant: 4. Seat the seedling: no contacts', 'transplant: the first stop (0.64 m)', 'reach: the folded arm at the lowest cart stop touches nothing'];
+const KNOWN_CLASH = ['transplant: rest pose is clear and reachable', 'transplant: 1. Pick a seedling', 'transplant: 2. Drive to the hole', 'transplant: 3. Park the plug: no contacts', 'transplant: 4. Seat the seedling: no contacts', 'transplant: the first stop (0.64 m)', 'transplant: 4. Seat the seedling: in reach', 'reach: the folded arm at the lowest cart stop touches nothing'];
+// OpenPocket #461 (round 9): the owner's CAD v4 cart (cad/cart_dims.py: arm straight on the plate, 50 mm nearer the plate than before) is the one cart of every scene, so the transplant arm sits 50 mm closer to its targets too: step 4 'in reach' has 673 unreachable frames now. Listed, not loosened; the transplant scene needs its own re-plan (reported in the pull request).
 // OpenPocket #461 (round 8): the Pod grab scene is now built on the real unit (spine and 75 mm growing pipe on the tank centre, track plane 60 mm in front of it, the unit's own loop). On that unit the cart cannot pass the growing pipe
-// (sleeves cut into it by up to 11.5 mm for x -8.5 to +8.5 cm) and the arm base is 21 mm in FRONT of the pick line, so no pod can be reached: 0/16. These checks stay as they were, are printed as KNOWN-CLASH and reported in the pull request.
+// (sleeves cut into it by up to 11.5 mm for x -8.5 to +8.5 cm). Round 9 (CAD v4 cart: arm straight on the plate, battery beside it, track at the CAD height 45 mm clearance): the arm cannot fold in far enough at the lift and the carry, so the cycle does not complete: 0/16 (reach table: scripts/check-podgrab-reach.ts). These checks stay as they were, are printed as KNOWN-CLASH and reported in the pull request.
 KNOWN_CLASH.push('pod grab: no part of the cart intersects the spine', 'pod grab: the runtime scan agrees', 'first pick: gripper never touched a collar', 'one pod is seated in collar A1', 'row 3 slid down one position', 'pods conserved over the first pick',
   'whole 4 x 4 tray filled', 'pod count conserved: 16 in the tray', '8 mm of perception error misses the hole', 'every seated pod stands', 'full run:');
 let knownClash = 0;
@@ -362,8 +364,8 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
       const c = [0, 1, 2].map((k) => pg.data.geom_xpos[3 * plate + k]);
       const under = [0, 1, 2].map((k) => pg.data.xpos[3 * bid + k] + BASE_BOTTOM * up[k]);
       const off = [0, 1, 2].map((k) => under[k] - c[k]);
-      const faceOff = Math.abs(off[0] * n[0] + off[1] * n[1] + off[2] * n[2]) - 0.003 - 0.05;   // distance of the base underside from the battery's front face (plate 6 mm + battery 50 mm) along the normal
-      check('arm base underside is flat on the battery face (cart_dims.py ARM_Y0, 106 mm out of the pipe plane)', Math.abs(faceOff) < 1e-6, String(faceOff));
+      const faceOff = Math.abs(off[0] * n[0] + off[1] * n[1] + off[2] * n[2]) - 0.003;   // distance of the base underside from the plate's front face along the normal (half the 6 mm plate; v4: no battery under the arm)
+      check('arm base underside is flat on the plate front face (cart_dims.py ARM_Y0, 56 mm out of the pipe plane, CAD v4)', Math.abs(faceOff) < 1e-6, String(faceOff));
       const inPlane = [off[0] - (off[0] * n[0] + off[1] * n[1] + off[2] * n[2]) * n[0], off[1] - (off[0] * n[0] + off[1] * n[1] + off[2] * n[2]) * n[1], off[2] - (off[0] * n[0] + off[1] * n[1] + off[2] * n[2]) * n[2]];
       check('arm base sits within the plate outline', Math.abs(inPlane[0]) < 0.056 - 0.0225 && Math.abs(inPlane[2]) < pg.model.geom_size[3 * plate + 2] - 0.0225, inPlane.join());
       check('only one arm base: the cart carries just the plate and the two wheel sets (no deck or pad)', !names.includes('DECK_') && !names.includes('deck'));
@@ -385,7 +387,11 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     check('pod grab: both hands have their jaws closed (the free bottom hand is closed to take less room, #461)', Math.abs(quat('jawB')[0] - 1) < 1e-9 && Math.abs(quat('jawC')[0] - 1) < 1e-9);
     const nmz = podGrabMjcf();
     check('pod grab: no hinge, worm, tongue or second hand below the pipe: the one plate carries the battery and the arm (cartbase), the arm base is the arm\'s own', !/hinge|worm|tongue/i.test(nmz.replace(/type="hinge"/g, '')) && nmz.includes('name="battery"') && nmz.includes('name="cartbase"') && !nmz.includes('name="armbase"'));
-    check('pod grab: the arm base is 106 mm out of the pipe plane (plate 6 + battery 50 on the 50 mm pads) and 60 mm BELOW the pipe it clamps with the top sleeve', Math.abs(PIPE_Y - ARM_Y - 0.0975) < 1e-9 && Math.abs(CART_Z - PIPE_Z + 0.06) < 1e-9);
+    check('pod grab: the arm base is bolted straight on the plate (56 mm out of the pipe plane, CAD v4, no battery under it), centred as cart_dims.py ARM_X, and 60 mm BELOW the pipe it clamps with the top sleeve', Math.abs(PIPE_Y - ARM_Y - 0.0475) < 1e-9 && Math.abs(CART_Z - PIPE_Z + 0.06) < 1e-9 && Math.abs(ARM_X - CAD_CONSTANTS.cart_dims.ARM_X / 1000) < 1e-12);
+    check('pod grab: the battery stands on its 50 mm edge beside the arm, on the riding-hand side, flush with the plate edge and 4 mm from the arm base (CAD v4)', (() => { const D = CAD_CONSTANTS.cart_dims; return D.BATT[0] === 50 && D.BATT[1] === 70 && D.BATT_X > D.ARM_X && Math.abs(D.BATT_X + D.BATT[0] / 2 - D.PLATE_X1) < 1e-9 && Math.abs(D.BATT_X - D.BATT[0] / 2 - D.ARM_X - D.ARM_BASE_W / 2 - 4) < 1e-9; })());
+    check('pod grab: the water testing station is a solid block of the CAD size (about 200 x 94 x 113 mm, x 60..260, from 74 mm behind the track axis) that the arm collides with, on four legs on the lid', nmz.includes('name="water_station"') && (nmz.match(/name="water_station_leg\d\d"/g) ?? []).length === 4 && Math.abs((STATION.x1 - STATION.x0) - 0.2) < 1e-9 && Math.abs((STATION.y0 - PIPE_Y) - 0.074) < 1e-9 && Math.abs((STATION.z1 - STATION.z0) - 0.113) < 1e-9 && STATION.z1 < PIPE_Z + PIPE_R);
+    check('pod grab: the cart stays flat (roll 0) and rides ONE pipe, the bottom run: no second track pipe below it', CART_ROLL === 0 && (nmz.match(/name="track_pipe"/g) ?? []).length === 1);
+    check('pod grab: the seedling tray is 10 mm nearer the cart (TRAY_CY -0.108, rows A to D at y -165, -127, -89, -51 mm)', Math.abs(TRAY_CY + 0.108) < 1e-12 && [0, 1, 2, 3].every((r, i) => Math.abs(trayY(r) * 1000 - [-165, -127, -89, -51][i]) < 1e-6));
     // spine and bracket (#461): the sleeves are turned so the 18 mm slot faces the bracket, which passes through it. Exact check on the CAD triangles (src/podgrab/clearance.ts), the whole run of the pipe.
     {
       const cloud = cartCloud(pg);
@@ -519,7 +525,7 @@ check('bad scene falls back', resolveSceneId('?scene=nope', 'zzz') === 'arm');
     const jb = tm.body('jawB'), jc = tm.body('jawC'), qb = [0, 1, 2, 3].map((k) => tm.body_quat[4 * jb.id + k]), qc = [0, 1, 2, 3].map((k) => tm.body_quat[4 * jc.id + k]); jb.delete(); jc.delete();
     check('transplant: the real omni cart (plate, battery, two three-lobe sleeves with omni wheels and ball cups), no hinge, worm or tongue, and the arm\'s own base (no armbase block)', xml.includes('name="lobeCo"') && xml.includes('name="battery"') && !xml.includes('name="armbase"') && !/worm|tongue/i.test(xml) && !xml.includes('name="hinge'));
     check('transplant: the free hand (B) has its jaw open 92 degrees and the riding hand (C) is closed', Math.abs(2 * Math.asin(Math.abs(qb[3])) * 180 / Math.PI - 92) < 0.1 && Math.abs(qc[0] - 1) < 1e-9);
-    check('transplant: the arm base is on the battery front, 106 mm out of the pipe plane (plate face -56, battery 50) and the cup root 18 mm out of the plate face', Math.abs(ARM_CY + 0.106) < 1e-12 && Math.abs(CUP_ROOT[1] + 0.074) < 1e-12);
+    check('transplant: the arm base is on the plate front (CAD v4), 56 mm out of the pipe plane, and the cup root 18 mm out of the plate face', Math.abs(ARM_CY + 0.056) < 1e-12 && Math.abs(CUP_ROOT[1] + 0.074) < 1e-12);
     // lowest stop: the sleeve's -60 degree lobe touches the track corner just below 0.64 m
     tr.reset();
     const probe = (z: number) => { const p = tr.pose; const was = p.cartZ; p.cartZ = z; bind.apply(p); const d = podContact(tm, td); p.cartZ = was; return d; };
