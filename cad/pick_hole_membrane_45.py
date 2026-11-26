@@ -20,16 +20,15 @@ for ang in (0, 90):
                   .rotate((0, 0, 0), (0, 0, 1), ang).translate((0, 0, MEM_T / 2)))
 
 ring = cq.Workplane("XY").circle(RING_OD / 2).circle(HOLE_D / 2).extrude(RING_T).translate((0, 0, MEM_T))
-# drain notch at the low edge (-Y)
-notch = cq.Workplane("XY").box(8, RING_OD, RING_T + 1, centered=(True, False, False)).translate((0, -RING_OD / 2 - 2, MEM_T - 0.5))
+# drain notch at the low edge (-Y) only
+notch = cq.Workplane("XY").box(8, 12, RING_T + 1, centered=(True, False, False)).translate((0, -RING_OD / 2 - 2, MEM_T - 0.5))
 ring = ring.cut(notch)
 
 # hood over the high half (+Y), open on the low side
 hood_r_in = RING_OD / 2 + 1; hood_t = 2.0; hood_h = 14.0
-hood = (cq.Workplane("XY").circle(hood_r_in + hood_t).circle(hood_r_in).extrude(hood_h)
-        .cut(cq.Workplane("XY").box(200, 200, 100, centered=(True, False, True)).translate((0, -200, 0))))
-cap = (cq.Workplane("XY").circle(hood_r_in + hood_t).extrude(hood_t).translate((0, 0, hood_h))
-       .cut(cq.Workplane("XY").box(200, 200, 100, centered=(True, False, True)).translate((0, -200 + 8, 0))))
+half = cq.Workplane("XY").box(200, 200, 100, centered=(True, False, True)).translate((0, -200, 0))
+hood = cq.Workplane("XY").circle(hood_r_in + hood_t).circle(hood_r_in).extrude(hood_h).cut(half)
+cap = cq.Workplane("XY").circle(hood_r_in + hood_t).extrude(hood_t).translate((0, 0, hood_h)).cut(half.translate((0, 8, 0)))
 hood = hood.union(cap)
 
 pod = cq.Workplane("XY").circle(POD_D / 2).extrude(POD_H).translate((0, 0, -LID_T - 6 - POD_H))
