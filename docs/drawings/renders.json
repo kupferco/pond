@@ -3,7 +3,7 @@
   "renders": [
     {
       "id": "complete-unit-v2",
-      "date": "2026-11-20",
+      "date": "2026-11-23",
       "part": "Complete unit",
       "category": "Complete unit",
       "status": "draft",
@@ -13,6 +13,123 @@
       "comment": "DRAFT, OpenPocket #365. Rebuilt from the single-source parts (cad/parts/): tank with the water volume at the normal 15 cm level (translucent blue), frame, solar panel, growing pipe with a pod in each of its 48 holes (simplified), the 155 mm shelf inside the tank with the seedling tray and the seedling storage (blue) standing on it UNDER the lid (#447: they were drawn on top of the lid), and the REAL cart (motors inward, #312, both omni sleeves) with its sample tubing coil (#330) clamped on the right track run, instead of the old red box stand-in. #447: the cart no longer carries a stub of track pipe: the only track is the unit's. 3D model: cad/renders/complete-unit.glb. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
       "thumb": "renders/complete-unit-v2-line.png",
       "viewer": "viewer.html?src=renders/complete-unit-v2.glb&title=Complete%20unit%20v2%20(single-source:%20tank%20with%20water,%20real%20cart,%20sample%20coil)"
+    },
+    {
+      "id": "track-supports-assembly-v2",
+      "date": "2026-11-23",
+      "part": "Track supports: whole unit",
+      "category": "Track",
+      "status": "draft",
+      "version": 2,
+      "group": "Track supports",
+      "title": "Whole unit with the track supports (with water)",
+      "comment": "DRAFT, OpenPocket #315 supports, regenerated in #365 from the single-source unit: the tank now holds its water volume (15 cm, separate part). OpenPocket #537: the track is 66 mm from the central pipe (16 tube radius + the 50 mm M8 rod of the track joint; the free rod stub is now 50 mm, was 34). A post on the lid at each end of the bottom run and a hanger from the crossbar on the top run, on the M8 rod entering from the spine side. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
+      "thumb": "renders/track-supports-assembly-v2-line.png",
+      "viewer": "viewer.html?src=renders/track-supports-assembly-v2.glb&title=Whole%20unit%20with%20the%20track%20supports%20(with%20water)"
+    },
+    {
+      "id": "track-supports-bottom-v2",
+      "date": "2026-11-23",
+      "part": "Track supports: bottom run",
+      "category": "Track",
+      "status": "draft",
+      "version": 2,
+      "group": "Track supports, bottom run",
+      "title": "Bottom-run support (regenerated)",
+      "comment": "DRAFT, regenerated in #365: close-up of the post on the tank lid. OpenPocket #537: THE TRACK OFFSET IS 66 mm: the track pipe axis is 66 mm in front of the central pipe axis (16 mm tube radius + the 50 mm M8 rod of the flush track joint; the rod stub here was 34 mm and disagreed with the joint). The blue dimension in the picture shows it.",
+      "thumb": "renders/track-supports-bottom-v2-line.png",
+      "viewer": "viewer.html?src=renders/track-supports-bottom-v2.glb&title=Bottom-run%20support%20(regenerated)"
+    },
+    {
+      "id": "track-supports-top-v2",
+      "date": "2026-11-23",
+      "part": "Track supports: top run",
+      "category": "Track",
+      "status": "draft",
+      "version": 2,
+      "group": "Track supports, top run",
+      "title": "Top-run support (regenerated)",
+      "comment": "DRAFT, regenerated in #365: close-up of the hanger from the crossbar. OpenPocket #537: THE TRACK OFFSET IS 66 mm: the track pipe axis is 66 mm in front of the central pipe axis (16 mm tube radius + the 50 mm M8 rod of the flush track joint; the rod stub here was 34 mm and disagreed with the joint). The blue dimension in the picture shows it.",
+      "thumb": "renders/track-supports-top-v2-line.png",
+      "viewer": "viewer.html?src=renders/track-supports-top-v2.glb&title=Top-run%20support%20(regenerated)"
+    },
+    {
+      "id": "transplant-seedling-step4-seat-v12",
+      "date": "2026-11-26",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "draft",
+      "version": 12,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 4: seedling seated, hole closed",
+      "comment": "The arm seated the seedling pod in the collar on the front of the spine; the hand is just above it. v10 (OpenPocket #459, owner review): the cart and its SO-101 arm are turned about the track leg they ride, so for the pick the ARM FACES THE FRONT of the unit (the cart on the left-hand leg, over the tray) and for the insertion the cart is on the RIGHT-hand leg with the arm facing the central spine (turned 120 degrees from the front, a little towards the front); the seedling pod sits in the collar on the FRONT of the spine, visible in the front view (one insertion only: no plug holder, no parked plug); the seedling tray is the 4 x 4 tray of the sim's Pod grab scene (16 silicone sockets, rows A to D from the front, 0.24 m to the left of the pipe, 190 x 370 mm), at the FRONT LEFT of the lid, position and size read from control-ui/src/podgrab/layout.ts. Drawing only: the sim is unchanged; the arm poses are solved with the sim's own inverse kinematics. Compromise: for the pick the cart is 20 mm behind the track plane and 0.60 m high (the arm cannot reach the front row from the track plane otherwise). Views: -iso, -front, -side, -top, -closeup. -collar. Clip: transplant-seedling-step4-seat-v10-clip.gif. v11 (OpenPocket #459, owner review): the sleeve that clamps the track leg is swapped in every step: the sleeve that clamped the pipe in v10 now hangs open (jaw open 92 degrees) and the other sleeve clamps the pipe (pick: hand C on the left-hand leg, the open hand B outside it; insertion: hand B on the right-hand leg, the open hand C outside it). The cart, the arm base and the battery moved with it (the cart is turned about the clamping sleeve), so for the pick the arm is turned 20 degrees from straight ahead (still facing the front, tray socket A1, the one nearest the arm, 0.04 m behind the track plane) and the arm still reaches the pod on the spine and the tray; the tray, the pod on the front of the spine and the orientation are as in v10. v12 (OpenPocket #537, owner review: one fixed layout): redrawn from cad/layout.json. The central pipe stays on the centre of the tank and the track loop is 66 mm in front of it (16 mm tube radius + the 50 mm M8 rod of the flush track joint, cad/track_joint.py ROD_OUT; v11 had 60 mm). The arm poses are solved again with the sim's own inverse kinematics.",
+      "viewer": "viewer.html?src=renders/transplant-seedling-step4-seat-v12.glb&title=Transplant%20seedling%3A%20Step%204%3A%20seedling%20seated%2C%20hole%20closed",
+      "thumb": "renders/transplant-seedling-step4-seat-v12-line.png"
+    },
+    {
+      "id": "transplant-seedling-step3-plug-v12",
+      "date": "2026-11-26",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "draft",
+      "version": 12,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 3: hole open, hand waiting",
+      "comment": "The hole on the front of the spine is open (the plug is out) and the hand waits in front of it. v10 (OpenPocket #459, owner review): the cart and its SO-101 arm are turned about the track leg they ride, so for the pick the ARM FACES THE FRONT of the unit (the cart on the left-hand leg, over the tray) and for the insertion the cart is on the RIGHT-hand leg with the arm facing the central spine (turned 120 degrees from the front, a little towards the front); the seedling pod sits in the collar on the FRONT of the spine, visible in the front view (one insertion only: no plug holder, no parked plug); the seedling tray is the 4 x 4 tray of the sim's Pod grab scene (16 silicone sockets, rows A to D from the front, 0.24 m to the left of the pipe, 190 x 370 mm), at the FRONT LEFT of the lid, position and size read from control-ui/src/podgrab/layout.ts. Drawing only: the sim is unchanged; the arm poses are solved with the sim's own inverse kinematics. Compromise: for the pick the cart is 20 mm behind the track plane and 0.60 m high (the arm cannot reach the front row from the track plane otherwise). Views: -iso, -front, -side, -top, -closeup. -collar. Clip: transplant-seedling-step3-plug-v10-clip.gif. v11 (OpenPocket #459, owner review): the sleeve that clamps the track leg is swapped in every step: the sleeve that clamped the pipe in v10 now hangs open (jaw open 92 degrees) and the other sleeve clamps the pipe (pick: hand C on the left-hand leg, the open hand B outside it; insertion: hand B on the right-hand leg, the open hand C outside it). The cart, the arm base and the battery moved with it (the cart is turned about the clamping sleeve), so for the pick the arm is turned 20 degrees from straight ahead (still facing the front, tray socket A1, the one nearest the arm, 0.04 m behind the track plane) and the arm still reaches the pod on the spine and the tray; the tray, the pod on the front of the spine and the orientation are as in v10. v12 (OpenPocket #537, owner review: one fixed layout): redrawn from cad/layout.json. The central pipe stays on the centre of the tank and the track loop is 66 mm in front of it (16 mm tube radius + the 50 mm M8 rod of the flush track joint, cad/track_joint.py ROD_OUT; v11 had 60 mm). The arm poses are solved again with the sim's own inverse kinematics.",
+      "viewer": "viewer.html?src=renders/transplant-seedling-step3-plug-v12.glb&title=Transplant%20seedling%3A%20Step%203%3A%20hole%20open%2C%20hand%20waiting",
+      "thumb": "renders/transplant-seedling-step3-plug-v12-line.png"
+    },
+    {
+      "id": "transplant-seedling-step2-drive-v12",
+      "date": "2026-11-26",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "draft",
+      "version": 12,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 2: cart at the hole",
+      "comment": "The cart drove up the track to the hole stop, now on the right-hand leg with the arm facing the central spine, the seedling pod in the holder. v10 (OpenPocket #459, owner review): the cart and its SO-101 arm are turned about the track leg they ride, so for the pick the ARM FACES THE FRONT of the unit (the cart on the left-hand leg, over the tray) and for the insertion the cart is on the RIGHT-hand leg with the arm facing the central spine (turned 120 degrees from the front, a little towards the front); the seedling pod sits in the collar on the FRONT of the spine, visible in the front view (one insertion only: no plug holder, no parked plug); the seedling tray is the 4 x 4 tray of the sim's Pod grab scene (16 silicone sockets, rows A to D from the front, 0.24 m to the left of the pipe, 190 x 370 mm), at the FRONT LEFT of the lid, position and size read from control-ui/src/podgrab/layout.ts. Drawing only: the sim is unchanged; the arm poses are solved with the sim's own inverse kinematics. Compromise: for the pick the cart is 20 mm behind the track plane and 0.60 m high (the arm cannot reach the front row from the track plane otherwise). Views: -iso, -front, -side, -top, -closeup. -collar. Clip: transplant-seedling-step2-drive-v10-clip.gif. v11 (OpenPocket #459, owner review): the sleeve that clamps the track leg is swapped in every step: the sleeve that clamped the pipe in v10 now hangs open (jaw open 92 degrees) and the other sleeve clamps the pipe (pick: hand C on the left-hand leg, the open hand B outside it; insertion: hand B on the right-hand leg, the open hand C outside it). The cart, the arm base and the battery moved with it (the cart is turned about the clamping sleeve), so for the pick the arm is turned 20 degrees from straight ahead (still facing the front, tray socket A1, the one nearest the arm, 0.04 m behind the track plane) and the arm still reaches the pod on the spine and the tray; the tray, the pod on the front of the spine and the orientation are as in v10. v12 (OpenPocket #537, owner review: one fixed layout): redrawn from cad/layout.json. The central pipe stays on the centre of the tank and the track loop is 66 mm in front of it (16 mm tube radius + the 50 mm M8 rod of the flush track joint, cad/track_joint.py ROD_OUT; v11 had 60 mm). The arm poses are solved again with the sim's own inverse kinematics.",
+      "viewer": "viewer.html?src=renders/transplant-seedling-step2-drive-v12.glb&title=Transplant%20seedling%3A%20Step%202%3A%20cart%20at%20the%20hole",
+      "thumb": "renders/transplant-seedling-step2-drive-v12-line.png"
+    },
+    {
+      "id": "transplant-seedling-step1-pick-v12",
+      "date": "2026-11-26",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "draft",
+      "version": 12,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Step 1: seedling picked and put in the cart holder",
+      "comment": "The arm picked a seedling pod from the tray (front row A, first socket from the left (nearest the arm)) and put it in the pod holder on the cart; the arm is folded over the tray again. v10 (OpenPocket #459, owner review): the cart and its SO-101 arm are turned about the track leg they ride, so for the pick the ARM FACES THE FRONT of the unit (the cart on the left-hand leg, over the tray) and for the insertion the cart is on the RIGHT-hand leg with the arm facing the central spine (turned 120 degrees from the front, a little towards the front); the seedling pod sits in the collar on the FRONT of the spine, visible in the front view (one insertion only: no plug holder, no parked plug); the seedling tray is the 4 x 4 tray of the sim's Pod grab scene (16 silicone sockets, rows A to D from the front, 0.24 m to the left of the pipe, 190 x 370 mm), at the FRONT LEFT of the lid, position and size read from control-ui/src/podgrab/layout.ts. Drawing only: the sim is unchanged; the arm poses are solved with the sim's own inverse kinematics. Compromise: for the pick the cart is 20 mm behind the track plane and 0.60 m high (the arm cannot reach the front row from the track plane otherwise). Views: -iso, -front, -side, -top, -closeup. Clip: transplant-seedling-step1-pick-v10-clip.gif. v11 (OpenPocket #459, owner review): the sleeve that clamps the track leg is swapped in every step: the sleeve that clamped the pipe in v10 now hangs open (jaw open 92 degrees) and the other sleeve clamps the pipe (pick: hand C on the left-hand leg, the open hand B outside it; insertion: hand B on the right-hand leg, the open hand C outside it). The cart, the arm base and the battery moved with it (the cart is turned about the clamping sleeve), so for the pick the arm is turned 20 degrees from straight ahead (still facing the front, tray socket A1, the one nearest the arm, 0.04 m behind the track plane) and the arm still reaches the pod on the spine and the tray; the tray, the pod on the front of the spine and the orientation are as in v10. v12 (OpenPocket #537, owner review: one fixed layout): redrawn from cad/layout.json. The central pipe stays on the centre of the tank and the track loop is 66 mm in front of it (16 mm tube radius + the 50 mm M8 rod of the flush track joint, cad/track_joint.py ROD_OUT; v11 had 60 mm). The arm poses are solved again with the sim's own inverse kinematics.",
+      "viewer": "viewer.html?src=renders/transplant-seedling-step1-pick-v12.glb&title=Transplant%20seedling%3A%20Step%201%3A%20seedling%20picked%20and%20put%20in%20the%20cart%20holder",
+      "thumb": "renders/transplant-seedling-step1-pick-v12-line.png"
+    },
+    {
+      "id": "transplant-seedling-start-v12",
+      "date": "2026-11-26",
+      "part": "Transplant seedling scene",
+      "category": "Pod handling",
+      "status": "draft",
+      "version": 12,
+      "group": "Transplant seedling scene (sim)",
+      "title": "Transplant seedling: Start: arm folded over the 4 x 4 seedling tray at the front left",
+      "comment": "Cart on the left-hand leg over the seedling tray, arm facing the front and folded over the tray, all 16 sockets filled, pod holder empty. v10 (OpenPocket #459, owner review): the cart and its SO-101 arm are turned about the track leg they ride, so for the pick the ARM FACES THE FRONT of the unit (the cart on the left-hand leg, over the tray) and for the insertion the cart is on the RIGHT-hand leg with the arm facing the central spine (turned 120 degrees from the front, a little towards the front); the seedling pod sits in the collar on the FRONT of the spine, visible in the front view (one insertion only: no plug holder, no parked plug); the seedling tray is the 4 x 4 tray of the sim's Pod grab scene (16 silicone sockets, rows A to D from the front, 0.24 m to the left of the pipe, 190 x 370 mm), at the FRONT LEFT of the lid, position and size read from control-ui/src/podgrab/layout.ts. Drawing only: the sim is unchanged; the arm poses are solved with the sim's own inverse kinematics. Compromise: for the pick the cart is 20 mm behind the track plane and 0.60 m high (the arm cannot reach the front row from the track plane otherwise). Views: -iso, -front, -side, -top, -closeup. v11 (OpenPocket #459, owner review): the sleeve that clamps the track leg is swapped in every step: the sleeve that clamped the pipe in v10 now hangs open (jaw open 92 degrees) and the other sleeve clamps the pipe (pick: hand C on the left-hand leg, the open hand B outside it; insertion: hand B on the right-hand leg, the open hand C outside it). The cart, the arm base and the battery moved with it (the cart is turned about the clamping sleeve), so for the pick the arm is turned 20 degrees from straight ahead (still facing the front, tray socket A1, the one nearest the arm, 0.04 m behind the track plane) and the arm still reaches the pod on the spine and the tray; the tray, the pod on the front of the spine and the orientation are as in v10. v12 (OpenPocket #537, owner review: one fixed layout): redrawn from cad/layout.json. The central pipe stays on the centre of the tank and the track loop is 66 mm in front of it (16 mm tube radius + the 50 mm M8 rod of the flush track joint, cad/track_joint.py ROD_OUT; v11 had 60 mm). The arm poses are solved again with the sim's own inverse kinematics.",
+      "viewer": "viewer.html?src=renders/transplant-seedling-start-v12.glb&title=Transplant%20seedling%3A%20Start%3A%20arm%20folded%20over%20the%20seedling%20tray%20inside%20the%20tank",
+      "thumb": "renders/transplant-seedling-start-v12-line.png"
+    },
+    {
+      "id": "cart-assembly-v5",
+      "date": "2026-11-23",
+      "part": "Whole cart assembly",
+      "category": "Cart",
+      "status": "draft",
+      "version": 5,
+      "group": "Cart assembly",
+      "title": "Whole cart assembly v5 (motors inward)",
+      "comment": "DRAFT, OpenPocket #365 (regenerated from cart_assembly.py after #312). The cart with the drive and roll motors INWARD in the sleeves, clear of the lettuce; rigid plate, battery under the arm, folded SO-101 envelope. Pipes 120 mm apart. #447: no track pipe on the cart any more (the leftover grey stub is gone); the two sleeves close round the unit's track. 3D model: cad/renders/cart-assembly.glb. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
+      "thumb": "renders/cart-assembly-v5-line.png",
+      "viewer": "viewer.html?src=renders/cart-assembly-v5.glb&title=Whole%20cart%20assembly%20v5%20(motors%20inward)"
     },
     {
       "id": "cart-hand-v5",
@@ -80,21 +197,8 @@
       "viewer": "viewer.html?src=renders/cart-hand-corner-v5.glb&title=Cart%20hand%20on%20a%20150%20mm%20loop%20corner%20v5%20(current%20sleeve%20and%20wheels)"
     },
     {
-      "id": "cart-assembly-v5",
-      "date": "2026-11-20",
-      "part": "Whole cart assembly",
-      "category": "Cart",
-      "status": "draft",
-      "version": 5,
-      "group": "Cart assembly",
-      "title": "Whole cart assembly v5 (motors inward)",
-      "comment": "DRAFT, OpenPocket #365 (regenerated from cart_assembly.py after #312). The cart with the drive and roll motors INWARD in the sleeves, clear of the lettuce; rigid plate, battery under the arm, folded SO-101 envelope. Pipes 120 mm apart. #447: no track pipe on the cart any more (the leftover grey stub is gone); the two sleeves close round the unit's track. 3D model: cad/renders/cart-assembly.glb. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
-      "thumb": "renders/cart-assembly-v5-line.png",
-      "viewer": "viewer.html?src=renders/cart-assembly-v5.glb&title=Whole%20cart%20assembly%20v5%20(motors%20inward)"
-    },
-    {
       "id": "cart-base-v3",
-      "date": "2026-11-20",
+      "date": "2026-11-23",
       "part": "Cart base plate",
       "category": "Cart",
       "status": "draft",
@@ -107,7 +211,7 @@
     },
     {
       "id": "cart-arm-v4",
-      "date": "2026-11-20",
+      "date": "2026-11-23",
       "part": "Cart arm",
       "category": "Arm",
       "status": "draft",
@@ -120,7 +224,7 @@
     },
     {
       "id": "cart-arm-stowed-v4",
-      "date": "2026-11-20",
+      "date": "2026-11-23",
       "part": "Cart arm, stowed",
       "category": "Arm",
       "status": "draft",
@@ -133,7 +237,7 @@
     },
     {
       "id": "cart-pod-holder-v3",
-      "date": "2026-11-20",
+      "date": "2026-11-23",
       "part": "Pod holder",
       "category": "Pod handling",
       "status": "draft",
@@ -145,47 +249,8 @@
       "viewer": "viewer.html?src=renders/cart-pod-holder-v3.glb&title=Pod%20holder%20v3%20(regenerated,%20motors%20inward)"
     },
     {
-      "id": "track-supports-assembly-v2",
-      "date": "2026-11-20",
-      "part": "Track supports: whole unit",
-      "category": "Track",
-      "status": "draft",
-      "version": 2,
-      "group": "Track supports",
-      "title": "Whole unit with the track supports (with water)",
-      "comment": "DRAFT, OpenPocket #315 supports, regenerated in #365 from the single-source unit: the tank now holds its water volume (15 cm, separate part). Supports unchanged: a post on the lid at each end of the bottom run and a hanger from the crossbar on the top run, on the M8 rod entering from the spine side. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
-      "thumb": "renders/track-supports-assembly-v2-line.png",
-      "viewer": "viewer.html?src=renders/track-supports-assembly-v2.glb&title=Whole%20unit%20with%20the%20track%20supports%20(with%20water)"
-    },
-    {
-      "id": "track-supports-bottom-v2",
-      "date": "2026-11-20",
-      "part": "Track supports: bottom run",
-      "category": "Track",
-      "status": "draft",
-      "version": 2,
-      "group": "Track supports, bottom run",
-      "title": "Bottom-run support (regenerated)",
-      "comment": "DRAFT, regenerated in #365: close-up of the post on the tank lid.",
-      "thumb": "renders/track-supports-bottom-v2-line.png",
-      "viewer": "viewer.html?src=renders/track-supports-bottom-v2.glb&title=Bottom-run%20support%20(regenerated)"
-    },
-    {
-      "id": "track-supports-top-v2",
-      "date": "2026-11-20",
-      "part": "Track supports: top run",
-      "category": "Track",
-      "status": "draft",
-      "version": 2,
-      "group": "Track supports, top run",
-      "title": "Top-run support (regenerated)",
-      "comment": "DRAFT, regenerated in #365: close-up of the hanger from the crossbar.",
-      "thumb": "renders/track-supports-top-v2-line.png",
-      "viewer": "viewer.html?src=renders/track-supports-top-v2.glb&title=Top-run%20support%20(regenerated)"
-    },
-    {
       "id": "unit-dimensioned-v4",
-      "date": "2026-11-20",
+      "date": "2026-11-23",
       "part": "Unit v3 dimensioned",
       "category": "Unit structure",
       "status": "draft",
@@ -198,7 +263,7 @@
     },
     {
       "id": "unit-water-v1",
-      "date": "2026-11-20",
+      "date": "2026-11-23",
       "part": "Unit structure with water",
       "category": "Unit structure",
       "status": "draft",
@@ -210,8 +275,34 @@
       "viewer": "viewer.html?src=renders/unit-water-v1.glb&title=Unit%20structure%20with%20the%20water%20in%20the%20tank"
     },
     {
+      "id": "mvp-unit-v4",
+      "date": "2026-11-23",
+      "part": "MVP unit",
+      "category": "Unit structure",
+      "status": "draft",
+      "version": 4,
+      "group": "Full unit",
+      "title": "MVP unit v4 (one layout: central pipe centred, track at the track-joint offset)",
+      "comment": "DRAFT, OpenPocket #537. The full unit redrawn from the single layout (cad/layout.json): 30 cm tank with the 15 cm water, the central pipe (75 mm growing pipe, 33.7 mm spine inside) on the tank centre, the track loop 66 mm in front of it (16 mm tube radius + the 50 mm M8 rod of the flush track joint), top and bottom brackets from the central pipe to the track. Replaces MVP unit v3. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
+      "thumb": "renders/mvp-unit-v4-line.png",
+      "viewer": "viewer.html?src=renders/mvp-unit-v4.glb&title=MVP%20unit%20v4%20(one%20layout:%20central%20pipe%20centred,%20track%20at%20the%20track-joint%20offset)"
+    },
+    {
+      "id": "unit-v3-bracing-v6",
+      "date": "2026-11-23",
+      "part": "Unit bracing",
+      "category": "Unit structure",
+      "status": "draft",
+      "version": 6,
+      "group": "Bracing",
+      "title": "Unit v3 bracing v6 - clamp-on collars, 30 W panel, one layout",
+      "comment": "DRAFT, OpenPocket #537. Same bracing as v5 (50 mm clamp collars, 16 mm legs, internal spacers, back strut, fold-out feet with sandbags, one 30 W panel at 23 degrees), now on the single layout: the central pipe is on the tank centre and the track is 66 mm in front of it (tube radius 16 + the 50 mm rod of the track joint). Replaces Unit v3 bracing v5. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
+      "thumb": "renders/unit-v3-bracing-v6-line.png",
+      "viewer": "viewer.html?src=renders/unit-v3-bracing-v6.glb&title=Unit%20v3%20bracing%20v6%20-%20clamp-on%20collars,%2030%20W%20panel,%20one%20layout"
+    },
+    {
       "id": "tank-water-v1",
-      "date": "2026-11-20",
+      "date": "2026-11-23",
       "part": "Tank with water",
       "category": "Unit structure",
       "status": "draft",
@@ -224,7 +315,7 @@
     },
     {
       "id": "sample-coil-v1",
-      "date": "2026-11-20",
+      "date": "2026-11-23",
       "part": "Sample tubing coil",
       "category": "Water",
       "status": "draft",
@@ -237,7 +328,7 @@
     },
     {
       "id": "water-assembly-v1",
-      "date": "2026-11-20",
+      "date": "2026-11-23",
       "part": "Cart at the water testing station",
       "category": "Water",
       "status": "draft",
@@ -250,7 +341,7 @@
     },
     {
       "id": "water-station-v1",
-      "date": "2026-11-20",
+      "date": "2026-11-23",
       "part": "Water testing station",
       "category": "Water",
       "status": "draft",
@@ -260,71 +351,6 @@
       "comment": "DRAFT, OpenPocket #330, regenerated in #365: the station (cup, three probes, standpipe, flush socket, drain) on the unit lid corner, with the tank's water volume. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
       "thumb": "renders/water-station-v1-line.png",
       "viewer": "viewer.html?src=renders/water-station-v1.glb&title=Shared%20water%20testing%20station%20on%20the%20unit"
-    },
-    {
-      "id": "transplant-seedling-start-v11",
-      "date": "2026-11-23",
-      "part": "Transplant seedling scene",
-      "category": "Pod handling",
-      "status": "draft",
-      "version": 11,
-      "group": "Transplant seedling scene (sim)",
-      "title": "Transplant seedling: Start: arm folded over the 4 x 4 seedling tray at the front left",
-      "comment": "Cart on the left-hand leg over the seedling tray, arm facing the front and folded over the tray, all 16 sockets filled, pod holder empty. v10 (OpenPocket #459, owner review): the cart and its SO-101 arm are turned about the track leg they ride, so for the pick the ARM FACES THE FRONT of the unit (the cart on the left-hand leg, over the tray) and for the insertion the cart is on the RIGHT-hand leg with the arm facing the central spine (turned 120 degrees from the front, a little towards the front); the seedling pod sits in the collar on the FRONT of the spine, visible in the front view (one insertion only: no plug holder, no parked plug); the seedling tray is the 4 x 4 tray of the sim's Pod grab scene (16 silicone sockets, rows A to D from the front, 0.24 m to the left of the pipe, 190 x 370 mm), at the FRONT LEFT of the lid, position and size read from control-ui/src/podgrab/layout.ts. Drawing only: the sim is unchanged; the arm poses are solved with the sim's own inverse kinematics. Compromise: for the pick the cart is 20 mm behind the track plane and 0.60 m high (the arm cannot reach the front row from the track plane otherwise). Views: -iso, -front, -side, -top, -closeup. v11 (OpenPocket #459, owner review): the sleeve that clamps the track leg is swapped in every step: the sleeve that clamped the pipe in v10 now hangs open (jaw open 92 degrees) and the other sleeve clamps the pipe (pick: hand C on the left-hand leg, the open hand B outside it; insertion: hand B on the right-hand leg, the open hand C outside it). The cart, the arm base and the battery moved with it (the cart is turned about the clamping sleeve), so for the pick the arm is turned 20 degrees from straight ahead (still facing the front, tray socket A1, the one nearest the arm, 0.04 m behind the track plane) and the arm still reaches the pod on the spine and the tray; the tray, the pod on the front of the spine and the orientation are as in v10.",
-      "viewer": "viewer.html?src=renders/transplant-seedling-start-v11.glb&title=Transplant%20seedling%3A%20Start%3A%20arm%20folded%20over%20the%20seedling%20tray%20inside%20the%20tank",
-      "thumb": "renders/transplant-seedling-start-v11-line.png"
-    },
-    {
-      "id": "transplant-seedling-step1-pick-v11",
-      "date": "2026-11-23",
-      "part": "Transplant seedling scene",
-      "category": "Pod handling",
-      "status": "draft",
-      "version": 11,
-      "group": "Transplant seedling scene (sim)",
-      "title": "Transplant seedling: Step 1: seedling picked and put in the cart holder",
-      "comment": "The arm picked a seedling pod from the tray (front row A, first socket from the left (nearest the arm)) and put it in the pod holder on the cart; the arm is folded over the tray again. v10 (OpenPocket #459, owner review): the cart and its SO-101 arm are turned about the track leg they ride, so for the pick the ARM FACES THE FRONT of the unit (the cart on the left-hand leg, over the tray) and for the insertion the cart is on the RIGHT-hand leg with the arm facing the central spine (turned 120 degrees from the front, a little towards the front); the seedling pod sits in the collar on the FRONT of the spine, visible in the front view (one insertion only: no plug holder, no parked plug); the seedling tray is the 4 x 4 tray of the sim's Pod grab scene (16 silicone sockets, rows A to D from the front, 0.24 m to the left of the pipe, 190 x 370 mm), at the FRONT LEFT of the lid, position and size read from control-ui/src/podgrab/layout.ts. Drawing only: the sim is unchanged; the arm poses are solved with the sim's own inverse kinematics. Compromise: for the pick the cart is 20 mm behind the track plane and 0.60 m high (the arm cannot reach the front row from the track plane otherwise). Views: -iso, -front, -side, -top, -closeup. Clip: transplant-seedling-step1-pick-v10-clip.gif. v11 (OpenPocket #459, owner review): the sleeve that clamps the track leg is swapped in every step: the sleeve that clamped the pipe in v10 now hangs open (jaw open 92 degrees) and the other sleeve clamps the pipe (pick: hand C on the left-hand leg, the open hand B outside it; insertion: hand B on the right-hand leg, the open hand C outside it). The cart, the arm base and the battery moved with it (the cart is turned about the clamping sleeve), so for the pick the arm is turned 20 degrees from straight ahead (still facing the front, tray socket A1, the one nearest the arm, 0.04 m behind the track plane) and the arm still reaches the pod on the spine and the tray; the tray, the pod on the front of the spine and the orientation are as in v10.",
-      "viewer": "viewer.html?src=renders/transplant-seedling-step1-pick-v11.glb&title=Transplant%20seedling%3A%20Step%201%3A%20seedling%20picked%20and%20put%20in%20the%20cart%20holder",
-      "thumb": "renders/transplant-seedling-step1-pick-v11-line.png"
-    },
-    {
-      "id": "transplant-seedling-step2-drive-v11",
-      "date": "2026-11-23",
-      "part": "Transplant seedling scene",
-      "category": "Pod handling",
-      "status": "draft",
-      "version": 11,
-      "group": "Transplant seedling scene (sim)",
-      "title": "Transplant seedling: Step 2: cart at the hole",
-      "comment": "The cart drove up the track to the hole stop, now on the right-hand leg with the arm facing the central spine, the seedling pod in the holder. v10 (OpenPocket #459, owner review): the cart and its SO-101 arm are turned about the track leg they ride, so for the pick the ARM FACES THE FRONT of the unit (the cart on the left-hand leg, over the tray) and for the insertion the cart is on the RIGHT-hand leg with the arm facing the central spine (turned 120 degrees from the front, a little towards the front); the seedling pod sits in the collar on the FRONT of the spine, visible in the front view (one insertion only: no plug holder, no parked plug); the seedling tray is the 4 x 4 tray of the sim's Pod grab scene (16 silicone sockets, rows A to D from the front, 0.24 m to the left of the pipe, 190 x 370 mm), at the FRONT LEFT of the lid, position and size read from control-ui/src/podgrab/layout.ts. Drawing only: the sim is unchanged; the arm poses are solved with the sim's own inverse kinematics. Compromise: for the pick the cart is 20 mm behind the track plane and 0.60 m high (the arm cannot reach the front row from the track plane otherwise). Views: -iso, -front, -side, -top, -closeup. -collar. Clip: transplant-seedling-step2-drive-v10-clip.gif. v11 (OpenPocket #459, owner review): the sleeve that clamps the track leg is swapped in every step: the sleeve that clamped the pipe in v10 now hangs open (jaw open 92 degrees) and the other sleeve clamps the pipe (pick: hand C on the left-hand leg, the open hand B outside it; insertion: hand B on the right-hand leg, the open hand C outside it). The cart, the arm base and the battery moved with it (the cart is turned about the clamping sleeve), so for the pick the arm is turned 20 degrees from straight ahead (still facing the front, tray socket A1, the one nearest the arm, 0.04 m behind the track plane) and the arm still reaches the pod on the spine and the tray; the tray, the pod on the front of the spine and the orientation are as in v10.",
-      "viewer": "viewer.html?src=renders/transplant-seedling-step2-drive-v11.glb&title=Transplant%20seedling%3A%20Step%202%3A%20cart%20at%20the%20hole",
-      "thumb": "renders/transplant-seedling-step2-drive-v11-line.png"
-    },
-    {
-      "id": "transplant-seedling-step3-plug-v11",
-      "date": "2026-11-23",
-      "part": "Transplant seedling scene",
-      "category": "Pod handling",
-      "status": "draft",
-      "version": 11,
-      "group": "Transplant seedling scene (sim)",
-      "title": "Transplant seedling: Step 3: hole open, hand waiting",
-      "comment": "The hole on the front of the spine is open (the plug is out) and the hand waits in front of it. v10 (OpenPocket #459, owner review): the cart and its SO-101 arm are turned about the track leg they ride, so for the pick the ARM FACES THE FRONT of the unit (the cart on the left-hand leg, over the tray) and for the insertion the cart is on the RIGHT-hand leg with the arm facing the central spine (turned 120 degrees from the front, a little towards the front); the seedling pod sits in the collar on the FRONT of the spine, visible in the front view (one insertion only: no plug holder, no parked plug); the seedling tray is the 4 x 4 tray of the sim's Pod grab scene (16 silicone sockets, rows A to D from the front, 0.24 m to the left of the pipe, 190 x 370 mm), at the FRONT LEFT of the lid, position and size read from control-ui/src/podgrab/layout.ts. Drawing only: the sim is unchanged; the arm poses are solved with the sim's own inverse kinematics. Compromise: for the pick the cart is 20 mm behind the track plane and 0.60 m high (the arm cannot reach the front row from the track plane otherwise). Views: -iso, -front, -side, -top, -closeup. -collar. Clip: transplant-seedling-step3-plug-v10-clip.gif. v11 (OpenPocket #459, owner review): the sleeve that clamps the track leg is swapped in every step: the sleeve that clamped the pipe in v10 now hangs open (jaw open 92 degrees) and the other sleeve clamps the pipe (pick: hand C on the left-hand leg, the open hand B outside it; insertion: hand B on the right-hand leg, the open hand C outside it). The cart, the arm base and the battery moved with it (the cart is turned about the clamping sleeve), so for the pick the arm is turned 20 degrees from straight ahead (still facing the front, tray socket A1, the one nearest the arm, 0.04 m behind the track plane) and the arm still reaches the pod on the spine and the tray; the tray, the pod on the front of the spine and the orientation are as in v10.",
-      "viewer": "viewer.html?src=renders/transplant-seedling-step3-plug-v11.glb&title=Transplant%20seedling%3A%20Step%203%3A%20hole%20open%2C%20hand%20waiting",
-      "thumb": "renders/transplant-seedling-step3-plug-v11-line.png"
-    },
-    {
-      "id": "transplant-seedling-step4-seat-v11",
-      "date": "2026-11-23",
-      "part": "Transplant seedling scene",
-      "category": "Pod handling",
-      "status": "draft",
-      "version": 11,
-      "group": "Transplant seedling scene (sim)",
-      "title": "Transplant seedling: Step 4: seedling seated, hole closed",
-      "comment": "The arm seated the seedling pod in the collar on the front of the spine; the hand is just above it. v10 (OpenPocket #459, owner review): the cart and its SO-101 arm are turned about the track leg they ride, so for the pick the ARM FACES THE FRONT of the unit (the cart on the left-hand leg, over the tray) and for the insertion the cart is on the RIGHT-hand leg with the arm facing the central spine (turned 120 degrees from the front, a little towards the front); the seedling pod sits in the collar on the FRONT of the spine, visible in the front view (one insertion only: no plug holder, no parked plug); the seedling tray is the 4 x 4 tray of the sim's Pod grab scene (16 silicone sockets, rows A to D from the front, 0.24 m to the left of the pipe, 190 x 370 mm), at the FRONT LEFT of the lid, position and size read from control-ui/src/podgrab/layout.ts. Drawing only: the sim is unchanged; the arm poses are solved with the sim's own inverse kinematics. Compromise: for the pick the cart is 20 mm behind the track plane and 0.60 m high (the arm cannot reach the front row from the track plane otherwise). Views: -iso, -front, -side, -top, -closeup. -collar. Clip: transplant-seedling-step4-seat-v10-clip.gif. v11 (OpenPocket #459, owner review): the sleeve that clamps the track leg is swapped in every step: the sleeve that clamped the pipe in v10 now hangs open (jaw open 92 degrees) and the other sleeve clamps the pipe (pick: hand C on the left-hand leg, the open hand B outside it; insertion: hand B on the right-hand leg, the open hand C outside it). The cart, the arm base and the battery moved with it (the cart is turned about the clamping sleeve), so for the pick the arm is turned 20 degrees from straight ahead (still facing the front, tray socket A1, the one nearest the arm, 0.04 m behind the track plane) and the arm still reaches the pod on the spine and the tray; the tray, the pod on the front of the spine and the orientation are as in v10.",
-      "viewer": "viewer.html?src=renders/transplant-seedling-step4-seat-v11.glb&title=Transplant%20seedling%3A%20Step%204%3A%20seedling%20seated%2C%20hole%20closed",
-      "thumb": "renders/transplant-seedling-step4-seat-v11-line.png"
     },
     {
       "id": "pipe-collar-with-pod-v1",
@@ -443,32 +469,6 @@
       "comment": "Adds bracing v5 parts: 30 W panel flat on the shelf, split legs and strut, bars, feet, collar envelopes, spacers, folded sandbags. Tallest part 283 mm, 13 mm under the lid.",
       "viewer": "viewer.html?src=renders/20261107-165901-6f82.glb&title=Flat-pack%20check%20v3",
       "thumb": "renders/20261107-165901-6f82-line.png"
-    },
-    {
-      "id": "20261107-141826-0fff",
-      "date": "2026-11-07",
-      "part": "Unit bracing",
-      "category": "Unit structure",
-      "status": "draft",
-      "version": 5,
-      "group": "Bracing",
-      "title": "Unit v3 bracing v5 — clamp-on collars, 30 W panel",
-      "comment": "Current bracing: 50 mm clamp collars outside the pipe with long sleeves, 16 mm steel legs, internal spacers to the spine, back strut, fold-out feet with sandbags, one 30 W panel at 23 deg.",
-      "viewer": "viewer.html?src=renders/20261107-141826-0fff.glb&title=Unit%20v3%20bracing%20v5%20%E2%80%94%20clamp-on%20collars%2C%2030%20W%20panel",
-      "thumb": "renders/20261107-141826-0fff-line.png"
-    },
-    {
-      "id": "20261106-164111-6305",
-      "date": "2026-11-06",
-      "part": "Full unit",
-      "category": "Unit structure",
-      "status": "draft",
-      "version": 3,
-      "group": "Full unit",
-      "title": "MVP unit v3",
-      "comment": "Full unit: 30 cm tank, 1.9 m top, spine as a tube, top and bottom brackets, three-piece track sides.",
-      "viewer": "viewer.html?src=renders/20261106-164111-6305.glb&title=MVP%20unit%20v3",
-      "thumb": "renders/20261106-164111-6305-line.png"
     },
     {
       "id": "20261106-161737-f125",
@@ -596,22 +596,9 @@
       "version": 1,
       "group": "Sim scenes (CAD cart)",
       "title": "Sim: pod grab, start",
-      "comment": "The Pod grab scene: the CAD cart on the bottom run of the loop (plate towards the unit, free hand above the run), arm over the tank. DRAFT, OpenPocket #447: the MuJoCo sim draws the cart from the CAD parts (cad/export_sim_model.py), not its own hand-built shapes, and the scene audit (control-ui/test/sim.test.ts) checks the cart sits on the track leg, upright, at the right roll. Drawn from the MuJoCo model by a software renderer. Views: -iso, -front, -top, -side.",
+      "comment": "The Pod grab scene (OpenPocket #537, one layout): the central pipe on the centre of the tank, the track 66 mm from it, the CAD cart riding the bottom run on its TOP sleeve (hand B) with the body and the free hand hanging below the pipe, plate on the side away from the central pipe. Known clash: from there the arm cannot reach the store and the tray (see docs/pod-grab-and-transplant-scenes.md). DRAFT, OpenPocket #447: the MuJoCo sim draws the cart from the CAD parts (cad/export_sim_model.py), not its own hand-built shapes, and the scene audit (control-ui/test/sim.test.ts) checks the cart sits on the track leg, upright, at the right roll. Drawn from the MuJoCo model by a software renderer. Views: -iso, -front, -top, -side.",
       "thumb": "renders/sim-pod-grab-v1-line.png",
       "viewer": "viewer.html?src=renders/sim-pod-grab-v1.glb&title=Sim:%20pod%20grab,%20start"
-    },
-    {
-      "id": "sim-transplant-v1",
-      "date": "2026-11-22",
-      "part": "Sim scene",
-      "category": "Sim",
-      "status": "draft",
-      "version": 1,
-      "group": "Sim scenes (CAD cart)",
-      "title": "Sim: transplant seedling, at the hole",
-      "comment": "The Transplant scene (and the reach test, which uses the same cart): the CAD cart rolled 180 degrees on the -y leg, plate towards the growing pipe. DRAFT, OpenPocket #447: the MuJoCo sim draws the cart from the CAD parts (cad/export_sim_model.py), not its own hand-built shapes, and the scene audit (control-ui/test/sim.test.ts) checks the cart sits on the track leg, upright, at the right roll. Drawn from the MuJoCo model by a software renderer. Views: -iso, -front, -top, -side.",
-      "thumb": "renders/sim-transplant-v1-line.png",
-      "viewer": "viewer.html?src=renders/sim-transplant-v1.glb&title=Sim:%20transplant%20seedling,%20at%20the%20hole"
     }
   ]
 }

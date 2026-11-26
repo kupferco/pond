@@ -17,7 +17,7 @@ AJ = os.path.join(D, "archive", "renders.json")
 
 
 # Drawings that show the same thing as a kept one (owner review, OpenPocket #459).
-RETIRE = {"unit-water-v1", "transplant-real-layout-v3"}
+RETIRE = {"unit-water-v1", "transplant-real-layout-v3", "sim-transplant-v1"}   # sim-transplant-v1 (#537): its picture is the older transplant scene; the Transplant seedling v12 drawings replace it
 
 
 def stem_version(rid):

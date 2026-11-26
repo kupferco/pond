@@ -33,7 +33,7 @@ def cropped(cx, cy, cz, hx, hy, hz):
 
 def write(parts, name):
     for v, el, az in VIEWS:
-        rl.draw(parts, el, az, os.path.join(OUT, f"{name}-{v}.png"), f"{name} ({v})")
+        rl.draw(parts, el, az, os.path.join(OUT, f"{name}-{v}.png"), f"{name} ({v}): track pipe axis {LAY.TRACK_OFFSET:.0f} mm from the central pipe = 16 tube radius + {LAY.TRACK_ROD_OUT:.0f} rod (track joint)")
     print("wrote", name)
 
 if __name__ == "__main__":

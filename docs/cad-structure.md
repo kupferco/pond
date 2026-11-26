@@ -46,7 +46,8 @@ draws the line views, and updates `docs/drawings/renders.json` (Drawings page) a
 3. two scripts define the same top-level function (apart from generic helpers such as `box`, a frozen list of known cases, and the superseded design
    studies listed in `STUDIES`, which the build no longer runs),
 4. (#447) the cart source carries a `track_pipe*` child, or any assembly adds one (the track comes only from `cad/parts/track.py`), or
-5. (#447) the shelf is not above the water and under the lid, or the seedling tray / storage do not stand on the shelf top and under the lid.
+5. (#537) a drawing or sim scene uses its own central pipe position, track offset (66 mm = 16 + the 50 mm rod of `track_joint.py`), rod stub, pipe spacing or climbing sleeve instead of the ones in `cad/layout.json`, or the real geometry of the central pipe / track loop / supports / generated sim numbers / `sim/constants.py` differs from them, or
+6. (#447) the shelf is not above the water and under the lid, or the seedling tray / storage do not stand on the shelf top and under the lid.
 
 ## Adding or changing a part
 
