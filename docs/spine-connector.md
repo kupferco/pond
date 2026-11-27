@@ -1,19 +1,19 @@
 # Spine to track connector (OpenPocket #561)
 
-The bracket that joins the central spine to the track. Script: `cad/spine_connector.py` (pictures: `cad/render_spine_connector.py`), drawings "Spine to track connector" on the Drawings page.
+Script: `cad/spine_connector.py` (pictures: `cad/render_spine_connector.py`), drawings "Spine to track connector" on the Drawings page. Redrawn on 27 Nov 2026 to match the approved sketch; the first version (clamp ring, arm, pods, red part) was rejected and is gone.
 
-**What it is.** A split clamp ring on the 33.7 mm spine, a 16 x 30 mm arm through a window in the 75 mm growing pipe, and the same M8 rod system as the track joint and the track supports (nut plate inside the 32 mm track pipe, rod out of the spine-side hole, lock nut, then the arm).
+**What the main drawing shows, and nothing else**
+1. The real flush track joint of `cad/track_joint.py`, coloured as that script colours it: an M8 rod through the 32 mm track pipe to the central pipe axis (`ROD_OUT` 50 mm = `track_rod_out_mm`); a captive nut on a curved plate INSIDE the track pipe, a lock nut OUTSIDE, so nothing stands proud and the cart sleeve passes.
+2. The track pipe lies horizontal; the rod is horizontal too; the spine is the vertical tube the rod ends in (33.7 mm OD, 2 mm wall).
+3. **PROPOSAL (the owner's idea, not from existing drawings):** one M8 nut on each side of the spine tube wall (outside and inside), so the rod cannot spin. The inside nut sits 1.6 mm off the wall so its corners clear the curve of the tube.
 
-**Where along the spine.** One connector on each run of the track at x = 0: bottom run at 514 mm over the tank floor (shared layout), top run at 1884 mm. These are the places of the two stand-in blocks (`spine_brackets`) the unit drew before.
+No collars, no pods, no clamp ring, no arm, no growing pipe.
 
-**Rule: no pod place may occupy a connector position.** `python cad/spine_connector.py` lists every pod place that touches a connector. Today: one, the front pod of the level at 500 mm (it also runs into the track pipe). The top connector has none. The pods are NOT changed in this task; leave that pod out in task 537 together with putting the connectors in the complete unit.
+**Where along the spine.** One joint on each run of the track at x = 0: bottom run 514 mm over the tank floor, top run 1884 mm (shown as plain ring markers in "where on the spine"; no pods drawn).
 
-**Numbers used (none invented).** Spine, growing pipe and track pipe sizes, track height and `track_rod_out_mm` (50, from `track_joint.py`; the brief said the key existed in `layout.json`, it did not, so it was added with that value): the rod needs 14.5 mm out of the track pipe, the check fails above 50. Arm size 16 x 30 = the stand-in blocks. Nut plate, lock nut, rod and hole sizes come from `track_supports.py`.
-
-**ASSUMED, open questions for the owner**
-1. Ring wall 6 mm and ring height 30 mm on the spine.
-2. How the ring is tightened: a split ring with a 2 mm gap, the clamp screw is not drawn (which screw, which side?).
-3. The window in the growing pipe (arm + 2 mm each side) is a new cut in the pipe; the pipe is not changed in this task.
-4. The top connector sits on the very end of the spine and the growing pipe (both end at 1884, the track axis is 1884): half the ring hangs past the spine end. Lower the top run, lengthen the spine by 15 mm, or move the connector down?
-5. One M8 rod per connector holds the track; is that enough against the cart's weight at the middle of each run (the supports already use one rod each)?
-6. Is a connector at x = 0 on both runs what you want, or only one?
+**Open questions for the owner (not drawn)**
+1. Does the joint need anything between the rod and the spine other than the two nuts (a washer, a sleeve through the wall)? Not drawn.
+2. The rod passes through the growing pipe (75 mm) between the track and the spine; how does it get through (a hole in its wall)? Not drawn; the complete unit is not changed here (task 537).
+3. The top run is at the very end of the spine (both end at 1884): a nut inside the spine there is at the tube end. Lower the top run or lengthen the spine?
+4. Is a connector at x = 0 on both runs what you want, or only one?
+5. One M8 rod per connector holds the track; is that enough against the cart's weight in the middle of each run?

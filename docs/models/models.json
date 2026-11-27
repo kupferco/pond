@@ -158,22 +158,22 @@
    "poster": "drawings/renders/cart-hand-v5-line.png"
   },
   {
-   "id": "spine-connector-positions-v1",
+   "id": "spine-connector-positions-v2",
    "title": "Where the two spine connectors sit along the spine (bottom z 514, top z 1884)",
-   "glb": "drawings/renders/spine-connector-positions-v1.glb",
-   "caption": "Both spine connectors on the whole spine, and the pod place that must go.",
+   "glb": "drawings/renders/spine-connector-positions-v2.glb",
+   "caption": "Where the two connectors sit on the spine, shown as plain markers.",
    "page": "models",
    "section": "Track",
-   "poster": "drawings/renders/spine-connector-positions-v1-line.png"
+   "poster": "drawings/renders/spine-connector-positions-v2-line.png"
   },
   {
-   "id": "spine-connector-v1",
-   "title": "Spine to track connector, bottom one in context (spine, growing pipe, track, pods)",
-   "glb": "drawings/renders/spine-connector-v1.glb",
-   "caption": "The connector that joins the spine to the track, with the pod place it must not share.",
+   "id": "spine-connector-v2",
+   "title": "Spine to track connector v2: flush track joint, track horizontal, rod to the spine (PROPOSAL: nut each side of the spine wall)",
+   "glb": "drawings/renders/spine-connector-v2.glb",
+   "caption": "The flush track joint with its rod to the spine and the proposed nuts either side of the spine wall.",
    "page": "models",
    "section": "Track",
-   "poster": "drawings/renders/spine-connector-v1-line.png"
+   "poster": "drawings/renders/spine-connector-v2-line.png"
   }
  ]
 }
