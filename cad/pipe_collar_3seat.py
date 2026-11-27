@@ -23,7 +23,7 @@ import numpy as np
 import pipe_collar as pc
 from pipe_collar import (RP, RI, RO, H, ZH, ZP, SPLIT, BOSS_D, X_TOP, U_FACE, SPIGOT_OD, SPIGOT_IN_R, GASKET_R0, GASKET_R1, GASKET_DEPTH,
                          HOLDER_FLOOR_X, DRILL_D, TAB_X, TAB_Z0, TAB_Z1, YB, MAG_ZS, MAG_Y, MAG_POCKET_D, MAG_POCKET_T, SPINE_R,
-                         cylx, cylz, boxc, tilt)
+                         cylx, cylz, boxc, tilt, tubex, OR_GROOVE_D, OR_GROOVE_W, OR_GROOVE_X, BORE_D, U_FACE)
 
 SEATS = (0.0, 120.0, 240.0)             # seat angles, degrees round the pipe axis
 HALF = 60.0                              # a piece reaches 60 degrees each side of its seat
@@ -108,6 +108,16 @@ def pipe3():
     return p
 
 
+def seat_orings_3seat():
+    """The two seat O-rings, each IN its groove: one in the angled pod seat's groove (on the 45 degree axis, u = U_FACE - 12 .. +2.6) and one in
+    the straight plug holder's groove at height ZP. (pipe_collar.seat_orings() puts its first ring on a straight axis at ZH, where this collar has
+    no straight seat, so it floated loose in the bore: not used here; pipe_collar.py itself is unchanged.)"""
+    u0 = U_FACE - 12.0
+    angled = tilt(tubex(OR_GROOVE_D / 2 - 0.05, BORE_D / 2 - 1, u0 + 0.3, u0 + OR_GROOVE_W - 0.3))
+    straight = tubex(OR_GROOVE_D / 2 - 0.05, BORE_D / 2 - 1, OR_GROOVE_X + 0.3, OR_GROOVE_X + OR_GROOVE_W - 0.3, 0, ZP)
+    return angled.union(straight)
+
+
 def spine():
     return cylz(SPINE_R, -10, H + 10).cut(cylz(SPINE_R - 1.5, -11, H + 11))
 
@@ -126,7 +136,7 @@ def scene(content="empty", explode=0.0, with_pipe=True, with_spine=True):
         for (n, m, c, _s, _z) in tab_magnets():
             add(place(m, k, explode), "%s_piece_%d" % (n, k + 1), c)
         add(place(pc.gasket(), k, explode), "gasket_EPDM_%d" % (k + 1), pc.C_SEAL)
-        add(place(pc.seat_orings(), k, explode), "seat_orings_%d" % (k + 1), pc.C_SEAL)
+        add(place(seat_orings_3seat(), k, explode), "seat_orings_%d" % (k + 1), pc.C_SEAL)
         if content == "pods":
             add(place(pc.pod(), k, explode), "pod_%d" % (k + 1), pc.C_POD)
         elif content == "plugs":
@@ -193,6 +203,16 @@ def checks():
         out[nm + "_vs_spine"] = sum(_vol(o, sp) for o in objs)
         out[nm + "_vs_pieces"] = sum(_vol(o, allp) for o in objs)
         out[nm + "_vs_pipe"] = sum(_vol(o, pipe) for o in objs)
+    # seat O-rings: sit in their grooves (inside the piece's groove void, so no overlap with the plastic and no overlap with the pipe),
+    # and do not overlap a seated pod / plug or a parked plug
+    orings = [place(seat_orings_3seat(), k) for k in range(3)]
+    out["oring_vs_pieces"] = sum(_vol(o, pieces[k]) for k, o in enumerate(orings))
+    out["oring_vs_pipe"] = sum(_vol(o, pipe) for o in orings)
+    # an O-ring squeezes the pod / plug body of ITS OWN seat (24 mm ring on a 25 / 25.5 mm body: the intended seal, as in the single collar);
+    # it must touch nothing of any other seat, and in its own seat it only touches the part that belongs in that groove
+    out["oring_vs_other_seats_pods_plugs"] = sum(_vol(o, x) for i, o in enumerate(orings) for j in range(3) if j != i for x in (pods[j], plugs[j], parked[j]))
+    out["oring_squeeze_own_pod_mm3"] = sum(_vol(o, pods[i]) for i, o in enumerate(orings)) / 3
+    out["oring_vs_gasket"] = sum(_vol(orings[k], place(pc.gasket(), k)) for k in range(3))
     # seated pods / plugs and parked plugs must not touch each other (every combination that can occur together)
     groups = {"pods+parked": pods + parked, "plugs+parked": plugs + parked}
     for gn, g in groups.items():

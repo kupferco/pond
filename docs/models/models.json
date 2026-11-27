@@ -2,13 +2,13 @@
  "_help": "One entry per 3D model shown on the site. Add an entry here and it appears: no code. Fields: id (unique), title, glb (path from docs/), caption (optional), page (home or models: where it is embedded), section (heading on the models page), poster (optional image shown until the model loads), camera (optional: orbit like '35deg 70deg auto', target, fov).",
  "models": [
   {
-   "id": "pipe-collar-with-pod-v1",
-   "title": "Pipe collar with a pod",
-   "glb": "drawings/renders/pipe-collar-with-pod-v1.glb",
-   "caption": "A pod seated in its collar on the growing pipe.",
+   "id": "pipe-collar-3seat-assembled-v1",
+   "title": "Three-seat pipe collar: three identical 120 degree pieces, empty holes",
+   "glb": "drawings/renders/pipe-collar-3seat-assembled-v1.glb",
+   "caption": "The three pieces round the pipe, holes empty.",
    "page": "models",
-   "section": "Growing pipe",
-   "poster": "drawings/renders/pipe-collar-with-pod-v1-line.png"
+   "section": "Pod handling",
+   "poster": "drawings/renders/pipe-collar-3seat-assembled-v1-line.png"
   },
   {
    "id": "charging-dock-v1",
@@ -192,15 +192,6 @@
    "page": "models",
    "section": "Pod handling",
    "poster": "drawings/renders/pipe-collar-3seat-pods-v1-line.png"
-  },
-  {
-   "id": "pipe-collar-3seat-assembled-v1",
-   "title": "Three-seat pipe collar: three identical 120 degree pieces, empty holes",
-   "glb": "drawings/renders/pipe-collar-3seat-assembled-v1.glb",
-   "caption": "The three pieces round the pipe, holes empty.",
-   "page": "models",
-   "section": "Pod handling",
-   "poster": "drawings/renders/pipe-collar-3seat-assembled-v1-line.png"
   },
   {
    "id": "pipe-collar-3seat-piece-v1",
