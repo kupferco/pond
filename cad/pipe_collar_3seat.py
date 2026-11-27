@@ -112,9 +112,8 @@ def seat_orings_3seat():
     """The two seat O-rings, each IN its groove: one in the angled pod seat's groove (on the 45 degree axis, u = U_FACE - 12 .. +2.6) and one in
     the straight plug holder's groove at height ZP. (pipe_collar.seat_orings() puts its first ring on a straight axis at ZH, where this collar has
     no straight seat, so it floated loose in the bore: not used here; pipe_collar.py itself is unchanged.)"""
-    u0 = U_FACE - 12.0
-    angled = tilt(tubex(OR_GROOVE_D / 2 - 0.05, BORE_D / 2 - 1, u0 + 0.3, u0 + OR_GROOVE_W - 0.3))
-    straight = tubex(OR_GROOVE_D / 2 - 0.05, BORE_D / 2 - 1, OR_GROOVE_X + 0.3, OR_GROOVE_X + OR_GROOVE_W - 0.3, 0, ZP)
+    angled = tilt(pc.seat_oring(U_FACE - 12.0))
+    straight = pc.seat_oring(OR_GROOVE_X, ZP)
     return angled.union(straight)
 
 

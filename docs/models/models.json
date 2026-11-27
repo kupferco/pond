@@ -2,15 +2,6 @@
  "_help": "One entry per 3D model shown on the site. Add an entry here and it appears: no code. Fields: id (unique), title, glb (path from docs/), caption (optional), page (home or models: where it is embedded), section (heading on the models page), poster (optional image shown until the model loads), camera (optional: orbit like '35deg 70deg auto', target, fov).",
  "models": [
   {
-   "id": "pipe-collar-3seat-assembled-v1",
-   "title": "Three-seat pipe collar: three identical 120 degree pieces, empty holes",
-   "glb": "drawings/renders/pipe-collar-3seat-assembled-v1.glb",
-   "caption": "The three pieces round the pipe, holes empty.",
-   "page": "models",
-   "section": "Pod handling",
-   "poster": "drawings/renders/pipe-collar-3seat-assembled-v1-line.png"
-  },
-  {
    "id": "charging-dock-v1",
    "title": "Charging dock",
    "glb": "drawings/renders/charging-dock-v1.glb",
@@ -176,31 +167,40 @@
    "poster": "drawings/renders/spine-connector-v2-line.png"
   },
   {
-   "id": "pipe-collar-3seat-exploded-v1",
-   "title": "Three-seat pipe collar exploded: the three pieces pulled out 60 mm",
-   "glb": "drawings/renders/pipe-collar-3seat-exploded-v1.glb",
+   "id": "pipe-collar-3seat-exploded-v2",
+   "title": "Pipe collar draft V2: three-seat collar exploded, the three pieces pulled out 60 mm",
+   "glb": "drawings/renders/pipe-collar-3seat-exploded-v2.glb",
    "caption": "The three pieces pulled apart.",
    "page": "models",
    "section": "Pod handling",
-   "poster": "drawings/renders/pipe-collar-3seat-exploded-v1-line.png"
+   "poster": "drawings/renders/pipe-collar-3seat-exploded-v2-line.png"
   },
   {
-   "id": "pipe-collar-3seat-pods-v1",
-   "title": "Three-seat pipe collar with a pod in every seat and one plug parked",
-   "glb": "drawings/renders/pipe-collar-3seat-pods-v1.glb",
+   "id": "pipe-collar-3seat-pods-v2",
+   "title": "Pipe collar draft V2: three-seat pipe collar with a pod in every seat and one plug parked",
+   "glb": "drawings/renders/pipe-collar-3seat-pods-v2.glb",
    "caption": "The collar with three pods and one parked plug.",
    "page": "models",
    "section": "Pod handling",
-   "poster": "drawings/renders/pipe-collar-3seat-pods-v1-line.png"
+   "poster": "drawings/renders/pipe-collar-3seat-pods-v2-line.png"
   },
   {
-   "id": "pipe-collar-3seat-piece-v1",
-   "title": "One piece of the three-seat collar (seat at 0 degrees, tabs at -60 and +60)",
-   "glb": "drawings/renders/pipe-collar-3seat-piece-v1.glb",
+   "id": "pipe-collar-3seat-piece-v2",
+   "title": "Pipe collar draft V2: one piece of the three-seat collar (seat at 0 degrees, tabs at -60 and +60)",
+   "glb": "drawings/renders/pipe-collar-3seat-piece-v2.glb",
    "caption": "One piece with its seat and its two magnet tabs.",
    "page": "models",
    "section": "Pod handling",
-   "poster": "drawings/renders/pipe-collar-3seat-piece-v1-line.png"
+   "poster": "drawings/renders/pipe-collar-3seat-piece-v2-line.png"
+  },
+  {
+   "id": "pipe-collar-3seat-assembled-v2",
+   "title": "Pipe collar draft V2: three-seat collar, three identical 120 degree pieces, empty holes",
+   "glb": "drawings/renders/pipe-collar-3seat-assembled-v2.glb",
+   "caption": "The three pieces round the pipe, holes empty.",
+   "page": "models",
+   "section": "Pod handling",
+   "poster": "drawings/renders/pipe-collar-3seat-assembled-v2-line.png"
   }
  ]
 }

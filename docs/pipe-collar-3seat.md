@@ -1,6 +1,6 @@
 # Pipe collar with three pod seats, three identical pieces (OpenPocket #563)
 
-Script: `cad/pipe_collar_3seat.py` (pictures: `cad/render_pipe_collar_3seat.py`), drawings "Pipe collar, three seats" on the Drawings page. It imports everything from `cad/pipe_collar.py` and does not change that file (task 537 uses it).
+Script: `cad/pipe_collar_3seat.py` (pictures: `cad/render_pipe_collar_3seat.py`), drawings "Pipe collar draft V2" (supersedes the single-seat draft V1) on the Drawings page. It imports everything from `cad/pipe_collar.py`. The one seat O-ring (green ring) is defined once there, as `seat_oring()` (`seat_orings()` of the single collar builds the same ring); the three-seat script imports it and defines no ring of its own. Published ids are `pipe-collar-3seat-*-v2`.
 
 **Reference** (approved by the owner, option B of Viber sketch SUPhkmDEjmXn; option A, today's two halves with two more seats, was rejected because the hinge and the closure both land on a seat):
 
