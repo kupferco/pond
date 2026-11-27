@@ -156,6 +156,24 @@
    "page": "models",
    "section": "Cart",
    "poster": "drawings/renders/cart-hand-v5-line.png"
+  },
+  {
+   "id": "spine-connector-positions-v2",
+   "title": "Where the two spine connectors sit along the spine (bottom z 514, top z 1884)",
+   "glb": "drawings/renders/spine-connector-positions-v2.glb",
+   "caption": "Where the two connectors sit on the spine, shown as plain markers.",
+   "page": "models",
+   "section": "Track",
+   "poster": "drawings/renders/spine-connector-positions-v2-line.png"
+  },
+  {
+   "id": "spine-connector-v2",
+   "title": "Spine to track connector v2: flush track joint, track horizontal, rod to the spine (PROPOSAL: nut each side of the spine wall)",
+   "glb": "drawings/renders/spine-connector-v2.glb",
+   "caption": "The flush track joint with its rod to the spine and the proposed nuts either side of the spine wall.",
+   "page": "models",
+   "section": "Track",
+   "poster": "drawings/renders/spine-connector-v2-line.png"
   }
  ]
 }
