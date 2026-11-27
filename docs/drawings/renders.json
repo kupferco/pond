@@ -2,6 +2,19 @@
   "updated": "2026-11-23",
   "renders": [
     {
+      "id": "complete-unit-v2",
+      "date": "2026-11-20",
+      "part": "Complete unit",
+      "category": "Complete unit",
+      "status": "draft",
+      "version": 2,
+      "group": "Complete unit",
+      "title": "Complete unit v2 (single-source: tank with water, real cart, sample coil)",
+      "comment": "DRAFT, OpenPocket #365. Rebuilt from the single-source parts (cad/parts/): tank with the water volume at the normal 15 cm level (translucent blue), frame, solar panel, growing pipe with a pod in each of its 48 holes (simplified), the 155 mm shelf inside the tank with the seedling tray and the seedling storage (blue) standing on it UNDER the lid (#447: they were drawn on top of the lid), and the REAL cart (motors inward, #312, both omni sleeves) with its sample tubing coil (#330) clamped on the right track run, instead of the old red box stand-in. #447: the cart no longer carries a stub of track pipe: the only track is the unit's. 3D model: cad/renders/complete-unit.glb. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
+      "thumb": "renders/complete-unit-v2-line.png",
+      "viewer": "viewer.html?src=renders/complete-unit-v2.glb&title=Complete%20unit%20v2%20(single-source:%20tank%20with%20water,%20real%20cart,%20sample%20coil)"
+    },
+    {
       "id": "pipe-collar-3seat-assembled-v2",
       "date": "2026-11-23",
       "part": "Pipe collar",
@@ -52,19 +65,6 @@
       "comment": "DRAFT V2 (supersedes the single-seat draft V1), OpenPocket #563 (owner decision 27 Nov 2026, option B of the approved sketch; ASSUMED: one plug holder per seat). The three identical pieces pulled 60 mm out along their seat directions (readability only), with their magnets, gaskets and seat O-rings, round the pipe and spine. 3D model: cad/renders/pipe-collar-3seat-exploded.glb. Plan view (top) has the seats at 0/120/240 degrees and the magnet joints at 60/180/300, as the approved reference drawing (docs/pipe-collar-3seat-reference.png). Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
       "thumb": "renders/pipe-collar-3seat-exploded-v2-line.png",
       "viewer": "viewer.html?src=renders/pipe-collar-3seat-exploded-v2.glb&title=Pipe%20collar%20draft%20V2:%20three-seat%20collar%20exploded,%20the%20three%20pieces%20pulled%20out%2060%20mm"
-    },
-    {
-      "id": "complete-unit-v2",
-      "date": "2026-11-20",
-      "part": "Complete unit",
-      "category": "Complete unit",
-      "status": "draft",
-      "version": 2,
-      "group": "Complete unit",
-      "title": "Complete unit v2 (single-source: tank with water, real cart, sample coil)",
-      "comment": "DRAFT, OpenPocket #365. Rebuilt from the single-source parts (cad/parts/): tank with the water volume at the normal 15 cm level (translucent blue), frame, solar panel, growing pipe with a pod in each of its 48 holes (simplified), the 155 mm shelf inside the tank with the seedling tray and the seedling storage (blue) standing on it UNDER the lid (#447: they were drawn on top of the lid), and the REAL cart (motors inward, #312, both omni sleeves) with its sample tubing coil (#330) clamped on the right track run, instead of the old red box stand-in. #447: the cart no longer carries a stub of track pipe: the only track is the unit's. 3D model: cad/renders/complete-unit.glb. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
-      "thumb": "renders/complete-unit-v2-line.png",
-      "viewer": "viewer.html?src=renders/complete-unit-v2.glb&title=Complete%20unit%20v2%20(single-source:%20tank%20with%20water,%20real%20cart,%20sample%20coil)"
     },
     {
       "id": "spine-connector-v2",
