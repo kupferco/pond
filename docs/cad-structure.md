@@ -21,6 +21,7 @@ copied the cart's track pipe and drew it twice.)
 | **Sample tubing coil** (pump link, PU coil, tail) | `cad/parts/sample_coil.py` | water sampler, cart, complete unit, water assembly |
 | Sampling connector (male nozzle, female socket) | `cad/parts/water_connector.py` | sampler, station |
 | Track supports (#315) | `cad/track_supports.py` | track supports renders, water assembly |
+| Spine-to-track connector (#561; not yet in the complete unit, task 537) | `cad/spine_connector.py` (see `docs/spine-connector.md`) | its renders and GLBs |
 | Water testing station | `cad/water_station.py` | water assembly, renders |
 
 Assemblies (they only place parts, never draw them): `cad/unit_v3_aframe.py`, `cad/unit_v3_dimensioned.py`, `cad/track_supports.py`,

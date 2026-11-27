@@ -11,6 +11,7 @@
 | Normal water level over the tank floor | 150 mm | owner (about 15 cm) |
 | Cart depth under the track axis, towards the tank | 165 mm | **measured** from the CAD (the parking block under the plate; `water_assembly.cart_tank_check()` recomputes it and fails if the real cart is deeper) |
 | Air between the lowest cart part and the lid | 45 mm | **ASSUMED**, not given by the owner |
+| M8 track rod reach from the pipe surface toward the spine (`track_rod_out_mm`) | 50 mm | `track_joint.py` ROD_OUT; the spine connector (#561) needs 14.5 and its check fails above 50 |
 | Bottom track run, axis over the lid top | 210 mm (165 + 45) | derived. Axis at z = 514 mm over the tank floor (the CAD guessed 450, the sim 510) |
 | **Central pipe position** (growing pipe 75 mm OD + the 33.7 mm spine on the same axis) | x = 0, y = 0 (tank centre) | **fixed** (#537): no drawing or scene may move it |
 | **Track offset** (track pipe axis to central pipe axis) | 66 mm = 16 tube radius + 50 mm rod | the flush track joint, `cad/track_joint.py` `ROD_OUT = 50` (M8 rod from the captive nut in the track pipe, past the lock nut, to the central pipe's axis). The loop plane is y = -66. cad/track_supports.py had a 34 mm free stub, the unit had 60 mm: both disagreed and were changed (#537). ASSUMPTION: "to the spine" is read as to the central pipe's axis |
