@@ -7,6 +7,8 @@ on:
   push:
     branches: [main]
     paths: ['control-ui/**', 'docs/**', '.github/workflows/control-ui.yml']
+  # "Full regression": the owner runs the full npm test (including sim.test.ts) by hand whenever it feels like time.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -30,7 +32,30 @@ jobs:
           cache-dependency-path: control-ui/package-lock.json
       - run: npm ci
       - run: npm run build:site
-      - run: npm test
+      - name: Does this pull request touch control-ui/?
+        id: scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          # Pushes to main and anything unclear run every test. Only a pull request that changes nothing under control-ui/ skips sim.test.ts.
+          full=true
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            if files=$(gh api --paginate "repos/${{ github.repository }}/pulls/$PR/files" --jq '.[].filename'); then
+              if ! echo "$files" | grep -q '^control-ui/'; then full=false; fi
+            fi
+          fi
+          echo "full=$full" >> "$GITHUB_OUTPUT"
+          echo "Full tests: $full"
+      - name: Tests (all four files)
+        if: steps.scope.outputs.full == 'true'
+        run: npm test
+      - name: Tests (CAD-only pull request, sim.test.ts skipped)
+        if: steps.scope.outputs.full != 'true'
+        run: |
+          node --experimental-strip-types test/drawings.test.ts
+          node --experimental-strip-types test/models.test.ts
+          node --experimental-strip-types test/sample.test.ts
       - name: Check deploy credentials
         id: creds
         env:
@@ -96,6 +121,24 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json" \
             npx --yes firebase-tools@latest deploy --only firestore:rules,storage --project pond-grow --non-interactive \
             || echo "::warning::Could not deploy Firestore/Storage rules. Is Firestore and Storage enabled in the console, and does the service account have Firebase Rules Admin?"
+
+  full-regression:
+    # Manual only: Actions tab, "Control UI hosting", Run workflow. Runs the full npm test, nothing is deployed.
+    if: github.event_name == 'workflow_dispatch'
+    name: Full regression
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: control-ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: control-ui/package-lock.json
+      - run: npm ci
+      - run: npm test
 
   cleanup-preview:
     # Delete this PR's preview channel when the PR is closed, merged or not.
