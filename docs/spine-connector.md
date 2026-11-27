@@ -17,3 +17,5 @@ No collars, no pods, no clamp ring, no arm, no growing pipe.
 3. The top run is at the very end of the spine (both end at 1884): a nut inside the spine there is at the tube end. Lower the top run or lengthen the spine?
 4. Is a connector at x = 0 on both runs what you want, or only one?
 5. One M8 rod per connector holds the track; is that enough against the cart's weight in the middle of each run?
+6. (#570) The lock nut is about 15 mm across corners but the cart's hand jaw is 14 mm, so the hand may not pass over it. From the #561 design; geometry not changed here.
+7. (#570, ASSUMED) In the unit drawings the track axis is 60 mm from the spine axis, not the 66 mm of the connector drawing, so the rod is not shortened and ends 6 mm past the spine axis inside the tube bore; the two spine nuts sit on the near wall. The rod also needs a hole through the growing pipe wall (see question 2). Confirm or give a shorter rod.

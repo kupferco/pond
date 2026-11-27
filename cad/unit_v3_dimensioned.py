@@ -12,13 +12,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from parts.unit_dims import *   # noqa: F401,F403
 from parts.common import box
 from parts.unit import unit_parts
+import unit_drawing as ud   # OpenPocket #570: the track shows the spine-to-track connector
 from parts.shelf_items import seedling_tray, seedling_storage
 
-KEEP = ("tank", "water_volume", "lid", "shelf", "socket", "growing_pipe", "spine_tube", "track_loop", "spine_brackets")
+KEEP = ("tank", "water_volume", "lid", "shelf", "socket", "growing_pipe", "spine_tube", "track_loop")
+KEEP_PREFIX = ("nut_plate_connector", "m8_rod_connector", "lock_nut_connector", "PROPOSAL_spine_nut")   # #570 (the old spine_brackets are the connector now)
 assy = cq.Assembly()
 def add(o, n, c): assy.add(o, name=n, color=cq.Color(*c))
-for _n, _s, _c in unit_parts():
-    if _n in KEEP:
+for _n, _s, _c in ud.drawing_parts():
+    if _n in KEEP or _n.startswith(KEEP_PREFIX):
         add(_s, _n, _c)
 add(seedling_tray(), "seedling_tray", (0.59, 0.43, 0.27, 1))
 add(seedling_storage(), "seedling_storage", (0.35, 0.5, 0.75, 1))

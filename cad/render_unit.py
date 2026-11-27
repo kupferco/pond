@@ -15,7 +15,7 @@ VIEWS = (("iso", 25, -50), ("front", 0, -90), ("top", 90, -90), ("side", 0, 0))
 
 
 def unit_water():
-    return runpy.run_path(os.path.join(HERE, "unit_v3_aframe.py"))["result"]
+    return runpy.run_path(os.path.join(HERE, "unit_structure_drawing.py"))["result"]
 
 
 def tank_water():

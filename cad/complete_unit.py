@@ -12,6 +12,7 @@ import cadquery as cq
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from parts.unit import unit_parts
+import unit_drawing as ud   # OpenPocket #570: the drawing shows the three-seat pipe collar and the spine-to-track connector (the clash check below still uses the plain unit)
 from parts.unit_dims import TX, LOOP_Y
 from parts.pods import pods_and_caps
 from parts.shelf_items import seedling_storage, seedling_tray
@@ -28,7 +29,7 @@ def to_unit(shape):
 
 def scene(with_cart=True, water=True):
     a = cq.Assembly()
-    for n, s, c in unit_parts(water=water):
+    for n, s, c in ud.drawing_parts(water=water):
         a.add(s, name=n, color=cq.Color(*c))
     pods, caps = pods_and_caps()
     a.add(pods, name="pods", color=cq.Color(0.24, 0.67, 0.31, 1))

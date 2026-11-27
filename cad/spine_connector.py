@@ -18,7 +18,7 @@ import cadquery as cq
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import layout as LAY
-from parts.unit_dims import SP, ZB, ZT
+from parts.unit_dims import SP, ZB, ZT, LOOP_Y, GP
 
 _tj = runpy.run_path(os.path.join(HERE, "track_joint.py"))        # the real joint: its parts, numbers and colours are taken from there, not copied
 R, RI, ROD_D, ROD_OUT, HOLE_D = (_tj[k] for k in ("R", "RI", "ROD_D", "ROD_OUT", "HOLE_D"))
@@ -97,17 +97,59 @@ def check():
     return msgs
 
 
+# ---- the connector placed on the UNIT (OpenPocket #570): the same joint hardware, no new geometry ----
+# In the unit the track loop plane is y = LOOP_Y (-60) and the spine axis is y = 0, so the track axis is UNIT_GAP = 60 mm from the spine axis, not the
+# 66 mm (R + ROD_OUT) the joint script reaches. ASSUMED: the rod is NOT shortened; it ends ROD_PAST = 6 mm past the spine axis, inside the tube bore (the far
+# wall is 14.85 mm away), and the two spine nuts sit on the near wall as in the connector drawing (shifted 6 mm toward the track with the wall).
+UNIT_GAP = abs(LOOP_Y)
+ROD_PAST = AXIS - UNIT_GAP
+HARDWARE = ("nut_plate", "m8_rod", "lock_nut")      # the joint tube, plugs and stubs are the track pipe itself, which the unit already draws
+
+
+def _rod_cyl(r, y0, y1, zc):
+    return cq.Workplane("XY").add(cq.Solid.makeCylinder(r, y1 - y0, cq.Vector(0, y0, zc), cq.Vector(0, 1, 0)))
+
+
+def unit_hardware(zc):
+    """[(name, shape, rgb)] of one connector on the unit's track run at height zc (x = 0): nut plate with its captive nut, M8 rod, lock nut, and the two
+    PROPOSAL nuts either side of the spine wall. Unit frame (Z up)."""
+    src = {c.name: c for c in _tj["assy"].children}
+    col = dict(JOINT_PARTS)
+    at = lambda w: to_horizontal(w).translate((0, LOOP_Y, zc))
+    out = [(n, at(src[n].obj), col[n]) for n in HARDWARE]
+    _tube, outside, inside, _end = spine_parts()
+    shift = lambda w: to_horizontal(w).translate((0, LOOP_Y - ROD_PAST, zc))
+    out.append(("PROPOSAL_spine_nut_outside", shift(outside), (0.2, 0.7, 0.3)))
+    out.append(("PROPOSAL_spine_nut_inside", shift(inside), (0.2, 0.7, 0.3)))
+    return out
+
+
+def unit_cutters(zc):
+    """Holes the unit's own parts need so the rod passes: {part name: shape to cut}. The track pipe gets the hollow the nut plate sits in (the real pipe is
+    hollow, the unit models it solid, as track_supports.py does for its plates) and the rod hole; the growing pipe and the spine tube get a rod hole each."""
+    bore = cq.Workplane("YZ").circle(RI).extrude(_tj["JOINT_L"]).translate((-_tj["JOINT_L"] / 2, LOOP_Y, zc))
+    return {"track_loop": bore.union(_rod_cyl(HOLE_D / 2, LOOP_Y, LOOP_Y + R + 2, zc)),
+            "growing_pipe": _rod_cyl(HOLE_D / 2, LOOP_Y + R, -GP / 2 + 8, zc),          # ASSUMED hole in the growing pipe wall (open question 2 of docs/spine-connector.md)
+            "spine_tube": _rod_cyl(HOLE_D / 2, -SP_R - 2, 0, zc)}
+
+
 def positions_scene():
-    """Where the connectors sit: the spine and the track as in the unit, plus one plain flat ring marker per connector height. No pods, nothing else."""
+    """Where the connectors sit: the spine and the track as in the unit with the real connector (joint hardware, rod, spine nuts) at each of the two heights,
+    in place of the plain ring markers of #561. No pods, no collars, nothing else."""
     from parts.unit import unit_parts
+    allp = unit_parts(water=False)
+    shapes = {n: s for n, s, c in allp if n in ("spine_tube", "track_loop")}
+    cols = {n: c for n, s, c in allp}
+    for zc in ZONES.values():
+        for n, cut in unit_cutters(zc).items():
+            if n in shapes:
+                shapes[n] = shapes[n].cut(cut)
     a = cq.Assembly()
-    parts = {n: (s, c) for n, s, c in unit_parts(water=False)}
-    for n in ("spine_tube", "track_loop"):
-        s, c = parts[n]
-        a.add(s, name=n, color=cq.Color(*c))
+    for n, s in shapes.items():
+        a.add(s, name=n, color=cq.Color(*cols[n]))
     for k, zc in ZONES.items():
-        ring = cq.Workplane("XY").circle(SP_R + 20).circle(SP_R + 1).extrude(12).translate((0, 0, zc - 6))
-        a.add(ring, name="marker_%s_connector" % k, color=cq.Color(0.85, 0.1, 0.1, 1))
+        for n, s, c in unit_hardware(zc):
+            a.add(s, name="%s_connector_%s" % (n, k), color=cq.Color(*c, 1))
     return a
 
 
