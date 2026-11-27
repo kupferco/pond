@@ -164,10 +164,15 @@ def gasket():
     ring = tubex(GASKET_R1 - 0.1, GASKET_R0 + 0.1, 0, RO, 0, ZH)
     return ring.intersect(cylz(RI + GASKET_DEPTH, -1, H + 1).cut(cylz(RP, -2, H + 2)))
 
+def seat_oring(x0=OR_GROOVE_X, z=0.0):
+    """THE seat O-ring (24 x 2, the green ring), the one definition: sits in a groove that starts at x0 along its axis, at height z.
+    pipe_collar_3seat.py imports this (tilted onto the 45 degree axis for the angled seat); it does not define a ring of its own."""
+    return tubex(OR_GROOVE_D / 2 - 0.05, 12.0, x0 + 0.3, x0 + 2.3, 0, z)
+
 def seat_orings():
     out = None
     for z in (ZH, ZP):
-        r = tubex(OR_GROOVE_D / 2 - 0.05, 12.0, OR_GROOVE_X + 0.3, OR_GROOVE_X + 2.3, 0, z)
+        r = seat_oring(OR_GROOVE_X, z)
         out = r if out is None else out.union(r)
     return out
 

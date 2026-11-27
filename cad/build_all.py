@@ -2,7 +2,7 @@
 #   python cad/build_all.py            everything (about 20 minutes: the renderer is software)
 #   python cad/build_all.py quick      only the single-source check and the clash checks (about 3 minutes)
 #   python cad/build_all.py only <family>   the checks, then only that family's render steps, then publish_drawings.py
-#                                      families: cart, track-supports, spine-connector, unit, water-station (the CAD-only task flow, #564)
+#                                      families: cart, track-supports, spine-connector, pipe-collar-3seat, unit, water-station (the CAD-only task flow, #564)
 # Order matters in one place: render_water_station.py writes assembly.glb (the full cart + sampler + station + unit); nothing else writes it.
 # Needs: cadquery, numpy, matplotlib, pillow, scipy, trimesh.   See docs/cad-structure.md.
 import os
@@ -16,6 +16,7 @@ STEPS_CHECK = [
     ("sim matches the CAD (control-ui/src/generated vs the cart, track and unit sources; fails on drift)", ["check_sim_matches_cad.py"]),
     ("water assembly clash check (cart, sampler, station, unit supports)", ["water_assembly.py"]),
     ("spine-to-track connector: fit checks and the pod places in its way (#561)", ["spine_connector.py"]),
+    ("three-seat pipe collar (three identical 120 degree pieces): clearances, magnets, pods and plugs (#563)", ["pipe_collar_3seat.py"]),
     ("complete unit: cart and sample coil vs every unit part (writes complete-unit.glb)", ["complete_unit.py"]),
 ]
 STEPS_BUILD = [
@@ -23,6 +24,7 @@ STEPS_BUILD = [
     ("cart family renders + GLBs (cart assembly, arm, base, pod holder, sleeves, wheel pairs, home station)", ["render_omni_sleeve.py"]),
     ("track supports renders + GLBs", ["render_track_supports.py"]),
     ("spine-to-track connector renders + GLBs (#561)", ["render_spine_connector.py"]),
+    ("three-seat pipe collar renders + GLBs (#563)", ["render_pipe_collar_3seat.py"]),
     ("unit renders + GLBs (complete unit, unit with water, tank with water, sample coil)", ["render_unit.py"]),
     ("water station + water assembly renders + assembly.glb", ["render_water_station.py"]),
     ("publish to the Drawings page and the 3D Models page", ["publish_drawings.py"]),
@@ -34,6 +36,7 @@ FAMILIES = {
     "cart": "render_omni_sleeve.py",
     "track-supports": "render_track_supports.py",
     "spine-connector": "render_spine_connector.py",
+    "pipe-collar-3seat": "render_pipe_collar_3seat.py",
     "unit": "render_unit.py",
     "water-station": "render_water_station.py",
 }
