@@ -12,7 +12,9 @@ copied the cart's track pipe and drew it twice.)
 | **Water volume** (normal level 15 cm, translucent blue, named part `water_volume`) | `cad/parts/water_volume.py` | same as the tank |
 | Track loop | `cad/parts/track.py` | unit, track supports, complete unit, water station |
 | Frame: growing pipe, spine, collars, legs, lid plates, panel, feet, sandbags | `cad/parts/unit_frame.py` | via `cad/parts/unit.py` (`unit_parts()`, the whole unit as a list) |
-| Pods | `cad/parts/pods.py` | complete unit, water station |
+| Generic pod places (old: 4 cups per level; now only used to count what the real collars replaced) | `cad/parts/pods.py` | `pod_collars.old_pod_places()` |
+| **Pod collars** on the central pipe (the real clamshell collar of `cad/pipe_collar.py`, placed by layout, clear of connectors and clamp collars) | `cad/parts/pod_collars.py` | complete unit |
+| **Real seedling tray and pod store rows** (from `cart_arm.py` and `pod_store_reach.py`) | `cad/parts/seedling_real.py` | complete unit |
 | **Shelf** (4 mm plate at z 155..159, 5 mm over the 150 water, under the lid, hole for the spine tube) | `cad/parts/shelf.py` (`SHELF_Z`/`SHELF_T` in `unit_dims.py`) | `unit_parts()`, so every unit drawing |
 | Seedling tray and seedling storage (the blue part), standing ON the shelf under the lid | `cad/parts/shelf_items.py` | complete unit, dimensioned unit, water station |
 | Unit numbers (tank size, track, heights, water level) | `cad/parts/unit_dims.py` | everything above |
@@ -21,11 +23,11 @@ copied the cart's track pipe and drew it twice.)
 | **Sample tubing coil** (pump link, PU coil, tail) | `cad/parts/sample_coil.py` | water sampler, cart, complete unit, water assembly |
 | Sampling connector (male nozzle, female socket) | `cad/parts/water_connector.py` | sampler, station |
 | Track supports (#315) | `cad/track_supports.py` | track supports renders, water assembly |
-| Spine-to-track connector (#561; not yet in the complete unit, task 537) | `cad/spine_connector.py` (see `docs/spine-connector.md`) | its renders and GLBs |
+| Spine-to-track connector (#561; in the complete unit since task 537: `connector_parts()`) | `cad/spine_connector.py` (see `docs/spine-connector.md`) | its renders and GLBs |
 | Water testing station | `cad/water_station.py` | water assembly, renders |
 
 Assemblies (they only place parts, never draw them): `cad/unit_v3_aframe.py`, `cad/unit_v3_dimensioned.py`, `cad/track_supports.py`,
-`cad/complete_unit.py` (unit + pods + shelf items + the real cart on the right track run), `cad/water_assembly.py` (cart at the water testing station).
+`cad/complete_unit.py` (unit + real pod collars + spine connectors + real tray and pod store + the real cart on the right track run), `cad/water_assembly.py` (cart at the water testing station).
 
 ## One command
 
@@ -47,7 +49,8 @@ draws the line views, and updates `docs/drawings/renders.json` (Drawings page) a
 3. two scripts define the same top-level function (apart from generic helpers such as `box`, a frozen list of known cases, and the superseded design
    studies listed in `STUDIES`, which the build no longer runs),
 4. (#447) the cart source carries a `track_pipe*` child, or any assembly adds one (the track comes only from `cad/parts/track.py`), or
-5. (#447) the shelf is not above the water and under the lid, or the seedling tray / storage do not stand on the shelf top and under the lid.
+5. (#537) a drawing or sim scene uses its own central pipe position, track offset (66 mm = 16 + the 50 mm rod of `track_joint.py`), rod stub, pipe spacing or climbing sleeve instead of the ones in `cad/layout.json`, or the real geometry of the central pipe / track loop / supports / generated sim numbers / `sim/constants.py` differs from them, or
+6. (#447) the shelf is not above the water and under the lid, or the seedling tray / storage do not stand on the shelf top and under the lid.
 
 ## Adding or changing a part
 

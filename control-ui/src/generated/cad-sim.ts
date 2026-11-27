@@ -286,11 +286,13 @@ export const CAD_CONSTANTS = {
  },
  "unit_dims": {
   "BAR_X": 200.0,
+  "CENTRAL_X": 0.0,
+  "CENTRAL_Y": 0.0,
   "FOOT_X": 340.0,
   "GP": 75.0,
   "LID": 304.0,
   "LID_T": 4.0,
-  "LOOP_Y": -60.0,
+  "LOOP_Y": -66.0,
   "LR": 8.0,
   "R": 150.0,
   "RC": 40.5,
@@ -303,6 +305,7 @@ export const CAD_CONSTANTS = {
   "TD": 400.0,
   "TH": 300.0,
   "TR": 16.0,
+  "TRACK_OFFSET": 66.0,
   "TW": 700.0,
   "TX": 290.0,
   "WATER_LEVEL": 150.0,
@@ -315,14 +318,35 @@ export const CAD_CONSTANTS = {
  "layout": {
   "CART_BELOW_TRACK": 165.0,
   "CART_CLEARANCE": 45.0,
+  "CART_PIPE_SPACING": 120.0,
+  "CENTRAL_PIPE_XY": [
+   0.0,
+   0.0
+  ],
+  "CLAMP_COLLAR_KEEPOUT": 27.0,
+  "CONNECTOR_KEEPOUT": 30.0,
+  "GROWING_PIPE_OD": 75.0,
   "LID_T": 4.0,
   "LID_TOP": 304.0,
   "OLD_TRACK_BOTTOM_Z": 450.0,
+  "POD_COLLAR_GAP": 2.0,
+  "POD_ZONE_BOTTOM": 400.0,
+  "POD_ZONE_TOP": 1840.0,
+  "SPINE_OD": 33.7,
   "TANK_H": 300.0,
   "TRACK_BOTTOM_ABOVE_LID": 210.0,
   "TRACK_BOTTOM_Z": 514.0,
+  "TRACK_CORNER_R": 150.0,
+  "TRACK_HALF_WIDTH": 290.0,
+  "TRACK_LOOP_Y": -66.0,
+  "TRACK_OFFSET": 66.0,
+  "TRACK_PIPE_OD": 32.0,
+  "TRACK_PIPE_R": 16.0,
   "TRACK_RISE": 64.0,
   "TRACK_ROD_OUT": 50.0,
+  "TRACK_STUB": 50.0,
+  "TRACK_TOP_Z": 1884.0,
+  "UPPER_CLAMP_LEGS_KEEPOUT": 65.0,
   "WATER_LEVEL": 150.0
  }
 } as const;
@@ -330,16 +354,22 @@ export const CAD_CONSTANTS = {
 export const CAD_UNIT = {
  "CART_SHIFT": [
   350.0,
-  -60.0,
+  -66.0,
   1000.0
  ],
  "CART_Z": 1000.0,
  "TX": 290.0,
  "TR": 16.0,
  "R": 150.0,
- "LOOP_Y": -60.0,
+ "LOOP_Y": -66.0,
  "ZB": 514.0,
  "ZT": 1884.0,
+ "TRACK_OFFSET": 66.0,
+ "CLIMB_SLEEVE": "B",
+ "CENTRAL_PIPE_XY": [
+  0.0,
+  0.0
+ ],
  "note": "sim world (x, y, z) = (-cad_y, cad_x, cad_z): the sim's track plane is x = -LOOP_Y, its two legs stand at y = -TX and +TX; the cart origin of the Complete unit is CART_SHIFT (hand B on the leg at TX)"
 } as const;
 

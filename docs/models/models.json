@@ -65,6 +65,24 @@
    "poster": "drawings/renders/unit-water-v1-line.png"
   },
   {
+   "id": "spine-connector-positions-v2",
+   "title": "Where the two spine connectors sit along the spine (bottom z 514, top z 1884)",
+   "glb": "drawings/renders/spine-connector-positions-v2.glb",
+   "caption": "Where the two connectors sit on the spine, shown as plain markers.",
+   "page": "models",
+   "section": "Track",
+   "poster": "drawings/renders/spine-connector-positions-v2-line.png"
+  },
+  {
+   "id": "spine-connector-v2",
+   "title": "Spine to track connector v2: flush track joint, track horizontal, rod to the spine (PROPOSAL: nut each side of the spine wall)",
+   "glb": "drawings/renders/spine-connector-v2.glb",
+   "caption": "The flush track joint with its rod to the spine and the proposed nuts either side of the spine wall.",
+   "page": "models",
+   "section": "Track",
+   "poster": "drawings/renders/spine-connector-v2-line.png"
+  },
+  {
    "id": "track-supports-assembly-v2",
    "title": "Whole unit with the track supports (with water)",
    "glb": "drawings/renders/track-supports-assembly-v2.glb",
@@ -90,27 +108,6 @@
    "page": "models",
    "section": "Cart",
    "poster": "drawings/renders/cart-base-v3-line.png"
-  },
-  {
-   "id": "cart-assembly-v5",
-   "title": "Whole cart assembly v5 (motors inward)",
-   "glb": "drawings/renders/cart-assembly-v5.glb",
-   "caption": "The climbing cart with its motors inward, plate, battery and arm mount.",
-   "page": "models",
-   "section": "Cart",
-   "poster": "drawings/renders/cart-assembly-v5-line.png"
-  },
-  {
-   "id": "complete-unit-v2",
-   "title": "Complete unit v2 (single-source: tank with water, real cart, sample coil)",
-   "glb": "drawings/renders/complete-unit-v2.glb",
-   "caption": "Tank with water, frame, panel, pods, trays and the cart with its sample coil on the track.",
-   "page": "home",
-   "section": "Complete unit",
-   "poster": "drawings/renders/complete-unit-v2-line.png",
-   "camera": {
-    "orbit": "35deg 70deg auto"
-   }
   },
   {
    "id": "cart-hand-corner-v5",
@@ -158,22 +155,25 @@
    "poster": "drawings/renders/cart-hand-v5-line.png"
   },
   {
-   "id": "spine-connector-positions-v2",
-   "title": "Where the two spine connectors sit along the spine (bottom z 514, top z 1884)",
-   "glb": "drawings/renders/spine-connector-positions-v2.glb",
-   "caption": "Where the two connectors sit on the spine, shown as plain markers.",
+   "id": "cart-assembly-v5",
+   "title": "Whole cart assembly v5 (motors inward)",
+   "glb": "drawings/renders/cart-assembly-v5.glb",
+   "caption": "The climbing cart with its motors inward, plate, battery and arm mount.",
    "page": "models",
-   "section": "Track",
-   "poster": "drawings/renders/spine-connector-positions-v2-line.png"
+   "section": "Cart",
+   "poster": "drawings/renders/cart-assembly-v5-line.png"
   },
   {
-   "id": "spine-connector-v2",
-   "title": "Spine to track connector v2: flush track joint, track horizontal, rod to the spine (PROPOSAL: nut each side of the spine wall)",
-   "glb": "drawings/renders/spine-connector-v2.glb",
-   "caption": "The flush track joint with its rod to the spine and the proposed nuts either side of the spine wall.",
-   "page": "models",
-   "section": "Track",
-   "poster": "drawings/renders/spine-connector-v2-line.png"
+   "id": "complete-unit-v2",
+   "title": "Complete unit v3 (real pod collars, connectors, tray and pod store, real cart)",
+   "glb": "drawings/renders/complete-unit-v2.glb",
+   "caption": "Tank with water, frame, panel, real pod collars, connectors, tray and pod store and the cart with its sample coil on the track.",
+   "page": "home",
+   "section": "Complete unit",
+   "poster": "drawings/renders/complete-unit-v2-line.png",
+   "camera": {
+    "orbit": "35deg 70deg auto"
+   }
   }
  ]
 }

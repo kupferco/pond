@@ -31,9 +31,10 @@ export function auditScenes(mj: MainModule): Row[] {
   { const { m, d } = make(transplantMjcf()); mj.mj_forward(m, d);
     const leg: Leg = { point: [XT, -CAD_UNIT.TX / 1000, CART_Z0], dir: [0, 0, 1], toUnit: [-1, 0, 0], outward: [0, -1, 0] };
     add('transplant (leg -y)', placementOf(m as never, d as never, leg, 'C'), 180, 'inner'); void YC; }
-  // 4. Pod grab: rides the bottom run (along world x) of the loop at y = PIPE_Y, z = PIPE_Z; the unit towards -y (growing pipe at y = 0), the loop's middle above the run.
+  // 4. Pod grab (#537): rides the bottom run (along world x) of the loop at y = PIPE_Y (66 mm in front of the central pipe), z = PIPE_Z, on its TOP sleeve (hand B): the unit (central pipe at y = 0) is towards +y,
+  //    the loop's middle above the run, the body and the free hand hang BELOW the pipe (outer), the plate on the front, away from the unit (roll 0): the CAD arrangement of cad/complete_unit.py.
   { const { m, d } = make(podGrabMjcf()); mj.mj_forward(m, d);
-    const leg: Leg = { point: [CART_HOME_X, PIPE_Y, PIPE_Z], dir: [1, 0, 0], toUnit: [0, -1, 0], outward: [0, 0, -1] };
-    add('pod grab (bottom run)', placementOf(m as never, d as never, leg, 'B'), 180, 'inner'); }
+    const leg: Leg = { point: [CART_HOME_X, PIPE_Y, PIPE_Z], dir: [1, 0, 0], toUnit: [0, 1, 0], outward: [0, 0, -1] };
+    add('pod grab (bottom run)', placementOf(m as never, d as never, leg, 'B'), 0, 'outer'); }
   return rows;
 }

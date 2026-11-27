@@ -2,7 +2,7 @@
 # The whole cart of cart_assembly.py (layout B from #312 is whatever cart_assembly.py draws on main: not changed here), plus the cart's water sampler
 # (water_sampler.py), plus the first unit's lid corner with the shared water testing station and the unit's passive socket (water_station.py).
 # The two files use different frames, so the unit is moved into the cart frame by ONE rigid move (a proper rotation, no mirroring):
-#   unit track bottom run (along X at y = -60, z = 450) becomes the cart's pipe B (along Z at x = -60, y = 0), dock (unit x = 100) at cart z = 0,
+#   unit track bottom run (along X at y = LOOP_Y (-66, cad/layout.json), z = 514) becomes the cart's pipe B (along Z at x = -60, y = 0), dock (unit x = 100) at cart z = 0,
 #   unit "down" (-Z, towards the lid) becomes cart +X (towards the other sleeve and past it), unit "inboard" (+Y) becomes cart +Y (the side AWAY from the plate).
 # 19 Nov follow-up 2 (owner): the cart clamps the track with the TOP sleeve (hand B, the upper one when the unit stands upright, lid below), and that sleeve is back.
 # Before, the track was pipe C and only the bottom sleeve (hand C) was drawn, clamped on it. Now hand B is closed on the track and the bottom sleeve (hand C) is
@@ -22,8 +22,9 @@ from parts.cart import add_cart
 import water_sampler as wsa
 import water_station as ws
 
-TRACK_X = -60.0                     # the track is pipe B, the top one
-MOVE = dict(rot=-90.0, shift=(LAY.TRACK_BOTTOM_Z + TRACK_X, 60.0, -ws.DOCK_X))   # #364: the track is at the shared layout height (was 450)
+TRACK_X = -LAY.CART_PIPE_SPACING / 2   # the track is pipe B, the TOP sleeve (cad/layout.json cart_climb_sleeve = B)
+assert LAY.CART_CLIMB_SLEEVE == "B"
+MOVE = dict(rot=-90.0, shift=(LAY.TRACK_BOTTOM_Z + TRACK_X, -LAY.TRACK_LOOP_Y, -ws.DOCK_X))   # #364: the track is at the shared layout height (was 450)
 SKIP = ("dock_plate_minus", "dock_plate_plus", "ground")
 
 

@@ -3,7 +3,7 @@
 import math
 import cadquery as cq
 from .common import box, cyl, tube, tdir, union_all
-from .unit_dims import (GP, SP, LR, TX, ZT, ZB, ZC1, ZC2, FOOT_X, LID, ZBAR, BAR_X, RP, RC)
+from .unit_dims import (GP, SP, LR, TX, ZT, ZB, ZC1, ZC2, FOOT_X, LID, ZBAR, BAR_X, RP, RC, LOOP_Y)
 
 PW_X, PD_Y, PT, TILT = 450.0, 350.0, 25.0, 23.0     # 30 W panel
 ZPC = 2000.0
@@ -22,7 +22,10 @@ def spine_tube():
 
 
 def spine_brackets():
-    return box(16, 30, 30, 0, -45, ZT - 15).union(box(16, 30, 30, 0, -45, ZB - 15))
+    # from the central pipe's surface (1.5 mm into it) out to the track axis (#537: the track is LOOP_Y = -66, was a 30 mm block at y -60..-30)
+    d = -LOOP_Y - (RP - 1.5)
+    yc = -(RP - 1.5) - d / 2                      # centre of the block between the two
+    return box(16, d, 30, 0, yc, ZT - 15).union(box(16, d, 30, 0, yc, ZB - 15))
 
 
 def _collar(zc, ends):

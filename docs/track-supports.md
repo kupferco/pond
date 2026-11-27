@@ -7,7 +7,7 @@ Render with `python cad/render_track_supports.py`. Sag: `python docs/bench-test/
 ## What was added
 - **Same rod system as the track joint** (`track_joint.py`): M8 rod, nut plate inside the pipe, hole on the +Y side (the sleeve's C-gap side, towards the spine),
   lock nut outside. The cart rolls to home (roll 0) to pass a support, same interlock as the joint rods (`control-ui/src/cart/roll.ts`: the runs are held at roll 0 already).
-- **Bottom run**: one support each side at x = +-125 mm, 15 mm before the bend starts (the straight part ends at 140). A 20 x 16 post on a 44 x 36 x 4 base plate on the tank lid, 34 mm of free rod.
+- **Bottom run**: one support each side at x = +-125 mm, 15 mm before the bend starts (the straight part ends at 140). A 20 x 16 post on a 44 x 36 x 4 base plate on the tank lid, **50 mm of free rod** from the pipe surface (the rod of the flush track joint, `ROD_OUT` in `cad/track_joint.py`; it was a 34 mm stub here, which disagreed with the joint, OpenPocket #537). The track pipe axis is therefore **66 mm** from the central pipe axis (16 tube radius + 50 rod), stated on the two close-up drawings.
   With the centre bracket the run is held at three points.
 - **Top run**: an M8 diagonal brace from a lug on the centre collar (where the top triangle legs meet) to a block under the top pipe at x = +-125 (middle of the CAD half span), on the same rod stub.
 

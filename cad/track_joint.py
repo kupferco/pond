@@ -5,6 +5,9 @@
 # swivel. Rod and nut sit on the +X (jaw) side, well under the hand's 14 mm jaw.
 import cadquery as cq
 import math
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import layout as LAY   # OpenPocket #537: ROD_OUT lives in cad/layout.json, so the unit, the supports and the sim all take it from here
 
 PIPE_OD = 32.0; PIPE_WALL = 2.0          # assumed standard pipe
 PIPE_ID = PIPE_OD - 2 * PIPE_WALL
@@ -13,7 +16,7 @@ PLUG_IN = 30.0
 PLUG_CLEAR = 0.15
 PIPE_STUB = 60.0
 ROD_D = 8.0                              # M8 threaded rod
-ROD_OUT = 50.0                           # reach from tube surface to spine
+ROD_OUT = LAY.TRACK_ROD_OUT              # 50: reach from tube surface to the central pipe axis (cad/layout.json)
 LOCKNUT_AF = 13.0; LOCKNUT_H = 6.5       # M8 nut
 PLATE_T = 3.0; PLATE_ANG = 50.0; PLATE_L = 30.0
 NUT_BOSS_D = 14.0; NUT_BOSS_H = 6.5      # captive M8 nut, facing inward

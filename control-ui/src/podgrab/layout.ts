@@ -52,34 +52,34 @@ export const CLAW_ACT = ['claw_l', 'claw_r'];
 export const TANK_W = 0.7, TANK_D = 0.4, TANK_H = LAYOUT.TANK_H, SHELF_Z = CAD_CONSTANTS.unit_dims.SHELF_Z / 1000, SHELF_T = CAD_CONSTANTS.unit_dims.SHELF_T / 1000;   // shelf slab z 155..159 (cad/parts/shelf.py, #447)
 export const SHELF_TOP = SHELF_Z + SHELF_T;
 export const LID_Z = TANK_H, LID_T = LAYOUT.LID_T;
-export const PIPE_Y = 0.104;                    // the track plane. CAD: -60 mm. MOVED 179 mm towards the back (was 115 mm: the omni cart's battery puts the arm base 50 mm further out of the plate, Pond #284) so that all 16 sockets are in front of the cart plate and the arm, mounted on the battery, reaches them (ASSUMED, see the PR)
-export const PIPE_Z = LAYOUT.TRACK_BOTTOM_Z;   // bottom run of the track, 210 mm over the lid top (cad/layout.json: the cart's 165 mm under the track plus 45 mm of air, ASSUMED; the CAD guessed 150 before and the sim 210 over the tank). The omni cart centre is 60 mm ABOVE the pipe it rides (hand B on the pipe, hand C hanging open above it), and the arm base is on the cart centre. OpenPocket #364: one number for CAD and sim
+export const PIPE_Y = LAYOUT.TRACK_LOOP_Y;      // the track plane: 66 mm in FRONT of the central pipe (cad/layout.json: tube radius 16 + the 50 mm rod of track_joint.py, OpenPocket #537). It was moved 179 mm to the back here (0.104) so the arm reached the sockets; that moved the central pipe off the centre, and no scene may do that
+export const PIPE_Z = LAYOUT.TRACK_BOTTOM_Z;   // bottom run of the track, 210 mm over the lid top (cad/layout.json: the cart's 165 mm under the track plus 45 mm of air, ASSUMED; the CAD guessed 150 before and the sim 210 over the tank). The omni cart centre is 60 mm BELOW the pipe it rides (the top sleeve, hand B, on the pipe, hand C hanging open below it), and the arm base is on the cart centre. OpenPocket #364: one number for CAD and sim
 export const PIPE_R = m(PIPE_D_MM) / 2;
 export const PIPE_X0 = -0.40, PIPE_X1 = 0.42;
 export const CART_X_MIN = -0.33, CART_X_MAX = 0.28;   // arm plane = the cart centre (the cart is symmetric about it)
 export const CART_HOME_X = -0.1;
 export const CART_SPINE_ZONE = 0.14;           // the cart touches the spine and its bracket only with its centre within about 13 cm of x = 0 (sleeve half length 62, the jaw motors on the CAD sleeve reach z +/-104 mm, spine radius 35; OpenPocket #447: the CAD cart's own parts are in the scan now, was 0.11 with the old stand-in shapes); only this zone is scanned
 // spine and brackets
-export const SPINE_R = 0.070 / 2, SPINE_TOP = 0.86;   // 70 mm: more than double the 33.7 mm tube of unit_v3_dimensioned.py (follow-up request)
-export const SPINE_Y = PIPE_Y + 0.06;           // the spine axis is 60 mm behind the track plane (CAD: LOOP_Y = -60; the scene had 75 mm before the omni cart), so its back surface is just inside the tank's back wall
+export const SPINE_R = LAYOUT.GROWING_PIPE_OD / 2, SPINE_TOP = 0.86;   // the central pipe: the 75 mm growing pipe of the CAD (cad/layout.json), drawn up to 0.86 m
+export const SPINE_Y = LAYOUT.CENTRAL_PIPE_Y;   // the central pipe is on the tank centre (y = 0), fixed: the track is TRACK_OFFSET in front of it (OpenPocket #537)
 export const BRACKET_T = 0.004;
 export const ROD_R = 0.004;                     // M8 rod (track_joint.py)
 export const SHELF_CAP_T = 0.004, SHELF_CAP_H = 0.03;   // ASSUMED shelf end caps
-// cart (the omni cart of cad/cart_dims.py, hand_sleeve.py v5; src/cart/omni-scene.ts, Pond #284). The cart body (mocap) rides the bottom run on hand B; hand C, its mirror, hangs open on the inside of the loop (above the pipe).
-//  - cart frame: x across the pipes (hand B at -60, hand C at +60), y out of the pipe plane (the plate is on -y, the front), z along the pipes. In the world: cart x = up, cart y = world y, cart z = world -x.
-//    So the cart centre, the plate centre and the arm base are 60 mm ABOVE the pipe the cart rides.
+// cart (the omni cart of cad/cart_dims.py, hand_sleeve.py v5; src/cart/omni-scene.ts, Pond #284). The cart body (mocap) rides the bottom run on its TOP sleeve, hand B; hand C, its mirror, hangs open below it, outside the loop (under the pipe), like the CAD cart.
+//  - cart frame: x across the pipes (hand B at -60, hand C at +60), y out of the pipe plane (the plate is on -y, the front), z along the pipes. In the world: cart x = DOWN, cart y = world y, cart z = world +x.
+//    So the cart centre, the plate centre and the arm base are 60 mm BELOW the pipe the cart rides.
 //  - the plate is 146 mm along the track (z -73..73) and 168 across (x -84..84), 6 mm thick, bolted to both sleeve pads: nothing swings and nothing dangles below the pipe (the old cart hung a second hand 100 mm below it)
 //  - the battery (70 x 50 x 70) is on the plate's front face, the SO-101 base (its servo underside) on the battery's front face: 106 mm out of the pipe plane. The arm works in the vertical plane through the cart centre.
 //  - the cart does the x motion; the plate is flat, parallel to the track plane (roll 0): the roll is only for the legs (owner answers Q6, Q8)
 export const CART_ROLL = 0;                      // deg: the cart stays flat on the runs
-export const CART_DZ = HX / 1000;                // cart centre height above the pipe it rides: hand B's pipe is at cart x = -60
+export const CART_DZ = -HX / 1000;               // cart centre height relative to the pipe it rides: BELOW it. The cart rides on its TOP sleeve (hand B, pipe B at cart x = -60, cad/layout.json cart_climb_sleeve) and hangs under the track like the CAD cart (cad/complete_unit.py): the bottom sleeve never rides (OpenPocket #537)
 export const CART_Z = PIPE_Z + CART_DZ;          // world z of the cart centre = the arm base height
-export const CART_QUAT: [number, number, number, number] = [Math.SQRT1_2, 0, -Math.SQRT1_2, 0];   // cart frame -> world: x up, y = world y, z = world -x
+export const CART_QUAT: [number, number, number, number] = [Math.SQRT1_2, 0, Math.SQRT1_2, 0];   // cart frame -> world: x DOWN (hand B, the top sleeve, is at cart x = -60 = up; the body hangs below), y = world y, z = world +x
 export const PLATE_FACE_Y = m(CART.battFaceY);   // cart frame y of the battery's front face, the plane the arm base is bolted to (the plate's own face is at -56)
 export const BASE_BOTTOM = 0.0085;               // the base servo's underside, in base coordinates (arm model: servo1 spans z 8.5..43.5 mm)
 export const ARM_Y = PIPE_Y + PLATE_FACE_Y + BASE_BOTTOM;   // arm base origin, world y: its underside (base z = 8.5 mm) is on the battery face, the arm axis (base z) is the plate normal, pointing out of the plate (-y)
 export const ARM_BASE_Z = CART_Z - 0.004;        // IK reference: the pick/place paths are planned with the points 4 mm above the real ones, so the claw runs a few mm high over the store walls (arm sag)
-export const BASE_XYAXES = '-1 0 0 0 0 -1';      // in the CART frame: base x = cart -x = world down (pan 0 points down the plate), base y = cart -z = world +x along the track, base z = out of the plate (cart -y)
+export const BASE_XYAXES = '1 0 0 0 0 1';        // in the CART frame: base x = cart +x = world down (pan 0 points down the plate), base y = cart +z = world +x along the track, base z = out of the plate (cart -y)
 export const PAN0 = 0;                          // pan angle (deg): the arm works in the vertical plane through the plate centre, pointing down the plate
 /** Arm planar IK frame: r = distance down from the base axis (the arm's "forward", base x), u = distance out of the plate along the base axis (base z, the plate normal). */
 export const armR = (z: number) => ARM_BASE_Z - z;
@@ -165,7 +165,7 @@ const SOFT = 'contype="1" conaffinity="3"';
 const CART_COL = 'contype="4" conaffinity="2"';   // the cart's parts: they collide with the arm (contype 2), not with the unit or the pods
 
 /** The cart (a mocap body, cart frame turned into the world by CART_QUAT) with the arm base as a rigid child.
- *  Hand B rides the pipe, hand C hangs open above it; the plate, the battery and the two sleeves are static. The cart's parts collide with the arm only (contype 4, conaffinity 2: the arm's contype is 2),
+ *  Hand B (the top sleeve) rides the pipe, hand C hangs open below it; the plate, the battery and the two sleeves are static. The cart's parts collide with the arm only (contype 4, conaffinity 2: the arm's contype is 2),
  *  except the battery, which the arm base sits flush on. Against the spine and the track bracket the cart is measured, not simulated: see PodWorld.scanCart. */
 function cartMount(): { open: string; close: string; baseAttrs: string } {
   const open = `<body name="cart" mocap="true" pos="${CART_HOME_X} ${PIPE_Y} ${f(CART_Z)}" quat="${CART_QUAT.map(f).join(' ')}">

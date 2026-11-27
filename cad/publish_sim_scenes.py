@@ -5,6 +5,7 @@
 import json
 import os
 import shutil
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 R = os.path.join(HERE, "renders")
@@ -19,7 +20,7 @@ SCENES = [
     ("sim-transfer-v1", "transfer-wide-1-start", "transfer-assembly.glb", "Sim: transfer, start at the roll station",
      "The Transfer scene: the CAD cart on pipes B and C of two neighbouring units, both hands clamped."),
     ("sim-pod-grab-v1", "podgrab-omni-1-start", "podgrab-assembly.glb", "Sim: pod grab, start",
-     "The Pod grab scene: the CAD cart on the bottom run of the loop (plate towards the unit, free hand above the run), arm over the tank."),
+     "The Pod grab scene (OpenPocket #537, one layout): the central pipe on the centre of the tank, the track 66 mm from it, the CAD cart riding the bottom run on its TOP sleeve (hand B) with the body and the free hand hanging below the pipe, plate on the side away from the central pipe. Known clash: from there the arm cannot reach the store and the tray (see docs/pod-grab-and-transplant-scenes.md)."),
     ("sim-transplant-v1", "transplant-omni-2-drive", "transplant-assembly.glb", "Sim: transplant seedling, at the hole",
      "The Transplant scene: the CAD cart rolled 180 degrees on the -y leg, plate towards the growing pipe."),
 ]
@@ -30,6 +31,8 @@ def main():
     data = json.load(open(path))
     cards = {c["id"]: c for c in data["renders"]}
     for sid, prefix, glb, title, comment in SCENES:
+        if sys.argv[1:] and sid not in sys.argv[1:]:
+            continue   # python cad/publish_sim_scenes.py sim-pod-grab-v1: only these cards (the transfer pictures are not in cad/renders)
         for v in ("iso",):     # the colour iso; -line, -front, -top, -side are the black-and-white line views of render_line_thumbs.py (run: python cad/render_line_thumbs.py views <ids>)
             shutil.copy(os.path.join(R, "%s-%s.png" % (prefix, v)), os.path.join(D, "renders", "%s-%s.png" % (sid, v)))
         # the sim works in metres; every other GLB on the site is in millimetres (Y up), so scale it (the viewer and the line drawings expect mm)
