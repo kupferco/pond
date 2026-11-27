@@ -174,6 +174,42 @@
    "page": "models",
    "section": "Track",
    "poster": "drawings/renders/spine-connector-v2-line.png"
+  },
+  {
+   "id": "pipe-collar-3seat-exploded-v1",
+   "title": "Three-seat pipe collar exploded: the three pieces pulled out 60 mm",
+   "glb": "drawings/renders/pipe-collar-3seat-exploded-v1.glb",
+   "caption": "The three pieces pulled apart.",
+   "page": "models",
+   "section": "Pod handling",
+   "poster": "drawings/renders/pipe-collar-3seat-exploded-v1-line.png"
+  },
+  {
+   "id": "pipe-collar-3seat-pods-v1",
+   "title": "Three-seat pipe collar with a pod in every seat and one plug parked",
+   "glb": "drawings/renders/pipe-collar-3seat-pods-v1.glb",
+   "caption": "The collar with three pods and one parked plug.",
+   "page": "models",
+   "section": "Pod handling",
+   "poster": "drawings/renders/pipe-collar-3seat-pods-v1-line.png"
+  },
+  {
+   "id": "pipe-collar-3seat-assembled-v1",
+   "title": "Three-seat pipe collar: three identical 120 degree pieces, empty holes",
+   "glb": "drawings/renders/pipe-collar-3seat-assembled-v1.glb",
+   "caption": "The three pieces round the pipe, holes empty.",
+   "page": "models",
+   "section": "Pod handling",
+   "poster": "drawings/renders/pipe-collar-3seat-assembled-v1-line.png"
+  },
+  {
+   "id": "pipe-collar-3seat-piece-v1",
+   "title": "One piece of the three-seat collar (seat at 0 degrees, tabs at -60 and +60)",
+   "glb": "drawings/renders/pipe-collar-3seat-piece-v1.glb",
+   "caption": "One piece with its seat and its two magnet tabs.",
+   "page": "models",
+   "section": "Pod handling",
+   "poster": "drawings/renders/pipe-collar-3seat-piece-v1-line.png"
   }
  ]
 }
