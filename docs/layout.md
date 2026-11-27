@@ -11,6 +11,7 @@
 | Normal water level over the tank floor | 150 mm | owner (about 15 cm) |
 | Cart depth under the track axis, towards the tank | 165 mm | **measured** from the CAD (the parking block under the plate; `water_assembly.cart_tank_check()` recomputes it and fails if the real cart is deeper) |
 | Air between the lowest cart part and the lid | 45 mm | **ASSUMED**, not given by the owner |
+| M8 track rod reach from the pipe surface toward the spine (`track_rod_out_mm`) | 50 mm | `track_joint.py` ROD_OUT; the spine connector (#561) needs 14.5 and its check fails above 50 |
 | Bottom track run, axis over the lid top | 210 mm (165 + 45) | derived. Axis at z = 514 mm over the tank floor (the CAD guessed 450, the sim 510) |
 
 Read by: `cad/layout.py` (`unit_v3_aframe.py`, `unit_v3_dimensioned.py`, `unit_v1_assembly.py`, `track_supports.py`, `complete_unit.py`, `water_station.py`, `water_assembly.py`, the render scripts) and, for the sim, `control-ui/src/layout.ts` (the Pod grab scene, `podgrab/layout.ts`, uses it; the tank height and lid of the Transplant and Reach scenes too). Change a number in the JSON and every drawing, render and GLB follows, and the Pod grab scene.

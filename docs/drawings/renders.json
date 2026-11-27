@@ -2,6 +2,32 @@
   "updated": "2026-11-23",
   "renders": [
     {
+      "id": "spine-connector-v1",
+      "date": "2026-11-23",
+      "part": "Spine to track connector",
+      "category": "Track",
+      "status": "draft",
+      "version": 1,
+      "group": "Spine to track connector",
+      "title": "Spine to track connector, bottom one in context (spine, growing pipe, track, pods)",
+      "comment": "DRAFT, OpenPocket #561. The bracket that joins the central spine to the track: a split clamp ring on the 33.7 mm spine, a 16 x 30 arm through a window in the 75 mm growing pipe, and the same M8 rod system as the track joint and the track supports (nut plate inside the 32 mm track pipe, rod out of the spine-side hole, lock nut, then the arm). Orange = bracket. The RED pod is a pod place that sits exactly where the connector clamps and has to be left out (task 537). Growing pipe window and track pocket are cut in this drawing's copy only; the complete unit is NOT changed here. Open questions in docs/spine-connector.md. 3D model: cad/renders/spine-connector.glb. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
+      "thumb": "renders/spine-connector-v1-line.png",
+      "viewer": "viewer.html?src=renders/spine-connector-v1.glb&title=Spine%20to%20track%20connector,%20bottom%20one%20in%20context%20(spine,%20growing%20pipe,%20track,%20pods)"
+    },
+    {
+      "id": "spine-connector-positions-v1",
+      "date": "2026-11-23",
+      "part": "Spine to track connector: where on the spine",
+      "category": "Track",
+      "status": "draft",
+      "version": 1,
+      "group": "Spine to track connector",
+      "title": "Where the two spine connectors sit along the spine (bottom z 514, top z 1884)",
+      "comment": "DRAFT, OpenPocket #561. The spine, growing pipe, track and every pod place with the two connectors: one at x = 0 on the bottom run (spine height 514 mm over the tank floor) and one on the top run (1884 mm, the very end of the spine). Red = a pod place in a connector position (the front pod at about 500 mm today). Rule: no pod place may occupy a connector position. 3D model: cad/renders/spine-connector-positions.glb. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
+      "thumb": "renders/spine-connector-positions-v1-line.png",
+      "viewer": "viewer.html?src=renders/spine-connector-positions-v1.glb&title=Where%20the%20two%20spine%20connectors%20sit%20along%20the%20spine%20(bottom%20z%20514,%20top%20z%201884)"
+    },
+    {
       "id": "complete-unit-v2",
       "date": "2026-11-20",
       "part": "Complete unit",

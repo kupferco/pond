@@ -16,3 +16,4 @@ TRACK_BOTTOM_ABOVE_LID = CART_BELOW_TRACK + CART_CLEARANCE          # 210: botto
 TRACK_BOTTOM_Z = LID_TOP + TRACK_BOTTOM_ABOVE_LID                   # 514: bottom track run axis (was guessed as 450 = lid + 146)
 OLD_TRACK_BOTTOM_Z = TANK_H + 150.0                                 # what unit_v3_aframe.py used before (the water station was drawn against it)
 TRACK_RISE = TRACK_BOTTOM_Z - OLD_TRACK_BOTTOM_Z                    # how far everything that is positioned off the track moved up
+TRACK_ROD_OUT = float(_D["track_rod_out_mm"])                      # 50: reach of the M8 rod from the track pipe surface towards the spine (track_joint.py ROD_OUT)
