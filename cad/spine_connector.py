@@ -75,6 +75,19 @@ def joint_assembly():
     return a
 
 
+def connector_parts():
+    """ONLY the parts of the connector that the complete unit adds at a connector height (OpenPocket #537): the curved nut plate with its captive nut (inside the
+    track pipe), the M8 rod, the lock nut (outside) and the PROPOSAL nuts either side of the spine wall. Same frame as joint_assembly(): track axis at the origin,
+    track along X, rod along +Y to the spine axis. The track pipe and the spine tube are the unit's own (cad/parts/track.py, unit_frame.py), not drawn again here.
+    Returns [(name, shape, rgb)]."""
+    src = {c.name: c for c in _tj["assy"].children}
+    out = [(n, to_horizontal(src[n].obj), col) for n, col in JOINT_PARTS if n in ("nut_plate", "m8_rod", "lock_nut")]
+    _tube, outside, inside, _end = spine_parts()
+    out.append(("spine_nut_outside", to_horizontal(outside), (0.2, 0.7, 0.3)))
+    out.append(("spine_nut_inside", to_horizontal(inside), (0.2, 0.7, 0.3)))
+    return out
+
+
 def inter_vol(a, b):
     r = a.intersect(b)
     return sum(s.Volume() for s in r.solids().vals()) if r.solids().vals() else 0.0

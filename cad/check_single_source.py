@@ -240,6 +240,17 @@ def main():
             b = fn().val().BoundingBox()
             if abs(b.zmin - sb.zmax) > 1e-6 or b.zmax > ud.TH:
                 problems.append("%s (z %.1f..%.1f) must stand on the shelf top (%.1f) and stay under the lid (%.1f)" % (nm, b.zmin, b.zmax, sb.zmax, ud.TH))
+        # (#537 follow-up) no pod collar on the central pipe where a connector clamps on, and no other generic pod places in the complete unit
+        import layout as LAY
+        from parts import pod_collars as pcol
+        for zb in pcol.collar_bottoms():
+            for z in pcol.CONNECTOR_Z:
+                if zb < z + LAY.CONNECTOR_KEEPOUT and zb + pcol.pc.H > z - LAY.CONNECTOR_KEEPOUT:
+                    problems.append("a pod collar (z %.1f..%.1f) sits where a spine-to-track connector clamps on (z %.0f)" % (zb, zb + pcol.pc.H, z))
+        cu_src = open(os.path.join(HERE, "complete_unit.py")).read()
+        for banned in ("parts.pods", "parts.shelf_items"):
+            if "from %s import" % banned in cu_src:
+                problems.append("complete_unit.py imports the stand-in %s; it must use the real pod collars / tray / pod store (#537)" % banned)
     except ImportError as e:
         notes.append("cart sleeve check skipped (%s)" % e)
     for d, fs in sorted(defs_by_name.items()):

@@ -16,6 +16,12 @@
   "track_top_z_mm": 1884,
   "cart_pipe_spacing_mm": 120,
   "cart_climb_sleeve": "B",
+  "connector_keepout_mm": 30,
+  "pod_collar_gap_mm": 2,
+  "pod_zone_bottom_mm": 400,
+  "pod_zone_top_mm": 1840,
+  "clamp_collar_keepout_mm": 27,
+  "upper_clamp_collar_legs_keepout_mm": 65,
   "_notes": {
     "tank_h_mm": "given (30 cm tank, unit_v3_aframe.py)",
     "lid_t_mm": "given (4 mm lid)",
@@ -27,6 +33,11 @@
     "track_half_width_mm": "track loop legs at x = -/+290 (v2, Viber #97: pipes 60 mm in from the tank edge, so two touching tanks put pipe B and pipe C 120 mm apart)",
     "track_top_z_mm": "top run axis (1900 top bar - 16 pipe radius)",
     "cart_pipe_spacing_mm": "cart_dims.py PIPE_SPACING: the cart's two pipes, centre to centre",
+    "connector_keepout_mm": "ASSUMED (OpenPocket #537): no pod collar may reach closer than this to a spine-to-track connector's height (the rod with its nuts is about 15 mm across), so no pod place sits where a connector clamps on. The connector heights are the two track runs: track_bottom (lid + cart room) and track_top_z_mm.",
+    "pod_collar_gap_mm": "ASSUMED: air between two pod collars (cad/pipe_collar.py) stacked on the central pipe; a collar is a clamshell round the whole pipe, 108 mm tall, so two collars cannot share a height.",
+    "pod_zone_bottom_mm / pod_zone_top_mm": "the first / last pod hole centre on the central pipe (400 and 1840 over the tank floor): the range the old generic pod places (cad/parts/pods.py) used. Kept; only the collar and its count are new.",
+    "clamp_collar_keepout_mm": "half height of the 50 mm clamp collars (cad/parts/unit_frame.py) plus 2 mm: a pod collar stays this far from the clamp collars at z 1215 and 1547.5.",
+    "upper_clamp_collar_legs_keepout_mm": "how far ABOVE the upper clamp collar (z 1547.5) a pod collar must stay: the two top triangle legs leave it going up and outwards and clip a 108 mm pod collar (86 mm3) until it starts 58.5 mm above the clamp collar centre; 65 gives a little air (measured with cad/complete_unit.py).",
     "cart_climb_sleeve": "the cart rides the track with its TOP sleeve, hand B (pipe B at cart x = -60), and its body (plate, battery, arm, coil: 165 mm) hangs BELOW the track pipe on a horizontal run, towards the lid / outside the loop on a leg. The other sleeve (C) is the lower one and hangs free. The bottom sleeve never climbs (OpenPocket #461 / #537)."
   }
 }
