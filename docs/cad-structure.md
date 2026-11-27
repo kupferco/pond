@@ -32,7 +32,12 @@ Assemblies (they only place parts, never draw them): `cad/unit_v3_aframe.py`, `c
 ```
 python cad/build_all.py          # checks, every render and GLB, then the Drawings and 3D Models pages (about 20 minutes)
 python cad/build_all.py quick    # only the single-source check and the clash checks
+python cad/build_all.py only <family>   # the checks, then only that family's renders, then the publish step
 ```
+
+Families: `cart`, `track-supports`, `spine-connector`, `unit`, `water-station`. An unknown family prints this list and exits with an error.
+For a change that touches only `cad/` and `docs/`, run `quick`, then `only <family>` for the part you changed. The full build and the full tests
+are for a task that says "full regression" (the deploy workflow also has a manual "Full regression" run).
 
 It runs `check_single_source.py`, the clash checks (`water_assembly.py`, `complete_unit.py`), the render scripts (`render_omni_sleeve.py` for the cart family,
 `render_track_supports.py`, `render_unit.py`, `render_water_station.py`) and `publish_drawings.py`, which copies the GLBs to `docs/drawings/renders/`,

@@ -16,3 +16,14 @@ about waiting for him before committing:
 - If the brief is unclear or would break a rule in this file, change nothing
   and explain why in the pull request description.
 <!-- viber:end -->
+
+## Pond: CAD changes
+
+For agent sessions. A change that touches only `cad/` and `docs/` (nothing under `control-ui/`):
+
+- Run `python cad/build_all.py quick`, then `python cad/build_all.py only <family>` for the part you changed
+  (families: cart, track-supports, spine-connector, unit, water-station). That regenerates and publishes only that part's renders.
+- Do NOT run the full `python cad/build_all.py` and do NOT run the sim tests.
+- If `check_sim_matches_cad.py` fails, run `python cad/export_sim_model.py` and commit the regenerated `control-ui/src/generated` files.
+  That is a control-ui change, so the full tests then apply.
+- Run the full build_all and the full tests only when the task says "full regression".

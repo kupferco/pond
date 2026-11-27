@@ -1,6 +1,8 @@
 # cad/build_all.py: ONE command that regenerates every check, render, GLB and drawing from the single-source parts (OpenPocket #365).
 #   python cad/build_all.py            everything (about 20 minutes: the renderer is software)
 #   python cad/build_all.py quick      only the single-source check and the clash checks (about 3 minutes)
+#   python cad/build_all.py only <family>   the checks, then only that family's render steps, then publish_drawings.py
+#                                      families: cart, track-supports, spine-connector, unit, water-station (the CAD-only task flow, #564)
 # Order matters in one place: render_water_station.py writes assembly.glb (the full cart + sampler + station + unit); nothing else writes it.
 # Needs: cadquery, numpy, matplotlib, pillow, scipy, trimesh.   See docs/cad-structure.md.
 import os
@@ -27,6 +29,17 @@ STEPS_BUILD = [
 ]
 
 
+# family name -> the STEPS_BUILD script that renders it (export_sim_model.py is a control-ui change, so it is in no family)
+FAMILIES = {
+    "cart": "render_omni_sleeve.py",
+    "track-supports": "render_track_supports.py",
+    "spine-connector": "render_spine_connector.py",
+    "unit": "render_unit.py",
+    "water-station": "render_water_station.py",
+}
+PUBLISH = [s for s in STEPS_BUILD if s[1][0] == "publish_drawings.py"]
+
+
 def run_step(label, args):
     t = time.time()
     print("== %s" % label, flush=True)
@@ -38,6 +51,14 @@ def run_step(label, args):
 
 
 if __name__ == "__main__":
-    for step in STEPS_CHECK + ([] if "quick" in sys.argv[1:] else STEPS_BUILD):
+    argv = sys.argv[1:]
+    if argv[:1] == ["only"]:
+        if len(argv) != 2 or argv[1] not in FAMILIES:
+            print("usage: build_all.py only <family>; families: %s" % ", ".join(FAMILIES))
+            sys.exit(2)
+        steps = STEPS_CHECK + [s for s in STEPS_BUILD if s[1][0] == FAMILIES[argv[1]]] + PUBLISH
+    else:
+        steps = STEPS_CHECK + ([] if "quick" in argv else STEPS_BUILD)
+    for step in steps:
         run_step(*step)
     print("build_all OK")
