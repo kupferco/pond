@@ -1,0 +1,3960 @@
+{
+ "rough_check_brief": {
+  "A@0": 201.1,
+  "B@0": 213.5,
+  "C@0": 231.6,
+  "D@0": 254.2,
+  "A@10": 198.9,
+  "B@10": 209.7,
+  "C@10": 226.4,
+  "D@10": 247.9
+ },
+ "rows": [
+  {
+   "battery": "beside",
+   "tray_shift_mm": 0.0,
+   "straight": {
+    "target": "A",
+    "tilt_deg": 0,
+    "reachable": true,
+    "margin_mm": 34.0,
+    "joints_deg": {
+     "shoulder_lift": 42.0,
+     "elbow_flex": 46.3,
+     "wrist_flex": -88.3
+    },
+    "joint_margin_deg": 6.7,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.41,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [],
+    "clearance_mm": 13.3,
+    "closest": "gripper_tip / pod_A0",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.09,
+     "elbow_flex": 0.33,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.92,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "A",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 126.0,
+     "joints_deg": {
+      "shoulder_lift": 34.1,
+      "elbow_flex": 49.5,
+      "wrist_flex": -78.5
+     },
+     "joint_margin_deg": 16.5,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.38,
+      "elbow_flex": 0.98,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 13.3,
+     "closest": "gripper_tip / pod_A0",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.06,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 0.98,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "A",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 139.0,
+     "joints_deg": {
+      "shoulder_lift": 26.3,
+      "elbow_flex": 51.3,
+      "wrist_flex": -67.6
+     },
+     "joint_margin_deg": 27.4,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.34,
+      "elbow_flex": 1.03,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 13.3,
+     "closest": "gripper_tip / pod_A0",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.02,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.03,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "A",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 153.0,
+     "joints_deg": {
+      "shoulder_lift": 19.3,
+      "elbow_flex": 51.6,
+      "wrist_flex": -55.9
+     },
+     "joint_margin_deg": 39.1,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.31,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 13.3,
+     "closest": "gripper_tip / pod_A0",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.01,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.06,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "A",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 165.0,
+     "joints_deg": {
+      "shoulder_lift": 13.4,
+      "elbow_flex": 50.4,
+      "wrist_flex": -43.8
+     },
+     "joint_margin_deg": 46.5,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.28,
+      "elbow_flex": 1.08,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 13.2,
+     "closest": "gripper_tip / tray",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.04,
+      "elbow_flex": 0.33,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.08,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 0,
+    "target": "A",
+    "reachable": true,
+    "margin_mm": 34.0,
+    "joints_deg": {
+     "shoulder_lift": 42.0,
+     "elbow_flex": 46.3,
+     "wrist_flex": -88.3
+    },
+    "joint_margin_deg": 6.7,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.41,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [],
+    "clearance_mm": 13.3,
+    "closest": "gripper_tip / pod_A0",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.09,
+     "elbow_flex": 0.33,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.92,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "beside",
+   "tray_shift_mm": 0.0,
+   "straight": {
+    "target": "B",
+    "tilt_deg": 0,
+    "reachable": false,
+    "margin_mm": -4.0,
+    "joints_deg": {
+     "shoulder_lift": 60.0,
+     "elbow_flex": 36.0,
+     "wrist_flex": -95.0
+    },
+    "joint_margin_deg": 0.0,
+    "tip_error_mm": 3.7,
+    "tool_angle_deg": 1.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.68,
+     "elbow_flex": 0.94,
+     "wrist_flex": 0.05
+    },
+    "collisions": [],
+    "clearance_mm": 5.3,
+    "closest": "gripper_tip / pod_A1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.21,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.94,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "B",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 88.0,
+     "joints_deg": {
+      "shoulder_lift": 55.3,
+      "elbow_flex": 37.7,
+      "wrist_flex": -88.0
+     },
+     "joint_margin_deg": 7.0,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.66,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 7.5,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.19,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 0.99,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "B",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 101.0,
+     "joints_deg": {
+      "shoulder_lift": 47.9,
+      "elbow_flex": 41.4,
+      "wrist_flex": -79.3
+     },
+     "joint_margin_deg": 15.7,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.63,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 7.2,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.15,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.06,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "B",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 115.0,
+     "joints_deg": {
+      "shoulder_lift": 40.7,
+      "elbow_flex": 43.8,
+      "wrist_flex": -69.5
+     },
+     "joint_margin_deg": 25.5,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.59,
+      "elbow_flex": 1.11,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 6.7,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.11,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.11,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "B",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 127.0,
+     "joints_deg": {
+      "shoulder_lift": 34.1,
+      "elbow_flex": 44.7,
+      "wrist_flex": -58.8
+     },
+     "joint_margin_deg": 36.2,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.56,
+      "elbow_flex": 1.16,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 6.1,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.08,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.16,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 1,
+    "target": "B",
+    "reachable": true,
+    "margin_mm": 10.0,
+    "joints_deg": {
+     "shoulder_lift": 61.1,
+     "elbow_flex": 33.9,
+     "wrist_flex": -94.0
+    },
+    "joint_margin_deg": 1.0,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 1.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.69,
+     "elbow_flex": 0.94,
+     "wrist_flex": 0.05
+    },
+    "collisions": [],
+    "clearance_mm": 7.6,
+    "closest": "gripper_tip / pod_A1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.22,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.94,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "beside",
+   "tray_shift_mm": 0.0,
+   "straight": {
+    "target": "C",
+    "tilt_deg": 0,
+    "reachable": false,
+    "margin_mm": -20.0,
+    "joints_deg": {
+     "shoulder_lift": 80.0,
+     "elbow_flex": 16.6,
+     "wrist_flex": -95.0
+    },
+    "joint_margin_deg": 0.0,
+    "tip_error_mm": 1.4,
+    "tool_angle_deg": 1.6,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.99,
+     "elbow_flex": 0.94,
+     "wrist_flex": 0.05
+    },
+    "collisions": [],
+    "clearance_mm": 9.0,
+    "closest": "gripper_tip / pod_B1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.35,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.99,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "C",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 50.0,
+     "joints_deg": {
+      "shoulder_lift": 74.6,
+      "elbow_flex": 21.6,
+      "wrist_flex": -91.2
+     },
+     "joint_margin_deg": 3.8,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.95,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 7.5,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.32,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 0.99,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "C",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 63.0,
+     "joints_deg": {
+      "shoulder_lift": 67.7,
+      "elbow_flex": 26.9,
+      "wrist_flex": -84.6
+     },
+     "joint_margin_deg": 10.4,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.92,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 7.2,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.28,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.06,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "C",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 77.0,
+     "joints_deg": {
+      "shoulder_lift": 60.9,
+      "elbow_flex": 31.0,
+      "wrist_flex": -76.9
+     },
+     "joint_margin_deg": 18.1,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.88,
+      "elbow_flex": 1.12,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 6.7,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.24,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.12,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "C",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 89.0,
+     "joints_deg": {
+      "shoulder_lift": 54.3,
+      "elbow_flex": 33.7,
+      "wrist_flex": -68.0
+     },
+     "joint_margin_deg": 27.0,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.84,
+      "elbow_flex": 1.18,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 6.1,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.21,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.18,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 2,
+    "target": "C",
+    "reachable": true,
+    "margin_mm": 41.0,
+    "joints_deg": {
+     "shoulder_lift": 78.8,
+     "elbow_flex": 17.8,
+     "wrist_flex": -94.6
+    },
+    "joint_margin_deg": 0.4,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 2.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.98,
+     "elbow_flex": 0.95,
+     "wrist_flex": 0.06
+    },
+    "collisions": [],
+    "clearance_mm": 7.6,
+    "closest": "gripper_tip / pod_B1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.34,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.98,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "beside",
+   "tray_shift_mm": 0.0,
+   "straight": {
+    "target": "D",
+    "tilt_deg": 0,
+    "reachable": false,
+    "margin_mm": -2.0,
+    "joints_deg": {
+     "shoulder_lift": 100.0,
+     "elbow_flex": -8.3,
+     "wrist_flex": -91.7
+    },
+    "joint_margin_deg": 0.0,
+    "tip_error_mm": 2.5,
+    "tool_angle_deg": 0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 1.27,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [],
+    "clearance_mm": 6.0,
+    "closest": "gripper_tip / pod_C1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.49,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 1.27,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "D",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 12.0,
+     "joints_deg": {
+      "shoulder_lift": 93.5,
+      "elbow_flex": 0.4,
+      "wrist_flex": -88.9
+     },
+     "joint_margin_deg": 6.1,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.25,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 7.5,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.46,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 1.25,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "D",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 25.0,
+     "joints_deg": {
+      "shoulder_lift": 86.6,
+      "elbow_flex": 7.7,
+      "wrist_flex": -84.3
+     },
+     "joint_margin_deg": 10.7,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.21,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 7.2,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.42,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.21,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "D",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 39.0,
+     "joints_deg": {
+      "shoulder_lift": 79.9,
+      "elbow_flex": 13.6,
+      "wrist_flex": -78.5
+     },
+     "joint_margin_deg": 16.5,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.17,
+      "elbow_flex": 1.12,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 6.7,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.38,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.17,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "D",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 51.0,
+     "joints_deg": {
+      "shoulder_lift": 73.4,
+      "elbow_flex": 18.1,
+      "wrist_flex": -71.5
+     },
+     "joint_margin_deg": 23.5,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.13,
+      "elbow_flex": 1.19,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 6.1,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.34,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.19,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 3,
+    "target": "D",
+    "reachable": true,
+    "margin_mm": 6.0,
+    "joints_deg": {
+     "shoulder_lift": 96.4,
+     "elbow_flex": -3.0,
+     "wrist_flex": -90.4
+    },
+    "joint_margin_deg": 3.6,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 3.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 1.26,
+     "elbow_flex": 0.96,
+     "wrist_flex": 0.07
+    },
+    "collisions": [],
+    "clearance_mm": 7.6,
+    "closest": "gripper_tip / pod_C1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.47,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.01
+    },
+    "max_torque_loaded_nm": 1.26,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "beside",
+   "tray_shift_mm": 0.0,
+   "straight": {
+    "target": "S",
+    "tilt_deg": 0,
+    "reachable": true,
+    "margin_mm": 22.0,
+    "joints_deg": {
+     "shoulder_lift": 46.5,
+     "elbow_flex": 44.3,
+     "wrist_flex": -90.8
+    },
+    "joint_margin_deg": 4.2,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.47,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [],
+    "clearance_mm": 3.3,
+    "closest": "gripper_tip / store_pod_1_2",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.12,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.92,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "S",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 118.0,
+     "joints_deg": {
+      "shoulder_lift": 38.6,
+      "elbow_flex": 47.9,
+      "wrist_flex": -81.5
+     },
+     "joint_margin_deg": 13.5,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.44,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 3.3,
+     "closest": "gripper_tip / store_pod_1_2",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.08,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 0.99,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "S",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 131.0,
+     "joints_deg": {
+      "shoulder_lift": 30.9,
+      "elbow_flex": 50.1,
+      "wrist_flex": -71.0
+     },
+     "joint_margin_deg": 24.0,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.4,
+      "elbow_flex": 1.04,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 3.3,
+     "closest": "gripper_tip / store_pod_1_2",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.05,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.04,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "S",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 145.0,
+     "joints_deg": {
+      "shoulder_lift": 23.7,
+      "elbow_flex": 50.9,
+      "wrist_flex": -59.6
+     },
+     "joint_margin_deg": 35.4,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.37,
+      "elbow_flex": 1.08,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 3.3,
+     "closest": "gripper_tip / store_pod_1_2",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.02,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.08,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "S",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 158.0,
+     "joints_deg": {
+      "shoulder_lift": 17.4,
+      "elbow_flex": 50.2,
+      "wrist_flex": -47.6
+     },
+     "joint_margin_deg": 46.6,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.34,
+      "elbow_flex": 1.11,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 3.2,
+     "closest": "gripper_tip / store_pod_0_3",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.01,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.11,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 0,
+    "target": "S",
+    "reachable": true,
+    "margin_mm": 22.0,
+    "joints_deg": {
+     "shoulder_lift": 46.5,
+     "elbow_flex": 44.3,
+     "wrist_flex": -90.8
+    },
+    "joint_margin_deg": 4.2,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.47,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [],
+    "clearance_mm": 3.3,
+    "closest": "gripper_tip / store_pod_1_2",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.12,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.92,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "beside",
+   "tray_shift_mm": 10.0,
+   "straight": {
+    "target": "A",
+    "tilt_deg": 0,
+    "reachable": true,
+    "margin_mm": 44.0,
+    "joints_deg": {
+     "shoulder_lift": 36.2,
+     "elbow_flex": 49.1,
+     "wrist_flex": -85.3
+    },
+    "joint_margin_deg": 9.7,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.34,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [],
+    "clearance_mm": 13.3,
+    "closest": "gripper_tip / pod_A0",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.06,
+     "elbow_flex": 0.33,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.92,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "A",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 136.0,
+     "joints_deg": {
+      "shoulder_lift": 28.2,
+      "elbow_flex": 51.7,
+      "wrist_flex": -74.9
+     },
+     "joint_margin_deg": 20.1,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.3,
+      "elbow_flex": 0.97,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 13.3,
+     "closest": "gripper_tip / pod_A0",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.02,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 0.97,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "A",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 149.0,
+     "joints_deg": {
+      "shoulder_lift": 20.5,
+      "elbow_flex": 52.9,
+      "wrist_flex": -63.4
+     },
+     "joint_margin_deg": 31.6,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.27,
+      "elbow_flex": 1.01,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 13.3,
+     "closest": "gripper_tip / pod_A0",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.01,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.01,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "A",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 163.0,
+     "joints_deg": {
+      "shoulder_lift": 13.7,
+      "elbow_flex": 52.6,
+      "wrist_flex": -51.4
+     },
+     "joint_margin_deg": 43.6,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.24,
+      "elbow_flex": 1.03,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 13.3,
+     "closest": "gripper_tip / pod_A0",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.04,
+      "elbow_flex": 0.33,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.03,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "A",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 175.0,
+     "joints_deg": {
+      "shoulder_lift": 8.3,
+      "elbow_flex": 50.8,
+      "wrist_flex": -39.1
+     },
+     "joint_margin_deg": 46.0,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.21,
+      "elbow_flex": 1.04,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 13.2,
+     "closest": "gripper_tip / tray",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.07,
+      "elbow_flex": 0.32,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.04,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 0,
+    "target": "A",
+    "reachable": true,
+    "margin_mm": 44.0,
+    "joints_deg": {
+     "shoulder_lift": 36.2,
+     "elbow_flex": 49.1,
+     "wrist_flex": -85.3
+    },
+    "joint_margin_deg": 9.7,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.34,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [],
+    "clearance_mm": 13.3,
+    "closest": "gripper_tip / pod_A0",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.06,
+     "elbow_flex": 0.33,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.92,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "beside",
+   "tray_shift_mm": 10.0,
+   "straight": {
+    "target": "B",
+    "tilt_deg": 0,
+    "reachable": true,
+    "margin_mm": 6.0,
+    "joints_deg": {
+     "shoulder_lift": 57.3,
+     "elbow_flex": 36.8,
+     "wrist_flex": -94.2
+    },
+    "joint_margin_deg": 0.8,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.63,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [],
+    "clearance_mm": 7.6,
+    "closest": "gripper_tip / pod_A1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.19,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.92,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "B",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 98.0,
+     "joints_deg": {
+      "shoulder_lift": 49.9,
+      "elbow_flex": 41.3,
+      "wrist_flex": -86.2
+     },
+     "joint_margin_deg": 8.8,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.59,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 7.5,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.15,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 0.99,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "B",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 111.0,
+     "joints_deg": {
+      "shoulder_lift": 42.4,
+      "elbow_flex": 44.5,
+      "wrist_flex": -76.9
+     },
+     "joint_margin_deg": 18.1,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.55,
+      "elbow_flex": 1.05,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 7.2,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.12,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.05,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "B",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 125.0,
+     "joints_deg": {
+      "shoulder_lift": 35.2,
+      "elbow_flex": 46.4,
+      "wrist_flex": -66.5
+     },
+     "joint_margin_deg": 28.5,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.52,
+      "elbow_flex": 1.11,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 6.7,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.08,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.11,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "B",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 137.0,
+     "joints_deg": {
+      "shoulder_lift": 28.6,
+      "elbow_flex": 46.8,
+      "wrist_flex": -55.3
+     },
+     "joint_margin_deg": 39.7,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.48,
+      "elbow_flex": 1.15,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 6.1,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.05,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.15,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 0,
+    "target": "B",
+    "reachable": true,
+    "margin_mm": 6.0,
+    "joints_deg": {
+     "shoulder_lift": 57.3,
+     "elbow_flex": 36.8,
+     "wrist_flex": -94.2
+    },
+    "joint_margin_deg": 0.8,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.63,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [],
+    "clearance_mm": 7.6,
+    "closest": "gripper_tip / pod_A1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.19,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.92,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "beside",
+   "tray_shift_mm": 10.0,
+   "straight": {
+    "target": "C",
+    "tilt_deg": 0,
+    "reachable": false,
+    "margin_mm": -30.0,
+    "joints_deg": {
+     "shoulder_lift": 74.3,
+     "elbow_flex": 22.1,
+     "wrist_flex": -95.0
+    },
+    "joint_margin_deg": 0.0,
+    "tip_error_mm": 0.8,
+    "tool_angle_deg": 1.4,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.9,
+     "elbow_flex": 0.94,
+     "wrist_flex": 0.05
+    },
+    "collisions": [],
+    "clearance_mm": 6.9,
+    "closest": "gripper_tip / pod_B1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.31,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.94,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "C",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 60.0,
+     "joints_deg": {
+      "shoulder_lift": 69.7,
+      "elbow_flex": 26.2,
+      "wrist_flex": -90.9
+     },
+     "joint_margin_deg": 4.1,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.88,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 7.5,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.29,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 0.99,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "C",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 73.0,
+     "joints_deg": {
+      "shoulder_lift": 62.7,
+      "elbow_flex": 31.1,
+      "wrist_flex": -83.8
+     },
+     "joint_margin_deg": 11.2,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.84,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 7.2,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.25,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.06,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "C",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 87.0,
+     "joints_deg": {
+      "shoulder_lift": 55.8,
+      "elbow_flex": 34.8,
+      "wrist_flex": -75.5
+     },
+     "joint_margin_deg": 19.5,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.8,
+      "elbow_flex": 1.12,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 6.7,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.21,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.12,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "C",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 99.0,
+     "joints_deg": {
+      "shoulder_lift": 49.1,
+      "elbow_flex": 37.1,
+      "wrist_flex": -66.2
+     },
+     "joint_margin_deg": 28.8,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.77,
+      "elbow_flex": 1.18,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 6.1,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.17,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.18,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 2,
+    "target": "C",
+    "reachable": true,
+    "margin_mm": 51.0,
+    "joints_deg": {
+     "shoulder_lift": 73.8,
+     "elbow_flex": 22.7,
+     "wrist_flex": -94.6
+    },
+    "joint_margin_deg": 0.4,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 2.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.9,
+     "elbow_flex": 0.95,
+     "wrist_flex": 0.06
+    },
+    "collisions": [],
+    "clearance_mm": 7.6,
+    "closest": "gripper_tip / pod_B1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.31,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.95,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "beside",
+   "tray_shift_mm": 10.0,
+   "straight": {
+    "target": "D",
+    "tilt_deg": 0,
+    "reachable": true,
+    "margin_mm": 8.0,
+    "joints_deg": {
+     "shoulder_lift": 95.6,
+     "elbow_flex": -1.6,
+     "wrist_flex": -93.9
+    },
+    "joint_margin_deg": 1.1,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": -0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 1.21,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [],
+    "clearance_mm": 7.6,
+    "closest": "gripper_tip / pod_C1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.46,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 1.21,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "D",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 22.0,
+     "joints_deg": {
+      "shoulder_lift": 88.5,
+      "elbow_flex": 6.6,
+      "wrist_flex": -90.1
+     },
+     "joint_margin_deg": 4.9,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.17,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 7.5,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.42,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 1.17,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "D",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 35.0,
+     "joints_deg": {
+      "shoulder_lift": 81.6,
+      "elbow_flex": 13.3,
+      "wrist_flex": -84.9
+     },
+     "joint_margin_deg": 10.1,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.13,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 7.2,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.38,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.13,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "D",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 49.0,
+     "joints_deg": {
+      "shoulder_lift": 74.9,
+      "elbow_flex": 18.6,
+      "wrist_flex": -78.6
+     },
+     "joint_margin_deg": 16.4,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.09,
+      "elbow_flex": 1.12,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 6.7,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.34,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.12,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "D",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 61.0,
+     "joints_deg": {
+      "shoulder_lift": 68.5,
+      "elbow_flex": 22.6,
+      "wrist_flex": -71.1
+     },
+     "joint_margin_deg": 23.9,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.06,
+      "elbow_flex": 1.19,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 6.1,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.31,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.19,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 0,
+    "target": "D",
+    "reachable": true,
+    "margin_mm": 8.0,
+    "joints_deg": {
+     "shoulder_lift": 95.6,
+     "elbow_flex": -1.6,
+     "wrist_flex": -93.9
+    },
+    "joint_margin_deg": 1.1,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": -0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 1.21,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [],
+    "clearance_mm": 7.6,
+    "closest": "gripper_tip / pod_C1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.46,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 1.21,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "beside",
+   "tray_shift_mm": 10.0,
+   "straight": {
+    "target": "S",
+    "tilt_deg": 0,
+    "reachable": true,
+    "margin_mm": 22.0,
+    "joints_deg": {
+     "shoulder_lift": 46.5,
+     "elbow_flex": 44.3,
+     "wrist_flex": -90.8
+    },
+    "joint_margin_deg": 4.2,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.47,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [],
+    "clearance_mm": 3.3,
+    "closest": "gripper_tip / store_pod_1_2",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.12,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.92,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "S",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 118.0,
+     "joints_deg": {
+      "shoulder_lift": 38.6,
+      "elbow_flex": 47.9,
+      "wrist_flex": -81.5
+     },
+     "joint_margin_deg": 13.5,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.44,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 3.3,
+     "closest": "gripper_tip / store_pod_1_2",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.08,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 0.99,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "S",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 131.0,
+     "joints_deg": {
+      "shoulder_lift": 30.9,
+      "elbow_flex": 50.1,
+      "wrist_flex": -71.0
+     },
+     "joint_margin_deg": 24.0,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.4,
+      "elbow_flex": 1.04,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 3.3,
+     "closest": "gripper_tip / store_pod_1_2",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.05,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.04,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "S",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 145.0,
+     "joints_deg": {
+      "shoulder_lift": 23.7,
+      "elbow_flex": 50.9,
+      "wrist_flex": -59.6
+     },
+     "joint_margin_deg": 35.4,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.37,
+      "elbow_flex": 1.08,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 3.3,
+     "closest": "gripper_tip / store_pod_1_2",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.02,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.08,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "S",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 158.0,
+     "joints_deg": {
+      "shoulder_lift": 17.4,
+      "elbow_flex": 50.2,
+      "wrist_flex": -47.6
+     },
+     "joint_margin_deg": 46.6,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.34,
+      "elbow_flex": 1.11,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 3.2,
+     "closest": "gripper_tip / store_pod_0_3",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.01,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.11,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 0,
+    "target": "S",
+    "reachable": true,
+    "margin_mm": 22.0,
+    "joints_deg": {
+     "shoulder_lift": 46.5,
+     "elbow_flex": 44.3,
+     "wrist_flex": -90.8
+    },
+    "joint_margin_deg": 4.2,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.47,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [],
+    "clearance_mm": 3.3,
+    "closest": "gripper_tip / store_pod_1_2",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.12,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.92,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "under_arm",
+   "tray_shift_mm": 0.0,
+   "straight": {
+    "target": "A",
+    "tilt_deg": 0,
+    "reachable": false,
+    "margin_mm": -16.0,
+    "joints_deg": {
+     "shoulder_lift": 65.7,
+     "elbow_flex": 30.4,
+     "wrist_flex": -95.0
+    },
+    "joint_margin_deg": 0.0,
+    "tip_error_mm": 2.7,
+    "tool_angle_deg": 1.1,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.77,
+     "elbow_flex": 0.94,
+     "wrist_flex": 0.05
+    },
+    "collisions": [],
+    "clearance_mm": 13.3,
+    "closest": "gripper_tip / pod_A0",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.25,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.94,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "A",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 76.0,
+     "joints_deg": {
+      "shoulder_lift": 61.5,
+      "elbow_flex": 33.1,
+      "wrist_flex": -89.6
+     },
+     "joint_margin_deg": 5.4,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.75,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 13.3,
+     "closest": "gripper_tip / pod_A0",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.23,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 0.99,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "A",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 89.0,
+     "joints_deg": {
+      "shoulder_lift": 54.4,
+      "elbow_flex": 37.3,
+      "wrist_flex": -81.7
+     },
+     "joint_margin_deg": 13.3,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.72,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 13.3,
+     "closest": "gripper_tip / pod_A0",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.19,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.06,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "A",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 103.0,
+     "joints_deg": {
+      "shoulder_lift": 47.3,
+      "elbow_flex": 40.2,
+      "wrist_flex": -72.5
+     },
+     "joint_margin_deg": 22.5,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.68,
+      "elbow_flex": 1.12,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 13.3,
+     "closest": "gripper_tip / pod_A0",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.15,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.12,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "A",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 115.0,
+     "joints_deg": {
+      "shoulder_lift": 40.6,
+      "elbow_flex": 41.8,
+      "wrist_flex": -62.4
+     },
+     "joint_margin_deg": 32.6,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.65,
+      "elbow_flex": 1.17,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 13.2,
+     "closest": "gripper_tip / tray",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.12,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.17,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 2,
+    "target": "A",
+    "reachable": true,
+    "margin_mm": 67.0,
+    "joints_deg": {
+     "shoulder_lift": 65.8,
+     "elbow_flex": 30.0,
+     "wrist_flex": -93.8
+    },
+    "joint_margin_deg": 1.2,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 2.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.78,
+     "elbow_flex": 0.95,
+     "wrist_flex": 0.06
+    },
+    "collisions": [],
+    "clearance_mm": 13.3,
+    "closest": "gripper_tip / pod_A0",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.25,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.95,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "under_arm",
+   "tray_shift_mm": 0.0,
+   "straight": {
+    "target": "B",
+    "tilt_deg": 0,
+    "reachable": false,
+    "margin_mm": -8.0,
+    "joints_deg": {
+     "shoulder_lift": 85.7,
+     "elbow_flex": 11.1,
+     "wrist_flex": -95.0
+    },
+    "joint_margin_deg": 0.0,
+    "tip_error_mm": 2.4,
+    "tool_angle_deg": 1.8,
+    "torque_loaded_nm": {
+     "shoulder_lift": 1.08,
+     "elbow_flex": 0.95,
+     "wrist_flex": 0.06
+    },
+    "collisions": [],
+    "clearance_mm": 9.0,
+    "closest": "gripper_tip / pod_A1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.39,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 1.08,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "B",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 38.0,
+     "joints_deg": {
+      "shoulder_lift": 80.6,
+      "elbow_flex": 15.5,
+      "wrist_flex": -91.1
+     },
+     "joint_margin_deg": 3.9,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.05,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 7.5,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.36,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 1.05,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "B",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 51.0,
+     "joints_deg": {
+      "shoulder_lift": 73.7,
+      "elbow_flex": 21.4,
+      "wrist_flex": -85.1
+     },
+     "joint_margin_deg": 9.9,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.01,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 7.2,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.32,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.06,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "B",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 65.0,
+     "joints_deg": {
+      "shoulder_lift": 67.0,
+      "elbow_flex": 26.0,
+      "wrist_flex": -78.0
+     },
+     "joint_margin_deg": 17.0,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.97,
+      "elbow_flex": 1.12,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 6.7,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.29,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.12,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "B",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 77.0,
+     "joints_deg": {
+      "shoulder_lift": 60.4,
+      "elbow_flex": 29.3,
+      "wrist_flex": -69.7
+     },
+     "joint_margin_deg": 25.3,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.93,
+      "elbow_flex": 1.19,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 6.1,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.25,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.19,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 2,
+    "target": "B",
+    "reachable": true,
+    "margin_mm": 29.0,
+    "joints_deg": {
+     "shoulder_lift": 84.7,
+     "elbow_flex": 11.4,
+     "wrist_flex": -94.0
+    },
+    "joint_margin_deg": 1.0,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 2.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 1.07,
+     "elbow_flex": 0.95,
+     "wrist_flex": 0.06
+    },
+    "collisions": [],
+    "clearance_mm": 7.6,
+    "closest": "gripper_tip / pod_A1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.39,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 1.07,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "under_arm",
+   "tray_shift_mm": 0.0,
+   "straight": {
+    "target": "C",
+    "tilt_deg": 0,
+    "reachable": false,
+    "margin_mm": -14.0,
+    "joints_deg": {
+     "shoulder_lift": 100.0,
+     "elbow_flex": -8.3,
+     "wrist_flex": -91.7
+    },
+    "joint_margin_deg": 0.0,
+    "tip_error_mm": 13.7,
+    "tool_angle_deg": 0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 1.27,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [
+     "gripper_tip / pod_B1 (4 mm into)"
+    ],
+    "clearance_mm": -3.7,
+    "closest": "gripper_tip / pod_B1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.49,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 1.27,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "C",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 0.0,
+     "joints_deg": {
+      "shoulder_lift": 99.8,
+      "elbow_flex": -7.8,
+      "wrist_flex": -87.0
+     },
+     "joint_margin_deg": 0.2,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.34,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 7.5,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.5,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 1.34,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "C",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 13.0,
+     "joints_deg": {
+      "shoulder_lift": 92.6,
+      "elbow_flex": 0.4,
+      "wrist_flex": -83.1
+     },
+     "joint_margin_deg": 7.4,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.3,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 7.2,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.46,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.3,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "C",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 27.0,
+     "joints_deg": {
+      "shoulder_lift": 85.8,
+      "elbow_flex": 7.0,
+      "wrist_flex": -77.9
+     },
+     "joint_margin_deg": 14.2,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.26,
+      "elbow_flex": 1.12,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 6.7,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.42,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.26,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "C",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 39.0,
+     "joints_deg": {
+      "shoulder_lift": 79.3,
+      "elbow_flex": 12.1,
+      "wrist_flex": -71.5
+     },
+     "joint_margin_deg": 20.7,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.22,
+      "elbow_flex": 1.19,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 6.1,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.38,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.22,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 7,
+    "target": "C",
+    "reachable": true,
+    "margin_mm": 5.0,
+    "joints_deg": {
+     "shoulder_lift": 96.9,
+     "elbow_flex": -4.3,
+     "wrist_flex": -85.6
+    },
+    "joint_margin_deg": 3.1,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 7.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 1.32,
+     "elbow_flex": 1.02,
+     "wrist_flex": 0.13
+    },
+    "collisions": [],
+    "clearance_mm": 7.4,
+    "closest": "gripper_tip / pod_B1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.48,
+     "elbow_flex": 0.35,
+     "wrist_flex": 0.01
+    },
+    "max_torque_loaded_nm": 1.32,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "under_arm",
+   "tray_shift_mm": 0.0,
+   "straight": {
+    "target": "D",
+    "tilt_deg": 0,
+    "reachable": false,
+    "margin_mm": -52.0,
+    "joints_deg": {
+     "shoulder_lift": 100.0,
+     "elbow_flex": 0.0,
+     "wrist_flex": -95.0
+    },
+    "joint_margin_deg": 0.0,
+    "tip_error_mm": 43.3,
+    "tool_angle_deg": 5.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 1.33,
+     "elbow_flex": 0.98,
+     "wrist_flex": 0.1
+    },
+    "collisions": [],
+    "clearance_mm": 16.0,
+    "closest": "gripper_tip / pod_C1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.5,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.01
+    },
+    "max_torque_loaded_nm": 1.33,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "D",
+     "tilt_deg": 5,
+     "reachable": false,
+     "margin_mm": -38.0,
+     "joints_deg": {
+      "shoulder_lift": 100.0,
+      "elbow_flex": -8.3,
+      "wrist_flex": -86.7
+     },
+     "joint_margin_deg": 0.0,
+     "tip_error_mm": 37.7,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.34,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [
+      "gripper_tip / pod_C1 (4 mm into)"
+     ],
+     "clearance_mm": -3.5,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.5,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 1.34,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "D",
+     "tilt_deg": 10,
+     "reachable": false,
+     "margin_mm": -25.0,
+     "joints_deg": {
+      "shoulder_lift": 100.0,
+      "elbow_flex": -8.3,
+      "wrist_flex": -81.7
+     },
+     "joint_margin_deg": 0.0,
+     "tip_error_mm": 24.1,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.41,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.17
+     },
+     "collisions": [
+      "gripper_tip / pod_C1 (3 mm into)"
+     ],
+     "clearance_mm": -3.0,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.51,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.41,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "D",
+     "tilt_deg": 15,
+     "reachable": false,
+     "margin_mm": -11.0,
+     "joints_deg": {
+      "shoulder_lift": 100.0,
+      "elbow_flex": -11.1,
+      "wrist_flex": -73.9
+     },
+     "joint_margin_deg": 0.0,
+     "tip_error_mm": 10.9,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.47,
+      "elbow_flex": 1.12,
+      "wrist_flex": 0.23
+     },
+     "collisions": [
+      "gripper_tip / pod_C1 (4 mm into)"
+     ],
+     "clearance_mm": -4.0,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.52,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.47,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "D",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 1.0,
+     "joints_deg": {
+      "shoulder_lift": 98.9,
+      "elbow_flex": -11.3,
+      "wrist_flex": -67.7
+     },
+     "joint_margin_deg": 1.1,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.52,
+      "elbow_flex": 1.18,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 6.1,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.52,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.52,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 22,
+    "target": "D",
+    "reachable": true,
+    "margin_mm": 6.0,
+    "joints_deg": {
+     "shoulder_lift": 96.2,
+     "elbow_flex": -8.7,
+     "wrist_flex": -65.6
+    },
+    "joint_margin_deg": 3.8,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 22.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 1.5,
+     "elbow_flex": 1.21,
+     "wrist_flex": 0.32
+    },
+    "collisions": [],
+    "clearance_mm": 5.7,
+    "closest": "gripper_tip / pod_C1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.51,
+     "elbow_flex": 0.38,
+     "wrist_flex": 0.04
+    },
+    "max_torque_loaded_nm": 1.5,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "under_arm",
+   "tray_shift_mm": 0.0,
+   "straight": {
+    "target": "S",
+    "tilt_deg": 0,
+    "reachable": false,
+    "margin_mm": -28.0,
+    "joints_deg": {
+     "shoulder_lift": 71.4,
+     "elbow_flex": 24.9,
+     "wrist_flex": -95.0
+    },
+    "joint_margin_deg": 0.0,
+    "tip_error_mm": 1.9,
+    "tool_angle_deg": 1.3,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.85,
+     "elbow_flex": 0.94,
+     "wrist_flex": 0.05
+    },
+    "collisions": [],
+    "clearance_mm": 3.3,
+    "closest": "gripper_tip / store_pod_1_2",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.29,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.94,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "S",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 68.0,
+     "joints_deg": {
+      "shoulder_lift": 65.7,
+      "elbow_flex": 30.2,
+      "wrist_flex": -90.8
+     },
+     "joint_margin_deg": 4.2,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.82,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 3.3,
+     "closest": "gripper_tip / store_pod_1_2",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.26,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 0.99,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "S",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 81.0,
+     "joints_deg": {
+      "shoulder_lift": 58.6,
+      "elbow_flex": 34.7,
+      "wrist_flex": -83.3
+     },
+     "joint_margin_deg": 11.7,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.78,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 3.3,
+     "closest": "gripper_tip / store_pod_1_2",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.22,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.06,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "S",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 95.0,
+     "joints_deg": {
+      "shoulder_lift": 51.5,
+      "elbow_flex": 38.0,
+      "wrist_flex": -74.6
+     },
+     "joint_margin_deg": 20.4,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.74,
+      "elbow_flex": 1.12,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 3.3,
+     "closest": "gripper_tip / store_pod_1_2",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.18,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.12,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "S",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 108.0,
+     "joints_deg": {
+      "shoulder_lift": 44.8,
+      "elbow_flex": 40.0,
+      "wrist_flex": -64.8
+     },
+     "joint_margin_deg": 30.2,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.71,
+      "elbow_flex": 1.18,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 3.2,
+     "closest": "gripper_tip / store_pod_0_3",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.15,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.18,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 2,
+    "target": "S",
+    "reachable": true,
+    "margin_mm": 8.0,
+    "joints_deg": {
+     "shoulder_lift": 69.9,
+     "elbow_flex": 26.9,
+     "wrist_flex": -94.7
+    },
+    "joint_margin_deg": 0.3,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 2.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.84,
+     "elbow_flex": 0.95,
+     "wrist_flex": 0.06
+    },
+    "collisions": [],
+    "clearance_mm": 3.3,
+    "closest": "gripper_tip / store_pod_1_2",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.28,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.95,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "under_arm",
+   "tray_shift_mm": 10.0,
+   "straight": {
+    "target": "A",
+    "tilt_deg": 0,
+    "reachable": false,
+    "margin_mm": -6.0,
+    "joints_deg": {
+     "shoulder_lift": 62.9,
+     "elbow_flex": 33.2,
+     "wrist_flex": -95.0
+    },
+    "joint_margin_deg": 0.0,
+    "tip_error_mm": 2.1,
+    "tool_angle_deg": 1.1,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.72,
+     "elbow_flex": 0.94,
+     "wrist_flex": 0.05
+    },
+    "collisions": [],
+    "clearance_mm": 13.3,
+    "closest": "gripper_tip / pod_A0",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.23,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.94,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "A",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 86.0,
+     "joints_deg": {
+      "shoulder_lift": 56.3,
+      "elbow_flex": 37.0,
+      "wrist_flex": -88.3
+     },
+     "joint_margin_deg": 6.7,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.68,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 13.3,
+     "closest": "gripper_tip / pod_A0",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.19,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 0.99,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "A",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 99.0,
+     "joints_deg": {
+      "shoulder_lift": 49.0,
+      "elbow_flex": 40.8,
+      "wrist_flex": -79.8
+     },
+     "joint_margin_deg": 15.2,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.64,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 13.3,
+     "closest": "gripper_tip / pod_A0",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.16,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.06,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "A",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 113.0,
+     "joints_deg": {
+      "shoulder_lift": 41.8,
+      "elbow_flex": 43.2,
+      "wrist_flex": -70.1
+     },
+     "joint_margin_deg": 24.9,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.6,
+      "elbow_flex": 1.12,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 13.3,
+     "closest": "gripper_tip / pod_A0",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.12,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.12,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "A",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 125.0,
+     "joints_deg": {
+      "shoulder_lift": 35.1,
+      "elbow_flex": 44.3,
+      "wrist_flex": -59.4
+     },
+     "joint_margin_deg": 35.6,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.57,
+      "elbow_flex": 1.16,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 13.2,
+     "closest": "gripper_tip / tray",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.09,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.16,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 1,
+    "target": "A",
+    "reachable": true,
+    "margin_mm": 8.0,
+    "joints_deg": {
+     "shoulder_lift": 62.1,
+     "elbow_flex": 33.1,
+     "wrist_flex": -94.3
+    },
+    "joint_margin_deg": 0.7,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 1.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.71,
+     "elbow_flex": 0.94,
+     "wrist_flex": 0.05
+    },
+    "collisions": [],
+    "clearance_mm": 13.3,
+    "closest": "gripper_tip / pod_A0",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.23,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.94,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "under_arm",
+   "tray_shift_mm": 10.0,
+   "straight": {
+    "target": "B",
+    "tilt_deg": 0,
+    "reachable": false,
+    "margin_mm": -18.0,
+    "joints_deg": {
+     "shoulder_lift": 80.0,
+     "elbow_flex": 16.6,
+     "wrist_flex": -95.0
+    },
+    "joint_margin_deg": 0.0,
+    "tip_error_mm": 0.7,
+    "tool_angle_deg": 1.6,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.99,
+     "elbow_flex": 0.94,
+     "wrist_flex": 0.05
+    },
+    "collisions": [],
+    "clearance_mm": 7.0,
+    "closest": "gripper_tip / pod_A1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.35,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.99,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "B",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 48.0,
+     "joints_deg": {
+      "shoulder_lift": 75.6,
+      "elbow_flex": 20.6,
+      "wrist_flex": -91.2
+     },
+     "joint_margin_deg": 3.8,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.97,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 7.5,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.33,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 0.99,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "B",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 61.0,
+     "joints_deg": {
+      "shoulder_lift": 68.8,
+      "elbow_flex": 26.0,
+      "wrist_flex": -84.8
+     },
+     "joint_margin_deg": 10.2,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.93,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 7.2,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.29,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.06,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "B",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 75.0,
+     "joints_deg": {
+      "shoulder_lift": 61.9,
+      "elbow_flex": 30.2,
+      "wrist_flex": -77.1
+     },
+     "joint_margin_deg": 17.9,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.89,
+      "elbow_flex": 1.12,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 6.7,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.25,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.12,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "B",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 87.0,
+     "joints_deg": {
+      "shoulder_lift": 55.3,
+      "elbow_flex": 33.0,
+      "wrist_flex": -68.4
+     },
+     "joint_margin_deg": 26.6,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.86,
+      "elbow_flex": 1.18,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 6.1,
+     "closest": "gripper_tip / pod_A1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.22,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.18,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 2,
+    "target": "B",
+    "reachable": true,
+    "margin_mm": 39.0,
+    "joints_deg": {
+     "shoulder_lift": 79.8,
+     "elbow_flex": 16.7,
+     "wrist_flex": -94.5
+    },
+    "joint_margin_deg": 0.5,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 2.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.99,
+     "elbow_flex": 0.95,
+     "wrist_flex": 0.06
+    },
+    "collisions": [],
+    "clearance_mm": 7.6,
+    "closest": "gripper_tip / pod_A1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.35,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.99,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "under_arm",
+   "tray_shift_mm": 10.0,
+   "straight": {
+    "target": "C",
+    "tilt_deg": 0,
+    "reachable": false,
+    "margin_mm": -4.0,
+    "joints_deg": {
+     "shoulder_lift": 100.0,
+     "elbow_flex": -8.3,
+     "wrist_flex": -91.7
+    },
+    "joint_margin_deg": 0.0,
+    "tip_error_mm": 4.1,
+    "tool_angle_deg": 0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 1.27,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [],
+    "clearance_mm": 4.0,
+    "closest": "gripper_tip / pod_B1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.49,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 1.27,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "C",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 10.0,
+     "joints_deg": {
+      "shoulder_lift": 94.6,
+      "elbow_flex": -0.9,
+      "wrist_flex": -88.7
+     },
+     "joint_margin_deg": 5.4,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.26,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 7.5,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.46,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 1.26,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "C",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 23.0,
+     "joints_deg": {
+      "shoulder_lift": 87.6,
+      "elbow_flex": 6.6,
+      "wrist_flex": -84.2
+     },
+     "joint_margin_deg": 10.8,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.22,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 7.2,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.42,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.22,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "C",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 37.0,
+     "joints_deg": {
+      "shoulder_lift": 80.9,
+      "elbow_flex": 12.5,
+      "wrist_flex": -78.4
+     },
+     "joint_margin_deg": 16.6,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.18,
+      "elbow_flex": 1.12,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 6.7,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.39,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.18,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "C",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 49.0,
+     "joints_deg": {
+      "shoulder_lift": 74.4,
+      "elbow_flex": 17.1,
+      "wrist_flex": -71.5
+     },
+     "joint_margin_deg": 23.5,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.15,
+      "elbow_flex": 1.19,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 6.1,
+     "closest": "gripper_tip / pod_B1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.35,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.19,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 4,
+    "target": "C",
+    "reachable": true,
+    "margin_mm": 7.0,
+    "joints_deg": {
+     "shoulder_lift": 96.0,
+     "elbow_flex": -2.6,
+     "wrist_flex": -89.4
+    },
+    "joint_margin_deg": 4.0,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 4.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 1.27,
+     "elbow_flex": 0.98,
+     "wrist_flex": 0.09
+    },
+    "collisions": [],
+    "clearance_mm": 7.5,
+    "closest": "gripper_tip / pod_B1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.47,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.01
+    },
+    "max_torque_loaded_nm": 1.27,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "under_arm",
+   "tray_shift_mm": 10.0,
+   "straight": {
+    "target": "D",
+    "tilt_deg": 0,
+    "reachable": false,
+    "margin_mm": -42.0,
+    "joints_deg": {
+     "shoulder_lift": 100.0,
+     "elbow_flex": 0.0,
+     "wrist_flex": -95.0
+    },
+    "joint_margin_deg": 0.0,
+    "tip_error_mm": 34.6,
+    "tool_angle_deg": 5.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 1.33,
+     "elbow_flex": 0.98,
+     "wrist_flex": 0.1
+    },
+    "collisions": [],
+    "clearance_mm": 15.5,
+    "closest": "gripper_tip / pod_C1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.5,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.01
+    },
+    "max_torque_loaded_nm": 1.33,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "D",
+     "tilt_deg": 5,
+     "reachable": false,
+     "margin_mm": -28.0,
+     "joints_deg": {
+      "shoulder_lift": 100.0,
+      "elbow_flex": -8.3,
+      "wrist_flex": -86.7
+     },
+     "joint_margin_deg": 0.0,
+     "tip_error_mm": 27.7,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.34,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [
+      "gripper_tip / pod_C1 (4 mm into)"
+     ],
+     "clearance_mm": -4.0,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.5,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 1.34,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "D",
+     "tilt_deg": 10,
+     "reachable": false,
+     "margin_mm": -15.0,
+     "joints_deg": {
+      "shoulder_lift": 100.0,
+      "elbow_flex": -8.3,
+      "wrist_flex": -81.7
+     },
+     "joint_margin_deg": 0.0,
+     "tip_error_mm": 14.2,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.41,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.17
+     },
+     "collisions": [
+      "gripper_tip / pod_C1 (3 mm into)"
+     ],
+     "clearance_mm": -3.0,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.51,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.41,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "D",
+     "tilt_deg": 15,
+     "reachable": false,
+     "margin_mm": -1.0,
+     "joints_deg": {
+      "shoulder_lift": 100.0,
+      "elbow_flex": -11.1,
+      "wrist_flex": -73.9
+     },
+     "joint_margin_deg": 0.0,
+     "tip_error_mm": 1.3,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.47,
+      "elbow_flex": 1.12,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 5.7,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.52,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.47,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "D",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 11.0,
+     "joints_deg": {
+      "shoulder_lift": 93.5,
+      "elbow_flex": -4.3,
+      "wrist_flex": -69.3
+     },
+     "joint_margin_deg": 6.5,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 1.44,
+      "elbow_flex": 1.18,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 6.1,
+     "closest": "gripper_tip / pod_C1",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.48,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.44,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 18,
+    "target": "D",
+    "reachable": true,
+    "margin_mm": 6.0,
+    "joints_deg": {
+     "shoulder_lift": 96.2,
+     "elbow_flex": -6.8,
+     "wrist_flex": -71.4
+    },
+    "joint_margin_deg": 3.8,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 18.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 1.45,
+     "elbow_flex": 1.16,
+     "wrist_flex": 0.27
+    },
+    "collisions": [],
+    "clearance_mm": 6.4,
+    "closest": "gripper_tip / pod_C1",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.5,
+     "elbow_flex": 0.37,
+     "wrist_flex": 0.03
+    },
+    "max_torque_loaded_nm": 1.45,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "under_arm",
+   "tray_shift_mm": 10.0,
+   "straight": {
+    "target": "S",
+    "tilt_deg": 0,
+    "reachable": false,
+    "margin_mm": -28.0,
+    "joints_deg": {
+     "shoulder_lift": 71.4,
+     "elbow_flex": 24.9,
+     "wrist_flex": -95.0
+    },
+    "joint_margin_deg": 0.0,
+    "tip_error_mm": 1.9,
+    "tool_angle_deg": 1.3,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.85,
+     "elbow_flex": 0.94,
+     "wrist_flex": 0.05
+    },
+    "collisions": [],
+    "clearance_mm": 3.3,
+    "closest": "gripper_tip / store_pod_1_2",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.29,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.94,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "S",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 68.0,
+     "joints_deg": {
+      "shoulder_lift": 65.7,
+      "elbow_flex": 30.2,
+      "wrist_flex": -90.8
+     },
+     "joint_margin_deg": 4.2,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.82,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [],
+     "clearance_mm": 3.3,
+     "closest": "gripper_tip / store_pod_1_2",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.26,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 0.99,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "S",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 81.0,
+     "joints_deg": {
+      "shoulder_lift": 58.6,
+      "elbow_flex": 34.7,
+      "wrist_flex": -83.3
+     },
+     "joint_margin_deg": 11.7,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.78,
+      "elbow_flex": 1.06,
+      "wrist_flex": 0.17
+     },
+     "collisions": [],
+     "clearance_mm": 3.3,
+     "closest": "gripper_tip / store_pod_1_2",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.22,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.06,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "S",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 95.0,
+     "joints_deg": {
+      "shoulder_lift": 51.5,
+      "elbow_flex": 38.0,
+      "wrist_flex": -74.6
+     },
+     "joint_margin_deg": 20.4,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.74,
+      "elbow_flex": 1.12,
+      "wrist_flex": 0.23
+     },
+     "collisions": [],
+     "clearance_mm": 3.3,
+     "closest": "gripper_tip / store_pod_1_2",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.18,
+      "elbow_flex": 0.36,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.12,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "S",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 108.0,
+     "joints_deg": {
+      "shoulder_lift": 44.8,
+      "elbow_flex": 40.0,
+      "wrist_flex": -64.8
+     },
+     "joint_margin_deg": 30.2,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.71,
+      "elbow_flex": 1.18,
+      "wrist_flex": 0.29
+     },
+     "collisions": [],
+     "clearance_mm": 3.2,
+     "closest": "gripper_tip / store_pod_0_3",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.15,
+      "elbow_flex": 0.37,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.18,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": {
+    "tilt_deg": 2,
+    "target": "S",
+    "reachable": true,
+    "margin_mm": 8.0,
+    "joints_deg": {
+     "shoulder_lift": 69.9,
+     "elbow_flex": 26.9,
+     "wrist_flex": -94.7
+    },
+    "joint_margin_deg": 0.3,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 2.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.84,
+     "elbow_flex": 0.95,
+     "wrist_flex": 0.06
+    },
+    "collisions": [],
+    "clearance_mm": 3.3,
+    "closest": "gripper_tip / store_pod_1_2",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.28,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.95,
+    "torque_ok": true
+   }
+  },
+  {
+   "battery": "beside",
+   "tray_shift_mm": 0.0,
+   "station_over_store": true,
+   "straight": {
+    "target": "S",
+    "tilt_deg": 0,
+    "reachable": true,
+    "margin_mm": 22.0,
+    "joints_deg": {
+     "shoulder_lift": 46.5,
+     "elbow_flex": 44.3,
+     "wrist_flex": -90.8
+    },
+    "joint_margin_deg": 4.2,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.47,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [
+     "shoulder_housing / station_box (27 mm into)",
+     "forearm / station_box (10 mm into)"
+    ],
+    "clearance_mm": -27.3,
+    "closest": "shoulder_housing / station_box",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.12,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.92,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "S",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 118.0,
+     "joints_deg": {
+      "shoulder_lift": 38.6,
+      "elbow_flex": 47.9,
+      "wrist_flex": -81.5
+     },
+     "joint_margin_deg": 13.5,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.44,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [
+      "shoulder_housing / station_box (27 mm into)",
+      "forearm / station_box (11 mm into)"
+     ],
+     "clearance_mm": -27.3,
+     "closest": "shoulder_housing / station_box",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.08,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 0.99,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "S",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 131.0,
+     "joints_deg": {
+      "shoulder_lift": 30.9,
+      "elbow_flex": 50.1,
+      "wrist_flex": -71.0
+     },
+     "joint_margin_deg": 24.0,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.4,
+      "elbow_flex": 1.04,
+      "wrist_flex": 0.17
+     },
+     "collisions": [
+      "shoulder_housing / station_box (27 mm into)",
+      "forearm / station_box (9 mm into)"
+     ],
+     "clearance_mm": -27.3,
+     "closest": "shoulder_housing / station_box",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.05,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.04,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "S",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 145.0,
+     "joints_deg": {
+      "shoulder_lift": 23.7,
+      "elbow_flex": 50.9,
+      "wrist_flex": -59.6
+     },
+     "joint_margin_deg": 35.4,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.37,
+      "elbow_flex": 1.08,
+      "wrist_flex": 0.23
+     },
+     "collisions": [
+      "shoulder_housing / station_box (27 mm into)",
+      "forearm / station_box (3 mm into)"
+     ],
+     "clearance_mm": -27.3,
+     "closest": "shoulder_housing / station_box",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.02,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.08,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "S",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 158.0,
+     "joints_deg": {
+      "shoulder_lift": 17.4,
+      "elbow_flex": 50.2,
+      "wrist_flex": -47.6
+     },
+     "joint_margin_deg": 46.6,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.34,
+      "elbow_flex": 1.11,
+      "wrist_flex": 0.29
+     },
+     "collisions": [
+      "shoulder_housing / station_box (27 mm into)"
+     ],
+     "clearance_mm": -27.3,
+     "closest": "shoulder_housing / station_box",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.01,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.11,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": null
+  },
+  {
+   "battery": "beside",
+   "tray_shift_mm": 10.0,
+   "station_over_store": true,
+   "straight": {
+    "target": "S",
+    "tilt_deg": 0,
+    "reachable": true,
+    "margin_mm": 22.0,
+    "joints_deg": {
+     "shoulder_lift": 46.5,
+     "elbow_flex": 44.3,
+     "wrist_flex": -90.8
+    },
+    "joint_margin_deg": 4.2,
+    "tip_error_mm": 0.0,
+    "tool_angle_deg": 0.0,
+    "torque_loaded_nm": {
+     "shoulder_lift": 0.47,
+     "elbow_flex": 0.92,
+     "wrist_flex": 0.03
+    },
+    "collisions": [
+     "shoulder_housing / station_box (27 mm into)",
+     "forearm / station_box (10 mm into)"
+    ],
+    "clearance_mm": -27.3,
+    "closest": "shoulder_housing / station_box",
+    "torque_unloaded_nm": {
+     "shoulder_lift": 0.12,
+     "elbow_flex": 0.34,
+     "wrist_flex": 0.0
+    },
+    "max_torque_loaded_nm": 0.92,
+    "torque_ok": true
+   },
+   "tilts": {
+    "5": {
+     "target": "S",
+     "tilt_deg": 5,
+     "reachable": true,
+     "margin_mm": 118.0,
+     "joints_deg": {
+      "shoulder_lift": 38.6,
+      "elbow_flex": 47.9,
+      "wrist_flex": -81.5
+     },
+     "joint_margin_deg": 13.5,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 5.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.44,
+      "elbow_flex": 0.99,
+      "wrist_flex": 0.1
+     },
+     "collisions": [
+      "shoulder_housing / station_box (27 mm into)",
+      "forearm / station_box (11 mm into)"
+     ],
+     "clearance_mm": -27.3,
+     "closest": "shoulder_housing / station_box",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.08,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.01
+     },
+     "max_torque_loaded_nm": 0.99,
+     "torque_ok": true
+    },
+    "10": {
+     "target": "S",
+     "tilt_deg": 10,
+     "reachable": true,
+     "margin_mm": 131.0,
+     "joints_deg": {
+      "shoulder_lift": 30.9,
+      "elbow_flex": 50.1,
+      "wrist_flex": -71.0
+     },
+     "joint_margin_deg": 24.0,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 10.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.4,
+      "elbow_flex": 1.04,
+      "wrist_flex": 0.17
+     },
+     "collisions": [
+      "shoulder_housing / station_box (27 mm into)",
+      "forearm / station_box (9 mm into)"
+     ],
+     "clearance_mm": -27.3,
+     "closest": "shoulder_housing / station_box",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.05,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.02
+     },
+     "max_torque_loaded_nm": 1.04,
+     "torque_ok": true
+    },
+    "15": {
+     "target": "S",
+     "tilt_deg": 15,
+     "reachable": true,
+     "margin_mm": 145.0,
+     "joints_deg": {
+      "shoulder_lift": 23.7,
+      "elbow_flex": 50.9,
+      "wrist_flex": -59.6
+     },
+     "joint_margin_deg": 35.4,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 15.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.37,
+      "elbow_flex": 1.08,
+      "wrist_flex": 0.23
+     },
+     "collisions": [
+      "shoulder_housing / station_box (27 mm into)",
+      "forearm / station_box (3 mm into)"
+     ],
+     "clearance_mm": -27.3,
+     "closest": "shoulder_housing / station_box",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.02,
+      "elbow_flex": 0.35,
+      "wrist_flex": 0.03
+     },
+     "max_torque_loaded_nm": 1.08,
+     "torque_ok": true
+    },
+    "20": {
+     "target": "S",
+     "tilt_deg": 20,
+     "reachable": true,
+     "margin_mm": 158.0,
+     "joints_deg": {
+      "shoulder_lift": 17.4,
+      "elbow_flex": 50.2,
+      "wrist_flex": -47.6
+     },
+     "joint_margin_deg": 46.6,
+     "tip_error_mm": 0.0,
+     "tool_angle_deg": 20.0,
+     "torque_loaded_nm": {
+      "shoulder_lift": 0.34,
+      "elbow_flex": 1.11,
+      "wrist_flex": 0.29
+     },
+     "collisions": [
+      "shoulder_housing / station_box (27 mm into)"
+     ],
+     "clearance_mm": -27.3,
+     "closest": "shoulder_housing / station_box",
+     "torque_unloaded_nm": {
+      "shoulder_lift": 0.01,
+      "elbow_flex": 0.34,
+      "wrist_flex": 0.04
+     },
+     "max_torque_loaded_nm": 1.11,
+     "torque_ok": true
+    }
+   },
+   "min_tilt": null
+  }
+ ]
+}

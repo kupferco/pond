@@ -1,0 +1,51 @@
+{
+ "tray": {
+  "seconds": 43.8,
+  "peak_servo_nm": {
+   "shoulder_pan": 1.9,
+   "shoulder_lift": 1.9,
+   "elbow_flex": 1.9,
+   "wrist_flex": 1.9
+  },
+  "saturated_samples": {
+   "shoulder_pan": 112,
+   "shoulder_lift": 501,
+   "elbow_flex": 309,
+   "wrist_flex": 485
+  },
+  "arm_contacts_with_scene": {
+   "gripper_tip / tray": [
+    "10.1-13.84 s",
+    "15.36-15.36 s",
+    "27.96-28.3 s",
+    "30.34-30.76 s"
+   ]
+  },
+  "cart_min_clearance_mm": {
+   "cart_to_lid_mm": 55.6,
+   "cart_to_pillar_mm": 19.4,
+   "cart_to_station_mm": 48.4
+  }
+ },
+ "store": {
+  "seconds": 17.8,
+  "peak_servo_nm": {
+   "shoulder_pan": 1.9,
+   "shoulder_lift": 1.9,
+   "elbow_flex": 1.9,
+   "wrist_flex": 1.9
+  },
+  "saturated_samples": {
+   "shoulder_pan": 11,
+   "shoulder_lift": 178,
+   "elbow_flex": 92,
+   "wrist_flex": 141
+  },
+  "arm_contacts_with_scene": {},
+  "cart_min_clearance_mm": {
+   "cart_to_lid_mm": 65.9,
+   "cart_to_pillar_mm": 35.0,
+   "cart_to_station_mm": 100.7
+  }
+ }
+}
