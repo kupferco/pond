@@ -15,6 +15,19 @@
       "viewer": "viewer.html?src=renders/complete-unit-v2.glb&title=Complete%20unit%20v2%20(single-source:%20tank%20with%20water,%20real%20cart,%20sample%20coil)"
     },
     {
+      "id": "spine-connector-v3",
+      "date": "2026-11-23",
+      "part": "Spine to track connector",
+      "category": "Track",
+      "status": "draft",
+      "version": 3,
+      "group": "Spine to track connector",
+      "title": "Spine connector draft V3: track axis 75 mm from the spine axis, rod reach 59 mm",
+      "comment": "DRAFT V3 (supersedes V2), OpenPocket #581, published in #588. Spine-to-track connector, assembled: the track axis is 75 mm from the spine axis (V2: 66 mm), so the v5 hand sleeve clears the 75 mm growing pipe by 5 mm; the rod reaches 59 mm past the track pipe surface (V2: 50 mm). Drawn by cad/spine_connector_v3.py, unchanged. 3D model: cad/renders/spine-connector-v3.glb. Views: -iso, -front, -top, -side. Water volume is a separate named part (water_volume) that the 3D viewer can hide.",
+      "thumb": "renders/spine-connector-v3-line.png",
+      "viewer": "viewer.html?src=renders/spine-connector-v3.glb&title=Spine%20connector%20draft%20V3:%20track%20axis%2075%20mm%20from%20the%20spine%20axis,%20rod%20reach%2059%20mm"
+    },
+    {
       "id": "pipe-collar-3seat-assembled-v2",
       "date": "2026-11-23",
       "part": "Pipe collar",
@@ -71,7 +84,7 @@
       "date": "2026-11-23",
       "part": "Spine to track connector",
       "category": "Track",
-      "status": "draft",
+      "status": "superseded",
       "version": 2,
       "group": "Spine to track connector",
       "title": "Spine to track connector v2: flush track joint, track horizontal, rod to the spine (PROPOSAL: nut each side of the spine wall)",

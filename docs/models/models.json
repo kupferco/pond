@@ -158,13 +158,13 @@
    "poster": "drawings/renders/spine-connector-positions-v2-line.png"
   },
   {
-   "id": "spine-connector-v2",
-   "title": "Spine to track connector v2: flush track joint, track horizontal, rod to the spine (PROPOSAL: nut each side of the spine wall)",
-   "glb": "drawings/renders/spine-connector-v2.glb",
-   "caption": "The flush track joint with its rod to the spine and the proposed nuts either side of the spine wall.",
+   "id": "spine-connector-v3",
+   "title": "Spine connector draft V3: track axis 75 mm from the spine axis, rod reach 59 mm",
+   "glb": "drawings/renders/spine-connector-v3.glb",
+   "caption": "The spine connector draft V3, track 75 mm from the spine.",
    "page": "models",
    "section": "Track",
-   "poster": "drawings/renders/spine-connector-v2-line.png"
+   "poster": "drawings/renders/spine-connector-v3-line.png"
   },
   {
    "id": "pipe-collar-3seat-exploded-v2",
