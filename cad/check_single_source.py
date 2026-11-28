@@ -25,7 +25,8 @@ ORCHESTRATION = {"add", "scene", "check", "checks", "main", "draw", "views", "bu
 # superseded design studies: kept for the drawings they made, not built by build_all.py, not checked as sources (their copies are the reason this list exists)
 STUDIES = {"unit_v1_assembly.py", "pod_store_reach.py", "pod_store.py", "flatpack_tank.py", "flatpack_check.py", "charging_dock.py", "bottom_bracket.py",
            "base_module.py", "cart_wheel_pairs_v4.py", "hand_sleeve_v4.py", "so101_servo_layout.py", "aframe_pipe_joint.py", "spine_joint.py", "track_joint.py",
-           "cleanout_section.py", "cleanout_section_door.py", "pick_hole_cap.py", "pick_hole_membrane.py", "home_station.py"}
+           "cleanout_section.py", "cleanout_section_door.py", "pick_hole_cap.py", "pick_hole_membrane.py", "home_station.py",
+           "spine_connector_v3.py"}   # (#588) draft V3 copied exactly from claude/drafts (#581): not run by build_all, builds its own pipes, left unedited by the owner's request
 CART_NAMES = {"base_plate", "battery", "so101_arm_envelope"}
 TRACK_NAMES = {"track_pipe_B", "track_pipe_C", "track_pipe"}   # (#447) the cart carries no track pipe: nothing may add a child with these names to the cart
 CART_PREFIXES = ("hand_on_pipe_",)
